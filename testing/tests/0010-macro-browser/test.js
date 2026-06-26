@@ -24,7 +24,7 @@ SaveTextFile(macrosIni + "/key_macros.ini", [
 ]);
 
 // Start far2l with the pre-configured profile
-StartTestApp(dirs.profile, dirs.left, dirs.right);
+StartTestApp(dirs.profile, dirs.left, dirs.right, "left", true, [100, 40]);
 DismissHelpAndOSC52();
 Sync(5000);
 
@@ -64,7 +64,7 @@ Sync(5000);
 
 // Macro Browser should now be open — verify title and macro count
 ExpectString("Macro Browser", 0, 0, -1, -1, 10000);
-ExpectString("Total macros", 0, 0, -1, -1, 10000);
+ExpectString("Total Macros", 0, 0, -1, -1, 10000);
 Sync(2000);
 
 // Verify our test macros appear in the list
@@ -243,7 +243,57 @@ if (r3.I >= 1) {
 }
 Sync(1000);
 
-// Corner case 4e: Delete a macro with Del
+// Corner case 4e: '*' (multiply) toggles disable/enable
+// Navigate to first macro entry
+TypeHome();
+Sleep(200);
+Sync(1000);
+TypeDown();
+Sleep(200);
+Sync(1000);
+ExpectString("Test macro for smoke test", 0, 0, -1, -1, 5000);
+Sync(1000);
+
+// Toggle disable with '*'
+TypeVK(0x6A);
+Sleep(300);
+Sync(2000);
+ExpectString("Macro Browser", 0, 0, -1, -1, 5000);
+Sync(1000);
+
+// Verify statistics now show disabled=1
+TypeEnd();
+Sleep(200);
+Sync(1000);
+ExpectString("disabled=1", 0, 0, -1, -1, 5000);
+Sync(1000);
+
+// Toggle back to enabled with '*'
+TypeHome();
+Sleep(200);
+Sync(1000);
+TypeDown();
+Sleep(200);
+Sync(1000);
+TypeVK(0x6A);
+Sleep(300);
+Sync(2000);
+
+// Verify disabled=1 is gone (re-enabled)
+TypeEnd();
+Sleep(200);
+Sync(1000);
+BeCalm();
+var r3star = ExpectString("disabled=1", 0, 0, -1, -1, 3000);
+BePanic();
+if (r3star.I >= 1) {
+    Log("'*' toggle re-enabled macro (disabled=1 gone) — correct");
+} else {
+    Panic("Macro still disabled after '*' toggle");
+}
+Sync(1000);
+
+// Corner case 4f: Delete a macro with Del
 // Navigate to first macro
 TypeHome();
 Sleep(200);

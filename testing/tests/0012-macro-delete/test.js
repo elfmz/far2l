@@ -11,11 +11,15 @@ SaveTextFile(macrosIni + "/key_macros.ini", [
     "[KeyMacros/Common/F2]",
     "Sequence=F3",
     "Description=Macro to delete",
+    "",
+    "[KeyMacros/Common/F3]",
+    "Sequence=F4",
+    "Description=NumDel target",
     ""
 ]);
 
 // Start far2l. Pre-existing .config/settings suppresses first-run Help.
-StartTestApp(dirs.profile, dirs.left, dirs.right, "left", false);
+StartTestApp(dirs.profile, dirs.left, dirs.right, "left", false, [100, 40]);
 // Dismiss OSC52 clipboard dialog that may appear on first start
 DismissOSC52Only();
 
@@ -101,7 +105,109 @@ Sync(1000);
 CloseMacroBrowser();
 
 // ========================================
-// Phase 3: MacroDelete — when busy (recording)
+// Phase 3: MacroDelete — NumDel alias
+// ========================================
+// NumDel is an alias for Del — opens the same confirmation dialog.
+// Use the F3/NumDel target macro already loaded from the initial INI
+// (Phase 1 only deleted F2; F3 is still in memory).
+OpenMacroBrowser();
+Sync(2000);
+
+// Verify the macro is visible
+ExpectString("NumDel target", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Navigate to the F3 macro entry. After Phase 1 deleted F2, the list
+// shows: [header] F2(deleted) F3(NumDel target). Two Down from header.
+TypeDown();
+Sleep(200);
+Sync(1000);
+TypeDown();
+Sleep(200);
+Sync(1000);
+
+// Press NumDel to delete
+TypeVK(0x2E);  // VK_DELETE (NumDel sends same VK)
+Sleep(500);
+Sync(3000);
+
+// Confirmation dialog should appear
+ExpectString("Mark macro as deleted", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Confirm with Enter
+TypeEnter();
+Sleep(500);
+Sync(3000);
+
+// Description should be freed (not found after deletion)
+BeCalm();
+var descCheck2 = ExpectString("NumDel target", 0, 0, -1, -1, 3000);
+BePanic();
+if (descCheck2.I >= 1) {
+    Log("NumDel deleted macro — description freed — correct");
+} else {
+    Panic("NumDel: description still visible after deletion");
+}
+Sync(1000);
+
+CloseMacroBrowser();
+
+// ========================================
+// Phase 4: Ctrl+R reload macros from file
+// ========================================
+// Write a new macro to the ini file, then Ctrl+R in Macro Browser to reload.
+// After reload the new macro should appear and any in-memory-only changes
+// (like the Phase 1 deletion, which was auto-saved) should be reflected.
+SaveTextFile(macrosIni + "/key_macros.ini", [
+    "[KeyMacros]",
+    "MacroVersion=1",
+    "",
+    "[KeyMacros/Common/F7]",
+    "Sequence=F3",
+    "Description=Reload-added macro",
+    ""
+]);
+
+OpenMacroBrowser();
+Sync(2000);
+
+// Before reload, the old macro from Phase 3 should NOT be visible
+// (it was deleted and auto-saved). The new F7 macro should also not
+// be visible yet because we haven't reloaded.
+BeCalm();
+var rBeforeReload = ExpectString("Reload-added macro", 0, 0, -1, -1, 2000);
+BePanic();
+if (rBeforeReload.I >= 1) {
+    Log("New macro visible before reload — unexpected but acceptable");
+}
+
+// Press Ctrl+R to reload
+ToggleLCtrl(true);
+TypeText("r");
+ToggleLCtrl(false);
+Sleep(500);
+Sync(3000);
+
+// Confirmation dialog "Reload all macros from ..." should appear
+ExpectString("Reload all macros from", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Confirm with Enter (Ok button)
+TypeEnter();
+Sleep(500);
+Sync(3000);
+
+// After reload, browser should refresh with the new macro from file
+ExpectString("Macro Browser", 0, 0, -1, -1, 10000);
+Sync(2000);
+ExpectString("Reload-added macro", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+CloseMacroBrowser();
+
+// ========================================
+// Phase 5: MacroDelete — when busy (recording)
 // ========================================
 // Start macro recording with Ctrl-., then try to open the Macro Browser.
 // The MacroBrowser::Show() method guards with IsRecording() and shows

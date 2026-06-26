@@ -17,7 +17,7 @@ SaveTextFile(macrosIni + "/key_macros.ini", [
 
 // Start far2l. Pre-existing .config/settings suppresses first-run Help,
 // but the OSC52 clipboard dialog may still appear on first start.
-StartTestApp(dirs.profile, dirs.left, dirs.right, "left", false);
+StartTestApp(dirs.profile, dirs.left, dirs.right, "left", false, [100, 40]);
 DismissOSC52Only();
 
 
@@ -123,6 +123,78 @@ Sync(2000);
 
 // Back in Macro Browser
 ExpectString("Macro Browser", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+CloseMacroBrowser();
+
+// ========================================
+// Phase 4: Add macro via NumPad0
+// ========================================
+// NumPad0 is an alias for Ins — opens the same "New Macro" dialog.
+OpenMacroBrowser();
+Sync(2000);
+
+// Press NumPad0 to open the "New Macro" edit dialog
+TypeVK(0x60);  // NumPad0
+Sleep(500);
+Sync(3000);
+ExpectString("New Macro", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Fill the Key field (Tab to Key, type, then Tab past Assign Key to Description)
+TypeVK(9); Sleep(200); Sync(1000);    // Tab → Key field
+TypeText("F6"); Sleep(200); Sync(1000);
+TypeVK(9); Sleep(100); Sync(500);     // Tab → Assign Key button
+TypeVK(9); Sleep(100); Sync(500);     // Tab → Description
+TypeText("NumPad0 add test"); Sleep(200); Sync(1000);
+TypeVK(9); Sleep(200); Sync(1000);    // Tab → Sequence
+TypeText("F5"); Sleep(200); Sync(1000);
+
+TypeCtrlEnter();
+Sleep(500);
+Sync(5000);
+
+// Dialog should close and new macro appears
+ExpectString("Macro Browser", 0, 0, -1, -1, 10000);
+Sync(2000);
+ExpectString("NumPad0 add test", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+CloseMacroBrowser();
+
+// ========================================
+// Phase 5: Ctrl+S saves macros to file
+// ========================================
+// Ctrl+S in Macro Browser triggers SaveMacros() — writes all macros to
+// key_macros.ini. After save, the macros remain in the list and the
+// browser refreshes. Verify the list is intact after Ctrl+S.
+OpenMacroBrowser();
+Sync(2000);
+
+// Verify macros are present before save
+ExpectString("Pre-existing macro", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Press Ctrl+S to save
+ToggleLCtrl(true);
+TypeText("s");
+ToggleLCtrl(false);
+Sleep(500);
+Sync(3000);
+
+// Confirmation dialog "Save all macros to ..." should appear
+ExpectString("Save all macros to", 0, 0, -1, -1, 10000);
+Sync(1000);
+
+// Confirm with Enter (Ok button)
+TypeEnter();
+Sleep(500);
+Sync(3000);
+
+// After save, browser should refresh and macros remain visible
+ExpectString("Macro Browser", 0, 0, -1, -1, 10000);
+Sync(2000);
+ExpectString("Pre-existing macro", 0, 0, -1, -1, 10000);
 Sync(1000);
 
 CloseMacroBrowser();

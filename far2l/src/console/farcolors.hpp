@@ -61,6 +61,7 @@ public:
 	static bool InitFarColorsFromFile( const std::string& file ) noexcept;
 
 	void Set() noexcept {
+		AdjustContrastLevels();
 		memcpy(setcolors, colors, sizeof(setcolors[0]) * SIZE_ARRAY_FARCOLORS);
 	}
 
@@ -86,6 +87,8 @@ public:
 	size_t size() const noexcept {
 		return SIZE_ARRAY_FARCOLORS;
 	}
+
+	void AdjustContrastLevels() noexcept;
 
 	static std::vector<std::string> GetKnownUserThemes ();
 	static std::vector<std::string> GetKnownSystemThemes ();

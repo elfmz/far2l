@@ -7,6 +7,8 @@
 #include <farplug-wide.h>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
+#include <cerrno>
 #include <ctime>
 #include <cwchar>
 #include <string>
@@ -67,7 +69,7 @@ static void DebugLog(const char *fmt, ...) {
 
 enum MsgId {
   MMemo = 0, MOk, MCancel, MConfigTitle, MEnablePlugin, MUseHotkey, MSaveAs, MConfig,
-  MSaveMemo, MPath, MMemoTitle, MUseHotkeyHint
+  MSaveMemo, MPath, MMemoTitle, MUseHotkeyHint, MSaveError
 };
 
 enum DialogItems {
@@ -329,19 +331,44 @@ static void SwitchToMemo(HANDLE hDlg, int newMemo) {
   g_far.SendDlgMessage(hDlg, DM_SETFOCUS, DI_MEMO, 0);
 }
 
+// Expand a leading "~/" (or bare "~") via GetMyHome().
+// POSIX-only: "~user/" and "$VAR" are intentionally not expanded.
+static std::string ExpandTilde(const std::string &p) {
+  if (p == "~") return GetMyHome();
+  if (p.size() >= 2 && p[0] == '~' && p[1] == '/') return GetMyHome() + p.substr(1);
+  return p;
+}
+
+static void ShowSaveError(const wchar_t *path, int err) {
+  std::wstring werr = MB2Wide(strerror(err));
+  std::wstring pathLine = std::wstring(path) + L": " + werr;
+  const wchar_t *lines[3] = {GetMsg(MSaveMemo), GetMsg(MSaveError), pathLine.c_str()};
+  g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, NULL, lines, 3, 0);
+}
+
 static void SaveAs(HANDLE hDlg) {
   std::wstring content = GetMemoText(hDlg);
   wchar_t path[MAX_PATH];
   swprintf(path, MAX_PATH, L"memo-%02d.txt", MemoDisplayNum(g_currentMemo));
-  if (g_far.InputBox(GetMsg(MSaveMemo), GetMsg(MPath), L"MemoSave", path, path, MAX_PATH, NULL, FIB_NONE)) {
-    DBG("SaveAs: %ls", path);
-    FILE *f = fopen(Wide2MB(path).c_str(), "w");
-    if (f) {
-      fputs(Wide2MB(content.c_str()).c_str(), f);
-      fclose(f);
-    } else {
-      DBG("SaveAs: write failed: %ls", path);
-    }
+  if (!g_far.InputBox(GetMsg(MSaveMemo), GetMsg(MPath), L"MemoSave", path, path, MAX_PATH, NULL, FIB_NONE))
+    return;
+  DBG("SaveAs: %ls", path);
+  std::string mbPath = ExpandTilde(Wide2MB(path));
+  FILE *f = fopen(mbPath.c_str(), "w");
+  if (!f) {
+    int err = errno;
+    DBG("SaveAs: open failed: %ls (%s)", path, strerror(err));
+    ShowSaveError(path, err);
+    return;
+  }
+  std::string mbContent = Wide2MB(content.c_str());
+  size_t wrote = fwrite(mbContent.data(), 1, mbContent.size(), f);
+  int werr = (wrote == mbContent.size()) ? 0 : errno;
+  int cerr = (fclose(f) == 0) ? 0 : errno;
+  if (werr || cerr) {
+    int err = werr ? werr : cerr;
+    DBG("SaveAs: write failed: %ls (%s)", path, strerror(err));
+    ShowSaveError(path, err);
   }
 }
 

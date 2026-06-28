@@ -174,6 +174,7 @@ const ConfigOpt g_cfg_opts[] {
 	{OST_COMMON, NSecInterface, "ExclusiveAltRight", &Opt.ExclusiveAltRight, 0},
 	{OST_COMMON, NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{OST_COMMON, NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
+	{OST_COMMON, NSecInterface, "UseRightAltAsAltGr", &Opt.UseRightAltAsAltGr, 0},
 
 	{OST_COMMON, NSecInterface, "DateFormat", &Opt.DateFormat, GetDateFormatDefault()},
 	{OST_COMMON, NSecInterface, "DateSeparator", &Opt.strDateSeparator, GetDateSeparatorDefaultStr()},

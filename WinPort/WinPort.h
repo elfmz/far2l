@@ -73,6 +73,12 @@ extern "C" {
 	//   and *len set to valid data size in that buffer.
 	// - otherwise returns NULL and zero *len
 	const char *WinPortStderrTrace(size_t *len);
+
+	// When on, Right Alt / Right Option produces keyboard-layout glyphs
+	// (AltGr behavior) instead of acting as an Alt modifier for far2l
+	// shortcuts. Honored by the wx backend on macOS and on X11/Wayland.
+	void WinPortSetUseRightAltAsAltGr(BOOL on);
+	BOOL WinPortGetUseRightAltAsAltGr();
 #endif /* FAR_PYTHON_GEN */
 
 #ifndef FAR_PYTHON_GEN

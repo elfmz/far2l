@@ -2992,6 +2992,17 @@ upd:"Right Win "
 "Правий Win "
 "Правы Win "
 
+ConfigUseRightAltAsAltGr
+"Использовать &правый Alt как AltGr"
+"Use &Right Alt as AltGr"
+upd:"Use &Right Alt as AltGr"
+upd:"Use &Right Alt as AltGr"
+upd:"Use &Right Alt as AltGr"
+upd:"Use &Right Alt as AltGr"
+upd:"Use &Right Alt as AltGr"
+"Використовувати &правий Alt як AltGr"
+"Выкарыстоўваць &правы Alt як AltGr"
+
 ConfigCopyTotal
 "Показывать &общий индикатор копирования"
 "Show &total copy progress indicator"

@@ -14,8 +14,7 @@ nomacro.hpp
 #include "chgmmode.hpp"
 #include "macro.hpp"
 
-#include "interf.hpp" // for RemoveChar()
-#include "message.hpp" // for ExMessager
+#include "message.hpp" // 
 
 KeyMacro::KeyMacro() {}
 KeyMacro::~KeyMacro() {}
@@ -44,9 +43,7 @@ void KeyMacro::SetMacroConst(const wchar_t *ConstName, const TVar Value) {}
 
 void KeyMacro::MacroBrowser()
 {
-	FARString title (Msg::MenuMacroBrowser);
-	RemoveChar(title, L'&');
-	ExMessager em(title);
+	ExMessager em(L"Macro Browser");
 	em.Add(L"FAR2L building without macro subsystem completely");
 	em.AddDup(Msg::Ok);
 	em.Show(MSG_WARNING, 1);

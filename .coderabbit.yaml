@@ -1,7 +1,0 @@
-# CodeRabbit configuration for far2l
-
-reviews:
-  tools:
-    golangci-lint:
-      enabled: true
-      config_file: .golangci.yml

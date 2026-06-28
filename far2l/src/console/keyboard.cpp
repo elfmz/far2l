@@ -521,7 +521,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 
 	if (LIKELY(FrameManager) && FrameManager->RegularIdleWantersCount()) {
 		clock_t now = GetProcessUptimeMSec();
-		if (now - sLastIdleDelivered >= 1000) {
+		if (now - sLastIdleDelivered >= 250) {
 			LastEventIdle = TRUE;
 			memset(rec, 0, sizeof(*rec));
 			rec->EventType = KEY_EVENT;
@@ -714,7 +714,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 		ScrBuf.Flush();
 
 		static DWORD sLastIdleWaitConsoleInput = 0;
-		DWORD WaitConsoleInputTmout = (sLastIdleWaitConsoleInput < 5) ? 10 : 160;
+		DWORD WaitConsoleInputTmout = (sLastIdleWaitConsoleInput < 5) ? 10 : 50;
 //		fprintf(stderr, " WaitConsoleInputTmout=%u\n", WaitConsoleInputTmout);
 		if (WINPORT(WaitConsoleInput)(NULL, WaitConsoleInputTmout)) {
 			sLastIdleWaitConsoleInput = 0;

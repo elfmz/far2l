@@ -559,10 +559,11 @@ int FileList::ConvertName(FARString &strDest, const wchar_t *SrcName, int MaxLen
 		int RightAlign, int ShowStatus, DWORD FileAttr, FileListItem *fi)
 {
 	if (ShowStatus && (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-		FARString strTemp;
-		if (ResolveSymlink(strTemp, SrcName, fi)) {
-			strTemp.Insert(0, L" ->");
-			strTemp.Insert(0, SrcName);
+		FARString strTarget;
+		if (ResolveSymlink(strTarget, SrcName, fi)) {
+			FARString strTemp(SrcName);
+			strTemp.Append(L" -> ");
+			strTemp.Append(strTarget);
 			return ConvertName(strDest, strTemp, MaxLength, RightAlign, ShowStatus,
 					FileAttr & (~(DWORD)FILE_ATTRIBUTE_REPARSE_POINT), fi);
 		}

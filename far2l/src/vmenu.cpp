@@ -1644,14 +1644,13 @@ void VMenu::DrawTitles()
 
 	if (!strDisplayTitle.IsEmpty() || bFilterEnabled) {
 		if (bFilterEnabled) {
-			WidthTitle = (int)strDisplayTitle.GetLength();
-			int WidthFilter = (int)strFilter.GetLength();
-			if (bFilterLocked || strFilter.IsEmpty()
-				|| WidthTitle + WidthFilter + 3 < MaxTitleLength )
+			WidthTitle = (int)strDisplayTitle.CellsCount();
+			int WidthFilter = (int)strFilter.CellsCount();
+			if (WidthTitle + WidthFilter + 3 < MaxTitleLength )
 				strDisplayTitle+= L' ';
 			else if (7 + WidthFilter + 3 < MaxTitleLength ) {
-				strDisplayTitle.Truncate(MaxTitleLength - 3 - WidthFilter - 6);
-				strDisplayTitle+= L"... ";
+				TruncStrFromEnd(strDisplayTitle, MaxTitleLength - 4 - WidthFilter);
+				strDisplayTitle+= L' ';
 			}
 			else
 				strDisplayTitle.Clear();
@@ -1661,27 +1660,27 @@ void VMenu::DrawTitles()
 			strDisplayTitle+= bFilterLocked ? L'>' : L']';
 		}
 
-		WidthTitle = (int)strDisplayTitle.GetLength();
+		WidthTitle = (int)strDisplayTitle.CellsCount();
 
-		if (WidthTitle > MaxTitleLength)
+		if (WidthTitle >= MaxTitleLength)
 			WidthTitle = MaxTitleLength - 1;
 
 		GotoXY(X1 + (X2 - X1 - 1 - WidthTitle) / 2, Y1);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Size(WidthTitle) << strDisplayTitle << L" ";
+		FS << L" " << fmt::Cells() << fmt::Size(WidthTitle) << strDisplayTitle << L" ";
 	}
 
 	if (!strBottomTitle.IsEmpty()) {
-		WidthTitle = (int)strBottomTitle.GetLength();
+		WidthTitle = (int)strBottomTitle.CellsCount();
 
-		if (WidthTitle > MaxTitleLength)
+		if (WidthTitle >= MaxTitleLength)
 			WidthTitle = MaxTitleLength - 1;
 
 		GotoXY(X1 + (X2 - X1 - 1 - WidthTitle) / 2, Y2);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Size(WidthTitle) << strBottomTitle << L" ";
+		FS << L" " << fmt::Cells() << fmt::Size(WidthTitle) << strBottomTitle << L" ";
 	}
 }
 
@@ -1872,13 +1871,13 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				BoxText(strTmpStr, FALSE);
 
 				if (!Item[I]->strName.IsEmpty()) {
-					int ItemWidth = (int)Item[I]->strName.GetLength();
+					int ItemWidth = (int)Item[I]->strName.CellsCount();
 
 					if (ItemWidth > X2 - X1 - 3)
 						ItemWidth = X2 - X1 - 3;
 
 					GotoXY(X1 + (X2 - X1 - 1 - ItemWidth) / 2, Y);
-					FS << L" " << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
+					FS << L" " << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
 				}
 
 			} else {

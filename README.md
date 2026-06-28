@@ -296,6 +296,10 @@ docker run -it far2l
 
 or simply on **Debian/Ubuntu** (without SDL-dependencies):
 ``` sh
+# For Debian 13+ / Ubuntu 23.04+ (using wxWidgets 3.2):
+apt-get install libwxgtk3.2-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+
+# For older distributions (using wxWidgets 3.0):
 apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 

@@ -38,7 +38,8 @@ bool _iterm2_cmd_state = 0;
 static bool IsEnhancedKey(WORD code)
 {
 	return (code==VK_LEFT || code==VK_RIGHT || code==VK_UP || code==VK_DOWN
-		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR );
+		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR
+		|| code==VK_INSERT || code==VK_DELETE );
 }
 
 static WORD WChar2WinVKeyCode(WCHAR wc)

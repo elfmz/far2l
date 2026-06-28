@@ -21299,15 +21299,15 @@ LocalMenuTitle
 "Мясцовае меню"
 
 MainMenuBottomTitle
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
 
 AskDeleteMenuItem
 "Вы хотите удалить пункт меню"

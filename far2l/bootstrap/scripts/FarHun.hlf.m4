@@ -1323,7 +1323,7 @@ kiválasztás után a lista aljára kerülnek. Ezt elkerülhetjük, ha Enter hel
 témakör részletezi a funkciót.
 
    #Felhasználói menü#    Fő vagy helyi ~felhasználói menüt~@UserMenu@
-   #szerkesztése#         szerkeszthetünk. Az #Ins# billentyű beszúrja,
+   #szerkesztése#         szerkeszthetünk. Az #Ins# vagy #Ctrl+N# billentyű beszúrja,
                         a #Del# törli, az #F4# pedig szerkeszti a menü
                         elemeit.
 
@@ -1926,7 +1926,7 @@ menük között #Shift-F2#-vel váltogathatunk. A #BackSpace#-szel a helyi menü
 visszafelé haladhatunk a főmenü felé.
 
     A felhasználói menü parancsai vagy almenüi közé választóvonalat is
-tehetünk: az #Ins# billentyűvel szúrjunk be egy új parancsot vagy menüt,
+tehetünk: az #Ins# vagy a #Ctrl+N# billentyűvel szúrjunk be egy új parancsot vagy menüt,
 adjunk #-# értéket a gyorsbillentyűnek és a többi mezőt hagyjuk üresen. A
 létrehozott választóvonalakat törölhetjük, ha az #Ctrl-F4#-gyel fájl módba
 kapcsolunk és a szerkesztőben eltávolítjuk a felesleges #-:# sorokat.
@@ -1935,7 +1935,7 @@ kapcsolunk és a szerkesztőben eltávolítjuk a felesleges #-:# sorokat.
 kurzorvezérlő billentyűvel és #Enter#-t ütünk rajta, vagy a hozzárendelt
 gyorsbillentyű segítségével.
 
-    Az #Ins# billentyűvel új menüelemeket, almenüket hozhatunk létre, az #F4#
+    Az #Ins# vagy a #Ctrl+N# billentyűvel új menüelemeket, almenüket hozhatunk létre, az #F4#
 bilentyűvel szerkeszthetjük a jellemzőiket, a #Del#-lel pedig törölhetjük a
 menü elemeit. #Ctrl-F4#-gyel a menüket szövegfájl formátumban szerkeszthetjük.
 

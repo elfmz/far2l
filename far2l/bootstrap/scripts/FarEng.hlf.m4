@@ -1478,7 +1478,7 @@ $ #Menus: commands menu#
                         detailed description.
 
    #Edit user menu#       Allows to edit main or local ~user menu~@UserMenu@.
-                        You may press #Ins# to insert, #Del# to delete
+                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
                         and #F4# to edit menu records.
 
    #Edit associations#    Displays the list of ~file associations~@FileAssoc@.
@@ -2293,7 +2293,7 @@ must switch to file mode with #Ctrl-F4# key.
 You may also press the hot key assigned to the required menu item.
 
     You may delete a submenu or menu item with the #Del# key, insert new
-submenu or menu item with the #Ins# key or edit an existing submenu or menu
+submenu or menu item with the #Ins# or #Ctrl+N# key or edit an existing submenu or menu
 item with the #F4# key. Press #Ctrl-F4# to edit the menu in text file form.
 
     It is possible to use digits, letters and function keys (#F1#..#F24#) as

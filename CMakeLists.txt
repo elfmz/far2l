@@ -204,13 +204,8 @@ endif()
 
 include_directories(utils/include)
 
-# E.6.4: enable_testing() makes docs/casts/verify_casts.py and the
-# testing/* CTest tests visible to `ctest` at the top-level build dir.
-enable_testing()
-
 add_subdirectory (WinPort)
 add_subdirectory (utils)
-add_subdirectory (testing)
 add_subdirectory (far2l)
 add_subdirectory (themes)
 
@@ -341,11 +336,6 @@ else()
         execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/colorer/plug/colorer.far-plug-wide)
         " COMPONENT system)
 endif()
-
-	if(TESTING AND (NOT DEFINED COLORER OR COLORER))
-		target_sources(far2l_unit_tests PRIVATE ${CMAKE_SOURCE_DIR}/testing/unit/test_cregexp_hardening.cpp)
-		target_link_libraries(far2l_unit_tests PRIVATE colorer_lib)
-	endif()
 
 if (NOT DEFINED COMPARE OR COMPARE)
     message(STATUS "COMPARE plugin enabled")

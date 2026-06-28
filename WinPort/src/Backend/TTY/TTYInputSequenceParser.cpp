@@ -380,6 +380,40 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 5;
 	}
 
+	// VK: osc52 get clipboard data
+	// ESC "[52;" [p|c|] ";" [Base64_Data] "\a"
+	if (l > 6 && s[0] == '[' && s[1] == '5' && s[2] == '2' && s[3] == ';' && s[5] == ';') {
+		// fprintf(stderr, "TTYInputSequenceParser: arrived answer to OSC52 get: %ld bytes, %.10s\n", l, s);
+		// here we need to grab data until it arrived or until it completed to \a
+		// if \a is here, wehave fuill data arrived, return length and call handler
+		// if not, remember the piece, return TTY_PARSED_CHUNK and wait for next portion
+		_chunk_osc52_text = "";
+		_is_primary_buffer = s[4] == 'p' || s[4] == 'P';
+
+		const char* start_pos = s + 6; // skip "[52;" [p|c|] ";", so the end till \a is payload
+
+		const char* v = start_pos;
+		for(; *v != '\a' && v - s <= (long)l; ++v) ;
+		if(*v == '\a') {
+			// no chunks
+			// fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", (size_t) (v - start_pos - 1) );
+			_chunk_osc52_text = std::string(start_pos, v - start_pos - 1);
+			size_t bytes = (size_t) (v - start_pos - 1);
+			// fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", bytes );
+			_handler->OnOSC52PasteReply(_chunk_osc52_text, _is_primary_buffer);
+			// fprintf(stderr, "TTYInputSequenceParser: notified about arrival\n" );
+			_is_primary_buffer = false;
+			_chunk_osc52_text = "";
+			// fprintf(stderr, "TTYInputSequenceParser: consumed %ld bytes pack\n", (size_t) (v - s + 1) );
+			return v - s + 1;
+		}
+		else {
+			// fprintf(stderr, "TTYInputSequenceParser: not enough %ld buytres, chunk mode = ON\n", (size_t) (v - start_pos - 1) );
+			_chunk_osc52_text = std::string(start_pos, l - (start_pos - s));
+			return TTY_PARSED_CHUNK;
+		}
+	}
+
 	size_t r = 0;
 
 	if (l > 1 && s[0] == '[' && s[1] == 'M') {
@@ -455,13 +489,15 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 				_extra_control_keys = LEFT_ALT_PRESSED;
 				size_t r = ParseEscapeSequence(s + 2, l - 2);
 				_extra_control_keys = 0;
-				if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE) {
+				if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE && r != TTY_PARSED_CHUNK) {
 					return r + 2;
 				}
+
+				if (r == TTY_PARSED_CHUNK) return r;
 			}
 
 			size_t r = ParseEscapeSequence(s + 1, l - 1);
-			if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE) {
+			if (r != TTY_PARSED_WANTMORE && r != TTY_PARSED_PLAINCHARS && r != TTY_PARSED_BADSEQUENCE && r != TTY_PARSED_CHUNK) {
 				return r + 1;
 			}
 
@@ -524,8 +560,38 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 	ABORT();
 }
 
+static const char* strnchr(const char *s, size_t l, char k) {
+	if (!s) return nullptr;
+	for(;*s && *s != k && l > 0; ++s, --l);
+	return (*s == k) ? s : nullptr;
+}
+
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
+	// VK: if in OSC52 paste mode, read the next chunk until \a
+	// VK: and if new chubnk is consumed compkertely, let know we need more;
+	// otherwise eat the prefix till \a, call handler and let work as usual
+	if (_chunk_mode) {
+		// fprintf(stderr, "TTYInputSequenceParser: chunk mode ON, arrived new portion %ld bytes\n", l);
+		const char* v = strnchr(s, l, '\a');
+		if (!v) {
+			_chunk_osc52_text += std::string(s, l);
+			return TTY_PARSED_CHUNK;
+		}
+
+		size_t r = v - s + 1;
+		_chunk_osc52_text += std::string(s, v - s);
+		s += r;
+		l -= r;
+		_chunk_mode = false;
+		
+		_handler->OnOSC52PasteReply(_chunk_osc52_text, _is_primary_buffer);
+		_is_primary_buffer = false;
+		_chunk_osc52_text = "";
+
+		// go ahead with the rest
+	}
+
 	//work-around for double encoded events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
 	//following codes are part of some double encoded input sequence and must be parsed in separate buffer
@@ -537,6 +603,10 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 	}
 
 	size_t r = ParseIntoPending(s, l);
+	if (r == TTY_PARSED_CHUNK) {
+		_chunk_mode = true;
+		return r;
+	}
 
 	if ( (r == TTY_PARSED_WANTMORE || r == TTY_PARSED_BADSEQUENCE) && idle_expired && *s == 0x1b) {
 		auto saved_pending = _ir_pending;

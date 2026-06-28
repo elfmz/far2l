@@ -8,11 +8,13 @@ $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Contents#
  The #OpenWith# plugin provides a context menu to open the selected file(s) with a suitable application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin uses native OS mechanisms: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
- After invoking the plugin on a file, a menu is displayed with a list of applications. The user can then select one to launch, or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior. Modifying options that affect application discovery, filtering, or ranking logic will cause the list of applications in the menu to update immediately.
+ After invoking the plugin on a file, a menu is displayed with a list of applications. The user can then select one to launch (#Enter# or #Shift+Enter#), or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior. Modifying options that affect application discovery, filtering, or ranking logic will cause the list of applications in the menu to update immediately.
 
    ~Details Dialog (F3)~@DetailsDialog@
 
    ~Configuration Dialog (F9)~@ConfigurationDialog@
+
+   ~Forced launch mode (Shift+Enter)~@ShiftEnter@
 
    ~Tips & tricks~@Tips@
 
@@ -23,25 +25,28 @@ $^#OpenWith plugin#
 $^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Details Dialog (F3)#
- The information dialog, accessible by pressing #F3# in the application selection menu, displays detailed technical information about the file, the highlighted application, and the exact command that will be used to launch it.
+ Displays comprehensive technical information about the selected file(s), the highlighted application, and the exact command that will be used to launch it. Accessible by pressing #F3# in the application selection menu.
 
  #1. COMMON FIELDS#
 
- #-# Filepath
-   The full (absolute) path to the selected file. If multiple files are selected, this field will instead show their count.
+ #-# Files selected
+   The number of files the plugin is currently processing. Not shown when only one file is selected.
 
- #-# MIME profile
+ #-# Filepaths
+   The full (absolute) paths to the selected files, formatted as a semicolon-separated list.
+
+ #-# MIME profiles
    The file type(s) detected by the plugin. For multiple files, all unique detected profiles are shown. Format depends on the OS:
-   #Linux/BSD#: "Raw" results from all detection methods ("xdg-mime", "file", etc) enabled in the ~configuration dialog~@ConfigurationDialog@. If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
+   #Linux/BSD#: "Raw" results from all detection methods (xdg-mime, file, etc) enabled in the ~configuration dialog~@ConfigurationDialog@. If tools disagree on the same file, the results are combined into a semicolon‑separated list: "(text/plain;application/x-shellscript)".
    #macOS#: The MIME type corresponding to the file's system UTI.
 
  #-# Launch command
-   The final command line that will be executed if you press #Enter# or #Shift+Enter#.
+   The final command line that will be executed if you press #Enter# or ~Shift+Enter~@ShiftEnter@.
 
 
- #2. PLATFORM-SPECIFIC FIELDS#
+ #2. PLATFORM-SPECIFIC FIELDS AND ACTIONS#
 
- #2.1. Linux/BSD Application Details#
+ #2.1.1. Linux/BSD Application Details#
 
  This section displays detailed information extracted from the application's .desktop file. These files serve as shortcuts and metadata containers, describing how applications should be named, displayed, and launched.
 
@@ -89,6 +94,17 @@ $^#Details Dialog (F3)#
  #-# X-SnapInstanceName
    Extension to the Desktop Entry Specification. The snap instance name (e.g., "steam" or "steam_beta"). Written by snapd for each installation. It identifies the specific snap instance or enables parallel installs of the same snap.
 
+ #2.1.2. Linux/BSD Actions#
+
+ #-# "GoTo .desktop" button
+   Jumps to the application's .desktop file in the active panel. Always available.
+
+ #-# "GoTo TryExec" button
+   Jumps to the file specified in the "TryExec" key of the application's .desktop file. If the path is not absolute, the file is looked up in $PATH. Shown only if the file exists and is executable.
+
+ #-# "GoTo source" button
+   Jumps to the file "mimeapps.list" or "mimeinfo.cache" from which the association was retrieved. Hidden when multiple files are selected, when the application was found by a full scan of .desktop files, or via 'xdg-mime query default'.
+
 
  #2.2. macOS Application Details#
 
@@ -114,24 +130,27 @@ $^#OpenWith plugin#
 $^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Configuration Dialog (F9)#
- The configuration dialog, accessible by pressing #F9# in the application selection menu or via ~Plugins Configuration~@:PluginsConfig@ in the ~Options Menu~@:OptMenu@, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
+ Allows you to customize the plugin's behavior. Accessible via ~Main menu~@:Menus@ → ~Options~@:OptMenu@ → ~Plugins Configuration~@:PluginsConfig@ (#Alt+Shift+F9#), and by pressing #F9# in the application selection menu.
 
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new ~external terminal~@:ExternalTerminal@ window. If unchecked, they will run inside far2l's ~built-in terminal~@:Terminal@.
-   When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
-   You can force a console application to launch in an external terminal regardless of this setting by pressing #Shift+Enter#.
+   Launch applications such as vim or mc not in far2l's ~built-in terminal~@:Terminal@, but in a new ~external one~@:ExternalTerminal@.
+   When using the external terminal, the plugin shows all matching applications; when using the built‑in one, it lists only those that can open all the selected files in a single command.
+   You can force a console application to launch in an external terminal regardless of this setting by pressing ~Shift+Enter~@ShiftEnter@.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close, allowing you to see its output (stdout/stderr) in the console. This setting does not affect terminal applications. It is also ignored if the application requires a separate launch for each selected file; in this case, asynchronous mode is forced to prevent interface blocking.
-   You can force a GUI application to launch asynchronously regardless of this setting by pressing #Shift+Enter#.
+   You can force a GUI application to launch asynchronously regardless of this setting by pressing ~Shift+Enter~@ShiftEnter@.
 
  #-# Clear selection if command executed
    If checked, launching an application from the menu resets the file selection on the panel.
 
  #-# Confirm opening if file count exceeds...
    To prevent resource-intensive launches, the plugin prompts a warning when the number of selected files exceeds the specified threshold. If you decline, you will be returned to the application selection menu or to the ~Details dialog~@DetailsDialog@.
+
+ #-# Display filename in the menu title
+   If checked, the plugin modifies the menu title to include the name of the processed file (or the total count, if multiple files are selected). If unchecked, a static "Choose application" title is used.
 
 
  #2. PLATFORM-SPECIFIC SETTINGS#
@@ -141,10 +160,10 @@ $^#Configuration Dialog (F9)#
  These settings fine-tune how the plugin identifies file types and discovers applications. The plugin gathers a list of potential MIME types for a file from all enabled sources. This list is then expanded and prioritized, and applications are ranked based on how well they match the most specific MIME types. This provides more flexible and accurate associations than relying on a single detection method.
 
  #-# Use `xdg-mime` tool
-   Determine the MIME type of the selected file by invoking the 'xdg-mime query filetype' command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, so its results are highly compatible with the "MimeType" entries in .desktop files. Although "xdg-mime" can additionally inspect file contents, it primarily relies on file names. This makes it susceptible to errors for files with incorrect extensions.
+   Determine the MIME type of the selected file by invoking the 'xdg-mime query filetype' command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, so its results are highly compatible with the "MimeType" entries in .desktop files. Although "xdg-mime" can additionally inspect file content, it primarily relies on file names. This makes it susceptible to errors for files with incorrect extensions.
 
  #-# Use `file` tool
-   Determine the MIME type of the selected file by invoking the 'file --mime-type' command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and cannot be fooled by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents. In addition, the MIME type names it returns sometimes differ from those in the shared-mime-info database, which can lead to fewer application matches.
+   Determine the MIME type of the selected file by invoking the 'file --mime-type' command. This utility performs a deep analysis of the binary data using its own "magic numbers" database. It is extremely reliable and cannot be fooled by incorrect file extensions. However, it can be slightly slower as it requires reading the file content. In addition, the MIME type names it returns sometimes differ from those in the shared-mime-info database, which can lead to fewer application matches.
 
  #-# Use `magika` tool
    Determine the MIME type of the selected file by invoking the 'magika --format %m' command. Instead of traditional magic numbers, it utilizes a deep learning model (ONNX) trained on a vast dataset to analyze file content. This enables accurate detection for over 200 formats, including modern programming languages, DevOps configuration files, and ML/AI data types.
@@ -154,7 +173,7 @@ $^#Configuration Dialog (F9)#
    Determine the MIME type of the selected file by matching the filename against the patterns defined in the system's "globs2" database. This internal method is significantly faster than the "xdg-mime" tool as it avoids launching external processes. However, unlike "xdg-mime", it relies on the filename only and lacks "magic sniffing" (content analysis) to resolve conflicts between multiple applicable rules. Enabling this option simultaneously with "Use `xdg-mime` tool" option is redundant. It is best used as a high-performance alternative to "xdg-mime" or as a superior replacement for the "extension-based fallback", as it fully respects XDG pattern weights and case sensitivity.
 
  #-# Use extension-based fallback
-   As a last resort, if the above tools fail, are absent or disabled, the plugin attempts to guess the MIME type from a built-in static map of common file extensions. The matching is case-insensitive. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
+   Try to guess the MIME type using a built-in static map of common file extensions. Matching is case-insensitive. This is the least reliable method and should only be used as a fallback when the above tools are missing or the MIME database is misconfigured.
 
  #-# Load MIME type aliases
    Enables loading MIME type associations from system "aliases" files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
@@ -164,30 +183,35 @@ $^#Configuration Dialog (F9)#
    For example, a Microsoft Word file (.docx), which has the MIME type "application/vnd.openxmlformats-officedocument.wordprocessingml.document", is structurally a ZIP archive ("application/zip"). With this option enabled, archive managers will be suggested for a .docx file in addition to word processors.
 
  #-# Resolve structured MIME suffixes
-   Many file formats use a more general format as their foundation, indicating this with a suffix in their MIME type (e.g., +xml or +json). For instance, an SVG vector image has the MIME type "image/svg+xml". With this option enabled, the plugin will suggest not only graphics editors but also any text or XML editors registered for "application/xml", allowing you to edit the file's internal structure.
+   If a MIME type ends with a suffix such as +xml or +json, also offer applications registered for the base format. For example, for an SVG vector image of type "image/svg+xml", the plugin will show not only graphics editors but also text editors registered for "application/xml" — letting you edit the file’s internal structure.
 
  #-# Search for apps for generic MIME types
-   When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For all files, the subtype is replaced with a wildcard (for example, "image/*" is used for an "image/jpeg" file).
+   Search for applications using not only the file's specific MIME type, but also its generic variants. For all files, the subtype is replaced with a wildcard (for example, "image/*" is used for an "image/jpeg" file).
    For text files ("text/*"), the "text/plain" type is additionally included to suggest standard text editors for source code and scripts. For example, for a file with the type "text/x-c++src", editors registered for "text/plain" will also be suggested.
 
  #-# Show universal handlers for all files
-   When enabled, this option adds the generic MIME type "application/octet-stream" as a fallback for any regular file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. If disabled, the list may be empty for files without a clear association.
+   Add the generic MIME type "application/octet-stream" as a fallback for any regular file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. If disabled, the list may be empty for files without a clear association.
+
+ #-# Query system defaults via `xdg-mime`
+   Identify and prioritize the system's default application by invoking the 'xdg-mime query default' command. When disabled, the plugin determines the highest-ranking application using only its internal algorithms to parse "mimeapps.list" and "mimeinfo.cache" files.
+
+ #-# Ignore [Removed Associations] section
+   Stop filtering out applications listed under the "[Removed Associations]" sections in system or user "mimeapps.list" files. Allows you to see all installed applications capable of handling the file, ignoring any explicit blacklists.
 
  #-# Use mimeinfo.cache
    Speed up application lookups by using the "mimeinfo.cache" files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., "image/png") to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
 
  #-# Filter by OnlyShowIn/NotShowIn
-   Respect the "OnlyShowIn" and "NotShowIn" keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE) as specified in the $XDG_CURRENT_DESKTOP environment variable.
+   Show only applications relevant to the current desktop environment (e.g., GNOME, KDE). The plugin respects the "OnlyShowIn" and "NotShowIn" keys in .desktop files, matching them against the $XDG_CURRENT_DESKTOP environment variable.
 
  #-# Validate TryExec field
    Before displaying an application, verify that the executable specified by the "TryExec" key in its .desktop file exists. This check helps hide orphaned shortcuts from uninstalled software. Turning it off may make the menu appear slightly faster.
 
  #-# Disable ranking and sort alphabetically
-   When enabled, this option overrides the complex ranking logic and sorts the application list strictly in alphabetical order. This can be useful if you prefer a simple, predictable list rather than one prioritized by MIME type specificity and association source.
-   For a detailed explanation, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
+   Override the complex ranking logic and list the applications strictly by name. For a detailed explanation, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
  #-# Pass plain paths instead of file:// URIs
-   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. By default, the plugin generates file:// URIs. However, some applications may not handle them correctly, despite claiming support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
+   When constructing the launch command, replace the "%u" and "%U" field codes with bare escaped paths rather than file:// URIs. The XDG specification allows both formats for local files, but some applications mishandle file:// URIs despite claiming to support them. This option improves compatibility with such applications by using the alternative approach.
 
  #-# Show package qualifiers
    Tag applications in the menu installed as Flatpak or Snap packages. Helps avoid confusion when multiple variants of the same program are available.
@@ -204,13 +228,13 @@ $^#OpenWith plugin#
 $^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
-    #1.# For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
+    #1.# To quickly invoke the plugin, you can use a ~macro~@:KeyMacro@, assigning it to any shortcut of your choice — for example, the "#≣ Menu#"/"#Apps#" key:
 
     In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines, variant 1:
  #[KeyMacros/Shell/Apps]#
  #Description=OpenWith Plugin for selected file(s)#
  #DisableOutput=1#
- #Sequence=F11 O#
+ #Sequence=F11 $if(menu.select("OpenWith",0)>0) Enter $else Esc $end#
     or variant 2:
  #[KeyMacros/Shell/Apps]#
  #Description=OpenWith Plugin for selected file(s)#
@@ -229,7 +253,8 @@ $^#Tips & tricks#
     After restarting far2l/far2m the macro will be available for use.
 
 
-    #2.# To quickly open the current folder in an external file manager or another far2l instance, invoke the OpenWith plugin on the ".." entry in the file panel. The plugin will treat this as a request for the current directory and show a list of matching applications. Among them, you will find far2l-gui (if installed) and far2l-tty. Note that for console applications (far2l-tty, mc, etc.), the plugin supports two launch modes: in far2l's ~built-in terminal~@:Terminal@ or in a new ~external terminal~@:ExternalTerminal@ window. To ensure a new window opens, use #Shift+Enter# or enable the "Use external terminal for console apps" ~option~@ConfigurationDialog@.
+    #2.# To quickly open the current folder in an external file manager or another far2l instance, invoke the OpenWith plugin on the ".." entry in the file panel. The plugin will treat this as a request for the current directory and show a list of matching applications. Among them, you will find far2l-gui (if installed) and far2l-tty.
+    Note that for console applications (far2l-tty, mc, etc.), the plugin supports two launch modes: in far2l's ~built-in terminal~@:Terminal@ or in a new ~external terminal~@:ExternalTerminal@ window. To ensure a new window opens, use ~Shift+Enter~@ShiftEnter@ or enable the "Use external terminal for console apps" ~option~@ConfigurationDialog@.
 
    ~Contents~@Contents@
 
@@ -238,30 +263,30 @@ $^#OpenWith plugin#
 $^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Troubleshooting#
- #Why is the application list empty when I select multiple files?#
+ #Why do I get the error "No applications found" when selecting multiple files?#
 
  The plugin uses an "intersection" logic: it seeks applications capable of opening all selected files simultaneously.
- Example: If you select an archive (".zip") and an image (".jpg"), the list will likely be empty, as few applications support both formats.
+ Example: If you select an archive (".zip") and an image (".jpg"), the resulting list will likely be empty, as few applications support both formats.
  Solution: Process files of different categories in separate operations. This algorithm is most effective for batch-processing files of the same kind.
 
 
  #Why do some terminal apps disappear when I select multiple files? (Linux/BSD)#
 
- If the "Use external terminal for console apps" option is disabled, far2l runs console applications inside its own interface. Since it cannot handle multiple processes concurrently outputting to the same screen, the plugin keeps only those terminal applications in the list that support opening all selected files with a single command (via the "%F" or "%U" codes).
- Solution: Enable "Use external terminal for console apps" in the ~configuration dialog~@ConfigurationDialog@.
+ When the ~built-in terminal~@:Terminal@ is in use, the plugin automatically hides applications whose .desktop files contain the "%f" or "%u" codes in the "Exec" key — as they require a separate process for each selected file.
+ Solution: Enable "Use ~external terminal~@:ExternalTerminal@ for console apps" in the ~configuration dialog~@ConfigurationDialog@.
 
 
  #Why doesn't my favorite app appear in the list? (Linux/BSD)#
 
  If an application doesn't appear even for a single file, check the following:
-  #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories defined by $XDG_DATA_HOME and $XDG_DATA_DIRS environment variables (typically "~~/.local/share/applications" and "/usr/share/applications"). The plugin also automatically scans standard Flatpak and Snap application directories ("~~/.local/share/flatpak/exports/share/applications", "/var/lib/flatpak/exports/share/applications", "/var/lib/snapd/desktop/applications").
+  #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories defined by the $XDG_DATA_HOME and $XDG_DATA_DIRS environment variables (typically "~~/.local/share/applications" and "/usr/share/applications"). The plugin also automatically scans standard Flatpak and Snap application directories ("~~/.local/share/flatpak/exports/share/applications", "/var/lib/flatpak/exports/share/applications", "/var/lib/snapd/desktop/applications").
   #-# Incorrect association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
-  #-# Removed section: Ensure the application is not listed in the "[Removed Associations]" section of your "mimeapps.list" file.
+  #-# "[Removed Associations]" sections: Ensure the desired application is not blacklisted in your "mimeapps.list" files. You can quickly diagnose this by opening the ~configuration dialog~@ConfigurationDialog@ and temporarily enabling the option "Ignore [Removed Associations] section". If the application immediately appears in the menu, it means it was explicitly hidden — either by the system/desktop environment or by your own user‑level configuration.
   #-# Filtering options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the ~configuration dialog~@ConfigurationDialog@, as they might be hiding the application.
-  #-# Outdated cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
+  #-# Outdated caches: For diagnostics, temporarily disable the "Use mimeinfo.cache" option in the ~configuration dialog~@ConfigurationDialog@. If the application appears in the list after that, the problem is a stale association cache. To rebuild it, run 'update-desktop-database' in your terminal. It also makes sense to run 'update-mime-database', which refreshes the system-wide MIME type database, including glob patterns and magic numbers.
 
 
- #File type is not detected ("none") and the application list is empty! (Linux/BSD)#
+ #Why is the file type not detected ("none") and the application list empty? (Linux/BSD)#
 
  This usually happens if analysis tools are disabled or unsuccessful.
  Solution:
@@ -270,14 +295,10 @@ $^#Troubleshooting#
   #-# Enable "Show universal handlers for all files" in the ~configuration dialog~@ConfigurationDialog@. This ensures that at least basic utilities (such as hex editors) appear even if the exact file type is unknown.
 
 
- #Why do I get the error "Selected item must be a file accessible locally via a real path."?#
+ #Why do I get the error "Selected item must be a file accessible locally via a real path"?#
 
- This error means the selected item is either not a physical file or resides in a virtual environment that the OS cannot access directly, so it cannot be passed as a command-line argument to external applications. It may occur when trying to open via the plugin:
-  #-# non-file items (e.g., connection names in NetRocks);
-  #-# files inside archives, as they are virtual until extracted (e.g., in multiarc/arclite);
-  #-# internal file structure elements (e.g., ELF headers, sections, or symbols viewed via Inside);
-  #-# file objects on remote resources (e.g., via NetRocks).
- Solution: Copy or extract the file to a real directory on your disk before opening it with this plugin.
+ This error means the selected item is either not a physical file or resides in a virtual environment that the OS cannot access directly, so it cannot be passed as a command-line argument to external applications. For example, this can happen if you invoke the plugin on files inside an archive (via the multiarc/arclite panel) or files on a remote resource (via the NetRocks panel).
+ Solution: Copy or extract the file to a real directory on your disk before opening it.
 
 
  #How does ranking work? Why is app X listed above app Y? (Linux/BSD)#
@@ -286,21 +307,22 @@ $^#Troubleshooting#
   1. MIME type specificity (primary factor): An association with a more specific type (e.g., "text/x-c++src") is always prioritized over a generic one (e.g., "text/plain").
   2. Association source (secondary factor): Sources are prioritized from highest to lowest: the global default ('xdg-mime query default'), the "[Default Applications]" section in "mimeapps.list", the "[Added Associations]" section, and finally, the "mimeinfo.cache" or the data from .desktop files themselves.
  Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
- If you prefer a simple, predictable list over this complex logic, turn it off using the "Disable ranking and sort alphabetically" option in the ~configuration dialog~@ConfigurationDialog@.
+ If you prefer a simple list sorted by name, use the "Disable ranking and sort alphabetically" option in the ~configuration dialog~@ConfigurationDialog@.
 
 
- #An application is in the list, but it fails to launch. (Linux/BSD)#
+ #Why does a listed application fail to launch? (Linux/BSD)#
 
  This usually indicates an error in the "Exec" line of the .desktop file or a missing dependency. Press #F3# to ~view the command~@DetailsDialog@ the plugin is trying to execute. If the command looks correct, the application might be failing silently at startup. To diagnose this:
   1. Open the ~configuration dialog~@ConfigurationDialog@.
   2. Uncheck the "Don't wait for command completion" option.
   3. Try launching the application again.
- You will now see any error messages (stdout/stderr) printed by the application directly in the far2l console.
- Also check the command for common syntax errors:
-  #-# Incorrect field codes: The plugin supports standard codes ("%f", "%F", "%u", "%U", "%c", "%k"). Some applications might use deprecated or non-standard codes that will not work.
+ You will now see any error messages (stdout/stderr) printed by the application directly in the far2l console. Note: when multiple files are selected, the plugin may launch the application several times if its .desktop file mandates a separate invocation per file (uses "%f" or "%u"). In that case, error output is not captured in the far2l console — test with a single file first.
+
+ Also check the command for these common issues:
+  #-# Unsupported field codes: The plugin recognizes codes "%f", "%F", "%u", "%U", "%c", "%k". Applications that use deprecated or non-standard codes may not work as expected.
   #-# Missing quotes: Paths with spaces must be correctly quoted or escaped. Warning: Do NOT enclose field codes in quotes (e.g., use #%f#, not #"%f"#). According to the spec, field codes inside quotes are treated as literal text and are not expanded.
   #-# Program not in $PATH: If "Exec" contains just a program name, it must be located in one of the directories listed in the $PATH environment variable.
-  #-# Incorrect path format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
+  #-# Unsupported path format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
 
 
  #Why is a checkbox in the configuration dialog grayed out? (Linux/BSD)#
@@ -309,11 +331,37 @@ $^#Troubleshooting#
  Solution: Install the missing tool via your package manager and ensure it is accessible in $PATH.
 
 
- #Plugin works very slowly! Can I speed up the menu appearance? (Linux/BSD)#
+ #Why is the plugin so slow? Can I speed up the menu appearance? (Linux/BSD)#
 
  Delays are usually caused by launching "heavy" external tools for every file when processing a large number of them.
  Solution:
-  #-# Prefer the "Use glob rules detection" ~option~@ConfigurationDialog@ over other MIME type discovery methods. Pattern matching is performed internally within the plugin and is instant. Launching external processes takes time; the "file" and "magika" tools always read file content, and "magika" is even slower as it loads a neural network model.
+  #-# For batch processing, switch to the "Use glob rules detection" ~option~@ConfigurationDialog@ instead of exact detection methods. Pattern matching is performed internally within the plugin and is instant. Launching external processes takes time; the "file" and "magika" tools always read file content, and "magika" additionally loads a neural network model.
   #-# Avoid selecting too many files at once if external analysis tools are enabled.
+
+
+ #Why do I get the error "Failed to save modified settings; the changes will apply to the current session only"?#
+
+ This error occurs when the current settings differ from the saved ones and the plugin fails to write the new data to the configuration file. Possible causes include missing permissions, a read-only file system, or insufficient disk space. The exact path to the target file is shown in the error message. Any unsaved changes are kept in memory and remain active until you close the file manager.
+
+
+ #Why do I get the error "OpenWith plugin is not available on this platform"?#
+
+ The plugin could not find a suitable application provider for your system. Most likely, your OS was not recognized as compatible at build time: the compiler did not define the required macros, or support for your specific OS variant has not yet been added to the plugin's source code. If you are running Linux, BSD, or macOS and are sure your system supports XDG (or Launch Services), check your build parameters or report the issue to the developers: ~https://github.com/elfmz/far2l/issues~@https://github.com/elfmz/far2l/issues@.
+
+   ~Contents~@Contents@
+
+@ShiftEnter
+$^#OpenWith plugin#
+$^#Version 1.2#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
+$^#Forced launch mode (Shift+Enter)#
+ The effect of pressing #Shift+Enter# in the ~menu~@Contents@ depends on the currently selected application:
+
+  #-# a console application will be launched in a new ~external terminal~@:ExternalTerminal@ window,
+  #-# a GUI application will be launched asynchronously, immediately returning control to far2l.
+
+ This is a convenient way to apply the forced launch mode once, without modifying the permanent ~plugin settings~@ConfigurationDialog@ "Use external terminal for console apps" and "Don't wait for command completion".
+
+ A regular #Enter# press (without Shift) launches the application according to the current values of these settings.
 
    ~Contents~@Contents@

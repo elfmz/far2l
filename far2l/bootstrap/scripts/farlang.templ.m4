@@ -29202,6 +29202,17 @@ upd:"Use 3D effect"
 upd:"Use 3D effect"
 upd:"Use 3D effect"
 
+EnforceColorCorrection
+"Выравнивать контрастность цветов автоматически"
+"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+
 #Must be the last
 NewFileName
 l:

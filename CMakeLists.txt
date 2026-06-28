@@ -621,6 +621,76 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED MTP OR MTP)
+    # Default: system libusb (matches Debian/Ubuntu packaging guidelines), vendored libmtp (we use its internal
+    # PTP layer for fast depth-1 listings — not part of libmtp's public API).
+    if (NOT DEFINED MTP_SYSTEM_LIBUSB)
+        set(MTP_SYSTEM_LIBUSB ON)
+    endif()
+    if (NOT DEFINED MTP_SYSTEM_LIBMTP)
+        set(MTP_SYSTEM_LIBMTP OFF)
+    endif()
+
+    set(_mtp_skip_reason "")
+
+    # System libmtp transitively pulls system libusb; mixing with vendored libusb would load two libusb
+    # instances in the same process.
+    if (MTP_SYSTEM_LIBMTP AND NOT MTP_SYSTEM_LIBUSB)
+        set(_mtp_skip_reason "MTP_SYSTEM_LIBMTP=ON requires MTP_SYSTEM_LIBUSB=ON (system libmtp links against system libusb)")
+    endif()
+
+    # Vendored libusb backend covers Linux + macOS only.
+    if (NOT _mtp_skip_reason AND NOT MTP_SYSTEM_LIBUSB AND NOT (APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+        set(_mtp_skip_reason "${CMAKE_SYSTEM_NAME}: vendored libusb backend not available — set -DMTP_SYSTEM_LIBUSB=ON")
+    endif()
+
+    if (NOT _mtp_skip_reason AND (MTP_SYSTEM_LIBUSB OR MTP_SYSTEM_LIBMTP))
+        find_package(PkgConfig QUIET)
+        if (NOT PkgConfig_FOUND)
+            set(_mtp_skip_reason "pkg-config not found (needed to locate system libusb/libmtp)")
+        endif()
+    endif()
+
+    if (NOT _mtp_skip_reason AND MTP_SYSTEM_LIBUSB)
+        pkg_check_modules(MTP_LIBUSB QUIET libusb-1.0)
+        if (NOT MTP_LIBUSB_FOUND)
+            set(_mtp_skip_reason "libusb-1.0 not found via pkg-config — install libusb-1.0-0-dev, or set -DMTP_SYSTEM_LIBUSB=OFF to use the vendored static build")
+        endif()
+    endif()
+
+    if (NOT _mtp_skip_reason AND MTP_SYSTEM_LIBMTP)
+        # IMPORTED_TARGET creates PkgConfig::MTP_LIBMTP; needed because the bare lib name "mtp" returned by
+        # pkg-config collides with our plugin target name "mtp", which makes target_link_libraries() drop it.
+        pkg_check_modules(MTP_LIBMTP QUIET IMPORTED_TARGET libmtp)
+        if (NOT MTP_LIBMTP_FOUND)
+            set(_mtp_skip_reason "libmtp not found via pkg-config — install libmtp-dev, or drop -DMTP_SYSTEM_LIBMTP=ON to use the vendored static build")
+        endif()
+    endif()
+
+    if (_mtp_skip_reason)
+        message(WARNING "${ColorRed}MTP plugin disabled: ${_mtp_skip_reason}${ColorNormal}")
+    else()
+        if (MTP_SYSTEM_LIBUSB)
+            set(_mtp_libusb_kind "system ${MTP_LIBUSB_VERSION}")
+        else()
+            set(_mtp_libusb_kind "vendored static")
+        endif()
+        if (MTP_SYSTEM_LIBMTP)
+            # External libmtp hides its internal PTP symbols via libmtp.sym, so ListChildrenFast falls back to the per-handle slow path.
+            set(_mtp_libmtp_kind "system ${MTP_LIBMTP_VERSION} (slow enumeration)")
+        else()
+            set(_mtp_libmtp_kind "vendored static")
+        endif()
+        message(STATUS "MTP plugin enabled (libusb: ${_mtp_libusb_kind}; libmtp: ${_mtp_libmtp_kind})")
+        add_subdirectory (mtp)
+    endif()
+else()
+    message(STATUS "${ColorRed}MTP plugin disabled due to MTP=${MTP}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/mtp/plug/mtp.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 

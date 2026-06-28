@@ -337,7 +337,7 @@ void GoToVisualLine(int VisualLine);
 	bool IsVerticalBlockEditMode() const;
 	bool ProcessVerticalBlockEditKey(FarKey Key);
 	Edit *GetStringByNumber(int DestLine);
-	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent);
+	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent, DWORD Flags = 0);
 
 	int SetBookmark(DWORD Pos);
 	int GotoBookmark(DWORD Pos);

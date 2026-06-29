@@ -455,6 +455,9 @@ emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
 
+#### Building on FreeBSD
+See [`.cirrus.yml`](.cirrus.yml) `install_script` for the dependency list. The **MTP plugin** uses FreeBSD's base-system `libusb-1.0` (no extra package needed); if pkg-config can't locate it the plugin is silently skipped, like other optional NetRocks backends.
+
 #### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
 To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Channel_branches).

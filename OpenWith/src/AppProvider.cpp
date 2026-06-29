@@ -1,22 +1,24 @@
 #include "AppProvider.hpp"
-
-#include "XDGBasedAppProvider.hpp"
 #include "MacOSAppProvider.hpp"
+#include "XDGBasedAppProvider.hpp"
 
-std::unique_ptr<AppProvider> AppProvider::CreateAppProvider(TMsgGetter msg_getter)
+namespace openwith
 {
-	std::unique_ptr<AppProvider> provider = nullptr;
-#ifdef __linux__
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+	std::unique_ptr<AppProvider> AppProvider::CreateAppProvider()
+	{
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+		return std::make_unique<XDGBasedAppProvider>();
 #elif defined(__APPLE__)
-	provider = std::make_unique<MacOSAppProvider>(msg_getter);
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+		return std::make_unique<MacOSAppProvider>();
+#else
+		return nullptr;
 #endif
-
-	if (provider) {
-		provider->LoadPlatformSettings();
 	}
 
-	return provider;
-}
+
+	AppProvider* AppProvider::GetInstance()
+	{
+		static const std::unique_ptr<AppProvider> instance = CreateAppProvider();
+		return instance.get();
+	}
+} // namespace openwith

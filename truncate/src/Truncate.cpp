@@ -1,23 +1,20 @@
 #include <farplug-wide.h>
-#include <fardlgbuilder.hpp>
-
 #include <utils.h>
-#include <KeyFileHelper.h>
 
 enum
 {
 	MTruncate,
-	MMessage1,
-	MMessage2,
+	MDeletedStats,
+	MNothingToDelete,
+	MEditorLocked
 };
 
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
-TCHAR PluginRootKey[80];
 
-const TCHAR *GetMsg(int MsgId)
+const wchar_t *GetMsg(int MsgId)
 {
-	return(Info.GetMsg(Info.ModuleNumber,MsgId));
+	return Info.GetMsg(Info.ModuleNumber,MsgId);
 }
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()
@@ -34,20 +31,36 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 {
+	if (OpenFrom != OPEN_EDITOR && OpenFrom != (OPEN_FROMMACRO | MACROAREA_EDITOR)) {
+		return INVALID_HANDLE_VALUE;
+	}
+
+	EditorInfo ei {};
+	if (!Info.EditorControl(ECTL_GETINFO, &ei)) {
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (ei.CurState & ECSTATE_LOCKED) {
+		const wchar_t* items[] = {GetMsg(MTruncate), GetMsg(MEditorLocked)};
+		Info.Message(Info.ModuleNumber, FMSG_MB_OK, nullptr, items, ARRAYSIZE(items), 0);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	int count = 0;
 	int empty_lines = 0;
 
-	struct EditorInfo ei;
-	Info.EditorControl(ECTL_GETINFO, &ei);
+	EditorUndoRedo eur {};
+	eur.Command = EUR_BEGIN;
+	Info.EditorControl(ECTL_UNDOREDO, &eur);
 
 	for (int i = 0; i < ei.TotalLines; i++) {
-		struct EditorGetString gs;
+		EditorGetString gs {};
 		gs.StringNumber = i;
 		if (!Info.EditorControl(ECTL_GETSTRING, &gs)) continue;
 
 		/* Count trailing spaces and tabs */
 		int len = gs.StringLength;
-		while (len > 0 && (gs.StringText[len - 1] == _T(' ') || gs.StringText[len - 1] == _T('\t'))) len--;
+		while (len > 0 && (gs.StringText[len - 1] == L' ' || gs.StringText[len - 1] == L'\t')) len--;
 		if (len) {
 			/* We are interested only in the empty lines at the end of file. So, reset the counter */
 			empty_lines = 0;
@@ -58,12 +71,12 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 		/* Strip trailing spaces and tabs */
 		if (len != gs.StringLength) {
-			TCHAR *s = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+			wchar_t *s = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
 			if (!s) continue;
-			_tmemcpy(s, gs.StringText, len);
+			wmemcpy(s, gs.StringText, len);
 			s[len] = 0;
 
-			struct EditorSetString ss;
+			EditorSetString ss {};
 			ss.StringNumber = i;
 			ss.StringText = s;
 			ss.StringEOL = gs.StringEOL;
@@ -77,7 +90,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	}
 
 	if (empty_lines > 1) {
-		struct EditorSetPosition pos;
+		EditorSetPosition pos {};
 
 		/* Delete trailing empty lines */
 		for (int i = 1; i <= empty_lines; i++) {
@@ -106,17 +119,20 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		Info.EditorControl(ECTL_SETPOSITION, &pos);
 	}
 
+	eur.Command = EUR_END;
+	Info.EditorControl(ECTL_UNDOREDO, &eur);
+
 	/* Don't count the final EOL */
 	if (empty_lines) empty_lines--;
 
 	if (count || empty_lines) {
-		TCHAR message[255] = {};
-		FSF.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MMessage1), count, empty_lines);
-		const TCHAR* items[] = {GetMsg(MTruncate), message};
-		Info.Message(Info.ModuleNumber, FMSG_MB_OK, nullptr, items, ARRAYSIZE(items), 2);
+		wchar_t message[255] = {};
+		FSF.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MDeletedStats), count, empty_lines);
+		const wchar_t* items[] = {GetMsg(MTruncate), message};
+		Info.Message(Info.ModuleNumber, FMSG_MB_OK, nullptr, items, ARRAYSIZE(items), 0);
 	} else {
-		const TCHAR* items[] = {GetMsg(MTruncate), GetMsg(MMessage2)};
-		Info.Message(Info.ModuleNumber, FMSG_MB_OK, nullptr, items, ARRAYSIZE(items), 2);
+		const wchar_t* items[] = {GetMsg(MTruncate), GetMsg(MNothingToDelete)};
+		Info.Message(Info.ModuleNumber, FMSG_MB_OK, nullptr, items, ARRAYSIZE(items), 0);
 	}
 
 	return INVALID_HANDLE_VALUE;
@@ -128,7 +144,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 	Info->SysID = 0x54524354; // 'TRCT'
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 	Info->DiskMenuStringsNumber = 0;
-	static const TCHAR *PluginMenuStrings[1];
+	static const wchar_t *PluginMenuStrings[1];
 	PluginMenuStrings[0] = GetMsg(MTruncate);
 	Info->PluginMenuStrings = PluginMenuStrings;
 	Info->PluginMenuStringsNumber = ARRAYSIZE(PluginMenuStrings);

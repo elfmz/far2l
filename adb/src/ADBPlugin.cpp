@@ -489,7 +489,11 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	const wchar_t* connectedTitles[] = { Lng(MColName), Lng(MColSize) };
+	// Static storage so the pointer stored in `connectedMode.ColumnTitles` outlives this call;
+	// values refreshed on every invocation so language changes are picked up.
+	static const wchar_t* connectedTitles[2];
+	connectedTitles[0] = Lng(MColName);
+	connectedTitles[1] = Lng(MColSize);
 
 	static PanelMode deviceMode = {
 		.ColumnTypes        = L"N,C0,C1,C2",
@@ -504,7 +508,12 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	const wchar_t* deviceTitles[] = { Lng(MColSerial), Lng(MColDeviceName), Lng(MColModel), Lng(MColPort) };
+	// See note above on connectedTitles — same lifetime requirement.
+	static const wchar_t* deviceTitles[4];
+	deviceTitles[0] = Lng(MColSerial);
+	deviceTitles[1] = Lng(MColDeviceName);
+	deviceTitles[2] = Lng(MColModel);
+	deviceTitles[3] = Lng(MColPort);
 
 	if (_isConnected) {
 		connectedMode.ColumnTitles = connectedTitles;
@@ -2407,24 +2416,32 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 {
 	std::map<std::string, DirMeta> out;
 	if (dirs.empty() || !_isConnected || !_adbDevice) return out;
+#if defined(DEBUG) || defined(_DEBUG)
 	auto t0 = std::chrono::steady_clock::now();
+#endif
 	std::map<std::string, std::unordered_map<std::string, uint64_t>> raw;
 	_adbDevice->BatchDirectoryFileSizes(dirs, raw);
+#if defined(DEBUG) || defined(_DEBUG)
 	uint64_t total_files = 0, total_bytes = 0;
+#endif
 	for (auto& kv : raw) {
 		DirMeta dm;
 		dm.file_sizes = std::move(kv.second);
 		dm.file_count = dm.file_sizes.size();
 		for (const auto& fk : dm.file_sizes) dm.total_size += fk.second;
+#if defined(DEBUG) || defined(_DEBUG)
 		total_files += dm.file_count;
 		total_bytes += dm.total_size;
+#endif
 		out[kv.first] = std::move(dm);
 	}
+#if defined(DEBUG) || defined(_DEBUG)
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 	DBG("PrescanDeviceDirs dirs=%zu out=%zu files=%llu bytes=%llu in %lldms\n",
 		dirs.size(), out.size(), (unsigned long long)total_files,
 		(unsigned long long)total_bytes, (long long)ms);
+#endif
 	if (out.size() < dirs.size()) {
 		DBG("PrescanDeviceDirs WARN missing %zu dir(s) — totals will fallback to 0/0\n",
 			dirs.size() - out.size());

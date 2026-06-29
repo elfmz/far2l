@@ -82,10 +82,10 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+static std::atomic<bool> s_shown_tip_exit{false};
 static std::atomic<unsigned int> s_vt_script_id{0};
 
-VT_ComposeCommandExec::VT_ComposeCommandExec(const IVTShellBackend &backend, const char *cd, const char *cmd, bool need_sudo,
-	const std::string &start_marker, const std::string &exit_marker, const std::string &user_profile)
+VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
@@ -96,12 +96,12 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const IVTShellBackend &backend, con
 	const auto &name = StrPrintf("vtcmd/%x_%u", (unsigned int)getpid(), id);
 	_cmd_script = InMyTemp(name.c_str());
 	_pwd_file = _cmd_script + pwd_file_ext;
-	Create(backend, cd, cmd, need_sudo, start_marker, exit_marker, user_profile);
+	Create(cd, cmd, need_sudo, start_marker);
 	if (!_created) {
 		Cleanup();
 		_cmd_script = InMyCache(name.c_str());
 		_pwd_file = _cmd_script + pwd_file_ext;
-		Create(backend, cd, cmd, need_sudo, start_marker, exit_marker, user_profile);
+		Create(cd, cmd, need_sudo, start_marker);
 	}
 }
 
@@ -132,13 +132,25 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 	return buf;
 }
 
-void VT_ComposeCommandExec::Create(const IVTShellBackend &backend, const char *cd, const char *cmd, bool need_sudo,
-	const std::string &start_marker, const std::string &exit_marker, const std::string &user_profile)
+void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
-	std::string content = backend.MakeScript(cd, cmd, need_sudo, start_marker, _pwd_file, exit_marker, user_profile);
-	fprintf(stderr, "VT_ComposeCommandExec::Create(cmd=`%s`) => `%s` after backend.MakeScript\n", cmd, content.c_str());
+	std::string content;
+	content+= "trap \"printf ''\" INT\n"; // need marker to be printed even after Ctrl+C pressed
+	content+= "PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
+	if (strcmp(cmd, "exit")!=0) {
+		content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
+	}
+	content+= VT_ComposeMarkerCommand(start_marker);
+	content+= '\n';
+	if (strcmp(cmd, "exit")==0) {
+		content+= StrPrintf(
+			"echo \"%ls%ls%ls\"\n",  Msg::VTStop.CPtr(),
+			s_shown_tip_exit ? L"" : L" ",
+			s_shown_tip_exit ? L"" : Msg::VTStopTip.CPtr()
+		);
+		s_shown_tip_exit = true;
+	}
 
-    /*
 	std::string pwd_suffix;
 	const char *last_ch = cmd + strlen(cmd);
 	while (last_ch != cmd && (*last_ch == ' ' || *last_ch == '\t' || *last_ch == 0)) {
@@ -184,8 +196,6 @@ void VT_ComposeCommandExec::Create(const IVTShellBackend &backend, const char *c
 		content+= "printf '\\033_push-attr\\007\\033_set-blank=~\\007\\033[33m\\033[K\\033_pop-attr\\007\\012'\n";
 		content+= "fi\n";
 	}
-    */
-
 	unlink(_pwd_file.c_str());
 	_fd = open(_cmd_script.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
 	if (_fd.Valid()) {
@@ -193,7 +203,6 @@ void VT_ComposeCommandExec::Create(const IVTShellBackend &backend, const char *c
 			_created = true;
 		}
 	}
-	fprintf(stderr, "VT_ComposeCommandExec::Create(cmd=`%s`) => `%s`\n", cmd, content.c_str());
 }
 
 void VT_ComposeCommandExec::Cleanup()

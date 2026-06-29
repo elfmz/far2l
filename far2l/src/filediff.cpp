@@ -311,7 +311,72 @@ bool ResolvePanelFile(Panel *Source, FARString &Path)
 	return Attr != INVALID_FILE_ATTRIBUTES && !(Attr & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-std::vector<DiffRow> CoalesceChanges(std::vector<DiffRow> Rows)
+constexpr size_t MaxInlineLcsCells = 65536;
+
+bool BuildInlineLcs(const FARString &Left, const FARString &Right, std::vector<int> &Lcs, size_t &Columns)
+{
+	const size_t LeftLength = Left.GetLength();
+	const size_t RightLength = Right.GetLength();
+	if (LeftLength == 0 || RightLength == 0
+			|| (RightLength != 0 && LeftLength > MaxInlineLcsCells / RightLength)) {
+		return false;
+	}
+
+	Columns = RightLength + 1;
+	Lcs.assign((LeftLength + 1) * Columns, 0);
+	for (size_t I = LeftLength; I-- > 0;) {
+		for (size_t J = RightLength; J-- > 0;) {
+			Lcs[I * Columns + J] = Left.At(I) == Right.At(J)
+					? Lcs[(I + 1) * Columns + J + 1] + 1
+					: std::max(Lcs[(I + 1) * Columns + J], Lcs[I * Columns + J + 1]);
+		}
+	}
+	return true;
+}
+
+bool LinesSimilar(const FARString &Left, const FARString &Right)
+{
+	if (Left == Right)
+		return true;
+
+	const size_t LeftLength = Left.GetLength();
+	const size_t RightLength = Right.GetLength();
+	if (LeftLength == 0 || RightLength == 0)
+		return false;
+
+	const size_t MaxLength = std::max(LeftLength, RightLength);
+	const size_t MinLength = std::min(LeftLength, RightLength);
+	if (MinLength * 2 < MaxLength)
+		return false;
+
+	std::vector<int> Lcs;
+	size_t Columns = 0;
+	if (BuildInlineLcs(Left, Right, Lcs, Columns))
+		return static_cast<size_t>(Lcs[0]) * 3 >= MaxLength * 2;
+
+	size_t Prefix = 0;
+	while (Prefix < LeftLength && Prefix < RightLength && Left.At(Prefix) == Right.At(Prefix))
+		++Prefix;
+
+	size_t LeftSuffix = LeftLength;
+	size_t RightSuffix = RightLength;
+	while (LeftSuffix > Prefix && RightSuffix > Prefix && Left.At(LeftSuffix - 1) == Right.At(RightSuffix - 1)) {
+		--LeftSuffix;
+		--RightSuffix;
+	}
+
+	const size_t Common = Prefix + (LeftLength - LeftSuffix);
+	return Common * 3 >= MaxLength * 2;
+}
+
+bool RowsSimilar(const DiffRow &Deleted, const DiffRow &Added, const std::vector<FARString> &Left,
+		const std::vector<FARString> &Right)
+{
+	return Deleted.Left >= 0 && Added.Right >= 0 && LinesSimilar(Left[Deleted.Left], Right[Added.Right]);
+}
+
+std::vector<DiffRow> CoalesceChanges(std::vector<DiffRow> Rows,
+		const std::vector<FARString> &Left, const std::vector<FARString> &Right)
 {
 	size_t Write = 0;
 	for (size_t I = 0; I < Rows.size();) {
@@ -331,10 +396,20 @@ std::vector<DiffRow> CoalesceChanges(std::vector<DiffRow> Rows)
 		const size_t DeletedCount = J - I;
 		const size_t AddedCount = K - J;
 		const size_t ChangedCount = std::min(DeletedCount, AddedCount);
-		for (size_t N = 0; N < ChangedCount; ++N)
-			Rows[Write++] = {Rows[I + N].Left, Rows[J + N].Right, DiffKind::Changed};
+		std::vector<bool> Similar(ChangedCount);
+		for (size_t N = 0; N < ChangedCount; ++N) {
+			Similar[N] = RowsSimilar(Rows[I + N], Rows[J + N], Left, Right);
+			if (Similar[N])
+				Rows[Write++] = {Rows[I + N].Left, Rows[J + N].Right, DiffKind::Changed};
+			else
+				Rows[Write++] = Rows[I + N];
+		}
 		for (size_t N = ChangedCount; N < DeletedCount; ++N)
 			Rows[Write++] = Rows[I + N];
+		for (size_t N = 0; N < ChangedCount; ++N) {
+			if (!Similar[N])
+				Rows[Write++] = Rows[J + N];
+		}
 		for (size_t N = ChangedCount; N < AddedCount; ++N)
 			Rows[Write++] = Rows[J + N];
 
@@ -353,9 +428,18 @@ void EmitFallbackRange(const std::vector<FARString> &Left, const std::vector<FAR
 	for (size_t I = 0; I < Count; ++I) {
 		const int L = I < LeftCount ? static_cast<int>(LeftBegin + I) : -1;
 		const int R = I < RightCount ? static_cast<int>(RightBegin + I) : -1;
-		const DiffKind Kind = L < 0 ? DiffKind::Added : R < 0 ? DiffKind::Deleted :
-				Left[L] == Right[R] ? DiffKind::Equal : DiffKind::Changed;
-		Rows.push_back({L, R, Kind});
+		if (L < 0)
+			Rows.push_back({L, R, DiffKind::Added});
+		else if (R < 0)
+			Rows.push_back({L, R, DiffKind::Deleted});
+		else if (Left[L] == Right[R])
+			Rows.push_back({L, R, DiffKind::Equal});
+		else if (LinesSimilar(Left[L], Right[R]))
+			Rows.push_back({L, R, DiffKind::Changed});
+		else {
+			Rows.push_back({L, -1, DiffKind::Deleted});
+			Rows.push_back({-1, R, DiffKind::Added});
+		}
 	}
 }
 
@@ -391,6 +475,7 @@ struct DiffAnchor
 	size_t RightBegin = 0;
 	size_t Length = 0;
 	size_t Frequency = 0;
+	size_t UnmatchedPairs = 0;
 
 	bool Valid() const { return Length != 0; }
 };
@@ -458,11 +543,17 @@ DiffAnchor FindHistogramAnchor(const std::vector<FARString> &Left, const std::ve
 			}
 
 			const size_t Length = LE - LB;
-			if (!Best.Valid() || Frequency < Best.Frequency || (Frequency == Best.Frequency && Length > Best.Length)) {
+			const size_t UnmatchedPairs = std::min(LB - LeftBegin, RB - RightBegin)
+					+ std::min(LeftEnd - LE, RightEnd - RE);
+			if (!Best.Valid() || Frequency < Best.Frequency
+					|| (Frequency == Best.Frequency
+							&& (Length > Best.Length
+									|| (Length == Best.Length && UnmatchedPairs < Best.UnmatchedPairs)))) {
 				Best.LeftBegin = LB;
 				Best.RightBegin = RB;
 				Best.Length = Length;
 				Best.Frequency = Frequency;
+				Best.UnmatchedPairs = UnmatchedPairs;
 			}
 		}
 	}
@@ -516,7 +607,7 @@ std::vector<DiffRow> BuildLineDiff(const std::vector<FARString> &Left, const std
 	std::vector<DiffRow> Rows;
 	Rows.reserve(Left.size() + Right.size());
 	BuildHistogramDiff(Left, Right, 0, Left.size(), 0, Right.size(), Rows);
-	return CoalesceChanges(std::move(Rows));
+	return CoalesceChanges(std::move(Rows), Left, Right);
 }
 
 uint32_t ComposeRgb(int R, int G, int B)
@@ -666,21 +757,11 @@ void BuildInlineDiffRanges(const FARString &Left, const FARString &Right,
 {
 	const size_t LeftLength = Left.GetLength();
 	const size_t RightLength = Right.GetLength();
-	constexpr size_t MaxInlineLcsCells = 65536;
-	if (LeftLength == 0 || RightLength == 0
-			|| (RightLength != 0 && LeftLength > MaxInlineLcsCells / RightLength)) {
+	std::vector<int> Lcs;
+	size_t Columns = 0;
+	if (!BuildInlineLcs(Left, Right, Lcs, Columns)) {
 		BuildSimpleInlineRanges(Left, Right, LeftRanges, RightRanges);
 		return;
-	}
-
-	const size_t Columns = RightLength + 1;
-	std::vector<int> Lcs((LeftLength + 1) * Columns);
-	for (size_t I = LeftLength; I-- > 0;) {
-		for (size_t J = RightLength; J-- > 0;) {
-			Lcs[I * Columns + J] = Left.At(I) == Right.At(J)
-					? Lcs[(I + 1) * Columns + J + 1] + 1
-					: std::max(Lcs[(I + 1) * Columns + J], Lcs[I * Columns + J + 1]);
-		}
 	}
 
 	std::vector<bool> LeftChanged(LeftLength);

@@ -15,7 +15,7 @@ static std::string HexEncode(const unsigned char *data, size_t len)
 	return ss.str();
 }
 
-std::string S3SHA256Hex(const void *data, size_t len)
+std::string S3SHA256Hex(const char *data, size_t len)
 {
 	unsigned char digest[SHA256_DIGEST_LENGTH];
 	SHA256(reinterpret_cast<const unsigned char *>(data), len, digest);

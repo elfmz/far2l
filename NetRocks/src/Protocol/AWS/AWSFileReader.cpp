@@ -3,6 +3,7 @@
 #include <neon/ne_uri.h>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <algorithm>
 
 AWSFileReader::AWSFileReader(std::shared_ptr<S3Session> session,
@@ -23,9 +24,8 @@ AWSFileReader::AWSFileReader(std::shared_ptr<S3Session> session,
 	                                  payload_hash, _creds.region,
 	                                  _creds.access_key, _creds.secret_key);
 
-	char *escaped = ne_path_escape(uri_path.c_str());
-	std::string neon_path = escaped ? escaped : uri_path;
-	if (escaped) free(escaped);
+	std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(uri_path.c_str()), free);
+	std::string neon_path = escaped ? escaped.get() : uri_path;
 
 	_req = ne_request_create(_session->sess, "GET", neon_path.c_str());
 	if (!_req) throw ProtocolError("Failed to create GET request");
@@ -90,7 +90,7 @@ void *AWSFileReader::ThreadProc()
 	return nullptr;
 }
 
-int AWSFileReader::sReadCallback(void *userdata, const char *buf, size_t len)
+int AWSFileReader::sReadCallback(void *userdata, const char *buf, size_t len) // NOSONAR(cpp:S5008)
 {
 	return reinterpret_cast<AWSFileReader *>(userdata)->ReadCallback(buf, len);
 }

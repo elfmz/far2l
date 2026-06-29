@@ -10,6 +10,7 @@
 #include <neon/ne_uri.h>
 #include <neon/ne_dates.h>
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
@@ -104,7 +105,7 @@ struct ResponseCapture {
 	std::string header_name;
 	std::string header_value;
 
-	static int sBodyReader(void *userdata, const char *buf, size_t len)
+	static int sBodyReader(void *userdata, const char *buf, size_t len) // NOSONAR(cpp:S5008)
 	{
 		auto *self = reinterpret_cast<ResponseCapture *>(userdata);
 		self->body.append(buf, len);
@@ -175,9 +176,8 @@ std::string S3Repository::SimpleRequestHeader(
 		uri_path = BuildPath("", key);
 	}
 
-	char *escaped = ne_path_escape(uri_path.c_str());
-	std::string neon_path = escaped ? escaped : uri_path;
-	if (escaped) free(escaped);
+	std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(uri_path.c_str()), free);
+	std::string neon_path = escaped ? escaped.get() : uri_path;
 
 	std::string query_str = BuildQueryString(query_params);
 	if (!query_str.empty()) neon_path += "?" + query_str;
@@ -373,9 +373,8 @@ std::shared_ptr<S3Session> S3Repository::GetOrCreateBucketSession(const std::str
 std::string S3Repository::ResolveRegion(const std::string &bucket)
 {
 	std::string path = "/" + bucket;
-	char *escaped = ne_path_escape(path.c_str());
-	std::string neon_path = escaped ? escaped : path;
-	if (escaped) free(escaped);
+	std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(path.c_str()), free);
+	std::string neon_path = escaped ? escaped.get() : path;
 
 	std::string payload_hash = S3SHA256Hex("");
 	auto auth_headers = S3SignRequest("HEAD", _endpoint, path, {},
@@ -559,9 +558,8 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
 		                                  payload_hash, effective_region,
 		                                  _creds.access_key, _creds.secret_key);
 
-		char *escaped = ne_path_escape(uri_path.c_str());
-		std::string neon_path = escaped ? escaped : uri_path;
-		if (escaped) free(escaped);
+		std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(uri_path.c_str()), free);
+		std::string neon_path = escaped ? escaped.get() : uri_path;
 
 		ne_request *req = ne_request_create(req_session->sess, "HEAD", neon_path.c_str());
 		if (!req) throw ProtocolError("HEAD request failed");

@@ -3,6 +3,7 @@
 #include <neon/ne_uri.h>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <map>
 
@@ -11,7 +12,7 @@ struct WriteResponseCapture {
 	std::string header_name;
 	std::string header_value;
 
-	static int sBodyReader(void *ud, const char *buf, size_t len)
+	static int sBodyReader(void *ud, const char *buf, size_t len) // NOSONAR(cpp:S5008)
 	{
 		reinterpret_cast<WriteResponseCapture *>(ud)->body.append(buf, len);
 		return 0;
@@ -52,9 +53,8 @@ std::string AWSFileWriter::DoRequest(const std::string &method,
 	                                  payload_hash, _creds.region,
 	                                  _creds.access_key, _creds.secret_key);
 
-	char *escaped = ne_path_escape(path.c_str());
-	std::string neon_path = escaped ? escaped : path;
-	if (escaped) free(escaped);
+	std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(path.c_str()), free);
+	std::string neon_path = escaped ? escaped.get() : path;
 	std::string query_str = BuildQueryString(query_params);
 	if (!query_str.empty()) neon_path += "?" + query_str;
 
@@ -158,9 +158,8 @@ void AWSFileWriter::FlushPart()
 	                                  payload_hash, _creds.region,
 	                                  _creds.access_key, _creds.secret_key);
 
-	char *escaped = ne_path_escape(path.c_str());
-	std::string neon_path = (escaped ? escaped : path) + "?" + BuildQueryString(qp);
-	if (escaped) free(escaped);
+	std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(path.c_str()), free);
+	std::string neon_path = (escaped ? escaped.get() : path) + "?" + BuildQueryString(qp);
 
 	WriteResponseCapture cap;
 	cap.header_name = "ETag";
@@ -208,9 +207,8 @@ void AWSFileWriter::CompleteMultipartUpload()
 		auto auth_headers = S3SignRequest("PUT", _endpoint, path, qp,
 		                                  payload_hash, _creds.region,
 		                                  _creds.access_key, _creds.secret_key);
-		char *escaped = ne_path_escape(path.c_str());
-		std::string neon_path = (escaped ? escaped : path) + "?" + BuildQueryString(qp);
-		if (escaped) free(escaped);
+		std::unique_ptr<char, decltype(&free)> escaped(ne_path_escape(path.c_str()), free);
+		std::string neon_path = (escaped ? escaped.get() : path) + "?" + BuildQueryString(qp);
 
 		WriteResponseCapture cap;
 		ne_request *req = ne_request_create(_session->sess, "PUT", neon_path.c_str());

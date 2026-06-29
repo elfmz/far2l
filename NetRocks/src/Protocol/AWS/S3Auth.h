@@ -17,4 +17,4 @@ std::map<std::string, std::string> S3SignRequest(
 );
 
 std::string S3SHA256Hex(const std::string &data);
-std::string S3SHA256Hex(const void *data, size_t len);
+std::string S3SHA256Hex(const char *data, size_t len);

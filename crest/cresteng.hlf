@@ -1,0 +1,55 @@
+.Language=English,English
+.PluginContents=Crest
+
+@Settings
+$^ #Crest FAR plugin#
+$# Settings#
+
+   #Colors#
+
+     Set #crest#, #highlighted cursor#, and #ruler# colors as a decimal number.
+
+   #Activators#
+
+     While either of these modifier keys is pressed temporarily draw a highlighted
+     'crest' in the editor.
+
+     Only a vertical or horizontal line can be shown if #Draw vertical line# or
+     #Draw horizontal# line is set respectively.
+
+   #Lockers#
+
+     Draw crest while selected keys are locked: CapsLock, NumLock, or ScrollLock.
+
+     After pressing a locker you need to press just anything else because no
+     keyboard event comes to plugin when these are pressed and there is no
+     realistic way to check if these are on or off via FAR API.
+
+   #Colorer correction#
+
+     You really need to set this checkbox depending on if you use colorer or not,
+     otherwise there will be unwanted color artifacts specifically in a locker mode.
+
+   #Colorize cursor#
+
+     Always show symbol under cursor with #Cursor color# except when drawing a crest.
+
+   #Show ruler#
+
+     Briefly display a ruler at the top line with position numbers when pressing
+     one of the #Activators#.
+
+   #Show config in editor menu#
+
+     If unset plugin configuration is only available via main FAR plugins'
+     configuration menu.
+
+   #Enabled#
+
+     Your actual mileage may vary depending on the terminal used and its
+     capabilities on reporting keypresses. If your terminal does not give you
+     satisfying experience disable it (or do not enable).
+
+
+ Based on original source by Jury Mamaev.
+ Adopted for far2l by Stanislav Mekhanoshin.

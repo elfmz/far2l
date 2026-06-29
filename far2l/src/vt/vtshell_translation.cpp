@@ -23,9 +23,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		case VK_RETURN:
 			return "\r";
 
-		case VK_TAB: /*
-		Tab      Shift     \x1b[Z */
-			if (shift)         return "\x1b[Z";
+		case VK_TAB:
 			return "\t";
 
 		case VK_ESCAPE:

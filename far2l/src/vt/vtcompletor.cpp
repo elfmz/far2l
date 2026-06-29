@@ -17,36 +17,44 @@
 #include <utils.h>
 #include <MakePTYAndFork.h>
 #include <RandomString.h>
+#include "headers.hpp"
 #include "vtcompletor.h"
+#include "ctrlobj.hpp"
+#include "cmdline.hpp"
+#include "config.hpp"
 
 static const ssize_t VeryLongTerminalLine = 0x1000;
 
-static const char *vtc_inputrc = "set completion-query-items 0\n"
-	"set completion-display-width 0\n"
-	"set colored-stats off\n"
-	"set colored-completion-prefix off\n"
-	"set page-completions off\n"
-	"set colored-stats off\n"
-	"set colored-completion-prefix off\n"
-	"set show-all-if-ambiguous off\n"
-	"set show-all-if-unmodified off\n";
-
-std::string VTSanitizeHistcontrol();
-
 VTCompletor::VTCompletor()
-	: _vtc_inputrc(InMyTemp("vtc_inputrc")),
+	: _vtc_config(InMyTemp("vtc_config")),
 	_pipe_stdin(-1), _pipe_stdout(-1), _pid(-1), _pty_used(false)
 {
-	int fd = open(_vtc_inputrc.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0622);
-	if (fd!=-1) {
-		if (write(fd, vtc_inputrc, strlen(vtc_inputrc))<=0) {
-			perror("VTCompletor: write vtc_inputrc");
-			_vtc_inputrc.clear();
+	// Detect shell same way as VTShell does
+	std::string shell_to_use;
+	if (Opt.CmdLine.UseShell) {
+		Environment::ExplodeCommandLine shell_exploded;
+		shell_exploded.Parse(Opt.CmdLine.strShell.GetMB());
+		if (!shell_exploded.empty()) {
+			shell_to_use = shell_exploded.front();
 		}
-		close(fd);
+	}
+	_backend = CreateVTShellBackend(shell_to_use);
+
+	std::string config_content = _backend->GetCompletorConfigContent();
+	if (!config_content.empty()) {
+		int fd = open(_vtc_config.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0622);
+		if (fd!=-1) {
+			if (write(fd, config_content.c_str(), config_content.size())<=0) {
+				perror("VTCompletor: write vtc_config");
+				_vtc_config.clear();
+			}
+			close(fd);
+		} else {
+			perror("VTCompletor: open vtc_config");
+			_vtc_config.clear();
+		}
 	} else {
-		perror("VTCompletor: open vtc_inputrc");
-		_vtc_inputrc.clear();
+		_vtc_config.clear();
 	}
 }
 
@@ -60,7 +68,11 @@ bool VTCompletor::EnsureStarted()
 	if (_pid != -1)
 		return true;
 
-	const std::string &hc_override = VTSanitizeHistcontrol();
+	std::map<std::string, std::string> env_vars;
+	_backend->SetupEnvironment(env_vars);
+
+	std::vector<std::string> args = _backend->GetStartArgs(true, true); // interactive, noprofile
+	std::string exec_path = _backend->GetExecPath();
 
 	int pty_master = -1;
 	_pid = MakePTYAndFork(pty_master);
@@ -75,8 +87,17 @@ bool VTCompletor::EnsureStarted()
 				_exit(1);
 				exit(1);
 			}
-			execlp("bash", "bash", "--noprofile", "-i", NULL);
-			perror("VTCompletor: execlp");
+
+			// Preparing args for execlp
+			// We need a NULL-terminated list of char*
+			// Since this is a child process after fork, we can allocate memory freely without cleaning up
+			std::vector<char*> exec_args;
+			exec_args.push_back(const_cast<char*>(exec_path.c_str())); // argv[0] usually same as path or name
+			for (const auto &arg : args) exec_args.push_back(const_cast<char*>(arg.c_str()));
+			exec_args.push_back(NULL);
+
+			execvp(exec_path.c_str(), exec_args.data());
+			perror("VTCompletor: execvp");
 			_exit(6);
 			exit(6);
 		}
@@ -124,12 +145,20 @@ bool VTCompletor::EnsureStarted()
 			dup2(pipe_out[1], STDERR_FILENO);
 			CheckedCloseFDPair(pipe_in);
 			CheckedCloseFDPair(pipe_out);
-			if (!hc_override.empty()) {
-				setenv("HISTCONTROL", hc_override.c_str(), 1);
+
+			for (const auto &kv : env_vars) {
+				setenv(kv.first.c_str(), kv.second.c_str(), 1);
 			}
+
 			setsid();
-			execlp("bash", "bash", "--noprofile", "-i", NULL);
-			perror("execlp");
+
+			std::vector<char*> exec_args;
+			exec_args.push_back(const_cast<char*>(exec_path.c_str()));
+			for (const auto &arg : args) exec_args.push_back(const_cast<char*>(arg.c_str()));
+			exec_args.push_back(NULL);
+
+			execvp(exec_path.c_str(), exec_args.data());
+			perror("execvp");
 			_exit(0);
 			exit(0);
 		}
@@ -173,19 +202,20 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	AvoidMarkerCollision(begin, cmd);  // if it still not enough unique
 	// dont do that: done+= '\n'; otherwise proposed command is executed, see https://github.com/elfmz/far2l/issues/1244
 
-	std::string sendline = " PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''";
-//	sendline+= " set +o history\n";
-	if (!_vtc_inputrc.empty()) {
-		sendline+= "; bind -f \"";
-		sendline+= _vtc_inputrc;
-		sendline+= "\"";
-	}
-	sendline+= '\n';
+	std::string sendline = _backend->GetCompletorInitCommand(_vtc_config);
 
 	sendline+= begin;
 	sendline+= '\n';
-	sendline+= cmd;
-	sendline+= tabs;
+
+	// If tabs are empty, we assume command is already formed fully (like complete -C "...")
+	if (tabs && *tabs) {
+		sendline+= cmd;
+		sendline+= tabs;
+	} else {
+		// If using backend-specific completion command generation
+		sendline+= _backend->MakeCompletionCommand(cmd);
+	}
+
 	sendline+= done;
 
 	if (write(_pipe_stdin, sendline.c_str(), sendline.size()) != (ssize_t)sendline.size()) {
@@ -309,33 +339,18 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 
 //fprintf(stderr, "!!! eval_cmd='%s'\n", eval_cmd.c_str());
 	std::string reply;
-	if (!TalkWithShell(eval_cmd, reply, "\t\t")) {
+
+	// Pass nullptr as tabs to indicate usage of MakeCompletionCommand inside TalkWithShell
+	if (!TalkWithShell(eval_cmd, reply, nullptr)) {
 		return false;
 	}
 
 	const auto &last_a = cmd.substr(args.back().orig_begin, args.back().orig_len);
 	const bool whole_next_arg = (eval_cmd.back() == ' ' && args.back().quot == Environment::QUOT_NONE);
 
-	size_t p = reply.find(eval_cmd);
-	if (p == std::string::npos || p + eval_cmd.size() >= reply.size() ) {
+	// Cleaning up the reply depends on the method used
+	if (!_backend->ParseCompletionOutput(reply, eval_cmd, possibilities)) {
 		return false;
-	}
-
-	reply.erase(0, p + eval_cmd.size());
-
-	if (StrEndsBy(reply, eval_cmd.c_str())) {
-		reply.resize(reply.size() - eval_cmd.size());
-	}
-
-	for (;;) {
-		p = reply.find('\n');
-		if (p == std::string::npos ) break;
-		possibilities.emplace_back(reply.substr(0, p));
-		StrTrim(possibilities.back(), " \r");
-		if (possibilities.back().empty()) {
-			possibilities.pop_back();
-		}
-		reply.erase(0, p + 1);
 	}
 
 	if (!possibilities.empty() && possibilities.back() == eval_cmd) {

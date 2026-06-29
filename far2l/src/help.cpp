@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filestr.hpp"
 #include "stddlg.hpp"
 #include "farversion.h"
+#include <map>
 
 // Стек возврата
 class CallBackStack
@@ -154,6 +155,14 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 	if (!ReadHelp(StackData.strHelpMask) && (Flags & FHELP_USECONTENTS)) {
 		StackData.strHelpTopic = Topic;
 
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
+
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			size_t pos;
 
@@ -210,6 +219,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	int Formatting = TRUE, RepeatLastLine, BreakProcess;
 	const int MaxLength = X2 - X1 - 1;
 	FARString strPath;
+	std::map<std::wstring, int> anchorMap; // name -> line number in HelpList
 
 	if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 		strPath = StackData.strHelpTopic.CPtr() + 1;
@@ -227,7 +237,20 @@ int Help::ReadHelp(const wchar_t *Mask)
 		strPath = !StackData.strHelpPath.IsEmpty() ? StackData.strHelpPath : g_strFarPath;
 	}
 
+	// Extract anchor from topic name (only when opening a new topic).
+	// Syntax: "TopicName??anchor_name" - "??" separates topic from anchor.
+	if (IsNewTopic) {
+		const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+		if (sep) {
+			StackData.strHelpAnchor = sep + 2;
+			StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		} else {
+			StackData.strHelpAnchor.Clear();
+		}
+	}
+
 	if (!StrCmp(StackData.strHelpTopic, PluginContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for plugin contents
 		strFullHelpPathName.Clear();
 		ReadDocumentsHelp(HIDX_PLUGINS);
 		return TRUE;
@@ -280,6 +303,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	HelpList.Free();
 
 	if (!StrCmp(StackData.strHelpTopic, FoundContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for search results
 		Search(HelpFile, nCodePage);
 		fclose(HelpFile);
 		return TRUE;
@@ -398,6 +422,18 @@ int Help::ReadHelp(const wchar_t *Mask)
 				if (!StrCmp(strReadStr, L"@-")) {
 					Formatting = FALSE;
 					PrevSymbol = 0;
+					continue;
+				}
+
+				// Anchor marker: "@??anchor_name" - record line index, do not add to HelpList
+				if (strReadStr.GetLength() >= 3 && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+					if (!strSplitLine.IsEmpty()) {
+						AddLine(strSplitLine.CPtr());
+						strSplitLine.Clear();
+					}
+					FARString anchorName = strReadStr.CPtr() + 3;
+					anchorMap[anchorName.CPtr()] = StrCount;
+					PrevSymbol = L'@';
 					continue;
 				}
 
@@ -564,6 +600,15 @@ int Help::ReadHelp(const wchar_t *Mask)
 	if (IsNewTopic) {
 		StackData.CurX = StackData.CurY = 0;
 		StackData.TopStr = 0;
+		// If an anchor was requested, scroll to its line index
+		if (!StackData.strHelpAnchor.IsEmpty()) {
+			auto it = anchorMap.find(StackData.strHelpAnchor.CPtr());
+			if (it != anchorMap.end()) {
+				int anchorLine = it->second;
+				StackData.TopStr = (anchorLine >= FixCount) ? (anchorLine - FixCount) : 0;
+			}
+			StackData.strHelpAnchor.Clear();
+		}
 	}
 
 	return TopicFound;
@@ -596,8 +641,14 @@ void Help::AddLine(const wchar_t *Line)
 
 void Help::AddTitle(const wchar_t *Title)
 {
+	FARString strEscaped = Title;
+	// Escape special .hlf markup characters
+	ReplaceStrings(strEscaped, L"@", L"@@", -1);
+	ReplaceStrings(strEscaped, L"~", L"~~", -1);
+	ReplaceStrings(strEscaped, L"#", L"##", -1);
+
 	FARString strIndexHelpTitle;
-	strIndexHelpTitle.Format(L"^ #%ls#", Title);
+	strIndexHelpTitle.Format(L"^ # %ls #", strEscaped.CPtr());
 	AddLine(strIndexHelpTitle);
 }
 
@@ -840,11 +891,12 @@ void Help::OutString(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 
@@ -922,11 +974,12 @@ int Help::StringLen(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 
@@ -1241,6 +1294,7 @@ int Help::ProcessKey(FarKey Key)
 
 				if (!JumpTopic()) {
 					Stack->Pop(&StackData);
+					IsNewTopic = FALSE;
 					ReadHelp(StackData.strHelpMask);	// вернем то, что отображали.
 				}
 
@@ -1263,6 +1317,11 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	if (JumpTopic)
 		StackData.strSelTopic = JumpTopic;
+
+	// Expand short intra-topic anchor links (e.g., "??anchor") to absolute paths
+	if (StackData.strSelTopic.GetLength() >= 2 && StackData.strSelTopic.At(0) == L'?' && StackData.strSelTopic.At(1) == L'?') {
+			StackData.strSelTopic = StackData.strHelpTopic + StackData.strSelTopic;
+	}
 
 	/*
 		$ 14.07.2002 IS
@@ -1371,6 +1430,14 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	if (!ReadHelp(StackData.strHelpMask)) {
 		StackData.strHelpTopic = strNewTopic;
+
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
 
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			if (StackData.strHelpTopic.RPos(pos, HelpEndLink)) {
@@ -1652,6 +1719,10 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		strReadStr = ReadStr;
 		RemoveTrailingSpaces(strReadStr);
 
+		if (strReadStr.GetLength() >= 3 && strReadStr.At(0) == L'@' && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+			continue; // skip anchor markers "@??..."
+		}
+
 		if (strReadStr.At(0) == L'@' && !(strReadStr.At(1) == L'+' || strReadStr.At(1) == L'-')
 				&& !strReadStr.Contains(L'='))		// && !TopicFound)
 		{
@@ -1665,16 +1736,20 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		} else if (TopicFound && strReadStr.At(0) == L'$' && strReadStr.At(1) && !strCurTopic.IsEmpty()) {
 			strEntryName = strReadStr.CPtr() + 1;
 			RemoveExternalSpaces(strEntryName);
+			if (strEntryName.At(0) == L'^') {
+				strEntryName.Remove(0); // skip centering prefix (not displayed)
+			}
 			RemoveChar(strEntryName, L'#', false);
 		}
 
 		if (TopicFound && !strEntryName.IsEmpty()) {
-			// !!!BUGBUG: необходимо "очистить" строку strReadStr от элементов разметки !!!
+			FARString strSearchable = SanitizeHelpString(strReadStr);
+
 
 			FARString ReplaceStr;
 			int CurPos = 0;
 			int SearchLength;
-			bool Result = SearchString(strReadStr, (int)strReadStr.GetLength(), strLastSearchStr, ReplaceStr,
+			bool Result = SearchString(strSearchable, (int)strSearchable.GetLength(), strLastSearchStr, ReplaceStr,
 					CurPos, 0, LastSearchCase, LastSearchWholeWords, false, LastSearchRegexp, &SearchLength);
 
 			if (Result) {
@@ -1690,6 +1765,71 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 
 	AddLine(L"");
 	MoveToReference(1, 1);
+}
+
+FARString Help::SanitizeHelpString(const FARString& input) const
+{
+	FARString result;
+	const wchar_t *p   = input.CPtr();
+	const wchar_t *end = input.CEnd();
+	bool atStart = true;
+
+	while (p < end) {
+		// Remove CtrlStartPosChar marker (e.g. "^<wrap>", position hint, not displayed)
+		if (!strCtrlStartPosChar.IsEmpty()
+				&& (size_t)(end - p) >= strCtrlStartPosChar.GetLength()
+				&& wcsncmp(p, strCtrlStartPosChar.CPtr(), strCtrlStartPosChar.GetLength()) == 0) {
+			p += strCtrlStartPosChar.GetLength();
+			continue;
+		}
+
+		// Skip leading '$' (fixed-line prefix, not displayed)
+		if (atStart && *p == L'$') {
+			p++;
+			continue;
+		}
+
+		// Skip leading '^' (centering prefix, not displayed)
+		if (atStart && *p == L'^') {
+			p++;
+			continue;
+		}
+		atStart = false;
+
+		// Escaped pairs "~~", "##", "@@" -> output one literal character
+		if (p + 1 < end
+				&& ((*p == L'~' && *(p+1) == L'~')
+					|| (*p == L'#' && *(p+1) == L'#')
+					|| (*p == L'@' && *(p+1) == L'@'))) {
+			result += *p;
+			p += 2;
+			continue;
+		}
+
+		// Skip link target "@Topic@" (not displayed)
+		if (*p == L'@') {
+			p++;
+			while (p < end && !(*p == L'@' && *(p-1) != L'@'))
+				p++;
+			if (p < end) p++;
+			continue;
+		}
+
+		// Skip '~' (link text delimiter, not displayed)
+		if (*p == L'~') {
+			p++;
+			continue;
+		}
+
+		// Skip '#' (highlight toggle, not displayed)
+		if (*p == L'#') {
+			p++;
+			continue;
+		}
+
+		result += *p++;
+	}
+	return result;
 }
 
 void Help::ReadDocumentsHelp(int TypeIndex)

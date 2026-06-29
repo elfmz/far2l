@@ -18,9 +18,26 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"path/filepath"
+	"reflect"
+	"syscall"
+	"sync/atomic"
+	"unsafe"
     "github.com/ActiveState/termtest"
     "github.com/ActiveState/termtest/expect"
     "github.com/dop251/goja"
+)
+
+// Test protocol command IDs — keep in sync with WinPort/src/Backend/TestProtocol.h
+const (
+	testCmdDetach      = 0
+	testCmdStatus      = 1
+	testCmdReadCell    = 2
+	testCmdWaitString  = 3
+	testCmdWaitNoString = 4
+	testCmdSendKey     = 5
+	testCmdSync        = 6
+	testCmdSendMouse   = 7
+	testCmdSendRaw     = 8
 )
 
 type far2l_Status struct {
@@ -73,7 +90,7 @@ var g_buf [4096]byte
 var g_app *termtest.ConsoleProcess
 var g_vm *goja.Runtime
 var g_status far2l_Status
-var g_far2l_running bool = false
+var g_far2l_running atomic.Bool
 var g_lctrl bool
 var g_rctrl bool
 var g_lalt bool
@@ -81,8 +98,16 @@ var g_ralt bool
 var g_shift bool
 var g_recv_timeout uint32 = 30
 var g_test_workdir string
+var g_test_dir string
 var g_calm bool = false
 var g_last_error string
+type testResult struct {
+	name   string
+	passed bool
+	err    string
+}
+
+var g_test_results []testResult
 
 func stringFromBytes(buf []byte) string {
 	last := 0
@@ -105,9 +130,69 @@ func aux_Inspect() string {
 	return out
 }
 
+// DumpScreen captures a rectangular screen region and logs it as an
+// ASCII-art "screenshot" with a border, so test failures show the actual
+// screen state that was compared against expected strings.
+// If width/height are 0xffffffff, the full terminal is dumped.
+func far2l_DumpScreen(x uint32, y uint32, w uint32, h uint32) string {
+	result := far2l_DumpScreenQuiet(x, y, w, h)
+	log.Print("\n" + result)
+	return result
+}
+
+// far2l_DumpScreenQuiet captures a screen region as ASCII-art without
+// logging to stdout. Used by saveSnapshotOnExit to write to snapshot.txt.
+func far2l_DumpScreenQuiet(x uint32, y uint32, w uint32, h uint32) string {
+	if w == 0xffffffff { w = g_status.Width }
+	if h == 0xffffffff { h = g_status.Height }
+	if w == 0 || h == 0 { return "" }
+
+	var sb strings.Builder
+	// Top border with column ruler (tens)
+	sb.WriteString("  ┌")
+	for col := uint32(0); col < w; col++ {
+		if col % 10 == 0 {
+			fmt.Fprintf(&sb, "%d", (x + col) / 10 % 10)
+		} else {
+			sb.WriteString("─")
+		}
+	}
+	sb.WriteString("┐\n")
+	sb.WriteString("  │")
+	for col := uint32(0); col < w; col++ {
+		fmt.Fprintf(&sb, "%d", (x + col) % 10)
+	}
+	sb.WriteString("│\n")
+
+	for row := uint32(0); row < h; row++ {
+		fmt.Fprintf(&sb, "%2d│", y + row)
+		for col := uint32(0); col < w; col++ {
+			cell := far2l_ReqRecvReadCellRaw(x + col, y + row)
+			text := cell.Text
+			if text == "" || text == " " {
+				sb.WriteString(" ")
+			} else {
+				sb.WriteString(text)
+			}
+		}
+		sb.WriteString("│\n")
+	}
+
+	sb.WriteString("  └")
+	for col := uint32(0); col < w; col++ {
+		sb.WriteString("─")
+	}
+	sb.WriteString("┘\n")
+
+	return sb.String()
+}
+
 func setErrorString(err string) {
 	g_last_error = err
 	log.Print("\x1b[1;31mERROR: " + err + "\x1b[39;22m")
+	// Dump the full screen so the user can see what was actually on screen
+	// when the string comparison failed.
+	far2l_DumpScreen(0, 0, 0xffffffff, 0xffffffff)
 	if !g_calm {
 		aux_Panic(err)
 	}
@@ -142,19 +227,19 @@ func far2l_ReadSocket(expected_n int, extra_timeout uint32) {
 }
 
 func far2l_Close() {
-	if g_far2l_running {
-		g_far2l_running = false
+	g_far2l_running.Store(false)
+	if g_app != nil {
 		g_app.Close()
 	}
 }
 
 func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
-	if g_far2l_running {
+	if g_far2l_running.Load() {
 		aux_Panic("far2l already running")
 	}
     opts := termtest.Options {
         CmdName: g_far2l_bin,
-		Args: append([]string{g_far2l_bin, "--test=" + g_far2l_sock}, args...),
+		Args: append([]string{"--test=" + g_far2l_sock}, args...),
 		Environment : []string {
 			"FAR2L_STD=" + filepath.Join(g_test_workdir, "far2l.log"),
 			"FAR2L_TESTCTL=" + g_far2l_sock},
@@ -165,7 +250,37 @@ func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	if err != nil {
 		aux_Panic(err.Error())
 	}
-	g_far2l_running = true
+	g_far2l_running.Store(true)
+	// Drain PTY output so the kernel buffer doesn't fill up and block ScrBuf.Flush().
+	// The test harness communicates via the TEST socket, not the PTY, so nobody
+	// normally reads terminal output. Without this goroutine far2l deadlocks.
+	//
+	// Read directly from the PTY master fd via reflection to avoid the xpty
+	// PassthroughPipe's goroutine-per-read pattern that races with Expect-based calls.
+	ptyFd := -1
+	// Access the unexported 'console' field via unsafe to get the PTY master fd.
+	consoleField := reflect.ValueOf(g_app).Elem().FieldByName("console")
+	if consoleField.IsValid() && !consoleField.IsNil() {
+		consolePtr := (*expect.Console)(unsafe.Pointer(consoleField.Pointer()))
+		ptyFd = int(consolePtr.Pty.TerminalOutFd())
+	}
+	go func() {
+		if ptyFd < 0 {
+			// Fallback: drain via ExpectRe (has race issues but better than deadlock)
+			for g_far2l_running.Load() {
+				g_app.ExpectRe(".", time.Millisecond)
+				time.Sleep(10 * time.Millisecond)
+			}
+			return
+		}
+		buf := make([]byte, 4096)
+		for g_far2l_running.Load() {
+			_, err := syscall.Read(ptyFd, buf)
+			if err != nil {
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
+	}()
 	return far2l_RecvStatus()
 }
 
@@ -468,6 +583,9 @@ func far2l_ReqBye() {
 
 func far2l_ExpectExit(code int, timeout_ms int) string {
 	far2l_ReqBye()
+	// Stop the PTY drain goroutine before ExpectExitCode.
+	g_far2l_running.Store(false)
+	time.Sleep(100 * time.Millisecond)
     _, err:= g_app.ExpectExitCode(code, time.Duration(timeout_ms) * 1000000)
 	if err != nil {
 		setErrorString(fmt.Sprintf("ExpectExit: %v", err))
@@ -477,20 +595,44 @@ func far2l_ExpectExit(code int, timeout_ms int) string {
 	return ""
 }
 
-func aux_Log(message string) {
-	log.Print(message)
-}
-
-func aux_Panic(message string) {
-	panic("\x1b[1;31m" + message + "\x1b[39;22m")
-}
-
 func tty_Write(s string) {
     g_app.Send(s)
 }
 
 func tty_CtrlC() {
     g_app.SendCtrlC()
+}
+
+// far2l_SendRaw sends TEST_CMD_SEND_RAW to inject raw bytes into the PTY slave,
+// bypassing the TTYInput parser. This allows escape sequences like
+// bracketed paste (ESC[200~) to reach the shell as raw bytes.
+func far2l_SendRaw(data string) {
+	if len(data) > 2048 {
+		aux_Panic(fmt.Sprintf("far2l_SendRaw: payload too large (%d > 2048)", len(data)))
+	}
+	binary.LittleEndian.PutUint32(g_buf[0:], testCmdSendRaw)
+	binary.LittleEndian.PutUint32(g_buf[4:], uint32(len(data)))
+	copy(g_buf[8:], data)
+	n, err := g_socket.WriteTo(g_buf[0:8+len(data)], g_addr)
+	if err != nil {
+		aux_Panic(err.Error())
+	} else if n != 8+len(data) {
+		aux_Panic(fmt.Sprintf("short write: %d != %d", n, 8+len(data)))
+	}
+}
+
+// tty_WriteRaw sends raw bytes via TEST_CMD_SEND_RAW, bypassing the TTYInput parser.
+// Escape sequences (like bracketed paste) reach bash as raw bytes on the PTY slave.
+func tty_WriteRaw(s string) {
+	far2l_SendRaw(s)
+}
+
+func aux_Log(message string) {
+	log.Print(message)
+}
+
+func aux_Panic(message string) {
+	panic("\x1b[1;31m" + message + "\x1b[39;22m")
 }
 
 func far2l_ToggleShift(pressed bool) {
@@ -556,10 +698,45 @@ func far2l_TypeText(text string) {
     }
 }
 
+var charToOEMVK = map[uint32]uint32{
+	'\\': 0xDC, // VK_OEM_5
+	'[':  0xDB, // VK_OEM_4
+	']':  0xDD, // VK_OEM_6
+	'\'': 0xDE, // VK_OEM_7
+	'"':  0xDE, // VK_OEM_7
+	'/':  0xBF, // VK_OEM_2
+	';':  0xBA, // VK_OEM_1
+	'=':  0xBB, // VK_OEM_PLUS
+	'-':  0xBD, // VK_OEM_MINUS
+	'.':  0xBE, // VK_OEM_PERIOD
+	',':  0xBC, // VK_OEM_COMMA
+	'`':  0xC0, // VK_OEM_3
+	'{':  0xDB, // VK_OEM_4 + Shift
+	'}':  0xDD, // VK_OEM_6 + Shift
+	'|':  0xDC, // VK_OEM_5 + Shift
+	':':  0xBA, // VK_OEM_1 + Shift
+	'<':  0xBC, // VK_OEM_COMMA + Shift
+	'>':  0xBE, // VK_OEM_PERIOD + Shift
+	'?':  0xBF, // VK_OEM_2 + Shift
+	'!':  0x31, // VK_1 + Shift
+	'@':  0x32, // VK_2 + Shift
+	'#':  0x33, // VK_3 + Shift
+	'$':  0x34, // VK_4 + Shift
+	'%':  0x35, // VK_5 + Shift
+	'^':  0x36, // VK_6 + Shift
+	'&':  0x37, // VK_7 + Shift
+	'(':  0x38, // VK_8 + Shift
+	')':  0x39, // VK_9 + Shift
+	'_':  0xBD, // VK_OEM_MINUS + Shift
+	'~':  0xC0, // VK_OEM_3 + Shift
+	'+':  0xBB, // VK_OEM_PLUS + Shift
+}
 func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	if key_code == 0 && utf32_code != 0 {
 		if utf32_code >= 'a' && utf32_code <= 'z' {
 			key_code = 'A' + (utf32_code - 'a')
+		} else if mapped, ok := charToOEMVK[utf32_code]; ok {
+			key_code = mapped
 		} else if (utf32_code <= 0x7f) {
 			key_code = utf32_code
 		}
@@ -568,9 +745,8 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	if g_lctrl { controls |= 0x0008 } // LEFT_CTRL_PRESSED
 	if g_rctrl { controls |= 0x0004 } // RIGHT_CTRL_PRESSED
 	if g_lalt  { controls |= 0x0002 } // LEFT_ALT_PRESSED
-	if g_ralt  { controls |= 0x0001 } // RIGHT_ALT_PRESSED
 	if g_shift { controls |= 0x0010 } // SHFIT_PRESSED
-	binary.LittleEndian.PutUint32(g_buf[0:], 5) // TEST_CMD_SEND_KEY
+	binary.LittleEndian.PutUint32(g_buf[0:], testCmdSendKey)
 	binary.LittleEndian.PutUint32(g_buf[4:], controls)
 	binary.LittleEndian.PutUint32(g_buf[8:], utf32_code)
 	binary.LittleEndian.PutUint32(g_buf[12:], key_code)
@@ -581,6 +757,47 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	if err != nil || n != 24 {
 		aux_Panic(err.Error())
 	}
+}
+
+// Mouse button constants matching WinPort/WinCompat.h
+const (
+	MOUSE_FROM_LEFT_1ST  = 0x0001 // FROM_LEFT_1ST_BUTTON_PRESSED
+	MOUSE_RIGHTMOST      = 0x0002 // RIGHTMOST_BUTTON_PRESSED
+	MOUSE_FROM_LEFT_2ND  = 0x0004 // FROM_LEFT_2ND_BUTTON_PRESSED (middle)
+	MOUSE_FROM_LEFT_3RD  = 0x0008 // FROM_LEFT_3RD_BUTTON_PRESSED
+	MOUSE_MOVED          = 0x0001
+	MOUSE_DOUBLE_CLICK   = 0x0002
+)
+
+func far2l_SendMouseEvent(x, y, buttonState, controlState, eventFlags uint32, pressed bool) {
+	binary.LittleEndian.PutUint32(g_buf[0:], testCmdSendMouse)
+	binary.LittleEndian.PutUint32(g_buf[4:], x)
+	binary.LittleEndian.PutUint32(g_buf[8:], y)
+	binary.LittleEndian.PutUint32(g_buf[12:], buttonState)
+	binary.LittleEndian.PutUint32(g_buf[16:], controlState)
+	binary.LittleEndian.PutUint32(g_buf[20:], eventFlags)
+	binary.LittleEndian.PutUint32(g_buf[24:], 0)
+	if pressed { g_buf[24] = 1 }
+	n, err := g_socket.WriteTo(g_buf[0:28], g_addr)
+	if err != nil || n != 28 {
+		aux_Panic(err.Error())
+	}
+}
+
+func far2l_TypeMouseClick(x, y, button uint32) {
+	far2l_SendMouseEvent(x, y, button, 0, 0, true)
+	far2l_SendMouseEvent(x, y, 0, 0, 0, false)
+}
+
+func far2l_TypeMouseClickCtrl(x, y, button uint32) {
+	var controls uint32 = 0
+	if g_lctrl { controls |= 0x0008 }
+	if g_rctrl { controls |= 0x0004 }
+	if g_lalt  { controls |= 0x0002 }
+	if g_ralt  { controls |= 0x0001 }
+	if g_shift { controls |= 0x0010 }
+	far2l_SendMouseEvent(x, y, button, controls, 0, true)
+	far2l_SendMouseEvent(x, y, 0, controls, 0, false)
 }
 
 func aux_RunCmd(args []string) string {
@@ -594,6 +811,23 @@ func aux_RunCmd(args []string) string {
 		setErrorString("RunCmd: " + err.Error())
 	}
 	return ""
+}
+
+func aux_LoadJS(path string) bool {
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(g_test_dir, path)
+	}
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		setErrorString("LoadJS: " + err.Error())
+		return false
+	}
+	_, err = g_vm.RunString(string(data))
+	if err != nil {
+		setErrorString("LoadJS: " + err.Error())
+		return false
+	}
+	return true
 }
 
 func aux_Sleep(msec uint32) {
@@ -874,10 +1108,14 @@ func initVM() {
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
 	setVMFunction("CellCharMatches", far2l_CellCharMatches)
 	setVMFunction("CheckCellChar", far2l_CheckCellChar)
+	setVMFunction("DumpScreen", far2l_DumpScreen)
 	
 	setVMFunction("BoundedLines", far2l_BoundedLines)
 	setVMFunction("BoundedLine", far2l_BoundedLine)
 	setVMFunction("CheckBoundedLine", far2l_CheckBoundedLine)
+	setVMFunction("TypeMouseClick", far2l_TypeMouseClick)
+	setVMFunction("TypeMouseClickCtrl", far2l_TypeMouseClickCtrl)
+	setVMFunction("SendMouseEvent", far2l_SendMouseEvent)
 	setVMFunction("SurroundedLines", far2l_SurroundedLines)
 
 	setVMFunction("ExpectStrings", far2l_ReqRecvExpectStrings)
@@ -900,6 +1138,7 @@ func initVM() {
 	setVMFunction("TypeSub", far2l_TypeSub)
 	setVMFunction("TypeMul", far2l_TypeMul)
 	setVMFunction("TypeDiv", far2l_TypeDiv)
+	setVMFunction("TTYWriteRaw", tty_WriteRaw)
 	setVMFunction("TypeSeparator", far2l_TypeSeparator)
 	setVMFunction("TypeDecimal", far2l_TypeDecimal)
 
@@ -924,8 +1163,8 @@ func initVM() {
 	setVMFunction("Panic", aux_Panic)
 
 	setVMFunction("RunCmd", aux_RunCmd)
-	setVMFunction("Sleep", aux_Sleep)
 
+	setVMFunction("Sleep", aux_Sleep)
 	setVMFunction("WorkDir", aux_WorkDir)
 	setVMFunction("Chmod", aux_Chmod)
 	setVMFunction("Chown", aux_Chown)
@@ -953,6 +1192,7 @@ func initVM() {
 	setVMFunction("SaveTextFile", aux_SaveTextFile)
 	setVMFunction("BoundedLinesMatchTextFile", far2l_BoundedLinesMatchTextFile)
 	setVMFunction("BoundedLinesSaveAsTextFile", far2l_BoundedLinesSaveAsTextFile)
+	setVMFunction("LoadJS", aux_LoadJS)
 }
 
 func setVMFunction(name string, value interface{}) {
@@ -1003,16 +1243,121 @@ func main() {
 		testdir, err := filepath.Abs(os.Args[i])
 		if err != nil { log.Fatal(err) }
 		g_test_workdir = filepath.Join(testdir, "workdir")
-		runTest(filepath.Join(testdir, "test.js"))
+
+		testPassed := true
+		testErr := ""
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					testPassed = false
+					testErr = fmt.Sprintf("%v", r)
+					far2l_Close()
+				}
+			}()
+			runTest(filepath.Join(testdir, "test.js"))
+		}()
+
+		g_test_results = append(g_test_results, testResult{
+			name:   name,
+			passed: testPassed,
+			err:    testErr,
+		})
+	}
+
+	fmt.Println("\n=== Test Summary ===")
+	passed := 0
+	failed := 0
+	for _, r := range g_test_results {
+		if r.passed {
+			fmt.Printf("[PASS] %s\n", r.name)
+			passed++
+		} else {
+			fmt.Printf("[FAIL] %s: %s\n", r.name, r.err)
+			failed++
+		}
+	}
+	fmt.Printf("%d passed, %d failed, %d total\n", passed, failed, passed+failed)
+
+	if failed > 0 {
+		os.Exit(1)
 	}
 }
 
+// saveSnapshotOnExit writes a meaningful snapshot to workdir/snapshot.txt
+// for post-mortem debugging. Captures: test name, timestamp, last error,
+// far2l status, modifier key states, far2l log tail, and a full ASCII-art
+// screen dump. Must run while far2l is still connected (before far2l_Close).
 func saveSnapshotOnExit() {
-	if g_app != nil {
-		f, err := os.Create(g_test_workdir + "/snapshot.txt")
-		if err == nil {
-			f.WriteString(g_app.Snapshot())
+	var sb strings.Builder
+	defer func() {
+		if r := recover(); r != nil {
+			// If the snapshot capture itself fails (e.g., socket closed),
+			// write what we have so far and continue
+			if err := ioutil.WriteFile(filepath.Join(g_test_workdir, "snapshot.txt"), []byte(sb.String()), 0644); err != nil {
+				log.Print("Failed to write snapshot after recover: " + err.Error())
+			}
 		}
+	}()
+
+	// Header
+	testName := filepath.Base(g_test_dir)
+	fmt.Fprintf(&sb, "=== far2l test snapshot ===\n")
+	fmt.Fprintf(&sb, "Test: %s\n", testName)
+	fmt.Fprintf(&sb, "Time: %s\n", time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Fprintf(&sb, "Binary: %s\n", g_far2l_bin)
+	fmt.Fprintf(&sb, "\n")
+
+	// Last error
+	if g_last_error != "" {
+		fmt.Fprintf(&sb, "--- Last error ---\n%s\n\n", g_last_error)
+	} else {
+		sb.WriteString("--- Last error ---\n(none)\n\n")
+	}
+
+	// Modifier key states (stuck modifiers can cause mysterious test failures)
+	fmt.Fprintf(&sb, "--- Modifier keys ---\n")
+	fmt.Fprintf(&sb, "LAlt=%v RAlt=%v LCtrl=%v RCtrl=%v Shift=%v Calm=%v\n",
+		g_lalt, g_ralt, g_lctrl, g_rctrl, g_shift, g_calm)
+	fmt.Fprintf(&sb, "\n")
+
+	// far2l status
+	if g_far2l_running.Load() {
+		far2l_ReqRecvStatus()
+	}
+	fmt.Fprintf(&sb, "--- Terminal status ---\n")
+	fmt.Fprintf(&sb, "Size: %dx%d  Cursor: (%d,%d)  Visible=%v\n",
+		g_status.Width, g_status.Height, g_status.CurX, g_status.CurY, g_status.CurV)
+	if g_status.Title != "" {
+		fmt.Fprintf(&sb, "Title: %s\n", g_status.Title)
+	}
+	fmt.Fprintf(&sb, "Running: %v\n\n", g_far2l_running.Load())
+
+	// Screen dump (only if far2l is still connected)
+	if g_far2l_running.Load() && g_status.Width > 0 && g_status.Height > 0 {
+		sb.WriteString("--- Screen dump ---\n")
+		sb.WriteString(far2l_DumpScreenQuiet(0, 0, g_status.Width, g_status.Height))
+		sb.WriteString("\n")
+	} else {
+		sb.WriteString("--- Screen dump ---\n(far2l not running, screen unavailable)\n\n")
+	}
+
+	// far2l log tail (last 30 lines)
+	logPath := filepath.Join(g_test_workdir, "far2l.log")
+	if logData, err := ioutil.ReadFile(logPath); err == nil {
+		logLines := strings.Split(string(logData), "\n")
+		tailStart := len(logLines) - 30
+		if tailStart < 0 { tailStart = 0 }
+		sb.WriteString("--- far2l.log (last 30 lines) ---\n")
+		for i := tailStart; i < len(logLines); i++ {
+			sb.WriteString(logLines[i])
+			sb.WriteString("\n")
+		}
+	}
+
+	// Write to file
+	snapshotPath := filepath.Join(g_test_workdir, "snapshot.txt")
+	if err := ioutil.WriteFile(snapshotPath, []byte(sb.String()), 0644); err != nil {
+		log.Print("Failed to write snapshot: " + err.Error())
 	}
 }
 
@@ -1027,12 +1372,13 @@ func runTest(file string) {
 	g_shift = false
 	g_calm = false
 	g_last_error = ""
+	g_test_dir = filepath.Dir(file)
 	data, err := ioutil.ReadFile(file)
 	if err != nil { aux_Panic(err.Error()) }
 	src := string(data)
 	rv, err := g_vm.RunString(src)
 	if err != nil { aux_Panic(err.Error()) }
-	if code := rv.Export().(int64); code != 0 {
- 	   fmt.Println("[FAILED] Error", code, "from test", file)
+	if code, ok := rv.Export().(int64); ok && code != 0 {
+		fmt.Println("[FAILED] Error", code, "from test", file)
 	}
 }

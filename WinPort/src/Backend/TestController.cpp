@@ -8,6 +8,8 @@
 #include <LocalSocket.h>
 #include <Event.h>
 
+// Signature must match far2l/src/vt/vtshell.h — resolved at link time
+extern void VTShell_InjectRawInput(const char *data, size_t len);
 static void StrCpyZeroFill(char *dst, size_t dst_len, const std::string &src)
 {
 	for (size_t i = 0, j = src.size(); i < dst_len; ++i) {
@@ -76,8 +78,15 @@ void TestController::ClientLoop(const std::string &ipc_client)
 				len = ClientDispatchSendKey(len);
 				break;
 
+			case TEST_CMD_SEND_MOUSE:
+				len = ClientDispatchSendMouse(len);
+				break;
+
 			case TEST_CMD_SYNC:
 				len = ClientDispatchSync(len);
+				break;
+			case TEST_CMD_SEND_RAW:
+				len = ClientDispatchSendRaw(len);
 				break;
 
 			default:
@@ -246,6 +255,25 @@ size_t TestController::ClientDispatchSendKey(size_t len)
 	return 0;
 }
 
+// button_state is authoritative — the `pressed` field in TestRequestSendMouse is
+// informational only and not read here. The Go harness drives press/release by
+// sending button_state with the bit set, then 0 on release.
+size_t TestController::ClientDispatchSendMouse(size_t len)
+{
+	if (len < sizeof(TestRequestSendMouse)) {
+		throw std::runtime_error(StrPrintf("len=%lu < sizeof(TestRequestSendMouse)", (unsigned long)len));
+	}
+	INPUT_RECORD ir{};
+	ir.EventType = MOUSE_EVENT;
+	ir.Event.MouseEvent.dwMousePosition.X = (SHORT)(int16_t)_buf.req_send_mouse.x;
+	ir.Event.MouseEvent.dwMousePosition.Y = (SHORT)(int16_t)_buf.req_send_mouse.y;
+	ir.Event.MouseEvent.dwButtonState = _buf.req_send_mouse.button_state;
+	ir.Event.MouseEvent.dwControlKeyState = _buf.req_send_mouse.control_key_state;
+	ir.Event.MouseEvent.dwEventFlags = _buf.req_send_mouse.event_flags;
+	g_winport_con_in->Enqueue(&ir, 1);
+	return 0;
+}
+
 //
 class TestSyncEvent : public Event
 {
@@ -285,4 +313,24 @@ size_t TestController::ClientDispatchSync(size_t len)
 	_buf.rep_sync.waited = waited ? 1 : 0;
 	ev->Deref();
 	return sizeof(_buf.rep_sync);
+}
+
+size_t TestController::ClientDispatchSendRaw(size_t len)
+{
+	if (len < sizeof(uint32_t) * 2) {
+		throw std::runtime_error(StrPrintf("len=%lu < header for TEST_CMD_SEND_RAW", (unsigned long)len));
+	}
+	const uint32_t data_len = _buf.req_send_raw.len;
+	if (data_len > sizeof(_buf.req_send_raw.data)) {
+		throw std::runtime_error(StrPrintf("data_len=%u too large", data_len));
+	}
+	if (len < sizeof(uint32_t) * 2 + data_len) {
+		throw std::runtime_error(StrPrintf("len=%lu < header + data_len=%lu",
+			(unsigned long)len, (unsigned long)(sizeof(uint32_t) * 2 + data_len)));
+	}
+	// Write raw bytes directly to the PTY master via VTShell::InjectRawInput.
+	// This bypasses both the TTYInput parser (which intercepts escape sequences)
+	// and the g_winport_con_in routing (which may deliver to the wrong reader).
+	VTShell_InjectRawInput(_buf.req_send_raw.data, data_len);
+	return 0;
 }

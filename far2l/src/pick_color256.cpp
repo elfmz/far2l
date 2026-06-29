@@ -932,9 +932,9 @@ static bool PickColor256DialogInner(uint32_t *color, bool bCentered)
 	DialogDataEx ColorRGBDlgData[] = {
 
 		{DI_DOUBLEBOX, 3, 1, 70, 25, {}, 0, Msg::SetColorTitle},
-		{DI_TEXT,  0, 14, 0, 14, {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,  0, 17, 0, 17, {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,  0, 23, 0, 23, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,  0, 14, 0, 14, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
+		{DI_TEXT,  0, 17, 0, 17, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
+		{DI_TEXT,  0, 23, 0, 23, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 
 		{DI_USERCONTROL, 5, 2, 5 + 64 - 1, 2 + 11, {}, 0, L"" },
 		{DI_USERCONTROL, 5, 15, 5 + 64 - 1, 15, {}, 0, L"" },

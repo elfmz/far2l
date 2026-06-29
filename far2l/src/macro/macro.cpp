@@ -664,8 +664,10 @@ void KeyMacro::ReleaseWORKBuffer(BOOL All)
 			Work.MacroWORKCount--;
 			memmove(Work.MacroWORK, ((BYTE *)Work.MacroWORK) + sizeof(MacroRecord),
 					sizeof(MacroRecord) * Work.MacroWORKCount);
-			Work.MacroWORK =
+			MacroRecord *NewMacroWORK =
 					(MacroRecord *)realloc(Work.MacroWORK, sizeof(MacroRecord) * Work.MacroWORKCount);
+			if (NewMacroWORK || Work.MacroWORKCount == 0)
+				Work.MacroWORK = NewMacroWORK;
 		}
 	}
 }
@@ -5831,7 +5833,7 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
 		{DI_TEXT,      5,  4, 35, 4, {}, 0,                       	Msg::DefineMacro     },
 		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L"" },
-		{DI_TEXT,      3,  5, 0,  5, {}, DIF_SEPARATOR,             L""},
+		{DI_TEXT,      3,  5, 0,  5, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),             L""},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
@@ -5965,10 +5967,10 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 		{DI_TEXT,      5,  4, 30, 4, {}, 0, 						Msg::DefineMacroDescription},
 		{DI_EDIT,      32, 4, 67, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
 
-		{DI_TEXT,      3,  5,  0,  5,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_TEXT,      3,  5,  0,  5,  {},  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                                    },
 		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsEnableOutput         },
 		{DI_CHECKBOX,  5,  7,  0,  7,  {},  0,                             Msg::MacroSettingsRunAfterStart        },
-		{DI_TEXT,      3,  8,  0,  8,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_TEXT,      3,  8,  0,  8,  {},  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                                    },
 		{DI_CHECKBOX,  5,  9,  0,  9,  {},  0,                             Msg::MacroSettingsActivePanel          },
 		{DI_CHECKBOX,  7,  10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
 		{DI_CHECKBOX,  7,  11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
@@ -5977,10 +5979,10 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 		{DI_CHECKBOX,  39, 10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
 		{DI_CHECKBOX,  39, 11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
 		{DI_CHECKBOX,  39, 12, 0,  12, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
-		{DI_TEXT,      3,  13, 0,  13, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_TEXT,      3,  13, 0,  13, {},  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                                    },
 		{DI_CHECKBOX,  5,  14, 0,  14, {2}, DIF_3STATE,                    Msg::MacroSettingsCommandLine          },
 		{DI_CHECKBOX,  5,  15, 0,  15, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
-		{DI_TEXT,      3,  16, 0,  16, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_TEXT,      3,  16, 0,  16, {},  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                                    },
 		{DI_BUTTON,    0,  17, 0,  17, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
 		{DI_BUTTON,    0,  17, 0,  17, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
 	};
@@ -6154,10 +6156,8 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec, BOOL NeedAddSendFlag, BOOL IsPlugi
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[0] = MCODE_OP_KEYS;
 
-	if ((MRec->BufferSize + 1) > 2)
+	if (MRec->BufferSize > 0 && MRec->Buffer)
 		memcpy(&NewMacroWORK2.Buffer[IsPluginSend ? 1 : 0], MRec->Buffer, sizeof(DWORD) * MRec->BufferSize);
-	else if (MRec->Buffer)
-		NewMacroWORK2.Buffer[IsPluginSend ? 1 : 0] = (DWORD)(DWORD_PTR)MRec->Buffer;
 
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[NewMacroWORK2.BufferSize + 1] = MCODE_OP_ENDKEYS;

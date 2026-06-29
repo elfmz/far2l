@@ -131,6 +131,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 	PrinterSupportBackendSetter _printer_backend_setter;
+	ShareBackendOptionsBackendSetter _share_backend_setter;
 
 	void GetWinSize(struct winsize &w);
 	void ChooseSimpleClipboardBackend();
@@ -162,6 +163,7 @@ protected:
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleAdhocQuickEdit();
 	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
+	virtual DWORD64 OnConsoleGetTweaks();
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleSaveWindowState();
 	virtual void OnConsoleSetMaximized(bool maximized);

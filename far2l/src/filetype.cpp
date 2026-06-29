@@ -471,7 +471,7 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 			{DI_EDIT,      5, 3,        DlgX - 6, 3,        {(DWORD_PTR)L"Masks"}, DIF_FOCUS | DIF_HISTORY,       L""                  },
 			{DI_TEXT,      5, 4,        0,        4,        {},                    0,                             Msg::FileAssocDescr  },
 			{DI_EDIT,      5, 5,        DlgX - 6, 5,        {},                    0,                             L""                  },
-			{DI_TEXT,      3, 6,        0,        6,        {},                    DIF_SEPARATOR,                 L""                  },
+			{DI_TEXT,      3, 6,        0,        6,        {},                    (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                  },
 			{DI_CHECKBOX,  5, 7,        0,        7,        {1},                   0,                             Msg::FileAssocExec   },
 			{DI_EDIT,      9, 8,        DlgX - 6, 8,        {},                    DIF_EDITPATH,                  L""                  },
 			{DI_CHECKBOX,  5, 9,        0,        9,        {1},                   0,                             Msg::FileAssocAltExec},
@@ -484,7 +484,7 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 			{DI_EDIT,      9, 16,       DlgX - 6, 16,       {},                    DIF_EDITPATH,                  L""                  },
 			{DI_CHECKBOX,  5, 17,       0,        17,       {1},                   0,                             Msg::FileAssocAltEdit},
 			{DI_EDIT,      9, 18,       DlgX - 6, 18,       {},                    DIF_EDITPATH,                  L""                  },
-			{DI_TEXT,      3, DlgY - 4, 0,        DlgY - 4, {},                    DIF_SEPARATOR,                 L""                  },
+			{DI_TEXT,      3, DlgY - 4, 0,        DlgY - 4, {},                    (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                 L""                  },
 			{DI_BUTTON,    0, DlgY - 3, 0,        DlgY - 3, {},                    DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok              },
 			{DI_BUTTON,    0, DlgY - 3, 0,        DlgY - 3, {},                    DIF_CENTERGROUP,               Msg::Cancel          }
 	};

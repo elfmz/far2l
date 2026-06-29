@@ -1593,7 +1593,14 @@ void VMenu::DrawEdges()
 	if (!CheckFlags(VMENU_DISABLEDRAWBACKGROUND) && !CheckFlags(VMENU_LISTBOX)) {
 		if (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX) {
 			SetScreen(X1, Y1, X2, Y2, L' ', Colors[VMenuColorBody]);
+			Hint(X1, Y1, X2, Y2, HintMenu, HintObjectNone);
+			
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
+
+			Hint(X1, Y1, X2, Y1, HintMenu, HintBox);
+			Hint(X1, Y2, X2, Y2, HintMenu, HintBox);
+			Hint(X1, Y1, X1, Y2, HintMenu, HintBox);
+			Hint(X2, Y1, X2, Y2, HintMenu, HintBox);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
 				MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1, SaveScr);
@@ -1610,8 +1617,14 @@ void VMenu::DrawEdges()
 				MakeShadow(X2 + 3, Y1, X2 + 4, Y2 + 2, SaveScr);
 			}
 
-			if (BoxType != NO_BOX)
+			if (BoxType != NO_BOX) {
 				Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
+
+				Hint(X1, Y1, X2, Y1, HintMenu, HintBox);
+				Hint(X1, Y2, X2, Y2, HintMenu, HintBox);
+				Hint(X1, Y1, X1, Y2, HintMenu, HintBox);
+				Hint(X2, Y1, X2, Y2, HintMenu, HintBox);
+			}
 		}
 
 		// SetFlags(VMENU_DISABLEDRAWBACKGROUND);
@@ -1754,6 +1767,13 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 		DrawTitles();
 	}
 
+	Hint(X1, Y1, X2, Y2, HintMenu, HintObjectNone);
+
+	Hint(X1, Y1, X2, Y1, HintMenu, HintBox);
+	Hint(X1, Y2, X2, Y2, HintMenu, HintBox);
+	Hint(X1, Y1, X1, Y2, HintMenu, HintBox);
+	Hint(X2, Y1, X2, Y2, HintMenu, HintBox);
+
 	wchar_t BoxChar[2] = {0};
 
 	switch (BoxType) {
@@ -1810,6 +1830,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 	for (int I = 0; I < TopPos && I < ItemCount; ++I) {
 		if ((Item[I]->Flags & LIF_SEPARATOR) != 0 && ItemIsVisible(Item[I]->Flags))
 			WrappedSeparatorIndex = I;
+
 	}
 
 	if (ForceFrameRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) {
@@ -1833,7 +1854,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 
 				MakeSeparator(SepWidth, TmpStr,
 						BoxType == NO_BOX ? 0
-										: (BoxType == SINGLE_BOX || BoxType == SHORT_SINGLE_BOX ? 2 : 1));
+										: (BoxType == SINGLE_BOX || BoxType == SHORT_SINGLE_BOX ? 13 : 12 /* 2 : 1 */));
 
 				if (I > 0 && I < ItemCount - 1 && SepWidth > 3) {
 					for (unsigned int J = 0; Ptr[J + 3]; J++) {
@@ -1881,6 +1902,8 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					FS << L" " << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
 				}
 
+				Hint(X1, Y, X2, Y, HintMenu, HintLine);
+
 			} else {
 				if (BoxType != NO_BOX) {
 					SetColor(Colors[VMenuColorBox]);
@@ -1895,10 +1918,13 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1, Y);
 
 				FARString strMenuLine;
+				FARString itemText(Item[I]->strName);
+				ReplaceStrings(itemText, L"\r", L"", -1);
+				ReplaceStrings(itemText, L"\n", L"\x21B5", -1);
 
 				int ShowPos =
-						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
+						HiFindRealPos(itemText, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+				FARString strMItemPtr(itemText.CPtr() + ShowPos);
 				const int strMItemPtrLen = CheckFlags(VMENU_SHOWAMPERSAND)
 					? static_cast<int>(strMItemPtr.CellsCount())
 					: HiStrCellsCount(strMItemPtr);
@@ -1928,8 +1954,13 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				if (Item[I]->Flags & LIF_CHECKED) {
 					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF)
 						? Item[I]->Flags & 0xFFFF
-						: (Opt.NoGraphics ? 0x002A /*L'*'*/ : 0x221A /*L'√'*/));
+						: (Opt.NoGraphics ? 0x002A /*L'*'*/ : 
+							( Opt.Backend.UseModernLook 
+								? L'√'  //  ✔  
+								: 0x221A /*L'√'*/) ));
 				}
+
+				// VK: todo: play with colors here
 
 				uint64_t Col;
 				if ((Item[I]->Flags & LIF_SELECTED))
@@ -1941,6 +1972,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 
 				SetColor(Col);
 				Text(CheckMark);
+				
 				// табуляции меняем только при показе!!!
 				// для сохранения оригинальной строки!!!
 				ReplaceTabsBySpaces(strMenuLine, 1);
@@ -1994,6 +2026,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + 1 + MaxLineWidth, Y);
 					BoxText(L'\xbb');	// '>>'
 				}
+				Hint(X1 + 1, Y, X2 - 1, Y, HintMenu, HintText, (Item[I]->Flags & LIF_SELECTED) /*focus*/, false /*hover*/, (Item[I]->Flags & LIF_DISABLE) /*disabled*/, (Item[I]->Flags & LIF_CHECKED));
 			}
 		} else {
 			if (BoxType != NO_BOX) {
@@ -2021,6 +2054,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 			ScrollBarEx(X2, Y1 + 1, Y2 - Y1 - 1, VisualTopPos, GetShowItemCount());
 		else
 			ScrollBarEx(X2, Y1, Y2 - Y1 + 1, VisualTopPos, GetShowItemCount());
+		Hint(X2, Y1 + 1, X2, Y2 - 1, HintMenu, HintScrollBar);
 	}
 
 	if ( (ForceFrameRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) && !CheckFlags(VMENU_LISTBOX)) {

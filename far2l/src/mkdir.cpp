@@ -108,9 +108,9 @@ void ShellMakeDir(Panel *SrcPanel)
 		{DI_DOUBLEBOX, 3, 1, 72, 8, {}, 0, Msg::MakeFolderTitle},
 		{DI_TEXT,      5, 2, 0,  2, {}, 0, Msg::CreateFolder },
 		{DI_EDIT,      5, 3, 70, 3, {(DWORD_PTR)L"NewFolder"}, DIF_FOCUS | DIF_EDITEXPAND | DIF_HISTORY | DIF_USELASTHISTORY | DIF_EDITPATH, L""},
-		{DI_TEXT,      0, 4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      0, 4, 0,  4, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_CHECKBOX,  5, 5, 0,  5, {(DWORD_PTR)Opt.MultiMakeDir}, 0, Msg::MultiMakeDir},
-		{DI_TEXT,      0, 6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      0, 6, 0,  6, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};

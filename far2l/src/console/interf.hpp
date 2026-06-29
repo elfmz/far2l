@@ -94,6 +94,12 @@ void TextEx(const WCHAR *Str, size_t Length = (size_t)-1);
 void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
 void HiText(const WCHAR *Str, uint64_t HiColor, int isVertText = 0);
+
+void Hint(int X1, int Y1, int X2, int Y2, HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool checked = false, bool defaultCtrl = false, bool bevel = false);
+void HintAt(HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool checked = false, bool defaultCtrl = false, bool bevel = false);
+void HintBeginContainer();
+void HintEndContainer();
+
 void mprintf(const wchar_t *fmt, ...);
 void vmprintf(const wchar_t *fmt, ...);
 void PutText(int X1, int Y1, int X2, int Y2, const void *Src);
@@ -106,6 +112,13 @@ void MakeShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss = NULL);
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color);
 void SetColor(uint64_t Color, bool ApplyToConsole = false);
 void SetFarColor(uint16_t Color, bool ApplyToConsole = false);
+
+void SetFarColor(uint16_t Color, bool Focus, bool Hover, bool Pressed, bool Selected);
+uint64_t SoftenItemColor(uint64_t attributes, int Focus, int Hover, int Pressed, int Selected);
+uint64_t GetAccentColors(uint64_t attributes);
+uint64_t GetLinkColor(uint64_t attributes);
+bool IsWxBackend();
+
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb, bool used);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb);
 void FarTrueColorFromAttributes(FarTrueColorForeAndBack &TFB, DWORD64 Attrs);

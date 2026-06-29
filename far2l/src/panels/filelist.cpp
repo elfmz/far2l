@@ -3309,7 +3309,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 		{DI_CHECKBOX,  5, 3, 49, 3, {(DWORD_PTR)Opt.SelectFolders}, 0, Msg::SelectFolders},
 		{DI_CHECKBOX,  5, 4, 49, 4, {(DWORD_PTR)Opt.PanelCaseSensitiveCompareSelect}, 0, Msg::SelectCase},
 		{DI_TEXT,      4, 5, 50,  5, {}, DIF_DISABLE | DIF_CENTERTEXT, Msg::SelectNote},
-		{DI_TEXT,      0, 6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      0, 6, 0,  6, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::SelectFilter},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}

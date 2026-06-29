@@ -43,6 +43,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "config.hpp"
 #include "ConfigRW.hpp"
+#include "farcolors.hpp"
+
+#include "vmenu.hpp"
+
+// 3 columns, 2 columns keys first, 2 columns keys last
+#define VIEW_MODE	0
 
 KeyBar::KeyBar()
 	:
@@ -52,6 +58,10 @@ KeyBar::KeyBar()
 	memset(KeyTitles, 0, sizeof(KeyTitles));
 	memset(KeyCounts, 0, sizeof(KeyCounts));
 	memset(RegKeyTitles, 0, sizeof(RegKeyTitles));
+
+	for (int i = 0; i < KEY_COUNT; i++) Hover[i] = 0;
+	for (int i = 0; i < KEY_COUNT; i++) xPos[i] = -1;
+	SandwichHover = 0;
 }
 
 void KeyBar::SetOwner(ScreenObject *Owner)
@@ -81,65 +91,94 @@ void KeyBar::DisplayObject()
 	RefreshObject(true);
 }
 
+int KeyBar::GetGroup(int alt, int shift, int ctrl, int meta) {
+	if (alt && shift && ctrl){ 
+		if (!(Opt.CASRule & 1) || !(Opt.CASRule & 2))
+			return KBL_CTRLALTSHIFT;
+		return KBL_MAIN;
+	}
+
+	if (alt && !shift && ctrl) return KBL_CTRLALT;
+	if (alt && shift && !ctrl) return KBL_ALTSHIFT;
+	if (!alt && shift && ctrl) return KBL_CTRLSHIFT;
+
+	if (alt && !shift && !ctrl) return KBL_ALT;
+	if (!alt && !shift && ctrl) return KBL_CTRL;
+	if (!alt && shift && !ctrl) return KBL_SHIFT;
+
+	return KBL_MAIN;
+}
+
+// у маков можно значки стащить ⌥ ⌘ ^ ⇧ но они караул мелкие
+#define MAC_CHARS	0
+#ifdef APPLE
+#define MAC_CHARS	1
+#endif
+
+std::wstring KeyBar::GetKeyName(int idx, int group) 
+{
+	static const wchar_t* prefixes[] = {
+#if MAC_CHARS
+		L"",
+		L"⇧",    // L"Shift+",
+		L"^",    // L"Ctrl+",
+		L"⌥",    // L"Alt+",
+		L"^⇧",   // L"Ctrl+Shift+",
+		L"⌥⇧",   // L"Alt+Shift+",
+		L"^⌥",   // L"Ctrl+Alt+",
+		L"^⌥⇧",  // L"Ctrl+Alt+Shift+",
+#else
+		L"",
+		L"Shift+",
+		L"Ctrl+",
+		L"Alt+",
+		L"Ctrl+Shift+",
+		L"Alt+Shift+",
+		L"Ctrl+Alt+",
+		L"Ctrl+Alt+Shift+",
+#endif
+	};
+	return std::wstring(prefixes[group]) + std::wstring(L"F") + std::to_wstring(idx + 1);
+}
+
+FarKey KeyBar::BuildShortcut(int group, int key) {
+	static const FarKey prefixes[] = {
+		KEY_F1,
+		KEY_SHIFTF1,
+		KEY_CTRLF1,
+		KEY_ALTF1,
+		KEY_CTRLSHIFTF1,
+		KEY_ALTSHIFTF1,
+		KEY_CTRLSHIFTF1,
+		KEY_CTRLSHIFTF1 | KEY_ALT,
+	};
+	return (prefixes[group]) + key;
+}
+
 void KeyBar::RefreshObject(bool Render)
 {
+	AltState = AltPressed && (!CtrlPressed || !ShiftPressed); // C-A-S is a specific case
+	CtrlState = CtrlPressed;
+	ShiftState = ShiftPressed;
+
+	int group = GetGroup(AltPressed, ShiftPressed, CtrlPressed, 0);
+
+	int KeyWidth = (X2 - X1 - 1) / 12;
+	if (KeyWidth < 8) KeyWidth = 8;
+	if (KeyWidth > 11) KeyWidth = 11;
+	int LabelWidth = KeyWidth - 2;
+
 	if (Render)
 		GotoXY(X1, Y1);
 
-	AltState = CtrlState = ShiftState = 0;
-	int KeyWidth = (X2 - X1 - 1) / 12;
-
-	if (KeyWidth < 8)
-		KeyWidth = 8;
-
-	int LabelWidth = KeyWidth - 2;
-
 	bool FKeyTitlesChanged = false;
 	for (int i = 0; i < KEY_COUNT; i++) {
-		const wchar_t *Label = L"";
+		const wchar_t *Label = KeyTitles[group][i];
 
-		if (ShiftPressed) {
-			ShiftState = ShiftPressed;
+		if (Render) xPos[i] = -1;
+		if (Opt.Backend.UseModernLook && (!Label || !*Label)) continue;
 
-			if (CtrlPressed) {
-				CtrlState = CtrlPressed;
-
-				if (!AltPressed)	// Ctrl-Alt-Shift - это особый случай :-)
-				{
-					if (i < KeyCounts[KBL_CTRLSHIFT])
-						Label = KeyTitles[KBL_CTRLSHIFT][i];
-				} else if (!(Opt.CASRule & 1) || !(Opt.CASRule & 2)) {
-					if (i < KeyCounts[KBL_CTRLALTSHIFT])
-						Label = KeyTitles[KBL_CTRLALTSHIFT][i];
-				}
-			} else if (AltPressed) {
-				if (i < KeyCounts[KBL_ALTSHIFT])
-					Label = KeyTitles[KBL_ALTSHIFT][i];
-
-				AltState = AltPressed;
-			} else {
-				if (i < KeyCounts[KBL_SHIFT])
-					Label = KeyTitles[KBL_SHIFT][i];
-			}
-		} else if (CtrlPressed) {
-			CtrlState = CtrlPressed;
-
-			if (AltPressed) {
-				if (i < KeyCounts[KBL_CTRLALT])
-					Label = KeyTitles[KBL_CTRLALT][i];
-
-				AltState = AltPressed;
-			} else {
-				if (i < KeyCounts[KBL_CTRL])
-					Label = KeyTitles[KBL_CTRL][i];
-			}
-		} else if (AltPressed) {
-			AltState = AltPressed;
-
-			if (i < KeyCounts[KBL_ALT])
-				Label = KeyTitles[KBL_ALT][i];
-		} else if (i < KeyCounts[KBL_MAIN] && !(DisableMask & (1 << i)))
-			Label = KeyTitles[KBL_MAIN][i];
+		std::wstring keyLabel = Render && Label && *Label && Opt.Backend.UseModernLook ? GetKeyName(i, group) : L"";
 
 		if (i >= (int)PrevFKeyTitles.size() || PrevFKeyTitles[i] != Label) {
 			FKeyTitlesChanged = true;
@@ -149,26 +188,71 @@ void KeyBar::RefreshObject(bool Render)
 				PrevFKeyTitles[i] = Label;
 		}
 
-		if (Render && WhereX() + LabelWidth < X2) {
-			SetFarColor(COL_KEYBARNUM);
-			FS << i + 1;
-			SetFarColor(COL_KEYBARTEXT);
-			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(LabelWidth) << Label;
+		wchar_t labelHolder[128];
+		wcscpy(labelHolder, Label);
+		wchar_t* q = wcschr(labelHolder, L' ');
+		if(q) *q = 0;
 
-			if (i < KEY_COUNT - 1) {
-				SetFarColor(COL_KEYBARBACKGROUND);
-				Text(L" ");
+		if (Opt.Backend.UseModernLook && Render) 
+			LabelWidth = wcslen(/*Hover[i] ? Label :*/ labelHolder) + 3 + wcslen(keyLabel.c_str());
+
+		if (Render && WhereX() + LabelWidth + (Opt.Backend.UseModernLook ? (int)strExtra.GetLength() : 0) < X2) {
+			xPos[i] = WhereX();
+			if (!Opt.Backend.UseModernLook) {
+				SetFarColor(COL_KEYBARNUM);
+				FS << i + 1;
+
+				SetFarColor(COL_KEYBARTEXT);
+				FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(LabelWidth) << Label;
+
+				if (i < KEY_COUNT - 1) {
+					SetFarColor(COL_KEYBARBACKGROUND);
+					Text(L" ");
+				}
 			}
+			else {
+				uint64_t color1 = SoftenItemColor(FarColorToReal(COL_KEYBARNUM), 0, Hover[i], 0, 0);
+				uint64_t color2 = SoftenItemColor(FarColorToReal(COL_KEYBARTEXT), 0, Hover[i], 0, 0);
+
+				if (i == 0) {
+					SetColor(SoftenItemColor(FarColorToReal(COL_KEYBARTEXT), 0, SandwichHover, 0, 0));
+					FS << L"🦊☰";
+					xPos[i] = WhereX();
+				}
+				SetColor(color2);
+				//FS << L"┋";
+
+				SetColor(color1);
+				FS << keyLabel.c_str();
+				SetColor(color2);
+				FS << L" ";
+				FS << (/*Hover[i] ? Label :*/ labelHolder);
+				FS << L" ";
+			}
+			xPos[i + 1] = WhereX();
 		}
 	}
 
 	if (Render) {
 		int Width = X2 - WhereX() + 1;
-
-		if (Width > 0) {
-			SetFarColor(COL_KEYBARTEXT);
-			FS << fmt::Cells() << fmt::Expand(Width) << L"";
+		if (!Opt.Backend.UseModernLook) {
+    		if (Width > 0) {
+    			SetFarColor(COL_KEYBARTEXT);
+    			FS << fmt::Cells() << fmt::Expand(Width) << L"";
+    		}
 		}
+		else {
+    		if (Width > 0) {
+            	int extraLen = strExtra.GetLength();
+                if (extraLen < Width - 2) extraLen = Width - 2;
+    			SetFarColor(COL_KEYBARTEXT);
+    			// FS << L"┋ ";
+                SetFarColor(COL_KEYBARBACKGROUND);
+    			FS << fmt::Cells() << fmt::RightAlign() << fmt::Size(extraLen) << strExtra << L" ";
+    		}
+		}
+
+		Hint(X1, Y1, X2, Y2, HintKeyBar, HintObjectNone);
 	}
 
 	if (FKeyTitlesChanged) {
@@ -302,19 +386,103 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (!IsVisible())
 		return FALSE;
 
-	if (!(MouseEvent->dwButtonState & 3) || MouseEvent->dwEventFlags)
+   	int MsX = MouseEvent->dwMousePosition.X;
+
+	if (Opt.Backend.UseModernLook) {
+    	bool needsRedraw = SandwichHover != (MsX <= 2);
+
+        // out oif key bar
+    	if (MsX < X1 || MsX > X2 || MouseEvent->dwMousePosition.Y != Y1) {
+    		for (int i = 0; i < KEY_COUNT; i++){ 
+    			if (Hover[i]) needsRedraw = true;
+    			Hover[i] = 0;
+    		}
+    		SandwichHover = 0;
+    		if (needsRedraw && Opt.Backend.UseModernLook) Redraw();
+    		return FALSE;
+    	}
+
+    	// Hover effect
+    	if (MouseEvent->dwEventFlags == MOUSE_MOVED) {
+    		int i, j;
+
+    		SandwichHover = MsX <= 2;
+    		for (i = 0; i < KEY_COUNT; i++) {
+    			if (xPos[i] < 0) continue;
+    			for(j = i + 1; j < KEY_COUNT && xPos[j] < 0; ++j);
+
+    			if (MsX >= xPos[i] && MsX < xPos[j] ) {
+    				if (!Hover[i]) needsRedraw = true;
+    				Hover[i] = 1;
+    			}
+    			else {
+    				Hover[i] = 0; // hiddeen means no repaints
+    			}
+    		}
+
+    		if (needsRedraw) {
+    			Redraw();
+    			return TRUE;
+    		}
+    	}
+	}
+
+	// out of region and no click
+	if (MsX < X1 || MsX > X2 || MouseEvent->dwMousePosition.Y != Y1)
+		return FALSE;
+	if (!(MouseEvent->dwButtonState & 3) || MouseEvent->dwEventFlags) 
 		return FALSE;
 
-	if (MouseEvent->dwMousePosition.X < X1 || MouseEvent->dwMousePosition.X > X2
-			|| MouseEvent->dwMousePosition.Y != Y1)
+	// Now click: just fire events, no magic like below
+	if (Opt.Backend.UseModernLook) {
+		int i, j;
+		if (MsX <= 2) {
+			ShowContextMenu();
+			Redraw();
+			return TRUE;
+		}
+
+		for (i = 0; i < KEY_COUNT; i++) {
+			if (xPos[i] < 0) continue;
+			for(j = i + 1; j < KEY_COUNT && xPos[j] < 0; ++j);
+			if (xPos[i] <= MsX && xPos[j] >= MsX ) {
+				// i is our position, fire the key
+				Key = i;
+
+                if (MouseEvent->dwControlKeyState & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)
+                		|| (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)) {
+                	if (MouseEvent->dwControlKeyState & SHIFT_PRESSED)
+                		Key += KEY_ALTSHIFTF1;
+                	else if (MouseEvent->dwControlKeyState & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED))
+                		Key += KEY_CTRLALTF1;
+                	else
+                		Key += KEY_ALTF1;
+                } 
+                else if (MouseEvent->dwControlKeyState & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) {
+                	if (MouseEvent->dwControlKeyState & SHIFT_PRESSED)
+                		Key += KEY_CTRLSHIFTF1;
+                	else
+                		Key += KEY_CTRLF1;
+                } 
+                else if (MouseEvent->dwControlKeyState & SHIFT_PRESSED)
+                	Key += KEY_SHIFTF1;
+                else
+                	Key += KEY_F1;
+
+                FrameManager->ProcessKey(Key);
+                Redraw();
+                return TRUE;
+			}
+		}
 		return FALSE;
+	}
 
 	int KeyWidth = (X2 - X1 - 1) / 12;
 
 	if (KeyWidth < 8)
 		KeyWidth = 8;
 
-	int X = MouseEvent->dwMousePosition.X - X1;
+	int X = MsX - X1;
 
 	if (X < KeyWidth * 9)
 		Key = X / KeyWidth;
@@ -382,3 +550,108 @@ void KeyBar::SetDisableMask(int Mask)
 }
 
 void KeyBar::ResizeConsole() {}
+
+static const wchar_t* GetDescriptionFromLabelIf(const wchar_t* label) {
+#if VIEW_MODE > 0
+ 	const wchar_t* q = wcschr(label, L' ');
+ 	if (q) {
+ 		while(*q && *q == L' ') ++q;
+ 		if (!*q) q = 0;
+ 	}
+    return q ? q : label;
+#else
+    return label;
+#endif
+}
+
+void KeyBar::ShowContextMenu() 
+{
+	int pos = 0;
+	int cnt = 0;
+	int width = 10;
+	int keywidth = 5;
+
+	// count list size and widths
+	for (int j = 0; j < KBL_GROUP_COUNT; ++j) {
+		for (int i = 0; i < KEY_COUNT; i++) {
+			const wchar_t *Label = KeyTitles[j][i];
+			if (!Label || !*Label) continue;
+            ++cnt;
+
+            Label = GetDescriptionFromLabelIf(Label);
+            width = std::max(width, (int)wcslen(Label) + 5);
+
+            std::wstring keyLabel = GetKeyName(i, j);
+            keywidth = std::max(keywidth, (int)keyLabel.size() + 5);
+		}
+	}
+
+	// prepare texts
+	std::vector<std::wstring> labels;
+	for (int j = 0; j < KBL_GROUP_COUNT; ++j) {
+		for (int i = 0; i < KEY_COUNT; i++) {
+			const wchar_t *Label = KeyTitles[j][i];
+			if (!Label || !*Label) continue;
+
+            Label = GetDescriptionFromLabelIf(Label);
+
+			std::wstring label = Label;
+			std::wstring keyLabel = GetKeyName(i, j);
+
+#if VIEW_MODE == 0 || VIEW_MODE == 2
+			std::wstring s = label;
+    		if (s.size() < (size_t)width) s.resize(width, L' ');
+    		s += keyLabel;
+#else
+			std::wstring s = keyLabel;
+    		if (s.size() < (size_t)keywidth) s.resize(keywidth, L' ');
+    		s += label;
+#endif
+
+			labels.push_back(s);
+		}
+	}
+
+	// std::sort(labels.begin(), labels.end());
+
+	// now we ready to fill menus
+	MenuDataEx Groups[cnt];
+	for (int j = 0; j < KBL_GROUP_COUNT; ++j) {
+		for (int i = 0; i < KEY_COUNT; i++) {
+			const wchar_t *Label = KeyTitles[j][i];
+			if (!Label || !*Label) continue;
+
+			Groups[pos] = {	labels[pos].c_str(), 0, BuildShortcut(j, i) };
+            ++pos;
+		}
+	}
+	int GroupsLen = cnt;
+
+	FarKey key = 0;
+	{
+		int GroupsCode;
+		VMenu GroupsMenu(L"", Groups, GroupsLen, 0);
+
+		for (;;) {
+			GroupsMenu.SetPosition(3, std::max(Y1 - GroupsLen - 3, 2), 0, 0);
+			GroupsMenu.SetFlags(VMENU_WRAPMODE | VMENU_NOTCHANGE);
+			GroupsMenu.ClearDone();
+			GroupsMenu.Process();
+
+			if ((GroupsCode = GroupsMenu.Modal::GetExitCode()) < 0)
+				break;
+
+			if (GroupsCode < 0 || GroupsCode >= GroupsLen) break;
+
+			key = Groups[GroupsCode].AccelKey;
+			break;
+		}
+	}
+
+	if (key) {
+		FrameManager->ProcessKey(key);
+		if (key == KEY_F9){ 
+			FrameManager->ProcessKey(KEY_DOWN);
+		}
+	}
+}

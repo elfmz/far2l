@@ -714,6 +714,7 @@ void Help::FastShow()
 void Help::DrawWindowFrame()
 {
 	SetScreen(X1, Y1, X2, Y2, L' ', FarColorToReal(COL_HELPTEXT));
+	Hint(X1, Y1, X2, Y2, HintHelpViewer, HintObjectNone);
 	Box(X1, Y1, X2, Y2, FarColorToReal(COL_HELPBOX), DOUBLE_BOX);
 	SetFarColor(COL_HELPBOXTITLE);
 	FARString strHelpTitleBuf;

@@ -54,8 +54,8 @@ class ConsoleOutput : public IConsoleOutput
 
 	void LockedChangeIdUpdate();
 
-	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area);
-	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
+	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area, HintContainerType, HintObjectType);
+	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos, HintContainerType, HintObjectType);
 	void DenoteExplicitLineWrap(COORD pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 
@@ -96,9 +96,9 @@ public:
 	virtual bool Read(CHAR_INFO &data, COORD screen_pos);
 	virtual bool Write(const CHAR_INFO &data, COORD screen_pos);
 
-	virtual size_t WriteString(const WCHAR *data, size_t count);
-	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos);
-	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
+	virtual size_t WriteString(const WCHAR *data, size_t count, HintContainerType, HintObjectType);
+	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos, HintContainerType, HintObjectType);
+	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos, HintContainerType, HintObjectType);
 	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos);
 
 	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle,
@@ -110,6 +110,7 @@ public:
 
 	virtual void AdhocQuickEdit();
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks);
+	virtual DWORD64 GetConsoleTweaks();
 	virtual void ConsoleChangeFont();
 	virtual void ConsoleSaveWindowState();
 	virtual bool IsActive();

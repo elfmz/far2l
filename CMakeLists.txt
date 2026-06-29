@@ -199,6 +199,7 @@ endif()
 if(CMAKE_VERSION VERSION_GREATER "3.3")
     cmake_policy(SET CMP0063 NEW)
     cmake_policy(SET CMP0057 NEW)
+    cmake_policy(SET CMP0079 NEW)
 endif()
 
 include_directories(utils/include)

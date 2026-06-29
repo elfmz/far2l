@@ -133,10 +133,10 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 		{DI_DOUBLEBOX, 3,  1, 72, 8, {}, 0, Msg::EditTitle},
 		{DI_TEXT,      5,  2, 0,  2, {}, 0, Msg::EditOpenCreateLabel},
 		{DI_EDIT,      5,  3, 70, 3, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
-		{DI_TEXT,      3,  4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,  4, 0,  4, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,      5,  5, 0,  5, {}, 0, Msg::EditCodePage},
 		{DI_COMBOBOX,  25, 5, 70, 5, {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
-		{DI_TEXT,      3,  6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,  6, 0,  6, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
@@ -242,17 +242,17 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage, bool
 		{DI_DOUBLEBOX,   3,  1,  72, 15, {}, 0, Msg::EditTitle},
 		{DI_TEXT,        5,  2,  0,  2,  {}, 0, Msg::EditSaveAs},
 		{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
-		{DI_TEXT,        3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  4,  0,  4,  {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,        5,  5,  0,  5,  {}, 0, Msg::EditCodePage},
 		{DI_COMBOBOX,    25, 5,  70, 5,  {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
 		{DI_CHECKBOX,    5,  6,  0,  6,  {AddSignature}, DIF_DISABLE, Msg::EditAddSignature},
-		{DI_TEXT,        3,  7,  0,  7,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  7,  0,  7,  {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,        5,  8,  0,  8,  {}, 0, Msg::EditSaveAsFormatTitle},
 		{DI_RADIOBUTTON, 5,  9,  0,  9,  {}, DIF_GROUP, Msg::EditSaveOriginal},
 		{DI_RADIOBUTTON, 5,  10, 0,  10, {}, 0, Msg::EditSaveDOS},
 		{DI_RADIOBUTTON, 5,  11, 0,  11, {}, 0, Msg::EditSaveUnix},
 		{DI_RADIOBUTTON, 5,  12, 0,  12, {}, 0, Msg::EditSaveMac},
-		{DI_TEXT,        3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  13, 0,  13, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
@@ -613,7 +613,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 		EditKeyBar.Hide0();
 
 	EditMenuBar = new EditorMenuBar();
-	EditMenuBar->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y1 + (TitleBarVisible ? 1 : 0));
+	EditMenuBar->SetPosition(X1, Y1  /*+ (TitleBarVisible ? 1 : 0)*/, X2, Y1 /*+ (TitleBarVisible ? 1 : 0)*/);
 	// if (!MenuBarVisible) EditMenuBar->Hide0();
 	EditMenuBar->Show();
 
@@ -695,7 +695,7 @@ void FileEditor::Show()
 		m_editor->SetPosition(0, vGap, ScrX, ScrY - (KeyBarVisible ? 1 : 0));
 
 		if (MenuBarVisible) {
-			EditMenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
+			EditMenuBar->SetPosition(0, /*TitleBarVisible ? 1 :*/ 0, ScrX, /*TitleBarVisible ? 1 : */ 0);
 			EditMenuBar->Show();
 		}
 	}
@@ -2077,10 +2077,46 @@ int FileEditor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	// Activate menu bar
 	if (MenuBarVisible) {
-		int pos = TitleBarVisible ? 1 : 0;
-		if (MouseEvent->dwMousePosition.Y == pos && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
+		int pos = /* TitleBarVisible ? 1 : */ 0;
+		if (MouseEvent->dwMousePosition.Y == pos + Y1 && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
 			EditorShellOptions(0, MouseEvent, this);
 			return TRUE;
+		}
+	}
+
+	if (TitleBarVisible && Opt.Backend.UseModernLook) {
+		int pos = MenuBarVisible ? 1 : 0;
+		int MsX = MouseEvent->dwMousePosition.X - X1;
+
+		if (MouseEvent->dwEventFlags == MOUSE_MOVED) {
+			if (MouseEvent->dwMousePosition.Y != pos + Y1) {
+				if (TabHovered) {
+					TabHovered = 0;
+					ShowStatus();
+				}
+			}
+			else {
+				for(int i = 0; i < (int)tabPos.size(); ++i) {
+					if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
+						TabHovered = i + 1;
+						ShowStatus();
+						// return TRUE;
+					}
+				}
+			}
+		}
+
+		if ((MouseEvent->dwButtonState & 3) && MouseEvent->dwMousePosition.Y == pos + Y1) {
+			for(int i = 0; i < (int)tabPos.size(); ++i) {
+				if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
+					Frame* editor = FrameManager->getWindowByTypeAndIndex(MODALTYPE_EDITOR, i);
+					if (editor) {
+						FrameManager->ActivateFrame(editor);
+						ShowStatus();
+						return TRUE;
+					}
+				}
+			}
 		}
 	}
 
@@ -2109,8 +2145,10 @@ void FileEditor::ShowConsoleTitle()
 
 void FileEditor::SetScreenPosition()
 {
+	Hint(X1, Y1, X2, Y2, HintEditor, HintObjectNone);
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
+		Hint(0, 0, ScrX, ScrY, HintEditor, HintObjectNone);
 	}
 	if (m_editor) {
 		int newY1 = Y1 + (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);
@@ -2311,7 +2349,7 @@ void FileEditor::ShowStatus()
 		return;
 
 	SetFarColor(COL_EDITORSTATUS);
-	GotoXY(X1, Y1);		//??
+	GotoXY(X1, Y1 + (MenuBarVisible ? 1 : 0));		//??
 	FARString strLineStr;
 	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
@@ -2353,17 +2391,21 @@ void FileEditor::ShowStatus()
 	FARString strWrapMode;
 	if (m_editor->GetWordWrap())
 	{
-		strWrapMode = L"WW ";
-	}
+		strWrapMode = /*Opt.Backend.UseModernLook ? L"\x21AB\x2140" :*/ L"WW ";
+	}                                                  
+
 	FARString strTabMode;
-	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
+	strTabMode.Format(L"%ls%d", m_editor->GetConvertTabs() 
+		? (/*Opt.Backend.UseModernLook ? L"\x21AD" :*/ L"S")
+		: (/*Opt.Backend.UseModernLook ? L"\x21F0" :*/ L"T"), 
+		m_editor->GetTabSize());
 
 	FARString str_codepage;
 	ShortReadableCodepageName(m_codepage,str_codepage);
 	FormatString FString;
 	FString << fmt::Cells() << fmt::LeftAlign()
-			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*' : L' ')
-			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-' : L' ')
+			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? (Opt.Backend.UseModernLook ? L'★' : L'*') : L' ')
+			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ?(Opt.Backend.UseModernLook ? L'🔒' : L'-') : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strWrapMode << strTabMode << L' '
 			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << str_codepage << L' '
 			<< fmt::Expand(7) << Msg::EditStatusLine << L' '
@@ -2383,11 +2425,51 @@ void FileEditor::ShowStatus()
 		TitleCells = StatusWidth;
 		StrStatus.Clear();
 	}
+
+	tabPos.clear();
+
 	if (TitleCells > 0) {
-		if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
-			TruncStr(strLocalTitle, TitleCells);
+		if (Opt.Backend.UseModernLook) {
+			// list of tabs
+			std::vector<std::wstring> v;
+			FrameManager->enumerateWindowsByType(v, MODALTYPE_EDITOR);
+
+			for(int i = 0; i < (int)v.size(); ++i) {
+				if (TitleCells <= 5) break;
+
+				bool active = v[i] == strLocalTitle.CPtr();
+				uint64_t color2 = SoftenItemColor(FarColorToReal(COL_EDITORSTATUS), active ? 1 : 0, i + 1 == TabHovered, active ? 0 : 1, 0);
+				SetColor(color2);
+
+				FARString strTab = v[i];
+				int len = v.size() > 1 ? std::min(15, (int)strTab.CellsCount()) : (int)strTab.CellsCount();
+				if (strTab.CellsCount() > (size_t)len) TruncStr(strTab, len);
+
+				tabPos.push_back({ strTab, WhereX(), (int)strTab.CellsCount() });
+
+				// case with many tabs and status under clock
+				int left = TitleCells - (len + 1 + (i > 0 ? 1 : 0));
+				if (left < 0) {
+					TruncStr(strTab, len + left);
+				}
+
+				if(i > 0) FS << L"║";
+				FS << (active ? L"📜" : L"📝");
+				FS << strTab;
+
+				TitleCells -= len + 1 + (i > 0 ? 1 : 0) ;
+			}
+
+			SetFarColor(COL_EDITORSTATUS);
+			if (TitleCells > 0) FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << L" ";
+			FS << StrStatus;
 		}
-		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
+		else {
+			if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
+				TruncStr(strLocalTitle, TitleCells);
+			}
+			FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
+		}
 	}
 
 	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
@@ -2395,6 +2477,15 @@ void FileEditor::ShowStatus()
 			Text(X2 - 5, Y1, FarColorToReal(COL_EDITORTEXT), L" ");
 		}
 		ShowTime(FALSE);
+	}
+
+	if(Opt.Backend.UseModernLook && KeyBarVisible) {
+		FARString extra;
+		extra.Format(L"%c%d %d/%d ", 
+			(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'★' : L' '),
+			m_editor->CurLine->GetCellCurPos() + 1, 
+			m_editor->NumLine + 1, m_editor->NumLastLine).Append(str_codepage);
+		EditKeyBar.Extra(extra);
 	}
 }
 
@@ -2924,7 +3015,7 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 }
 
 int FileEditor::MenuBarPosition() {
-	return TitleBarVisible && MenuBarVisible ? 1 : 0;
+	return /*TitleBarVisible && MenuBarVisible ? 1 : */ 0;
 }
 
 int FileEditor::IsOptionActive(int hMenu, int vMenu) {

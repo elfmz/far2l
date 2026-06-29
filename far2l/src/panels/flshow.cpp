@@ -115,6 +115,7 @@ void FileList::ShowFileList(int Fast)
 	}
 
 	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
+	Hint(X1, Y1, X2, Y2, HintPanel, HintObjectNone);
 	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 
 	if (Opt.ShowColumnTitles) {

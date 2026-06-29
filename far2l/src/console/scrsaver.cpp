@@ -198,6 +198,8 @@ int ScreenSaver(int EnableExit)
 		randomize();
 		SetScreen(0, 0, ScrX, ScrY, L' ', F_LIGHTGRAY | B_BLACK);
 
+		Hint(0, 0, ScrX, ScrY, HintScreenSaver, HintObjectNone);
+
 		for (size_t I = 0; I < ARRAYSIZE(Star); I++) {
 			Star[I].Type = STAR_NONE;
 			Star[I].Color = 0;

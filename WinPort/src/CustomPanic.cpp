@@ -17,7 +17,7 @@ extern "C" {
 		}
 		COORD pos = {0, row};
 		g_winport_con_out->SetAttributes(color | FOREGROUND_INTENSITY);
-		g_winport_con_out->WriteStringAt(wstr.c_str(), wstr.size(), pos);
+		g_winport_con_out->WriteStringAt(wstr.c_str(), wstr.size(), pos, HintPanic, HintText);
 	}
 
 	// this function intended to be called from Panic() function implemented in utils project

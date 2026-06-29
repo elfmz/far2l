@@ -12,7 +12,6 @@ enum class SDLFontDialogStatus
 struct SDLFontSelection
 {
     std::string path;
-    std::string fc_name;
     float point_size{0.0f};
     int face_index{-1};
 };

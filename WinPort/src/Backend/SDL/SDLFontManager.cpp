@@ -10,18 +10,11 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <limits>
-#include <limits.h>
 
 #if !defined(__APPLE__)
 #include <fontconfig/fontconfig.h>
-#endif
-
-#if defined(__APPLE__)
-#include <CoreText/CoreText.h>
-#include <CoreGraphics/CoreGraphics.h>
 #endif
 
 namespace
@@ -132,39 +125,6 @@ static bool ClusterPrefersEmojiPresentation(const std::u32string &cluster)
 }
 
 #if !defined(__APPLE__)
-static bool AppendFontPathFromFontconfigDescriptor(std::vector<std::string> &out, const std::string &descriptor)
-{
-	if (descriptor.empty()) {
-		return false;
-	}
-	FcPattern *pattern = FcNameParse(reinterpret_cast<const FcChar8 *>(descriptor.c_str()));
-	if (!pattern) {
-		return false;
-	}
-	FcConfigSubstitute(nullptr, pattern, FcMatchPattern);
-	FcDefaultSubstitute(pattern);
-	FcResult res = FcResultMatch;
-	FcPattern *font = FcFontMatch(nullptr, pattern, &res);
-	FcPatternDestroy(pattern);
-	if (!font || res != FcResultMatch) {
-		if (font) {
-			FcPatternDestroy(font);
-		}
-		return false;
-	}
-	FcChar8 *file = nullptr;
-	int index = 0;
-	if (FcPatternGetString(font, FC_FILE, 0, &file) != FcResultMatch) {
-		FcPatternDestroy(font);
-		return false;
-	}
-	FcPatternGetInteger(font, FC_INDEX, 0, &index);
-	const std::string descriptor_out = BuildFontPathDescriptor(reinterpret_cast<const char *>(file), index);
-	FcPatternDestroy(font);
-	out.emplace_back(descriptor_out);
-	return true;
-}
-
 static void AppendFontPathFromFontconfigFamily(std::vector<std::string> &out, const std::string &family, bool require_fixed)
 {
 	if (family.empty()) {
@@ -176,7 +136,7 @@ static void AppendFontPathFromFontconfigFamily(std::vector<std::string> &out, co
 	}
 	FcPatternAddString(pattern, FC_FAMILY, reinterpret_cast<const FcChar8 *>(family.c_str()));
 	if (require_fixed) {
-		FcPatternAddBool(pattern, FC_SPACING, FC_MONO);
+		FcPatternAddInteger(pattern, FC_SPACING, FC_MONO);
 	}
 	FcConfigSubstitute(nullptr, pattern, FcMatchPattern);
 	FcDefaultSubstitute(pattern);
@@ -332,83 +292,6 @@ static std::vector<std::string> DefaultFallbackFontCandidates()
 	return out;
 }
 
-static std::vector<std::string> ExtractFontNamesFromDescriptor(const std::string &descriptor)
-{
-	std::vector<std::string> names;
-	std::string trimmed = TrimString(descriptor);
-	if (trimmed.empty()) {
-		return names;
-	}
-	const size_t colon = trimmed.find(':');
-	if (colon != std::string::npos) {
-		const std::string prefix = trimmed.substr(0, colon);
-		if (!prefix.empty()) {
-			names.emplace_back(prefix);
-		}
-		const std::string tail = trimmed.substr(colon + 1);
-		trimmed = TrimString(tail);
-		if (trimmed.empty()) {
-			return names;
-		}
-	}
-
-	const char *face_key = "face=";
-	const size_t face_pos = trimmed.find(face_key);
-	if (face_pos != std::string::npos) {
-		size_t value_start = face_pos + strlen(face_key);
-		size_t value_end = trimmed.find_first_of(",;", value_start);
-		const std::string face = TrimString(trimmed.substr(value_start, value_end - value_start));
-		if (!face.empty()) {
-			names.emplace_back(face);
-			return names;
-		}
-	}
-
-	const size_t last_semicolon = trimmed.find_last_of(';');
-	if (last_semicolon != std::string::npos && last_semicolon + 1 < trimmed.size()) {
-		const std::string tail = TrimString(trimmed.substr(last_semicolon + 1));
-		if (!tail.empty()) {
-			names.emplace_back(tail);
-			return names;
-		}
-	}
-
-	if (!trimmed.empty()) {
-		names.emplace_back(trimmed);
-	}
-	return names;
-}
-
-#if defined(__APPLE__)
-static void AppendFontPathForName(const std::string &name, std::vector<std::string> &out)
-{
-	if (name.empty()) {
-		return;
-	}
-	CFStringRef cf_name = CFStringCreateWithCString(kCFAllocatorDefault, name.c_str(), kCFStringEncodingUTF8);
-	if (!cf_name) {
-		return;
-	}
-	CTFontDescriptorRef desc = CTFontDescriptorCreateWithNameAndSize(cf_name, 0.0);
-	CFRelease(cf_name);
-	if (!desc) {
-		return;
-	}
-	CFURLRef url = static_cast<CFURLRef>(CTFontDescriptorCopyAttribute(desc, kCTFontURLAttribute));
-	CFRelease(desc);
-	if (!url) {
-		return;
-	}
-	char buffer[PATH_MAX];
-	if (CFURLGetFileSystemRepresentation(url, true, reinterpret_cast<UInt8 *>(buffer), sizeof(buffer))) {
-		AppendFontPathIfReadable(out, buffer);
-	}
-	CFRelease(url);
-}
-#else
-static void AppendFontPathForName(const std::string &, std::vector<std::string> &) {}
-#endif
-
 static void AppendFontPathsFromConfig(std::vector<std::string> &out)
 {
 	const std::string config_path = InMyConfig("sdl_font", false);
@@ -433,20 +316,7 @@ static void AppendFontPathsFromConfig(std::vector<std::string> &out)
 			continue;
 		}
 
-#if !defined(__APPLE__)
-		if (AppendFontPathFromFontconfigDescriptor(out, trimmed)) {
-			continue;
-		}
-#endif
-
-		if (AppendFontPathIfReadable(out, trimmed)) {
-			continue;
-		}
-
-		const auto names = ExtractFontNamesFromDescriptor(trimmed);
-		for (const auto &name : names) {
-			AppendFontPathForName(name, out);
-		}
+		AppendFontPathIfReadable(out, trimmed);
 	}
 }
 
@@ -1195,6 +1065,46 @@ bool SaveFontPreference(const std::string &path, int face_index, int point_size)
 	return true;
 }
 
+bool LoadFontPreferenceFromConfig(SDLFontSelection &selection)
+{
+	const std::string config_path = InMyConfig("sdl_font", false);
+	if (config_path.empty()) {
+		return false;
+	}
+
+	std::ifstream file(config_path);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	bool found_font = false;
+	bool found_size = false;
+	std::string line;
+	while (std::getline(file, line)) {
+		const std::string trimmed = TrimString(line);
+		if (trimmed.empty()) {
+			continue;
+		}
+
+		int point_size = 0;
+		if (ExtractFontPointSizeFromLine(trimmed, point_size)) {
+			selection.point_size = static_cast<float>(point_size);
+			found_size = true;
+			continue;
+		}
+
+		if (!found_font) {
+			const FontPathDescriptor desc = ParseFontPathDescriptor(trimmed);
+			if (!desc.path.empty()) {
+				selection.path = ExpandUserPath(desc.path);
+				selection.face_index = desc.face_index;
+				found_font = !selection.path.empty();
+			}
+		}
+	}
+	return found_font || found_size;
+}
+
 bool EnsureFontPreferenceSelected()
 {
 	const std::string config_path = InMyConfig("sdl_font", false);
@@ -1206,15 +1116,13 @@ bool EnsureFontPreferenceSelected()
 	if (status != SDLFontDialogStatus::Chosen) {
 		return false;
 	}
-	const std::string descriptor = selection.fc_name.empty() ? selection.path : selection.fc_name;
-	const int descriptor_face = selection.fc_name.empty() ? selection.face_index : -1;
-	if (descriptor.empty()) {
+	if (selection.path.empty()) {
 		return false;
 	}
 	const int chosen_size = (selection.point_size > 0.0f)
 		? NormalizeFontPointSize(selection.point_size)
 		: kDefaultFontPointSize;
-	return SaveFontPreference(descriptor, descriptor_face, chosen_size);
+	return SaveFontPreference(selection.path, selection.face_index, chosen_size);
 }
 
 int LoadFontPointSizeFromConfig()

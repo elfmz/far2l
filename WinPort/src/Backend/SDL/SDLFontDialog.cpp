@@ -1,5 +1,7 @@
 #include "SDLFontDialog.h"
 
+#include "SDLBackendUtils.h"
+
 #include <SDL.h>
 #include <fontconfig/fontconfig.h>
 #include <ft2build.h>
@@ -8,6 +10,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <cctype>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -21,7 +24,6 @@ struct FontEntry {
     std::string path;
     int face_index{-1};
     std::string label;
-    std::string fc_name;
 };
 
 struct Color {
@@ -227,30 +229,6 @@ static std::vector<FontEntry> CollectFonts()
         entry.path = reinterpret_cast<const char *>(file);
         entry.face_index = index;
         entry.label = std::move(label);
-        if (family) {
-            std::string desc = std::string("fc:") + reinterpret_cast<const char *>(family);
-            if (style) {
-                desc += ":style=";
-                desc += reinterpret_cast<const char *>(style);
-            }
-            int slant = 0;
-            if (FcPatternGetInteger(font, FC_SLANT, 0, &slant) == FcResultMatch) {
-                desc += ":slant=" + std::to_string(slant);
-            }
-            int weight = 0;
-            if (FcPatternGetInteger(font, FC_WEIGHT, 0, &weight) == FcResultMatch) {
-                desc += ":weight=" + std::to_string(weight);
-            }
-            int width = 0;
-            if (FcPatternGetInteger(font, FC_WIDTH, 0, &width) == FcResultMatch) {
-                desc += ":width=" + std::to_string(width);
-            }
-            int spacing = 0;
-            if (FcPatternGetInteger(font, FC_SPACING, 0, &spacing) == FcResultMatch) {
-                desc += ":spacing=" + std::to_string(spacing);
-            }
-            entry.fc_name = std::move(desc);
-        }
         fonts.push_back(std::move(entry));
     }
 
@@ -280,6 +258,44 @@ static int ClampPointSize(int size)
     return size;
 }
 
+static std::string FoldAscii(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return value;
+}
+
+static void SortFontsByLabel(std::vector<FontEntry> &fonts)
+{
+    std::stable_sort(fonts.begin(), fonts.end(), [](const FontEntry &a, const FontEntry &b) {
+        const std::string a_label = FoldAscii(a.label);
+        const std::string b_label = FoldAscii(b.label);
+        if (a_label != b_label) {
+            return a_label < b_label;
+        }
+        if (a.path != b.path) {
+            return a.path < b.path;
+        }
+        return a.face_index < b.face_index;
+    });
+}
+
+static int FindFontEntry(const std::vector<FontEntry> &fonts, const std::string &path, int face_index)
+{
+    if (path.empty()) {
+        return -1;
+    }
+    const std::string expanded_path = ExpandUserPath(path);
+    const std::string &match_path = expanded_path.empty() ? path : expanded_path;
+    for (size_t i = 0; i < fonts.size(); ++i) {
+        if (fonts[i].path == match_path && (face_index < 0 || fonts[i].face_index == face_index)) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
 } // namespace
 
 SDLFontDialogStatus SDLShowFontPicker(SDLFontSelection &selection)
@@ -288,6 +304,7 @@ SDLFontDialogStatus SDLShowFontPicker(SDLFontSelection &selection)
     if (fonts.empty()) {
         return SDLFontDialogStatus::Failed;
     }
+    SortFontsByLabel(fonts);
 
     const int win_w = 720;
     const int win_h = 540;
@@ -320,7 +337,8 @@ SDLFontDialogStatus SDLShowFontPicker(SDLFontSelection &selection)
     }
 
     int point_size = ClampPointSize(static_cast<int>(selection.point_size > 0.0f ? selection.point_size : 18));
-    int selected = 0;
+    const int current = FindFontEntry(fonts, selection.path, selection.face_index);
+    int selected = current >= 0 ? current : 0;
     int scroll = 0;
 
     const int pad = 12;
@@ -486,8 +504,14 @@ SDLFontDialogStatus SDLShowFontPicker(SDLFontSelection &selection)
             const int y = list_y + i * line_h;
             if (idx == selected) {
                 FillRect(surface, 0, y, win_w, line_h, Color{60, 80, 120, 255});
+            } else if (idx == current) {
+                FillRect(surface, 0, y, win_w, line_h, Color{42, 48, 58, 255});
             }
-            RenderText(surface, ui_face, list_x, y, fonts[idx].label, Color{240, 240, 240, 255});
+            std::string label = fonts[idx].label;
+            if (idx == current) {
+                label += "  [current]";
+            }
+            RenderText(surface, ui_face, list_x, y, label, Color{240, 240, 240, 255});
         }
 
         RenderText(surface, ui_face, pad, win_h - footer_h + 10,
@@ -513,9 +537,6 @@ SDLFontDialogStatus SDLShowFontPicker(SDLFontSelection &selection)
     if (status == SDLFontDialogStatus::Chosen) {
         selection.path = fonts[selected].path;
         selection.face_index = fonts[selected].face_index;
-        if (!fonts[selected].fc_name.empty()) {
-            selection.fc_name = fonts[selected].fc_name;
-        }
         selection.point_size = static_cast<float>(point_size);
     }
 

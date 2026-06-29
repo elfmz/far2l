@@ -28,6 +28,7 @@ class ProtocolOptionsAWS : protected BaseDialog
 	int _i_user_agent = -1;
 	int _i_region = -1;
 	int _i_use_path_style = -1;
+	int _i_use_untrusted_ssl = -1;
 	int _i_use_proxy = -1, _i_proxy_host = -1, _i_proxy_port = -1;
 	int _i_auth_proxy = -1, _i_proxy_username = -1, _i_proxy_password = -1;
 
@@ -67,6 +68,9 @@ public:
 
 		_di.NextLine();
 		_i_use_path_style = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MAWSUsePathStyle);
+
+		_di.NextLine();
+		_i_use_untrusted_ssl = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MAWSUseUntrustedSSL);
 
 		_di.NextLine();
 		_i_use_proxy = _di.AddAtLine(DI_CHECKBOX, 5,48, 0, MAWSUseProxy);
@@ -109,6 +113,7 @@ public:
 		TextToDialogControl(_i_user_agent, sc.GetString("UserAgent"));
 		TextToDialogControl(_i_region, sc.GetString("Region"));
 		SetCheckedDialogControl(_i_use_path_style, sc.GetInt("UsePathStyle", 0) != 0);
+		SetCheckedDialogControl(_i_use_untrusted_ssl, sc.GetInt("VerifySSL", 1) == 0);
 		SetCheckedDialogControl( _i_use_proxy, sc.GetInt("UseProxy", 0) != 0);
 		TextToDialogControl(_i_proxy_host, sc.GetString("ProxyHost"));
 		LongLongToDialogControl(_i_proxy_port, sc.GetInt("ProxyPort", 8080));
@@ -125,6 +130,7 @@ public:
 			sc.SetString("Region", str);
 
 			sc.SetInt("UsePathStyle", IsCheckedDialogControl(_i_use_path_style) ? 1 : 0);
+			sc.SetInt("VerifySSL", IsCheckedDialogControl(_i_use_untrusted_ssl) ? 0 : 1);
 
 			sc.SetInt("UseProxy", IsCheckedDialogControl(_i_use_proxy) ? 1 : 0);
 			TextFromDialogControl(_i_proxy_host, str);

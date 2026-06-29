@@ -8,6 +8,7 @@
 #include <neon/ne_auth.h>
 #include <neon/ne_ssl.h>
 #include <neon/ne_uri.h>
+#include <neon/ne_dates.h>
 #include <map>
 #include <algorithm>
 #include <cstring>
@@ -243,6 +244,7 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 	_useragent = options.GetString("UserAgent");
 	_creds.region = options.GetString("Region");
 	_use_path_style = options.GetInt("UsePathStyle", 0) != 0;
+	_verify_ssl = options.GetInt("VerifySSL", 1) != 0;
 	if (_use_path_style && _creds.region.empty()) _creds.region = "us-east-1";
 
 	std::string trimmed_host = Trim(host);
@@ -348,7 +350,11 @@ std::shared_ptr<S3Session> S3Repository::CreateConfiguredSession(const std::stri
 	auto s = std::make_shared<S3Session>();
 	s->sess = ne_session_create(_scheme.c_str(), host.c_str(), _port);
 	if (s->sess) {
-		ne_ssl_set_verify(s->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr);
+		if (_verify_ssl) {
+			ne_ssl_trust_default_ca(s->sess);
+		} else {
+			ne_ssl_set_verify(s->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr);
+		}
 		if (!_proxy_host.empty())
 			ne_session_proxy(s->sess, _proxy_host.c_str(), _proxy_port);
 	}
@@ -581,8 +587,14 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
 			long long size = cl_val.empty() ? 0 : std::stoll(cl_val);
 			AWSFile f(ExtractFileName(path), true);
 			f.size = size;
-			f.modified.tv_sec  = 0;
-			f.modified.tv_nsec = 0;
+			if (!lm_val.empty()) {
+				time_t t = ne_httpdate_parse(lm_val.c_str());
+				f.modified.tv_sec  = (t != (time_t)-1) ? t : 0;
+				f.modified.tv_nsec = 0;
+			} else {
+				f.modified.tv_sec  = 0;
+				f.modified.tv_nsec = 0;
+			}
 			return f;
 		}
 		if (http_status == 404) {

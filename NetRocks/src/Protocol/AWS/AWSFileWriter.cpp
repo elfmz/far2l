@@ -89,11 +89,17 @@ std::string AWSFileWriter::DoRequest(const std::string &method,
 		if (hv) cap.header_value = hv;
 	}
 
+	const ne_status *st = ne_get_status(req);
+	int http_code = st ? st->code : 0;
 	ne_request_destroy(req);
 
 	if (rc != NE_OK) {
 		const char *err = ne_get_error(_session->sess);
 		throw ProtocolError(err ? err : "S3 write request failed");
+	}
+	if (http_code < 200 || http_code >= 300) {
+		throw ProtocolError("S3 HTTP error: " + std::to_string(http_code) +
+		                    " on " + method + " " + path);
 	}
 
 	CheckXmlError(cap.body, method + " " + path);
@@ -246,11 +252,15 @@ void AWSFileWriter::AbortMultipartUpload()
 
 void AWSFileWriter::Write(const void *buf, size_t len)
 {
-	if (len == 0) return;
 	const char *data = reinterpret_cast<const char *>(buf);
-	_buffer.insert(_buffer.end(), data, data + len);
-	if (_buffer.size() >= MAX_PART_SIZE) {
-		FlushPart();
+	while (len > 0) {
+		size_t space = MAX_PART_SIZE - _buffer.size();
+		size_t chunk = std::min(len, space);
+		_buffer.insert(_buffer.end(), data, data + chunk);
+		data += chunk;
+		len -= chunk;
+		if (_buffer.size() >= MAX_PART_SIZE)
+			FlushPart();
 	}
 }
 

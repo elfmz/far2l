@@ -102,9 +102,7 @@ int AWSFileReader::ReadCallback(const char *buf, size_t len)
 		if (_done) return -1;
 		if (len == 0) return 0;
 		if (_buf.size() < (size_t)INTERMEDIATE_BUFFER) {
-			size_t prev = _buf.size();
-			_buf.resize(prev + len);
-			memcpy(&_buf[prev], buf, len);
+			_buf.insert(_buf.end(), buf, buf + len);
 			_cond.notify_all();
 			return 0;
 		}
@@ -116,7 +114,7 @@ size_t AWSFileReader::TryFetch(void *data, size_t len)
 {
 	len = std::min(len, _buf.size());
 	if (len) {
-		memcpy(data, _buf.data(), len);
+		std::copy(_buf.begin(), _buf.begin() + len, static_cast<char *>(data));
 		_buf.erase(_buf.begin(), _buf.begin() + len);
 	}
 	return len;

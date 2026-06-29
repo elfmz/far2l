@@ -322,6 +322,7 @@
 "User agent"
 "Region"
 "Use path-style"
+"Use untrusted SSL"
 "Use proxy"
 "Proxy host"
 "Proxy port"

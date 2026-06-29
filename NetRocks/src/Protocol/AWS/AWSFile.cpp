@@ -9,11 +9,7 @@ timespec AWSFile::FromISO8601(const std::string &s)
 	struct tm tm = {};
 	if (strptime(s.c_str(), "%Y-%m-%dT%H:%M:%S", &tm)) {
 		tm.tm_isdst = 0;
-#ifdef __linux__
 		ts.tv_sec = timegm(&tm);
-#else
-		ts.tv_sec = timegm(&tm);
-#endif
 	}
 	return ts;
 }

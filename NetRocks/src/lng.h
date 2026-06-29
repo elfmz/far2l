@@ -325,6 +325,7 @@ enum LanguageID
 	MAWSUserAgent,
 	MAWSRegion,
 	MAWSUsePathStyle,
+	MAWSUseUntrustedSSL,
 	MAWSUseProxy,
 	MAWSProxyHost,
 	MAWSProxyPort,

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <vector>
+#include <deque>
 #include <mutex>
 #include <condition_variable>
 #include <Threaded.h>
@@ -40,7 +40,7 @@ private:
 	std::string _ne_error;
 	bool        _done = false;
 
-	std::vector<char>       _buf;
+	std::deque<char>        _buf;
 	std::mutex              _mtx;
 	std::condition_variable _cond;
 

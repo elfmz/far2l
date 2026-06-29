@@ -26,6 +26,7 @@ struct S3Session
 	}
 private:
 	S3Session(const S3Session &) = delete;
+	S3Session &operator=(const S3Session &) = delete;
 };
 
 class S3Repository
@@ -96,6 +97,7 @@ private:
 	std::string _proxy_host;
 	unsigned int _proxy_port = 0;
 	bool _use_path_style = false;
+	bool _verify_ssl = true;
 
 	std::map<std::string, std::shared_ptr<S3Session>> _bucket_sessions;
 	std::map<std::string, std::string> _bucket_region_cache;

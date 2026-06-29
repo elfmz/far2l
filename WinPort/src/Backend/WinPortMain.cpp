@@ -12,9 +12,11 @@
 # include <termios.h>
 # include <linux/kd.h>
 # include <linux/keyboard.h>
+# include <sys/prctl.h>
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/ioctl.h>
 # include <sys/kbio.h>
+# include <sys/procctl.h>
 #endif
 
 #include <ScopeHelpers.h>
@@ -560,6 +562,25 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				MakeFDCloexec(std_out);
 				MakeFDCloexec(new_notify_pipe[1]);
 				if (g_sigwinch_pid == 0) {
+					// Register SIGUSR1 as default here; the real parent-death
+					// handler is installed in WinPortMainTTY (TTYBackend.cpp).
+					// PR_SET_PDEATHSIG / PROC_PDEATHSIG_CTL asks the kernel to
+					// deliver SIGUSR1 when our parent dies.
+					signal(SIGUSR1, SIG_DFL);
+#ifdef __linux__
+					prctl(PR_SET_PDEATHSIG, SIGUSR1);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+					int sig = SIGUSR1;
+					procctl(P_PID, 0, PROC_PDEATHSIG_CTL, &sig);
+#endif
+					// Close the fork-to-prctl race window: if the parent died
+					// between fork() and the prctl/procctl above, we are already
+					// reparented to init/subreaper (getppid()==1) and no signal
+					// will ever fire. Exit immediately in that case.
+					if (getppid() == 1) {
+						fprintf(stderr, "WinPortMain: parent already gone at fork, exiting\n");
+						_exit(EXIT_FAILURE);
+					}
 					{
 						setsid();
 						SudoAskpassImpl askass_impl;

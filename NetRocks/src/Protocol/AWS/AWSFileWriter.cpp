@@ -254,7 +254,7 @@ void AWSFileWriter::AbortMultipartUpload()
 	try {
 		std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 		DoRequest("DELETE", path, {{"uploadId", _upload_id}}, "");
-	} catch (...) { /* best-effort abort — ignore errors */ }
+	} catch (...) { /* best-effort abort — ignore errors */ } // NOSONAR(cpp:S2221)
 	_aborted = true;
 }
 

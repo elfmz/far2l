@@ -17,6 +17,24 @@
 #include <pwd.h>
 #include <unistd.h>
 
+static std::string TrimWS(const std::string &s)
+{
+	const char *ws = " \t\r\n";
+	size_t start = s.find_first_not_of(ws);
+	if (start == std::string::npos) return "";
+	size_t end = s.find_last_not_of(ws);
+	return s.substr(start, end - start + 1);
+}
+
+static std::string ParseSectionName(const std::string &line)
+{
+	size_t end = line.find(']');
+	std::string hdr = TrimWS(end != std::string::npos ? line.substr(1, end - 1) : line.substr(1));
+	if (hdr.size() >= 8 && hdr.substr(0, 8) == "profile ")
+		hdr = TrimWS(hdr.substr(8));
+	return hdr;
+}
+
 static std::map<std::string, std::string>
 ParseAWSIniSection(const std::string &path, const std::string &section)
 {
@@ -24,31 +42,21 @@ ParseAWSIniSection(const std::string &path, const std::string &section)
 	FILE *f = fopen(path.c_str(), "r");
 	if (!f) return result;
 
-	char line[512];
+	char buf[512];
 	bool in_section = false;
-	while (fgets(line, sizeof(line), f)) {
-		std::string s = line;
-		while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
-			s.pop_back();
+	while (fgets(buf, sizeof(buf), f)) {
+		std::string s = TrimWS(buf);
 		if (s.empty() || s[0] == '#' || s[0] == ';') continue;
 
 		if (s[0] == '[') {
-			size_t end = s.find(']');
-			std::string hdr = (end != std::string::npos) ? s.substr(1, end - 1) : s.substr(1);
-			if (hdr.size() >= 8 && hdr.substr(0, 8) == "profile ") hdr = hdr.substr(8);
-			while (!hdr.empty() && (hdr.front() == ' ' || hdr.front() == '\t')) hdr.erase(0, 1);
-			while (!hdr.empty() && (hdr.back()  == ' ' || hdr.back()  == '\t')) hdr.pop_back();
-			in_section = (hdr == section);
+			in_section = (ParseSectionName(s) == section);
 			continue;
 		}
 
 		if (!in_section) continue;
 		auto eq = s.find('=');
 		if (eq == std::string::npos) continue;
-		std::string k = s.substr(0, eq), v = s.substr(eq + 1);
-		while (!k.empty() && (k.back()  == ' ' || k.back()  == '\t')) k.pop_back();
-		while (!v.empty() && (v.front() == ' ' || v.front() == '\t')) v.erase(0, 1);
-		result[k] = v;
+		result[TrimWS(s.substr(0, eq))] = TrimWS(s.substr(eq + 1));
 	}
 	fclose(f);
 	return result;
@@ -449,7 +457,7 @@ std::vector<AWSFile> S3Repository::ListBuckets()
 	std::string body = SimpleRequest("GET", "", "", {}, "");
 
 	std::vector<AWSFile> ls;
-	for (auto &item : XmlExtractAll(body, "Bucket")) {
+	for (const auto &item : XmlExtractAll(body, "Bucket")) {
 		std::string name = XmlExtract(item, "Name");
 		std::string date = XmlExtract(item, "CreationDate");
 		if (!name.empty()) {
@@ -480,7 +488,7 @@ std::vector<AWSFile> S3Repository::ListFolder(const std::string &path)
 
 		std::string body = SimpleRequest("GET", localPath.bucket(), "", qp, "");
 
-		for (auto &item : XmlExtractAll(body, "Contents")) {
+		for (const auto &item : XmlExtractAll(body, "Contents")) {
 			std::string full_key = XmlExtract(item, "Key");
 			if (full_key.size() <= prefix_len) continue;
 			std::string rel_key = full_key.substr(prefix_len);
@@ -497,7 +505,7 @@ std::vector<AWSFile> S3Repository::ListFolder(const std::string &path)
 			ls.emplace_back(rel_key, true, date, size);
 		}
 
-		for (auto &item : XmlExtractAll(body, "CommonPrefixes")) {
+		for (const auto &item : XmlExtractAll(body, "CommonPrefixes")) {
 			std::string p = XmlExtract(item, "Prefix");
 			if (p.size() <= prefix_len) continue;
 			p = p.substr(prefix_len);
@@ -585,19 +593,12 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
 			long long size = cl_val.empty() ? 0 : std::stoll(cl_val);
 			AWSFile f(ExtractFileName(path), true);
 			f.size = size;
-			if (!lm_val.empty()) {
-				time_t t = ne_httpdate_parse(lm_val.c_str());
-				f.modified.tv_sec  = (t != (time_t)-1) ? t : 0;
-				f.modified.tv_nsec = 0;
-			} else {
-				f.modified.tv_sec  = 0;
-				f.modified.tv_nsec = 0;
-			}
+			time_t t = lm_val.empty() ? 0 : ne_httpdate_parse(lm_val.c_str());
+			f.modified.tv_sec  = (t != (time_t)-1) ? t : 0;
+			f.modified.tv_nsec = 0;
 			return f;
 		}
-		if (http_status == 404) {
-			// Fall through to check if it's a folder
-		}
+		// Non-200 status (including 404): fall through to IsFolder check
 	} catch (ProtocolAuthFailedError &) {
 		throw;
 	} catch (...) { /* HEAD failed; fall through to IsFolder check */ }
@@ -695,7 +696,7 @@ void S3Repository::DeleteDirectory(const std::string &path)
 
 		std::string body = SimpleRequest("GET", localPath.bucket(), "", qp, "");
 
-		for (auto &item : XmlExtractAll(body, "Contents")) {
+		for (const auto &item : XmlExtractAll(body, "Contents")) {
 			std::string key = XmlExtract(item, "Key");
 			if (!key.empty()) {
 				SimpleRequest("DELETE", localPath.bucket(), key, {}, "");

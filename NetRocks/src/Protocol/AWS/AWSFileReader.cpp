@@ -54,7 +54,7 @@ AWSFileReader::AWSFileReader(std::shared_ptr<S3Session> session,
 	if (!StartThread()) {
 		ne_request_destroy(_req);
 		_req = nullptr;
-		throw std::runtime_error("Failed to start download thread");
+		throw ProtocolError("Failed to start download thread");
 	}
 }
 

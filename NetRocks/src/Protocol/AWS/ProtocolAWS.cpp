@@ -157,10 +157,12 @@ void ProtocolAWS::Rename(const std::string &path_old, const std::string &path_ne
 
 void ProtocolAWS::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
+	// S3 does not support setting file modification times
 }
 
 void ProtocolAWS::SetMode(const std::string &path, mode_t mode)
 {
+	// S3 does not support POSIX file permission modes
 }
 
 void ProtocolAWS::SymlinkCreate(const std::string &link_path, const std::string &link_target)

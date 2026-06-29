@@ -14,6 +14,9 @@
 #endif
 #include <dirent.h>
 
+#include <platform_features.h>
+#include <def_statx.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,6 +59,8 @@ extern "C" {
 	__attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode);
 	__attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir);
 	__attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *name);
+	__attribute__ ((visibility("default"))) int sdc_opendir_fd(const char *path);
+
 	__attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DIR *dir);
 	__attribute__ ((visibility("default"))) int sdc_mkdir(const char *path, mode_t mode);
 	__attribute__ ((visibility("default"))) int sdc_chdir(const char *path);
@@ -81,6 +86,12 @@ extern "C" {
 	__attribute__ ((visibility("default"))) int sdc_mknod(const char *path, mode_t mode, dev_t dev);
 	__attribute__ ((visibility("default"))) int sdc_lchown(const char *pathname, uid_t owner, gid_t group);
 	__attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2]);
+#if USE_STATX
+	__attribute__ ((visibility("default"))) int sdc_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct __statx *statxbuf);
+#endif
+//#if USE_FSTATAT
+//	__attribute__ ((visibility("default"))) int sdc_fstatat(int dirfd, const char *pathname, struct stat *statbuf, int flags);
+//#endif
 
 #ifdef __cplusplus
 }

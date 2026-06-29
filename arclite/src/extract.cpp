@@ -849,8 +849,11 @@ public:
 		wbi = cbi;
 
 		bool has_remaining_data = !cache_records[wbi].empty()
-			&& (cache_records[wbi].size() > 1 || cache_records[wbi].front().buffer_size > 0
-				|| (cache_records[wbi].size() == 1 && cache_records[wbi].front().buffer_size > 0));
+			&& (cache_records[wbi].size() > 1 || cache_records[wbi].size() == 1);
+
+//		bool has_remaining_data = !cache_records[wbi].empty()
+//			&& (cache_records[wbi].size() > 1 || cache_records[wbi].front().buffer_size > 0
+//				|| (cache_records[wbi].size() == 1 && cache_records[wbi].front().buffer_size > 0));
 
 		if (has_remaining_data) {
 			//fprintf(stderr, "FWC::finalize() - Writing remaining data synchronously. [TID: %lu]\n", pthread_self());
@@ -1186,6 +1189,7 @@ private:
 				filter_data.FindData.ftCreationTime = archive.get_ctime(file_index);
 				filter_data.FindData.ftLastAccessTime = archive.get_atime(file_index);
 				filter_data.FindData.ftLastWriteTime = archive.get_mtime(file_index);
+				filter_data.FindData.ftChangeTime = archive.get_chtime(file_index);
 				filter_data.FindData.lpwszFileName = const_cast<wchar_t *>(file_info.name.c_str());
 
 				filter_data.CRC32 = archive.get_crc(file_index);
@@ -1370,6 +1374,8 @@ private:
 					filter_data.FindData.ftCreationTime = archive.get_ctime(file_index);
 					filter_data.FindData.ftLastAccessTime = archive.get_atime(file_index);
 					filter_data.FindData.ftLastWriteTime = archive.get_mtime(file_index);
+					filter_data.FindData.ftChangeTime = archive.get_chtime(file_index);
+
 					filter_data.FindData.lpwszFileName = const_cast<wchar_t *>(file_info.name.c_str());
 
 					filter_data.CRC32 = archive.get_crc(file_index);
@@ -1398,7 +1404,7 @@ private:
 
 				FILETIME atime_ft = archive.get_atime(file_index);
 				FILETIME mtime_ft = archive.get_mtime(file_index);
-				if (set_symlink_times(mb_path, atime_ft, mtime_ft)) {
+				if (set_file_times(mb_path, atime_ft, mtime_ft)) {
 					FAIL(errno);
 				}
 			}

@@ -174,6 +174,8 @@ void FileList::FileListToPluginItem(FileListItem *fi, PluginPanelItem *pi)
 	pi->FindData.ftLastWriteTime = fi->WriteTime;
 	pi->FindData.ftCreationTime = fi->CreationTime;
 	pi->FindData.ftLastAccessTime = fi->AccessTime;
+	pi->FindData.ftChangeTime = fi->ChangeTime;
+
 	pi->NumberOfLinks = fi->NumberOfLinks;
 	pi->Flags = fi->UserFlags;
 
@@ -215,6 +217,8 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi, PluginPanelItem *pi)
 		pi->FindData.ftLastWriteTime = fi->WriteTime;
 		pi->FindData.ftCreationTime = fi->CreationTime;
 		pi->FindData.ftLastAccessTime = fi->AccessTime;
+		pi->FindData.ftChangeTime = fi->ChangeTime;
+
 		pi->NumberOfLinks = fi->NumberOfLinks;
 		pi->Flags = fi->Selected ? fi->UserFlags | PPIF_SELECTED : fi->UserFlags;
 		pi->CustomColumnNumber = fi->CustomColumnNumber;
@@ -308,8 +312,10 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi, FileListItem *fi)
 	fi->WriteTime = pi->FindData.ftLastWriteTime;
 	fi->CreationTime = pi->FindData.ftCreationTime;
 	fi->AccessTime = pi->FindData.ftLastAccessTime;
-	fi->ChangeTime.dwHighDateTime = 0;
-	fi->ChangeTime.dwLowDateTime = 0;
+	fi->ChangeTime = pi->FindData.ftChangeTime;
+
+//	fi->ChangeTime.dwHighDateTime = 0;
+//	fi->ChangeTime.dwLowDateTime = 0;
 	fi->NumberOfLinks = pi->NumberOfLinks;
 	fi->UserFlags = pi->Flags;
 

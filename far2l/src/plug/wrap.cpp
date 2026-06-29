@@ -383,6 +383,7 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		(*PanelItemW)[i].FindData.ftCreationTime = PanelItemA[i].FindData.ftCreationTime;
 		(*PanelItemW)[i].FindData.ftLastAccessTime = PanelItemA[i].FindData.ftLastAccessTime;
 		(*PanelItemW)[i].FindData.ftLastWriteTime = PanelItemA[i].FindData.ftLastWriteTime;
+		(*PanelItemW)[i].FindData.ftChangeTime = PanelItemA[i].FindData.ftChangeTime;
 		(*PanelItemW)[i].FindData.nPhysicalSize = PanelItemA[i].FindData.nPhysicalSize;
 		(*PanelItemW)[i].FindData.nFileSize = PanelItemA[i].FindData.nFileSize;
 		(*PanelItemW)[i].FindData.dwFileAttributes = PanelItemA[i].FindData.dwFileAttributes;

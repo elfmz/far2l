@@ -183,11 +183,16 @@ void AWSFileWriter::FlushPart()
 
 	const char *etag_hdr = ne_get_response_header(req, "ETag");
 	std::string etag = etag_hdr ? etag_hdr : "";
+	const ne_status *st = ne_get_status(req);
+	int http_code = st ? st->code : 0;
 	ne_request_destroy(req);
 
 	if (rc != NE_OK) {
 		const char *err = ne_get_error(_session->sess);
 		throw ProtocolError(err ? err : "UploadPart failed");
+	}
+	if (http_code < 200 || http_code >= 300) {
+		throw ProtocolError("UploadPart HTTP error: " + std::to_string(http_code));
 	}
 	CheckXmlError(cap.body, "UploadPart");
 	if (etag.empty()) throw ProtocolError("UploadPart: missing ETag in response");
@@ -221,8 +226,13 @@ void AWSFileWriter::CompleteMultipartUpload()
 		int rc = ne_request_dispatch(req);
 		const char *etag_hdr = ne_get_response_header(req, "ETag");
 		std::string etag = etag_hdr ? etag_hdr : "";
+		const ne_status *st = ne_get_status(req);
+		int http_code = st ? st->code : 0;
 		ne_request_destroy(req);
-		if (rc != NE_OK || etag.empty()) throw ProtocolError("UploadPart(0) failed");
+		if (rc != NE_OK) throw ProtocolError("UploadPart(0) failed");
+		if (http_code < 200 || http_code >= 300)
+			throw ProtocolError("UploadPart(0) HTTP error: " + std::to_string(http_code));
+		if (etag.empty()) throw ProtocolError("UploadPart(0): missing ETag");
 		_etags.push_back(etag);
 	}
 

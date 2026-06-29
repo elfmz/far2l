@@ -305,10 +305,10 @@ public:
 						_need_repaint = true;
 					}
 				}
+			}
 
-				if (_result != RES_PENDING) {
-					return _result == RES_OK;
-				}
+			if (_result != RES_PENDING) {
+				return _result == RES_OK;
 			}
 
 			if (_need_repaint) {

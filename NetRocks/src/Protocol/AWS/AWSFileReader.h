@@ -22,8 +22,8 @@ public:
 	              unsigned long long position,
 	              unsigned long long size);
 
-	virtual ~AWSFileReader();
-	virtual size_t Read(void *buf, size_t len) override;
+	~AWSFileReader() override;
+	size_t Read(void *buf, size_t len) override; // NOSONAR(cpp:S5008)
 
 private:
 	std::shared_ptr<S3Session> _session;
@@ -46,13 +46,13 @@ private:
 
 	enum { INTERMEDIATE_BUFFER = 10 * 1024 * 1024 };
 
-	static int sReadCallback(void *userdata, const char *buf, size_t len);
+	static int sReadCallback(void *userdata, const char *buf, size_t len); // NOSONAR(cpp:S5008)
 	int ReadCallback(const char *buf, size_t len);
 
-	size_t TryFetch(void *data, size_t len);
+	size_t TryFetch(char *data, size_t len);
 
 	void EnsureAllDone();
 
 protected:
-	void *ThreadProc() override;
+	void *ThreadProc() override; // NOSONAR(cpp:S5008)
 };

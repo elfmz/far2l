@@ -84,11 +84,9 @@ public:
 		}
 	}
 
-	virtual ~AWSDirectoryEnumer()
-	{
-	}
+	~AWSDirectoryEnumer() override = default;
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
 	{
 		if (ls.empty()) return false;
 

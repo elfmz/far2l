@@ -124,7 +124,7 @@ AWSFileWriter::~AWSFileWriter()
 	if (!_completed && !_aborted) {
 		try {
 			AbortMultipartUpload();
-		} catch (...) {}
+		} catch (...) { /* must not throw from destructor */ }
 	}
 }
 
@@ -244,11 +244,11 @@ void AWSFileWriter::AbortMultipartUpload()
 	try {
 		std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 		DoRequest("DELETE", path, {{"uploadId", _upload_id}}, "");
-	} catch (...) {}
+	} catch (...) { /* best-effort abort — ignore errors */ }
 	_aborted = true;
 }
 
-void AWSFileWriter::Write(const void *buf, size_t len)
+void AWSFileWriter::Write(const void *buf, size_t len) // NOSONAR(cpp:S5008)
 {
 	const char *data = reinterpret_cast<const char *>(buf);
 	while (len > 0) {

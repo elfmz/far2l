@@ -77,7 +77,7 @@ void AWSFileReader::EnsureAllDone()
 	WaitThread();
 }
 
-void *AWSFileReader::ThreadProc()
+void *AWSFileReader::ThreadProc() // NOSONAR(cpp:S5008)
 {
 	_ne_status = ne_request_dispatch(_req);
 	std::unique_lock<std::mutex> lock(_mtx);
@@ -106,27 +106,27 @@ int AWSFileReader::ReadCallback(const char *buf, size_t len)
 			_cond.notify_all();
 			return 0;
 		}
-		_cond.wait(lock);
+		_cond.wait(lock, [this]{ return _done || _buf.size() < (size_t)INTERMEDIATE_BUFFER; });
 	}
 }
 
-size_t AWSFileReader::TryFetch(void *data, size_t len)
+size_t AWSFileReader::TryFetch(char *data, size_t len)
 {
 	len = std::min(len, _buf.size());
 	if (len) {
-		std::copy(_buf.begin(), _buf.begin() + len, static_cast<char *>(data));
+		std::copy(_buf.begin(), _buf.begin() + len, data);
 		_buf.erase(_buf.begin(), _buf.begin() + len);
 	}
 	return len;
 }
 
-size_t AWSFileReader::Read(void *buf, size_t buflen)
+size_t AWSFileReader::Read(void *buf, size_t buflen) // NOSONAR(cpp:S5008)
 {
 	if (buflen == 0) return 0;
 
 	std::unique_lock<std::mutex> lock(_mtx);
 	for (;;) {
-		size_t got = TryFetch(buf, buflen);
+		size_t got = TryFetch(static_cast<char *>(buf), buflen);
 		if (got) {
 			_cond.notify_all();
 			return got;
@@ -137,6 +137,6 @@ size_t AWSFileReader::Read(void *buf, size_t buflen)
 			}
 			return 0;
 		}
-		_cond.wait(lock);
+		_cond.wait(lock, [this]{ return _done || !_buf.empty(); });
 	}
 }

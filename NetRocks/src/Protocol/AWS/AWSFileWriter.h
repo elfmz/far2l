@@ -19,10 +19,10 @@ public:
 	              const std::string &useragent,
 	              const std::string &path_prefix,
 	              const std::string &key);
-	virtual ~AWSFileWriter();
+	~AWSFileWriter() override;
 
-	virtual void Write(const void *buf, size_t len) override;
-	virtual void WriteComplete() override;
+	void Write(const void *buf, size_t len) override; // NOSONAR(cpp:S5008)
+	void WriteComplete() override;
 
 private:
 	std::shared_ptr<S3Session> _session;

@@ -3,11 +3,13 @@
 #include <KeyFileHelper.h>
 #include <WideMB.h>
 #include <Escaping.h>
+#include "lng.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cwchar>
 #include <unistd.h>
 
 #include <string>
@@ -18,6 +20,11 @@ static PluginStartupInfo g_info{};
 static FarStandardFunctions g_fsf{};
 
 static const wchar_t *g_plugin_menu_strings[1];
+
+static const wchar_t *GetMsg(int msg_id)
+{
+	return g_info.GetMsg(g_info.ModuleNumber, msg_id);
+}
 
 static uint64_t NowMs()
 {
@@ -78,7 +85,7 @@ static bool FileExists(const std::string &path)
 static bool MakeTempFile(std::string &path, FILE *&f)
 {
 	f = nullptr;
-	std::string tmpl = "/tmp/far2l_gitgutter_XXXXXX";
+	std::string tmpl = InMyTemp("gitgutter/far2l_gitgutter_XXXXXX");
 	std::vector<char> buf(tmpl.begin(), tmpl.end());
 	buf.push_back('\0');
 	const int fd = mkstemp(buf.data());
@@ -210,6 +217,16 @@ static bool IsPluginActive()
 	return g_git_available && g_settings.enabled;
 }
 
+static int GetCurrentWindowType()
+{
+	WindowInfo wi{};
+	wi.Pos = -1;
+	if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETSHORTWINDOWINFO, &wi, nullptr) == 0) {
+		return 0;
+	}
+	return wi.Type;
+}
+
 static bool CheckGitAvailable()
 {
 	std::string out;
@@ -246,6 +263,7 @@ struct EditorState
 	std::string repo_root;
 	std::string rel_path;
 	std::string temp_path;
+	std::wstring baseline_label;
 	uint64_t last_update_ms = 0;
 	bool dirty = true;
 	bool gutter_forced = false;
@@ -259,6 +277,7 @@ static std::unordered_map<int, EditorState> g_editors;
 struct PendingPopup
 {
 	bool active = false;
+	bool center_on_hunk = false;
 	int editor_id = -1;
 	int line = 0;
 };
@@ -273,6 +292,8 @@ enum PopupItemId
 	POPUP_PREV = 1,
 	POPUP_NEXT = 2,
 	POPUP_REVERT = 3,
+	POPUP_BASELINE = 4,
+	POPUP_COUNT
 };
 
 static bool GetEditorInfo(EditorInfo &ei);
@@ -330,6 +351,7 @@ struct PopupContext
 	const EditorState *st = nullptr;
 	size_t index = 0;
 	int tab_size = 0;
+	int focus_item = POPUP_MEMO;
 };
 
 static void UpdatePopupMemo(HANDLE hDlg, PopupContext *ctx)
@@ -348,7 +370,8 @@ static LONG_PTR WINAPI PopupDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	auto *ctx = reinterpret_cast<PopupContext *>(
 			g_info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 	if (Msg == DN_INITDIALOG) {
-		g_info.SendDlgMessage(hDlg, DM_SETFOCUS, POPUP_MEMO, 0);
+		const int focus_item = ctx ? ctx->focus_item : POPUP_MEMO;
+		g_info.SendDlgMessage(hDlg, DM_SETFOCUS, focus_item, 0);
 		// Set memoedit tab size at init, before colorer processes focus.
 		if (ctx && ctx->tab_size > 0) {
 			g_info.SendDlgMessage(hDlg, DM_SETEDITTABSIZE, POPUP_MEMO, ctx->tab_size);
@@ -371,10 +394,10 @@ static void MaybeScheduleTick()
 	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
 }
 
-static void ApplyGutterRequest(EditorState &st)
+static bool ApplyGutterRequest(EditorState &st)
 {
 	if (st.gutter_request == -1) {
-		return;
+		return false;
 	}
 	EditorSetParameter esp{};
 	esp.Type = ESPT_SHOWGUTTER;
@@ -389,6 +412,7 @@ static void ApplyGutterRequest(EditorState &st)
 		st.gutter_forced = false;
 	}
 	st.gutter_request = -1;
+	return true;
 }
 
 static bool GetEditorInfo(EditorInfo &ei)
@@ -701,6 +725,25 @@ static bool WriteBaselineToTemp(const std::string &repo_root, const std::string 
 	return WriteTextToTempFile(out, path);
 }
 
+static bool IsCustomBaseline(const std::string &baseline)
+{
+	return baseline != "head" && baseline != "index" && baseline != "unstaged";
+}
+
+static bool WriteBaselineToTempWithFallback(const std::string &repo_root, const std::string &rel_path,
+		const std::string &baseline, std::string &path, std::string &effective_baseline)
+{
+	if (WriteBaselineToTemp(repo_root, rel_path, baseline, path)) {
+		effective_baseline = baseline;
+		return true;
+	}
+	if (IsCustomBaseline(baseline) && WriteBaselineToTemp(repo_root, rel_path, "head", path)) {
+		effective_baseline = "head";
+		return true;
+	}
+	return false;
+}
+
 static bool ParseHunkHeader(const std::string &line, int &old_start, int &old_count, int &new_start, int &new_count)
 {
 	if (line.rfind("@@ ", 0) != 0)
@@ -868,6 +911,61 @@ static std::string MakeDiffCommand(const std::string &repo_root, const std::stri
 	return MakeDiffCommandBaseline(repo_root, file_path, g_settings.baseline);
 }
 
+static bool RunDiffCommand(const std::string &repo_root, const std::string &file_path,
+		std::string &out, std::string &effective_baseline)
+{
+	if (RunCommand(MakeDiffCommand(repo_root, file_path), out)) {
+		effective_baseline = g_settings.baseline;
+		return true;
+	}
+	if (IsCustomBaseline(g_settings.baseline)
+			&& RunCommand(MakeDiffCommandBaseline(repo_root, file_path, "head"), out)) {
+		effective_baseline = "head";
+		return true;
+	}
+	return false;
+}
+
+static bool TryRunEditorBufferDiff(EditorState &st, std::string &out, std::string &effective_baseline)
+{
+	if (!WriteEditorBufferToTemp(st.temp_path)) {
+		return false;
+	}
+
+	std::string base_path;
+	std::string base_temp;
+	if (g_settings.baseline == "unstaged") {
+		base_path = st.file;
+		if (!FileExists(base_path)) {
+			base_path = "/dev/null";
+		}
+	} else {
+		std::string rel_path;
+		if (!GetRelativePath(st.repo_root, st.file, rel_path)
+				|| !WriteBaselineToTempWithFallback(st.repo_root, rel_path, g_settings.baseline,
+						base_temp, effective_baseline)) {
+			unlink(st.temp_path.c_str());
+			st.temp_path.clear();
+			return false;
+		}
+		base_path = base_temp;
+	}
+
+	std::string root_arg = st.repo_root;
+	std::string base_arg = base_path;
+	std::string temp_arg = st.temp_path;
+	QuoteCmdArgIfNeed(root_arg);
+	QuoteCmdArgIfNeed(base_arg);
+	QuoteCmdArgIfNeed(temp_arg);
+	const std::string cmd = "git -C " + root_arg
+			+ " diff --no-color --unified=0 --no-index -- " + base_arg + " " + temp_arg;
+	RunCommand(cmd, out);
+	if (!base_temp.empty()) {
+		unlink(base_temp.c_str());
+	}
+	return true;
+}
+
 static void ApplyMarksToEditor(const EditorState &st)
 {
 	EditorGutterMarks gm{};
@@ -922,40 +1020,20 @@ static void UpdateEditorState(EditorState &st)
 	}
 
 	std::string out;
-	if (WriteEditorBufferToTemp(st.temp_path)) {
-		std::string base_path;
-		std::string base_temp;
-		if (g_settings.baseline == "unstaged") {
-			base_path = st.file;
-			if (!FileExists(base_path)) {
-				base_path = "/dev/null";
-			}
-		} else {
-			std::string rel_path;
-			if (!GetRelativePath(st.repo_root, st.file, rel_path)
-					|| !WriteBaselineToTemp(st.repo_root, rel_path, g_settings.baseline, base_temp)) {
-				unlink(st.temp_path.c_str());
-				st.temp_path.clear();
-				goto fallback;
-			}
-			base_path = base_temp;
+	std::string effective_baseline = g_settings.baseline;
+	if (!TryRunEditorBufferDiff(st, out, effective_baseline)) {
+		RunDiffCommand(st.repo_root, st.file, out, effective_baseline);
+	}
+
+	st.baseline_label.clear();
+	if (IsCustomBaseline(g_settings.baseline)) {
+		if (effective_baseline == g_settings.baseline) {
+			st.baseline_label = StrMB2Wide(g_settings.baseline.c_str());
+		} else if (effective_baseline == "head") {
+			st.baseline_label = L"HEAD (";
+			st.baseline_label+= StrMB2Wide(g_settings.baseline.c_str());
+			st.baseline_label+= L")";
 		}
-		std::string root_arg = st.repo_root;
-		std::string base_arg = base_path;
-		std::string temp_arg = st.temp_path;
-		QuoteCmdArgIfNeed(root_arg);
-		QuoteCmdArgIfNeed(base_arg);
-		QuoteCmdArgIfNeed(temp_arg);
-		const std::string cmd = "git -C " + root_arg
-				+ " diff --no-color --unified=0 --no-index -- " + base_arg + " " + temp_arg;
-		RunCommand(cmd, out);
-		if (!base_temp.empty()) {
-			unlink(base_temp.c_str());
-		}
-	} else {
-fallback:
-		std::string cmd = MakeDiffCommand(st.repo_root, st.file);
-		RunCommand(cmd, out);
 	}
 
 	if (out.empty()) {
@@ -1038,7 +1116,7 @@ static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, const Settings::Color
 	g_info.SendDlgMessage(hdlg, DM_SETCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
 }
 
-static void ShowHunkPopup(const EditorState &st, int line)
+static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 {
 	if (g_popup_active) {
 		return;
@@ -1060,7 +1138,11 @@ static void ShowHunkPopup(const EditorState &st, int line)
 	if (index == st.hunks.size()) {
 		return;
 	}
+	if (center_on_hunk) {
+		MoveEditorToHunk(st.hunks[index]);
+	}
 
+	int focus_item = POPUP_MEMO;
 	for (;;) {
 		const auto &h = st.hunks[index];
 		int max_line = 0;
@@ -1093,17 +1175,21 @@ static void ShowHunkPopup(const EditorState &st, int line)
 			const int screen_w = static_cast<int>(fr.Right) - static_cast<int>(fr.Left) + 1;
 			max_w = std::max(min_w, (screen_w * 2) / 3);
 		}
-		const int dlg_w = std::min(max_w, std::max(min_w, max_line + 4));
+		const int baseline_header_cells = st.baseline_label.empty()
+				? 0
+				: static_cast<int>(g_fsf.StrCellsCount(st.baseline_label.c_str(), st.baseline_label.size()));
+		const int baseline_header_x = 19;
+		const int dlg_w = std::min(max_w,
+				std::max({min_w, max_line + 4, baseline_header_x + baseline_header_cells + 2}));
 		const int dlg_h = std::min(30, std::max(min_h, lines + 2));
 
-		FarDialogItem items[4]{};
+		FarDialogItem items[POPUP_COUNT]{};
 		items[POPUP_MEMO].Type = DI_MEMOEDIT;
 		items[POPUP_MEMO].X1 = 0;
 		items[POPUP_MEMO].Y1 = 1;
 		items[POPUP_MEMO].X2 = dlg_w - 1;
 		items[POPUP_MEMO].Y2 = dlg_h - 1;
-		items[POPUP_MEMO].Focus = 1;
-		items[POPUP_MEMO].Flags = DIF_READONLY | DIF_FOCUS;
+		items[POPUP_MEMO].Flags = DIF_READONLY;
 		items[POPUP_MEMO].PtrData = h.text.c_str();
 		items[POPUP_MEMO].MaxLen = h.text.size();
 
@@ -1131,6 +1217,19 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		items[POPUP_REVERT].Flags = 0;
 		items[POPUP_REVERT].PtrData = L"\x21A9";
 
+		items[POPUP_BASELINE].Type = DI_TEXT;
+		items[POPUP_BASELINE].X1 = baseline_header_x;
+		items[POPUP_BASELINE].Y1 = 0;
+		items[POPUP_BASELINE].X2 = dlg_w - 1;
+		items[POPUP_BASELINE].Y2 = 0;
+		items[POPUP_BASELINE].PtrData = st.baseline_label.c_str();
+
+		if (focus_item != POPUP_PREV && focus_item != POPUP_NEXT) {
+			focus_item = POPUP_MEMO;
+		}
+		items[focus_item].Focus = 1;
+		items[focus_item].Flags |= DIF_FOCUS;
+
 		int local_anchor_x = 0;
 		int local_anchor_y = 0;
 		const bool have_anchor = GetHunkAnchor(h, local_anchor_x, local_anchor_y);
@@ -1157,8 +1256,9 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		ctx.st = &st;
 		ctx.index = index;
 		ctx.tab_size = st.tab_size;
+		ctx.focus_item = focus_item;
 		HANDLE hdlg = g_info.DialogInit(
-				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"GitGutter", items, 4, 0, 0,
+				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"HunkPopup", items, POPUP_COUNT, 0, 0,
 				PopupDlgProc, reinterpret_cast<LONG_PTR>(&ctx));
 		if (hdlg == INVALID_HANDLE_VALUE)
 			return;
@@ -1166,12 +1266,14 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		g_info.DialogFree(hdlg);
 		if (rc == POPUP_PREV) {
 			if (!st.hunks.empty()) {
+				focus_item = POPUP_PREV;
 				index = (index == 0) ? (st.hunks.size() - 1) : (index - 1);
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
 			}
 		} else if (rc == POPUP_NEXT) {
 			if (!st.hunks.empty()) {
+				focus_item = POPUP_NEXT;
 				index = (index + 1 >= st.hunks.size()) ? 0 : (index + 1);
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
@@ -1199,6 +1301,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 				if (index >= st.hunks.size())
 					return;
 			}
+			focus_item = POPUP_MEMO;
 			MoveEditorToHunk(st.hunks[index]);
 			continue;
 		}
@@ -1250,6 +1353,67 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 
 	const int line = ei.TopScreenLine + rel_y;
 	g_pending_popup.active = true;
+	g_pending_popup.center_on_hunk = false;
+	g_pending_popup.editor_id = ei.EditorID;
+	g_pending_popup.line = line;
+	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+	return true;
+}
+
+static bool IsCtrlG(const INPUT_RECORD *ir)
+{
+	if (!ir || ir->EventType != KEY_EVENT)
+		return false;
+
+	const auto &ke = ir->Event.KeyEvent;
+	if (!ke.bKeyDown)
+		return false;
+	if ((ke.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) == 0)
+		return false;
+	if ((ke.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0)
+		return false;
+
+	return ke.wVirtualKeyCode == 'G' || ke.uChar.UnicodeChar == 7;
+}
+
+static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
+{
+	line = -1;
+	if (st.hunks.empty())
+		return false;
+
+	cur_line = std::max(0, cur_line);
+	for (const Hunk &h : st.hunks) {
+		if (h.end < cur_line)
+			continue;
+
+		line = h.start;
+		return true;
+	}
+	return false;
+}
+
+static bool HandleCtrlG(const INPUT_RECORD *ir)
+{
+	if (!IsCtrlG(ir))
+		return false;
+	if (g_popup_active || g_pending_popup.active)
+		return true;
+
+	EditorInfo ei{};
+	if (!GetEditorInfo(ei))
+		return false;
+
+	auto it = g_editors.find(ei.EditorID);
+	if (it == g_editors.end())
+		return false;
+
+	int line = -1;
+	if (!FindHunkFromLineDown(it->second, ei.CurLine, line))
+		return false;
+
+	g_pending_popup.active = true;
+	g_pending_popup.center_on_hunk = true;
 	g_pending_popup.editor_id = ei.EditorID;
 	g_pending_popup.line = line;
 	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
@@ -1268,7 +1432,6 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 	g_info.FSF = &g_fsf;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
-	g_plugin_menu_strings[0] = L"GitGutter";
 }
 
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
@@ -1278,6 +1441,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	if (!g_git_available) {
 		return;
 	}
+	g_plugin_menu_strings[0] = GetMsg(MPluginTitle);
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS | PF_PRELOAD;
 	Info->PluginConfigStringsNumber = 1;
 	Info->PluginConfigStrings = g_plugin_menu_strings;
@@ -1353,105 +1517,133 @@ static int ShowConfigDialog()
 	}
 	FarList baseline_list{static_cast<int>(baseline_items.size()), baseline_items.data()};
 
+	auto msg_cells = [](int msg_id) -> int
+	{
+		const wchar_t *msg = GetMsg(msg_id);
+		return static_cast<int>(g_fsf.StrCellsCount(msg, std::wcslen(msg)));
+	};
+
+	const int LabelX = 5;
+	const int FieldGap = 2;
+	int label_cells = msg_cells(MBaseline);
+	label_cells = std::max(label_cells, msg_cells(MColorAdded));
+	label_cells = std::max(label_cells, msg_cells(MColorModified));
+	label_cells = std::max(label_cells, msg_cells(MColorDeleted));
+	const int FieldX1 = LabelX + label_cells + FieldGap;
+	const int ColorX2 = FieldX1 + 20;
+	const int PickerX1 = ColorX2 + 2;
+	const int PickerX2 = PickerX1 + 6;
+	const int BaselineX2 = PickerX2;
+	const int IntervalX2 = PickerX2;
+	const int IntervalX1 = IntervalX2 - 9;
+	const int DialogX2 = std::max({
+			PickerX2 + 2,
+			LabelX + msg_cells(MUpdateInterval) + 2,
+			3 + msg_cells(MConfigTitle) + 4
+	});
+	const int DialogWidth = DialogX2 + 4;
+
 	FarDialogItem items[CD_COUNT]{};
 	items[CD_BOX].Type = DI_DOUBLEBOX;
 	items[CD_BOX].X1 = 3;
 	items[CD_BOX].Y1 = 1;
-	items[CD_BOX].X2 = 58;
+	items[CD_BOX].X2 = DialogX2;
 	items[CD_BOX].Y2 = 14;
-	items[CD_BOX].PtrData = L"GitGutter settings";
+	items[CD_BOX].PtrData = GetMsg(MConfigTitle);
 
 	items[CD_ENABLED].Type = DI_CHECKBOX;
-	items[CD_ENABLED].X1 = 5;
+	items[CD_ENABLED].X1 = LabelX;
 	items[CD_ENABLED].Y1 = 2;
 	items[CD_ENABLED].Param.Selected = g_settings.enabled ? 1 : 0;
-	items[CD_ENABLED].PtrData = L"Enabled";
+	items[CD_ENABLED].PtrData = GetMsg(MEnabled);
 
 	items[CD_BASELINE_TEXT].Type = DI_TEXT;
-	items[CD_BASELINE_TEXT].X1 = 5;
+	items[CD_BASELINE_TEXT].X1 = LabelX;
 	items[CD_BASELINE_TEXT].Y1 = 4;
-	items[CD_BASELINE_TEXT].PtrData = L"Baseline";
+	items[CD_BASELINE_TEXT].PtrData = GetMsg(MBaseline);
 
 	items[CD_BASELINE].Type = DI_COMBOBOX;
-	items[CD_BASELINE].X1 = 20;
+	items[CD_BASELINE].X1 = FieldX1;
 	items[CD_BASELINE].Y1 = 4;
-	items[CD_BASELINE].X2 = 50;
+	items[CD_BASELINE].X2 = BaselineX2;
 	items[CD_BASELINE].Y2 = 4;
 	items[CD_BASELINE].Flags = DIF_DROPDOWNLIST;
 	items[CD_BASELINE].Param.ListItems = &baseline_list;
 
 	items[CD_INTERVAL_TEXT].Type = DI_TEXT;
-	items[CD_INTERVAL_TEXT].X1 = 5;
+	items[CD_INTERVAL_TEXT].X1 = LabelX;
 	items[CD_INTERVAL_TEXT].Y1 = 6;
-	items[CD_INTERVAL_TEXT].PtrData = L"Update interval (ms)";
+	items[CD_INTERVAL_TEXT].PtrData = GetMsg(MUpdateInterval);
 
-	items[CD_INTERVAL].Type = DI_EDIT;
-	items[CD_INTERVAL].X1 = 28;
+	items[CD_INTERVAL].Type = DI_FIXEDIT;
+	items[CD_INTERVAL].Flags = DIF_MASKEDIT;
+	items[CD_INTERVAL].X1 = IntervalX1;
 	items[CD_INTERVAL].Y1 = 6;
-	items[CD_INTERVAL].X2 = 50;
+	items[CD_INTERVAL].X2 = IntervalX2;
 	items[CD_INTERVAL].Y2 = 6;
 	items[CD_INTERVAL].PtrData = interval_w.c_str();
 	items[CD_INTERVAL].MaxLen = 10;
+	items[CD_INTERVAL].Param.Mask = L"9999999999";
 
 	items[CD_COLOR_ADDED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_ADDED_TEXT].X1 = 5;
+	items[CD_COLOR_ADDED_TEXT].X1 = LabelX;
 	items[CD_COLOR_ADDED_TEXT].Y1 = 8;
-	items[CD_COLOR_ADDED_TEXT].PtrData = L"Color added";
+	items[CD_COLOR_ADDED_TEXT].PtrData = GetMsg(MColorAdded);
 
 	items[CD_COLOR_ADDED].Type = DI_EDIT;
-	items[CD_COLOR_ADDED].X1 = 20;
+	items[CD_COLOR_ADDED].X1 = FieldX1;
 	items[CD_COLOR_ADDED].Y1 = 8;
-	items[CD_COLOR_ADDED].X2 = 49;
+	items[CD_COLOR_ADDED].X2 = ColorX2;
 	items[CD_COLOR_ADDED].Y2 = 8;
 	items[CD_COLOR_ADDED].PtrData = color_added_w.c_str();
 	items[CD_COLOR_ADDED].MaxLen = 20;
 
 	items[CD_COLOR_ADDED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_ADDED_PICK].X1 = 51;
+	items[CD_COLOR_ADDED_PICK].X1 = PickerX1;
 	items[CD_COLOR_ADDED_PICK].Y1 = 8;
-	items[CD_COLOR_ADDED_PICK].X2 = 54;
+	items[CD_COLOR_ADDED_PICK].X2 = PickerX2;
 	items[CD_COLOR_ADDED_PICK].Y2 = 8;
 	items[CD_COLOR_ADDED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_ADDED_PICK].PtrData = L"...";
 
 	items[CD_COLOR_MODIFIED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_MODIFIED_TEXT].X1 = 5;
+	items[CD_COLOR_MODIFIED_TEXT].X1 = LabelX;
 	items[CD_COLOR_MODIFIED_TEXT].Y1 = 9;
-	items[CD_COLOR_MODIFIED_TEXT].PtrData = L"Color modified";
+	items[CD_COLOR_MODIFIED_TEXT].PtrData = GetMsg(MColorModified);
 
 	items[CD_COLOR_MODIFIED].Type = DI_EDIT;
-	items[CD_COLOR_MODIFIED].X1 = 20;
+	items[CD_COLOR_MODIFIED].X1 = FieldX1;
 	items[CD_COLOR_MODIFIED].Y1 = 9;
-	items[CD_COLOR_MODIFIED].X2 = 49;
+	items[CD_COLOR_MODIFIED].X2 = ColorX2;
 	items[CD_COLOR_MODIFIED].Y2 = 9;
 	items[CD_COLOR_MODIFIED].PtrData = color_modified_w.c_str();
 	items[CD_COLOR_MODIFIED].MaxLen = 20;
 
 	items[CD_COLOR_MODIFIED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_MODIFIED_PICK].X1 = 51;
+	items[CD_COLOR_MODIFIED_PICK].X1 = PickerX1;
 	items[CD_COLOR_MODIFIED_PICK].Y1 = 9;
-	items[CD_COLOR_MODIFIED_PICK].X2 = 54;
+	items[CD_COLOR_MODIFIED_PICK].X2 = PickerX2;
 	items[CD_COLOR_MODIFIED_PICK].Y2 = 9;
 	items[CD_COLOR_MODIFIED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_MODIFIED_PICK].PtrData = L"...";
 
 	items[CD_COLOR_DELETED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_DELETED_TEXT].X1 = 5;
+	items[CD_COLOR_DELETED_TEXT].X1 = LabelX;
 	items[CD_COLOR_DELETED_TEXT].Y1 = 10;
-	items[CD_COLOR_DELETED_TEXT].PtrData = L"Color deleted";
+	items[CD_COLOR_DELETED_TEXT].PtrData = GetMsg(MColorDeleted);
 
 	items[CD_COLOR_DELETED].Type = DI_EDIT;
-	items[CD_COLOR_DELETED].X1 = 20;
+	items[CD_COLOR_DELETED].X1 = FieldX1;
 	items[CD_COLOR_DELETED].Y1 = 10;
-	items[CD_COLOR_DELETED].X2 = 49;
+	items[CD_COLOR_DELETED].X2 = ColorX2;
 	items[CD_COLOR_DELETED].Y2 = 10;
 	items[CD_COLOR_DELETED].PtrData = color_deleted_w.c_str();
 	items[CD_COLOR_DELETED].MaxLen = 20;
 
 	items[CD_COLOR_DELETED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_DELETED_PICK].X1 = 51;
+	items[CD_COLOR_DELETED_PICK].X1 = PickerX1;
 	items[CD_COLOR_DELETED_PICK].Y1 = 10;
-	items[CD_COLOR_DELETED_PICK].X2 = 54;
+	items[CD_COLOR_DELETED_PICK].X2 = PickerX2;
 	items[CD_COLOR_DELETED_PICK].Y2 = 10;
 	items[CD_COLOR_DELETED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_DELETED_PICK].PtrData = L"...";
@@ -1466,13 +1658,13 @@ static int ShowConfigDialog()
 	items[CD_OK].Y1 = 13;
 	items[CD_OK].Flags = DIF_CENTERGROUP;
 	items[CD_OK].DefaultButton = TRUE;
-	items[CD_OK].PtrData = L"OK";
+	items[CD_OK].PtrData = GetMsg(MOk);
 
 	items[CD_CANCEL].Type = DI_BUTTON;
 	items[CD_CANCEL].X1 = 0;
 	items[CD_CANCEL].Y1 = 13;
 	items[CD_CANCEL].Flags = DIF_CENTERGROUP;
-	items[CD_CANCEL].PtrData = L"Cancel";
+	items[CD_CANCEL].PtrData = GetMsg(MCancel);
 
 	auto dlg_proc = [](HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) -> LONG_PTR
 	{
@@ -1538,7 +1730,7 @@ static int ShowConfigDialog()
 	};
 
 	HANDLE hdlg = g_info.DialogInit(
-			g_info.ModuleNumber, -1, -1, 62, 16, L"GitGutter settings", items, CD_COUNT, 0, 0,
+			g_info.ModuleNumber, -1, -1, DialogWidth, 16, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
 			dlg_proc, 0);
 	if (hdlg == INVALID_HANDLE_VALUE) {
 		return 0;
@@ -1565,8 +1757,22 @@ static int ShowConfigDialog()
 		g_settings.color_deleted = ParseColorPair(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_DELETED, 0)), g_settings.color_deleted);
 		if (!g_settings.enabled) {
-			EditorGutterMarks gm{};
-			g_info.EditorControl(ECTL_SETGUTTERMARKS, &gm);
+			g_pending_tick = false;
+			EditorInfo ei{};
+			if (GetEditorInfo(ei)) {
+				EditorState &st = g_editors[ei.EditorID];
+				st.editor_id = ei.EditorID;
+				st.marks.clear();
+				st.hunks.clear();
+				st.baseline_label.clear();
+				ApplyMarksToEditor(st);
+				if (st.gutter_forced) {
+					st.gutter_request = 0;
+					ApplyGutterRequest(st);
+				} else {
+					g_info.EditorControl(ECTL_REDRAW, nullptr);
+				}
+			}
 		}
 		g_settings.Save();
 		if (g_settings.enabled) {
@@ -1673,14 +1879,19 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	if (g_pending_popup.active) {
 		const int editor_id = g_pending_popup.editor_id;
 		const int line = g_pending_popup.line;
+		const bool center_on_hunk = g_pending_popup.center_on_hunk;
 		g_pending_popup.active = false;
+		g_pending_popup.center_on_hunk = false;
 
 		auto it = g_editors.find(editor_id);
 		if (it != g_editors.end()) {
-			ShowHunkPopup(it->second, line);
+			ShowHunkPopup(it->second, line, center_on_hunk);
 			did_work = true;
 		}
 	}
+
+	const bool dialog_current = GetCurrentWindowType() == WTYPE_DIALOG;
+	bool redraw_current_dialog = false;
 
 	if (g_pending_tick) {
 		g_pending_tick = false;
@@ -1692,7 +1903,9 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 				UpdateEditorState(st);
 				did_work = true;
 			}
-			ApplyGutterRequest(st);
+			if (ApplyGutterRequest(st)) {
+				redraw_current_dialog = dialog_current;
+			}
 		}
 	}
 	EditorInfo ei{};
@@ -1700,9 +1913,15 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		EditorState &st = g_editors[ei.EditorID];
 		st.editor_id = ei.EditorID;
 		if (st.gutter_request != -1) {
-			ApplyGutterRequest(st);
-			did_work = true;
+			if (ApplyGutterRequest(st)) {
+				did_work = true;
+				redraw_current_dialog = dialog_current;
+			}
 		}
+	}
+
+	if (redraw_current_dialog) {
+		g_info.AdvControl(g_info.ModuleNumber, ACTL_REDRAWALL, nullptr, nullptr);
 	}
 
 	return did_work ? 1 : 0;
@@ -1715,6 +1934,9 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 	}
 	if (!ir) {
 		return 0;
+	}
+	if (HandleCtrlG(ir)) {
+		return 1;
 	}
 	if (IsLikelyEditInput(ir)) {
 		EditorInfo ei{};

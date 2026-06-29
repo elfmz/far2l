@@ -1,0 +1,106 @@
+.Language=English,English
+.PluginContents=GitGutter
+
+@Contents
+$^#GitGutter plugin#
+$^#Contents#
+ The #GitGutter# plugin shows Git changes directly in the far2l editor gutter.
+It watches the current editor buffer, compares it with the selected baseline,
+and marks changed lines without requiring the file to be saved.
+
+ The plugin works only when the #git# command is available and the edited file
+belongs to a Git repository. If the editor gutter is hidden, GitGutter enables it
+while there are marks to show.
+
+   ~Hunk popup~@HunkPopup@
+
+   ~Configuration dialog~@ConfigurationDialog@
+
+   ~Troubleshooting~@Troubleshooting@
+
+@HunkPopup
+$^#GitGutter plugin#
+$^#Hunk popup#
+ Click a GitGutter mark in the editor gutter to open a popup with the diff hunk
+for that change. The popup is positioned near the clicked mark when possible.
+
+ Press #Ctrl+G# in the editor to open the nearest hunk at or below the current
+line and center it on screen.
+
+ Buttons:
+
+ #-# #◁#
+   Go to the previous hunk.
+
+ #-# #▷#
+   Go to the next hunk.
+
+ #-# #↩#
+   Revert the current hunk in the editor buffer.
+
+ The revert command verifies that the current editor text still matches the hunk
+before applying the change. If the text no longer matches, the hunk is not
+reverted.
+
+   ~Contents~@Contents@
+
+@ConfigurationDialog
+$^#GitGutter plugin#
+$^#Configuration dialog#
+ The configuration dialog is available from the plugin menu and from
+~Plugins Configuration~@:PluginsConfig@.
+
+ #-# Enabled
+   Turns GitGutter updates on or off.
+
+ #-# Baseline
+   Selects what the editor buffer is compared with:
+
+   #head# compares against #HEAD#.
+
+   #index# compares against the Git index.
+
+   #unstaged# compares against the file currently stored on disk.
+
+   Branch names are also listed when they can be obtained from Git.
+
+ #-# Update interval (ms)
+   Minimum delay between background updates. Lower values make marks react
+sooner while typing, but may run Git more often.
+
+ #-# Color added
+   Foreground and background color for added lines.
+
+ #-# Color modified
+   Foreground and background color for modified lines.
+
+ #-# Color deleted
+   Foreground and background color for deleted lines.
+
+ Colors are stored as #0xRRGGBB,0xRRGGBB#. The first value is foreground, the
+second value is background. The #...# buttons open the color picker.
+
+   ~Contents~@Contents@
+
+@Troubleshooting
+$^#GitGutter plugin#
+$^#Troubleshooting#
+ If no marks are shown, check that:
+
+ #-# The #git# executable is available in #PATH#.
+
+ #-# The edited file is inside a Git repository.
+
+ #-# The file has a path. Unsaved temporary editor buffers cannot be matched to a
+repository file.
+
+ #-# The selected baseline exists and contains the file. For example, comparing
+an untracked file with #head# may produce no useful baseline.
+
+ #-# The plugin is enabled in the configuration dialog.
+
+ GitGutter updates the editor buffer through temporary files and #git diff#.
+Large files or very small update intervals can make updates more expensive
+and impact editing performance.
+
+   ~Contents~@Contents@

@@ -9,15 +9,16 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ Added a new option "Auto save panels state"
 * Themes: added "Hercules Night", fixes to "Gold on Blue"
 * **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
-* _New_: `--nodetect=e` command line parameter to prevent emodjie VS16 suffix detection
+* _New_: `--nodetect=e` command line parameter to prevent emoji VS16 suffix detection
 * _New_: Restore initial terminal cursor shape on exit
 * Editor/Viewer: search/replace dialog: don't start search if search string is empty or regular expression is invalid
-* Viewer: Hex Mode now support multibytes UTF-8, UTF-16 etc.
+* Viewer: Hex Mode now supports multibyte UTF-8, UTF-16 etc.
 * Viewer: Printing support from viewer (via **Alt+F5**)
 * Fix cmdline autocomplete when commands deduplicated by text
-* SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a pluguin's SysID may see via `far:about` or in plugin's source code)
+* SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
 * _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system; see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
+* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** to open the nearest hunk at or below the current editor line
 * _OpenWith plugin_: Update to v1.2. Allow plugin invocation on `..` (treated as the current directory). New options: show Snap/Flatpak markers in app menu, ignore `[Removed Associations]` section, query system defaults via `xdg-mime`, and display filename in menu title. Add `GoTo .desktop`, `GoTo TryExec` and `GoTo source` buttons in `Details` dialog. Bugfixes, help updates.
 * _python plugin_: fixes and new subplugins uimgimage.py, uimgpdf.py, udockerrunlike.py [#3346](https://github.com/elfmz/far2l/issues/3346)
 * Several bugfixes and improvements
@@ -40,7 +41,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   **Left Ctrl+1**...**Left Ctrl+0** expands all branches to the chosen depth (1...10).
 * Dialog edit fields: Visual show trailing spaces/tabs and Select All by **Ctrl+A**
 * _New:_ Colored multiline edit control in "Multiline paste" and "Edit user menu" dialogs
-* _New:_ Options of the special command `edit:[line,col]` for openening file with position
+* _New:_ Options of the special command `edit:[line,col]` for opening file with position
 * _New:_ NetBSD support
 * _New:_ Show Pseudo-graphics on VT100+ terminals
 * _New:_ Macro Browser (**F9**->Commands->Macro Browser)
@@ -55,7 +56,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _memo plugin_: New multi-page scratchpad/memo common plugin
   (**F11**->Memo or **Ctrl+Alt+S** inside Panel, Dialog, Editor or Viewer; see [memo/README.md](https://github.com/elfmz/far2l/blob/master/memo/README.md))
 * _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
-* _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
+* _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at chosen column
 * _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file
 * _multiarc plugin_: Update bundled 7z sources to 26.00
 * _multiarc plugin_: Update bundled unrar sources to 7.20
@@ -64,7 +65,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Several bugfixes and improvements
 
 ## 2.7.0 beta (2025-10-26)
-* Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.
+* Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original unwrapped lines.
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
 * _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
 * _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
@@ -72,7 +73,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
 * _New:_ support (and warning) for pasting and executing multiline text in command line
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
+* Workaround for wxWidgets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
@@ -87,7 +88,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _multiarc plugin_: Update bundled 7z sources to 25.01
 * _multiarc plugin_: Update bundled unrar sources to 7.13
 * _arclite plugin_: New plugin for archives processing
-  (now as experimental version which partially more effective then multiarc;
+  (now as experimental version which partially more effective than multiarc;
   arclite disabled by default, to enable manually turn on
   F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
 * _hexitor plugin_: Hex editor (ported from far3) + preliminary support for viewing and editing UTF-8 characters

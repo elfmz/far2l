@@ -27,6 +27,13 @@ file(GLOB_RECURSE RESOURCE_FILES
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
         "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
 )
+list(APPEND RESOURCE_FILES
+        plug/gitgutter_en.lng
+        plug/gitgutter_ru.lng
+        plug/help_en.hlf
+        plug/help_ru.hlf
+)
+list(REMOVE_DUPLICATES RESOURCE_FILES)
 setup_target_auxiliary_files(${CURRENT_TARGET}
         RESOURCE_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/configs

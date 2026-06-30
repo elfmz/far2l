@@ -27,7 +27,7 @@ incsrch,
 inside,
 memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/memo/README.md))</sub>,
 multiarc,
-NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3 <sub>optional compilation if AWSSDK installed</sub>),
+NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3),
 OpenWith,
 Python <sub>(optional scripting support, see [readme](python/configs/plugins/read-en.txt) and [info](python/configs/plugins/readme-plugins.txt))</sub>,
 SimpleIndent,
@@ -201,7 +201,7 @@ First, install Homebrew if not yet installed:
 
 You can install 25MB "compact", slightly limited far2l TTY version via official [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
 
-It has no support for plugins in Python and no AWS S3, SMB protocols in NetRocks due to huge dependency size.
+It has no support for plugins in Python and no SMB protocol in NetRocks due to huge dependency size.
 
 For the far2l binary version run
 ```sh
@@ -278,11 +278,10 @@ docker run -it far2l
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
 * `libuchardet-dev` (_optional_ - needed for **auto charset detection**, not needed with `-DUSEUCD=no`)
 * `libssh-dev` (_optional_ - needed for **NetRocks/SFTP**)
-* `libssl-dev` (_optional_ - needed for **NetRocks/FTPS**)
+* `libssl-dev` (_optional_ - needed for **NetRocks/FTPS** and **NetRocks/AWS S3**)
 * `libsmbclient-dev` (_optional_ - needed for **NetRocks/SMB**)
 * `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
-* `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
-* [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS S3**)
+* `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV** and **NetRocks/AWS S3**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
 * `7zip` or `p7zip-full` in old distributions (_optional_ - not needed for building, but dynamically used for archives processing via **multiarc** and **arclite**)

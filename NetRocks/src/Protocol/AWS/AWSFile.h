@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <aws/core/Aws.h>
+#include <ctime>
 
 class AWSFile
 {
@@ -11,7 +11,9 @@ public:
 	long long size = 0;
 
 	AWSFile(std::string name, bool isFile);
-	AWSFile(std::string name, bool isFile, const Aws::Utils::DateTime &date, long long size);
+	AWSFile(std::string name, bool isFile, const std::string &iso8601_date, long long size);
 
-    void UpdateModification(const Aws::Utils::DateTime &date);
+	void UpdateModification(const std::string &iso8601_date);
+
+	static timespec FromISO8601(const std::string &s);
 };

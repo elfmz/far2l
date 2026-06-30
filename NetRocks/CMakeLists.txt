@@ -185,7 +185,7 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
         SUFFIX ".broker")
 endif ()
 
-if (AWSSDK_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
+if (LIBNEON_FOUND AND OPENSSL_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_AWS")
     add_executable (NetRocks-AWS
         ${PROTOCOL_SOURCES}
@@ -193,10 +193,11 @@ if (AWSSDK_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
         src/Protocol/AWS/AWSFileWriter.cpp
         src/Protocol/AWS/AWSFileReader.cpp
         src/Protocol/AWS/S3Repository.cpp
+        src/Protocol/AWS/S3Auth.cpp
         src/Protocol/AWS/ProtocolAWS.cpp
     )
-    target_include_directories(NetRocks-AWS PRIVATE src ${AWSSDK_INCLUDE_DIR})
-    target_link_libraries(NetRocks-AWS utils ${AWSSDK_LINK_LIBRARIES})
+    target_include_directories(NetRocks-AWS PRIVATE src ${LIBNEON_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries(NetRocks-AWS utils ${LIBNEON_LIBRARIES} ${OPENSSL_LIBRARIES})
 
     set_target_properties(NetRocks-AWS
         PROPERTIES

@@ -266,7 +266,9 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 		_scheme = "https";
 		_endpoint = _endpoint.substr(8);
 		scheme_explicit = true;
-	} else if (_endpoint.size() > 7 && _endpoint.substr(0, 7) == "http://") {
+	// Plain HTTP is intentionally supported for S3-compatible endpoints
+	// (MinIO, localhost, on-prem gateways); HTTPS is the default otherwise.
+	} else if (_endpoint.size() > 7 && _endpoint.substr(0, 7) == "http://") { // NOSONAR(cpp:S5332)
 		_scheme = "http";
 		_endpoint = _endpoint.substr(7);
 		scheme_explicit = true;

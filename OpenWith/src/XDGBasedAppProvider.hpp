@@ -316,7 +316,7 @@ namespace openwith
 
 		// RAII helper to manage "Operation-Scoped" state.
 		// Caches expensive lookups (like parsing all .desktop files or checking tool existence)
-		// for the duration of a single user action (GetAppCandidates), then releases them.
+		// for the duration of a single user action (GetAppCandidates()), then releases them.
 		// This avoids passing massive context structures through every function.
 
 		struct OperationContext
@@ -376,7 +376,7 @@ namespace openwith
 		void IndexDirectoryRecursively(std::unordered_map<std::string, std::string>& desktop_id_to_path_map, const std::string& current_path, const std::string& base_dir_prefix, VisitedInodeSet& visited_inodes);
 		const std::optional<XDGBasedAppProvider::DesktopEntry>& GetOrLoadDesktopEntry(const std::string& desktop_id);
 		MimeToDesktopEntryIndex ParseAllDesktopFiles();
-		MimeToDesktopAssociationsIndex ParseMimeinfoCacheFiles();
+		MimeToDesktopAssociationsIndex ParseMimeinfoCaches();
 		static void ParseMimeinfoCache(const std::string& filepath, MimeToDesktopAssociationsIndex& mime_to_desktop_associations_index);
 		MimeappsListsConfig ParseMimeappsLists();
 		void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists);
@@ -410,8 +410,12 @@ namespace openwith
 		static std::string GetEnv(const char* var, const char* default_val = "");
 		static std::string EscapeArgForShell(const std::string& arg);
 		static std::string GetBaseName(const std::string& filepath);
-		static std::string Trim(const std::string& str);
-		static std::vector<std::string> SplitString(const std::string& str, char delimiter);
+		static std::string_view TrimToStrV(std::string_view sv) noexcept;
+		static std::string TrimToStr(std::string_view sv);
+
+		enum class SplitBehavior { KeepEmpty, SkipEmpty };
+		static std::vector<std::string> SplitString(std::string_view str, char delimiter, SplitBehavior behavior = SplitBehavior::SkipEmpty);
+
 		static std::string ToLowerASCII(std::string str);
 
 		// ******************************************************************************
@@ -426,8 +430,8 @@ namespace openwith
 		// Maps a candidate's ID to its source info, i.e. where the association came from (e.g., 'mimeapps.list').
 		std::unordered_map<std::string, AssociationFact> _last_association_facts;
 
-		// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates call.
-		// This is used by GetMimeTypes to avoid redundant work.
+		// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates() call.
+		// This is used by GetMimeTypes() to avoid redundant work.
 		std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> _last_unique_mime_profiles;
 
 		// --- Platform-specific settings (values are loaded from INI) ---
@@ -466,7 +470,7 @@ namespace openwith
 		};
 
 		// --- Operation-Scoped State ---
-		// Fields managed by OperationContext. Valid only during a GetAppCandidates call.
+		// Fields managed by OperationContext. Valid only during a GetAppCandidates() call.
 		std::vector<std::string> _op_locale_suffixes;
 		std::vector<std::string> _op_current_desktop_names;  // from $XDG_CURRENT_DESKTOP
 		bool _op_xdg_mime_exists = false;

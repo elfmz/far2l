@@ -12,7 +12,6 @@
 #include <fstream>
 #include <map>
 #include <set>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -320,8 +319,10 @@ namespace openwith
 
 			const DesktopEntry& entry = it->second.value();
 			locations.push_back({GetMsg(MsgID::GotoDesktop), StrMB2Wide(entry.desktop_filepath)});
+
+			const std::string try_exec_path = UnescapeGKeyFileString(entry.try_exec);
 			std::string tryexec_filepath;
-			if (IsExecutableAvailable(entry.try_exec, &tryexec_filepath)) {
+			if (IsExecutableAvailable(try_exec_path, &tryexec_filepath)) {
 				locations.push_back({GetMsg(MsgID::GotoTryExec), StrMB2Wide(tryexec_filepath)});
 			}
 		}
@@ -420,7 +421,9 @@ namespace openwith
 
 	std::string XDGBasedAppProvider::QuerySystemDefaultApplication(const std::string& mime)
 	{
-		if (mime.empty()) return "";
+		if (mime.empty()) {
+			return "";
+		}
 
 		if (auto it = _op_mime_to_default_desktop_id_cache.find(mime);
 				 it != _op_mime_to_default_desktop_id_cache.end()) {
@@ -558,7 +561,7 @@ namespace openwith
 	}
 
 
-	// Validates a desktop entry against TryExec and OnlyShowIn/NotShowIn constraints, then forwards it to AddOrUpdateCandidate.
+	// Validates a desktop entry against TryExec and OnlyShowIn/NotShowIn constraints, then forwards it to AddOrUpdateCandidate().
 	// Entries incompatible with the current desktop environment are silently discarded.
 	void XDGBasedAppProvider::RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry,
 																int rank, const AssociationFact& origin_fact)
@@ -571,30 +574,38 @@ namespace openwith
 		}
 
 		if (_filter_by_show_in && !_op_current_desktop_names.empty()) {
+
 			bool only_show_in_present = !desktop_entry.only_show_in.empty();
 			bool not_show_in_present = !desktop_entry.not_show_in.empty();
+
 			if (only_show_in_present || not_show_in_present) {
-				std::vector<std::string> allowed_desktops;
-				std::vector<std::string> forbidden_desktops;
-				if (only_show_in_present) {
-					allowed_desktops = SplitString(desktop_entry.only_show_in, ';');
-				}
-				if (not_show_in_present) {
-					forbidden_desktops = SplitString(desktop_entry.not_show_in, ';');
-				}
+
+				auto is_desktop_listed = [](std::string_view env_list, std::string_view desktop_name) noexcept {
+					while (!env_list.empty()) {
+						size_t semicolon_pos = env_list.find(';');
+						std::string_view extracted_env = TrimToStrV(env_list.substr(0, semicolon_pos));
+						if (extracted_env == desktop_name) {
+							return true;
+						}
+						if (semicolon_pos == std::string_view::npos) {
+							break;
+						}
+						env_list.remove_prefix(semicolon_pos + 1);
+					}
+					return false;
+				};
+
 				bool explicitly_allowed = false;
 				for (const auto& current_desktop_name : _op_current_desktop_names) {
-					if (current_desktop_name.empty()) continue;
-					if (only_show_in_present) {
-						if (std::find(allowed_desktops.begin(), allowed_desktops.end(), current_desktop_name) != allowed_desktops.end()) {
-							explicitly_allowed = true;
-							break; // Found a high-priority match explicitly allowing the app. Stop checking.
-						}
+					if (current_desktop_name.empty()) {
+						continue;
 					}
-					if (not_show_in_present) {
-						if (std::find(forbidden_desktops.begin(), forbidden_desktops.end(), current_desktop_name) != forbidden_desktops.end()) {
-							return; // Found a high-priority match explicitly forbidding the app. Reject immediately.
-						}
+					if (only_show_in_present && is_desktop_listed(desktop_entry.only_show_in, current_desktop_name)) {
+						explicitly_allowed = true;
+						break; // Found a high-priority match explicitly allowing the app. Stop checking.
+					}
+					if (not_show_in_present && is_desktop_listed(desktop_entry.not_show_in, current_desktop_name)) {
+						return; // Found a high-priority match explicitly forbidding the app. Reject immediately.
 					}
 				}
 				if (only_show_in_present && !explicitly_allowed) {
@@ -668,7 +679,9 @@ namespace openwith
 
 		if (_sort_alphabetically) {
 			std::sort(sorted_candidates.begin(), sorted_candidates.end(), [](const RankedCandidate& a, const RankedCandidate& b) {
-				if (!a.desktop_entry || !b.desktop_entry) return b.desktop_entry != nullptr;
+				if (!a.desktop_entry || !b.desktop_entry) {
+					return b.desktop_entry != nullptr;
+				}
 				return a.desktop_entry->name < b.desktop_entry->name;
 			});
 		} else {
@@ -825,8 +838,10 @@ namespace openwith
 
 		// Adds a MIME type only if it's valid and not already present.
 		auto add_unique = [&](std::string mime) {
-			mime = Trim(mime);
-			if (mime.empty()) return;
+			mime = TrimToStr(mime);
+			if (mime.empty()) {
+				return;
+			}
 			if (mime == s_octet_stream) {
 				octet_stream_detected = true;
 				return;
@@ -1054,13 +1069,17 @@ namespace openwith
 		}
 
 		DIR* dir_stream = opendir(current_path.c_str());
-		if (!dir_stream) return;
+		if (!dir_stream) {
+			return;
+		}
 
 		struct dirent* dir_entry;
 
 		while ((dir_entry = readdir(dir_stream))) {
 			std::string_view name = dir_entry->d_name;
-			if (name == "." || name == "..") continue;
+			if (name == "." || name == "..") {
+				continue;
+			}
 
 			bool is_dir = false;
 			bool is_reg = false;
@@ -1088,7 +1107,9 @@ namespace openwith
 				// Fallback to stat():
 				// 1. If d_type is not supported by the OS or filesystem.
 				// 2. If the entry is a symlink (we need to follow it).
-				if (stat(full_path.c_str(), &st) != 0) continue;
+				if (stat(full_path.c_str(), &st) != 0) {
+					continue;
+				}
 
 				if (S_ISDIR(st.st_mode)) {
 					is_dir = true;
@@ -1147,7 +1168,7 @@ namespace openwith
 		for (const auto& [id, filepath] : _op_desktop_id_to_path_index) {
 
 			// Parsed entries are stored in the persistent _desktop_id_to_desktop_entry_cache
-			// so they can later be looked up cheaply by RegisterCandidateById.
+			// so they can later be looked up cheaply by RegisterCandidateById().
 			const auto& desktop_entry_opt = GetOrLoadDesktopEntry(id);
 			if (!desktop_entry_opt.has_value()) {
 				continue;
@@ -1166,7 +1187,7 @@ namespace openwith
 	}
 
 
-	XDGBasedAppProvider::MimeToDesktopAssociationsIndex XDGBasedAppProvider::ParseMimeinfoCacheFiles()
+	XDGBasedAppProvider::MimeToDesktopAssociationsIndex XDGBasedAppProvider::ParseMimeinfoCaches()
 	{
 		if (_op_desktop_file_dirpaths.empty()) {
 			return {};
@@ -1186,40 +1207,47 @@ namespace openwith
 	void XDGBasedAppProvider::ParseMimeinfoCache(const std::string& filepath, MimeToDesktopAssociationsIndex& mime_to_desktop_associations_index)
 	{
 		std::ifstream file(filepath);
-		if (!file.is_open()) return;
+		if (!file.is_open()) {
+			return;
+		}
 
 		std::string line;
 		bool in_cache_section = false;
 		while (std::getline(file, line)) {
-			line = Trim(line);
-			if (line.empty() || line[0] == '#') continue;
+			std::string_view line_v = TrimToStrV(line);
+			if (line_v.empty() || line_v[0] == '#') {
+				continue;
+			}
 
-			if (line == "[MIME Cache]") {
+			if (line_v == "[MIME Cache]") {
 				in_cache_section = true;
 				continue;
 			}
 
-			if (line[0] == '[') {
+			if (line_v[0] == '[') {
 				in_cache_section = false;
 				continue;
 			}
 
-			if (in_cache_section) {
-				auto eq_pos = line.find('=');
-				if (eq_pos == std::string::npos) continue;
+			if (!in_cache_section) {
+				continue;
+			}
 
-				std::string mime = Trim(line.substr(0, eq_pos));
-				std::string desktop_ids_str = Trim(line.substr(eq_pos + 1));
+			size_t eq_pos = line_v.find('=');
+			if (eq_pos == std::string_view::npos) {
+				continue;
+			}
 
-				auto desktop_ids = SplitString(desktop_ids_str, ';');
-				if (!mime.empty() && !desktop_ids.empty()) {
-					std::vector<DesktopAssociation>& existing = mime_to_desktop_associations_index[mime];
-					for (const auto& desktop_id : desktop_ids) {
-						if (!desktop_id.empty()) {
-							existing.push_back(DesktopAssociation(desktop_id, filepath));
-						}
-					}
-				}
+			std::string mime = TrimToStr(line_v.substr(0, eq_pos));
+			auto desktop_ids = SplitString(line_v.substr(eq_pos + 1), ';');
+
+			if (mime.empty() || desktop_ids.empty()) {
+				continue;
+			}
+
+			std::vector<DesktopAssociation>& existing = mime_to_desktop_associations_index[mime];
+			for (const std::string& desktop_id : desktop_ids) {
+				existing.push_back(DesktopAssociation(desktop_id, filepath));
 			}
 		}
 	}
@@ -1241,45 +1269,52 @@ namespace openwith
 	void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists)
 	{
 		std::ifstream file(filepath);
-		if (!file.is_open()) return;
+		if (!file.is_open()) {
+			return;
+		}
 
 		std::string line, current_section;
 		while (std::getline(file, line)) {
-			line = Trim(line);
-			if (line.empty() || line[0] == '#') continue;
-
-			if (line[0] == '[' && line.back() == ']') {
-				current_section = line;
+			std::string_view line_v = TrimToStrV(line);
+			if (line_v.empty() || line_v[0] == '#') {
 				continue;
 			}
 
-			auto eq_pos = line.find('=');
-			if (eq_pos == std::string::npos) continue;
+			if (line_v[0] == '[' && line_v.back() == ']') {
+				current_section = std::string(line_v);
+				continue;
+			}
 
-			std::string mime = Trim(line.substr(0, eq_pos));
-			std::string desktop_ids_str = Trim(line.substr(eq_pos + 1));
-			auto desktop_ids = SplitString(desktop_ids_str, ';');
+			size_t eq_pos = line_v.find('=');
+			if (eq_pos == std::string_view::npos) {
+				continue;
+			}
 
-			if (desktop_ids.empty()) continue;
+			std::string mime = TrimToStr(line_v.substr(0, eq_pos));
+			auto desktop_ids = SplitString(line_v.substr(eq_pos + 1), ';');
+
+			if (mime.empty() || desktop_ids.empty()) {
+				continue;
+			}
 
 			// By passing the partially built 'mimeapps_lists' to IsAssociationRemoved(), we check the candidate application
 			// against only those records from [Removed Associations] that have been accumulated from higher-priority files
 			// parsed up to this point - preventing later system-level removals from overriding earlier user-level additions.
 
 			if (current_section == "[Default Applications]") {
-				for (const auto& desktop_id : desktop_ids) {
+				for (const std::string& desktop_id : desktop_ids) {
 					if (!IsAssociationRemoved(mime, desktop_id, mimeapps_lists)) {
 						mimeapps_lists.defaults[mime].push_back(DesktopAssociation(desktop_id, filepath));
 					}
 				}
 			} else if (current_section == "[Added Associations]") {
-				for (const auto& desktop_id : desktop_ids) {
+				for (const std::string& desktop_id : desktop_ids) {
 					if (!IsAssociationRemoved(mime, desktop_id, mimeapps_lists)) {
 						mimeapps_lists.added[mime].push_back(DesktopAssociation(desktop_id, filepath));
 					}
 				}
 			} else if (current_section == "[Removed Associations]") {
-				for (const auto& desktop_id : desktop_ids) {
+				for (const std::string& desktop_id : desktop_ids) {
 					mimeapps_lists.removed[mime].insert(desktop_id);
 				}
 			}
@@ -1305,24 +1340,31 @@ namespace openwith
 
 		// Parse key-value pairs from the [Desktop Entry] section only.
 		while (std::getline(file, line)) {
-			line = Trim(line);
-			if (line.empty() || line[0] == '#') continue;
-			if (line == "[Desktop Entry]") {
+			std::string_view line_v = TrimToStrV(line);
+
+			if (line_v.empty() || line_v[0] == '#') {
+				continue;
+			}
+			if (line_v == "[Desktop Entry]") {
 				in_main_section = true;
 				continue;
 			}
-			if (line[0] == '[') {
+			if (line_v[0] == '[') {
 				in_main_section = false;
 				continue;
 			}
-			if (in_main_section) {
-				auto eq_pos = line.find('=');
-				if (eq_pos == std::string::npos) {
-					continue;
-				}
-				std::string key = Trim(line.substr(0, eq_pos));
-				std::string value = Trim(line.substr(eq_pos + 1));
-				kv_entries[key] = value;
+			if (!in_main_section) {
+				continue;
+			}
+			size_t eq_pos = line_v.find('=');
+			if (eq_pos == std::string_view::npos) {
+				continue;
+			}
+
+			std::string_view key_v = TrimToStrV(line_v.substr(0, eq_pos));
+			std::string_view value_v = TrimToStrV(line_v.substr(eq_pos + 1));
+			if (!key_v.empty()) {
+				kv_entries.emplace(key_v, value_v);
 			}
 		}
 
@@ -1474,19 +1516,25 @@ namespace openwith
 		for (const auto& dirpath : _op_mime_database_dirpaths) {
 			std::string alias_filepath = dirpath + "/aliases";
 			std::ifstream file(alias_filepath);
-			if (!file.is_open()) continue;
+			if (!file.is_open()) {
+				continue;
+			}
 
 			std::string line;
 			while (std::getline(file, line)) {
-				line = Trim(line);
-				if (line.empty() || line[0] == '#') continue;
-
-				std::stringstream ss(line);
-				std::string alias_mime, canonical_mime;
-				if (ss >> alias_mime >> canonical_mime) {
-					// Use try_emplace to ensure that only the first-encountered alias
-					// (from the highest-priority file) is inserted.
-					alias_to_canonical_map.try_emplace(alias_mime, canonical_mime);
+				std::string_view line_v = TrimToStrV(line);
+				if (line_v.empty() || line_v[0] == '#') {
+					continue;
+				}
+				size_t space_pos = line_v.find_first_of(" \t");
+				if (space_pos != std::string_view::npos) {
+					std::string alias_mime = TrimToStr(line_v.substr(0, space_pos));
+					std::string canonical_mime = TrimToStr(line_v.substr(space_pos + 1));
+					if (!alias_mime.empty() && !canonical_mime.empty()) {
+						// Use try_emplace to ensure that only the first-encountered alias
+						// (from the highest-priority file) is inserted.
+						alias_to_canonical_map.try_emplace(std::move(alias_mime), std::move(canonical_mime));
+					}
 				}
 			}
 		}
@@ -1518,17 +1566,23 @@ namespace openwith
 		for (auto it = _op_mime_database_dirpaths.rbegin(); it != _op_mime_database_dirpaths.rend(); ++it) {
 			std::string subclasses_filepath = *it + "/subclasses";
 			std::ifstream file(subclasses_filepath);
-			if (!file.is_open()) continue;
+			if (!file.is_open()) {
+				continue;
+			}
 
 			std::string line;
 			while (std::getline(file, line)) {
-				line = Trim(line);
-				if (line.empty() || line[0] == '#') continue;
-
-				std::stringstream ss(line);
-				std::string child_mime, parent_mime;
-				if (ss >> child_mime >> parent_mime) {
-					subclass_to_parent_map[child_mime] = parent_mime;
+				std::string_view line_v = TrimToStrV(line);
+				if (line_v.empty() || line_v[0] == '#') {
+					continue;
+				}
+				size_t space_pos = line_v.find_first_of(" \t");
+				if (space_pos != std::string_view::npos) {
+					std::string child_mime = TrimToStr(line_v.substr(0, space_pos));
+					std::string parent_mime = TrimToStr(line_v.substr(space_pos + 1));
+					if (!child_mime.empty() && !parent_mime.empty()) {
+						subclass_to_parent_map[std::move(child_mime)] = std::move(parent_mime);
+					}
 				}
 			}
 		}
@@ -1565,7 +1619,9 @@ namespace openwith
 	void XDGBasedAppProvider::ParseGlobs2File(const std::string& filepath, std::vector<GlobRule>& rules, int source_rank)
 	{
 		std::ifstream file(filepath);
-		if (!file.is_open()) return;
+		if (!file.is_open()) {
+			return;
+		}
 
 		std::string line;
 		while (std::getline(file, line)) {
@@ -1590,7 +1646,7 @@ namespace openwith
 				continue;
 			}
 
-			std::string mime = Trim(line.substr(first_colon + 1, second_colon - first_colon - 1));
+			std::string_view mime_v = TrimToStrV(std::string_view(line).substr(first_colon + 1, second_colon - first_colon - 1));
 
 			std::string pattern;
 			std::string flags_str;
@@ -1615,7 +1671,7 @@ namespace openwith
 			// for this specific MIME type (simulating a reset/override from a higher-priority directory).
 			if (pattern == "__NOGLOBS__") {
 				rules.erase(std::remove_if(rules.begin(), rules.end(),
-										   [&mime](const GlobRule& r) { return r.mime_type == mime; }),
+										   [mime_v](const GlobRule& r) { return r.mime_type == mime_v; }),
 							rules.end());
 				continue;
 			}
@@ -1626,10 +1682,10 @@ namespace openwith
 				case_sensitive = (std::find(flags.begin(), flags.end(), "cs") != flags.end());
 			}
 
-			if (!mime.empty() && !pattern.empty()) {
+			if (!mime_v.empty() && !pattern.empty()) {
 				// Pre-calculate is_literal to optimize sorting performance later.
 				bool is_literal = IsLiteralPattern(pattern);
-				rules.push_back({weight, std::move(mime), std::move(pattern), case_sensitive, source_rank, is_literal});
+				rules.push_back({weight, std::string(mime_v), std::move(pattern), case_sensitive, source_rank, is_literal});
 			}
 		}
 	}
@@ -1665,7 +1721,9 @@ namespace openwith
 
 		// System-wide data directories ($XDG_DATA_DIRS) have lower priority.
 		for (const auto& dir : SplitString(xdg_data_dirs, ':')) {
-			if (dir.empty() || dir[0] != '/') continue;
+			if (dir.empty() || dir[0] != '/') {
+				continue;
+			}
 			add_path(dir + "/applications");
 		}
 
@@ -1740,7 +1798,9 @@ namespace openwith
 		// [Added Associations] from a higher-priority one already processed.
 		for (const SearchBase& base : bases) {
 			for (const auto& raw_dir : SplitString(base.colon_paths, ':')) {
-				if (raw_dir.empty() || raw_dir[0] != '/') continue;
+				if (raw_dir.empty() || raw_dir[0] != '/') {
+					continue;
+				}
 				std::string dir = raw_dir;
 				if (dir.back() != '/') {
 					dir += '/';
@@ -1751,7 +1811,9 @@ namespace openwith
 				}
 				// 1. Desktop-specific associations: $desktop-mimeapps.list
 				for (const auto& current_desktop_name : _op_current_desktop_names) {
-					if (current_desktop_name.empty()) continue;
+					if (current_desktop_name.empty()) {
+						continue;
+					}
 					std::string filename = ToLowerASCII(current_desktop_name) + "-mimeapps.list";
 					add_path(dir + filename);
 				}
@@ -1786,7 +1848,9 @@ namespace openwith
 		}
 
 		for (const auto& dir : SplitString(xdg_data_dirs, ':')) {
-			if (dir.empty() || dir[0] != '/') continue;
+			if (dir.empty() || dir[0] != '/') {
+				continue;
+			}
 			add_path(dir + "/mime");
 		}
 		return dirpaths;
@@ -1817,7 +1881,9 @@ namespace openwith
 
 		for (const ExecArgTemplate& arg_template : desktop_entry.arg_templates) {
 			// Spec: field codes must not be used inside a quoted argument.
-			if (arg_template.is_quoted_literal) continue;
+			if (arg_template.is_quoted_literal) {
+				continue;
+			}
 
 			// Check for FileList codes (%F, %U) which dictate a single process invocation for multiple files.
 			if (arg_template.value == "%F" || arg_template.value == "%U") {
@@ -1848,7 +1914,9 @@ namespace openwith
 	// Parses the GKeyFile-unescaped 'Exec' key string into a sequence of argument templates.
 	std::vector<XDGBasedAppProvider::ExecArgTemplate> XDGBasedAppProvider::TokenizeExecString(const std::string& exec_value)
 	{
-		if (exec_value.empty()) return {};
+		if (exec_value.empty()) {
+			return {};
+		}
 
 		std::vector<ExecArgTemplate> tokens;
 		tokens.reserve(4);
@@ -2146,7 +2214,9 @@ namespace openwith
 		// Otherwise, look up in $PATH.
 		auto dirs = SplitString(GetEnv("PATH"), ':');
 		for (const auto& dir : dirs) {
-			if (dir.empty()) continue;
+			if (dir.empty()) {
+				continue;
+			}
 			std::string filepath = (dir.back() == '/') ? (dir + command) : (dir + '/' + command);
 			if (check_and_save(filepath)) {
 				return true;
@@ -2162,7 +2232,7 @@ namespace openwith
 		if (cmd.empty() || !POpen(result, cmd.c_str())) {
 			return "";
 		}
-		return Trim(result);
+		return TrimToStr(result);
 	}
 
 
@@ -2224,37 +2294,37 @@ namespace openwith
 	}
 
 
-	std::string XDGBasedAppProvider::Trim(const std::string& str)
+	std::string_view XDGBasedAppProvider::TrimToStrV(std::string_view sv) noexcept
 	{
-		if (str.empty()) {
-			return "";
+		constexpr std::string_view spaces = " \t\n\r\f\v";
+		const size_t first = sv.find_first_not_of(spaces);
+		if (first == std::string_view::npos) {
+			return {};
 		}
-		std::string_view sv = str;
-		auto is_ascii_space = [](char c) {
-			return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
-		};
-		while (!sv.empty() && is_ascii_space(sv.front())) {
-			sv.remove_prefix(1);
-		}
-		while (!sv.empty() && is_ascii_space(sv.back())) {
-			sv.remove_suffix(1);
-		}
-		return std::string(sv);
+		const size_t last = sv.find_last_not_of(spaces);
+		return sv.substr(first, (last - first) + 1);
 	}
 
 
-	std::vector<std::string> XDGBasedAppProvider::SplitString(const std::string& str, char delimiter)
+	std::string XDGBasedAppProvider::TrimToStr(std::string_view sv)
 	{
-		if (str.empty()) return {};
+		return std::string(TrimToStrV(sv));
+	}
 
+
+	std::vector<std::string> XDGBasedAppProvider::SplitString(std::string_view str, char delimiter, SplitBehavior behavior)
+	{
 		std::vector<std::string> tokens;
-		std::istringstream stream(str);
-		std::string token;
-
-		while (std::getline(stream, token, delimiter)) {
-			if (auto trimmed = Trim(token); !trimmed.empty()) {
-				tokens.push_back(std::move(trimmed));
+		while (true) {
+			const size_t pos = str.find(delimiter);
+			std::string_view token = TrimToStrV(str.substr(0, pos));
+			if (behavior == SplitBehavior::KeepEmpty || !token.empty()) {
+				tokens.emplace_back(token);
 			}
+			if (pos == std::string_view::npos) {
+				break;
+			}
+			str.remove_prefix(pos + 1);
 		}
 		return tokens;
 	}
@@ -2323,7 +2393,7 @@ namespace openwith
 
 		if (provider._use_mimeinfo_cache) {
 			// Attempt to load from 'mimeinfo.cache' first, as per user setting.
-			provider._op_mime_to_desktop_associations_index = provider.ParseMimeinfoCacheFiles();
+			provider._op_mime_to_desktop_associations_index = provider.ParseMimeinfoCaches();
 		}
 
 		// If caching is disabled (by user) OR cache was empty...

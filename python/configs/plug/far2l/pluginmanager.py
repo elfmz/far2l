@@ -153,7 +153,12 @@ class PluginManager:
         name = id2name[OpenFrom]
         log.debug("pluginGetFrom({0} ({1}), {2})".format(
             OpenFrom, name, Item))
-        plugin = self.plugins[Item]
+        plugins = []
+        for plugin in self.plugins:
+            openFrom = plugin.Plugin.openFrom
+            if "PLUGINSMENU" in openFrom:
+                plugins.append(plugin)
+        plugin = plugins[Item]
         if name not in plugin.Plugin.openFrom:
             log.debug("pluginGetFrom({0} ({1}), {2}) unhandled by {3} {4}".format(
             OpenFrom, name, Item, plugin.Plugin.label, plugin.Plugin.openFrom))

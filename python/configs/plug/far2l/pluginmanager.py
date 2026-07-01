@@ -154,10 +154,16 @@ class PluginManager:
         log.debug("pluginGetFrom({0} ({1}), {2})".format(
             OpenFrom, name, Item))
         plugins = []
-        for plugin in self.plugins:
-            openFrom = plugin.Plugin.openFrom
-            if "PLUGINSMENU" in openFrom:
-                plugins.append(plugin)
+        if OpenFrom == ffic.OPEN_DISKMENU:
+            for plugin in self.plugins:
+                openFrom = plugin.Plugin.openFrom
+                if "DISKMENU" in openFrom:
+                    plugins.append(plugin)
+        else:
+            for plugin in self.plugins:
+                openFrom = plugin.Plugin.openFrom
+                if "PLUGINSMENU" in openFrom:
+                    plugins.append(plugin)
         plugin = plugins[Item]
         if name not in plugin.Plugin.openFrom:
             log.debug("pluginGetFrom({0} ({1}), {2}) unhandled by {3} {4}".format(

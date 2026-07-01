@@ -49,9 +49,9 @@ namespace openwith
 		// Defines how the application expects arguments based on Field Codes in the Exec key.
 		enum class ExecutionModel
 		{
-			LegacyImplicit, // no field codes found; append files to the end of the command.
-			PerFile,        // %f or %u found; launch a separate process for each file.
-			FileList        // %F or %U found; pass all files as a list to a single process.
+			ImplicitFileAppend, // no field codes found; append files to the end of the command.
+			PerFile,            // %f or %u found; launch a separate process for each file.
+			FileList            // %F or %U found; pass all files as a list to a single process.
 		};
 
 
@@ -85,9 +85,9 @@ namespace openwith
 			std::string x_flatpak;
 			std::string x_snap_instance_name;
 
-			// Mutable cache for lazy parsing: analysis is performed only if the application is selected as a candidate.
+			// Mutable cache for lazy parsing: command line analysis is performed once when converting the entry to a menu candidate.
 			mutable bool is_exec_parsed = false;
-			mutable ExecutionModel execution_model = ExecutionModel::LegacyImplicit;
+			mutable ExecutionModel execution_model = ExecutionModel::ImplicitFileAppend;
 			mutable std::vector<ExecArgTemplate> arg_templates;
 		};
 
@@ -102,7 +102,7 @@ namespace openwith
 		{
 			std::string xdg_mime;		// result from 'xdg-mime query filetype'
 			std::string file_mime;		// result from 'file --mime-type'
-			std::string magika_mime;	// result from 'magika --format '%m''
+			std::string magika_mime;	// result from 'magika --format %m'
 			std::string globs2_mime;	// result from XDG glob rules matching (globs2)
 			std::string ext_mime;		// result from internal extension fallback map
 			std::string stat_mime;		// result from internal stat() analysis (e.g., inode/directory)
@@ -115,7 +115,7 @@ namespace openwith
 					   std::tie(other.is_regular_file, other.xdg_mime, other.file_mime, other.magika_mime, other.globs2_mime, other.ext_mime, other.stat_mime);
 			}
 
-			// Custom hash function to allow RawMimeProfile to be used as a key in std::unordered_map.
+			// Custom hash functor required to use RawMimeProfile as a key in std::unordered_map and std::unordered_set.
 			struct Hash
 			{
 				std::size_t operator()(const RawMimeProfile& s) const noexcept
@@ -191,8 +191,8 @@ namespace openwith
 		// Represents the merged content of all parsed 'mimeapps.list' files found in XDG directories.
 		struct MimeappsListsConfig
 		{
-			// MIME type -> default application from [Default Applications].
-			std::unordered_map<std::string, DesktopAssociation> defaults;
+			// MIME type -> list of apps from [Default Applications].
+			std::unordered_map<std::string, std::vector<DesktopAssociation>> defaults;
 			// MIME type -> list of apps from [Added Associations].
 			std::unordered_map<std::string, std::vector<DesktopAssociation>> added;
 			// MIME type -> set of apps from [Removed Associations].
@@ -225,13 +225,20 @@ namespace openwith
 		struct Ranking
 		{
 			// Specificity determines the base tier (Specific MIME > Generic MIME > Fallback).
-			static constexpr int SPECIFICITY_MULTIPLIER = 100;
+			static constexpr int SPECIFICITY_MULTIPLIER = 100'000;
 
 			// Within the same specificity tier, the source determines priority.
-			static constexpr int SOURCE_RANK_GLOBAL_DEFAULT = 5;   // 'xdg-mime query default'
-			static constexpr int SOURCE_RANK_MIMEAPPS_DEFAULT = 4; // [Default Applications] in 'mimeapps.list'
-			static constexpr int SOURCE_RANK_MIMEAPPS_ADDED = 3;   // [Added Associations] in 'mimeapps.list'
-			static constexpr int SOURCE_RANK_CACHE_OR_SCAN = 2;    // 'mimeinfo.cache' or full .desktop scan
+			static constexpr int SOURCE_RANK_GLOBAL_DEFAULT = 5'000;   // 'xdg-mime query default'
+			static constexpr int SOURCE_RANK_MIMEAPPS_DEFAULT = 4'000; // [Default Applications] in 'mimeapps.list'
+			static constexpr int SOURCE_RANK_MIMEAPPS_ADDED = 3'000;   // [Added Associations] in 'mimeapps.list'
+			static constexpr int SOURCE_RANK_CACHE_OR_SCAN = 2'000;    // 'mimeinfo.cache' or full .desktop scan
+
+			// Maximum intra-tier rank penalty (applied per-position within a single source).
+			// Capped so that even the lowest-ranked entry within a tier cannot drop below
+			// the base rank of the next lower-priority tier, preserving strict tier ordering.
+			static constexpr int MAX_PENALTY_FOR_DEFAULT = SOURCE_RANK_MIMEAPPS_DEFAULT - SOURCE_RANK_MIMEAPPS_ADDED - 1;
+			static constexpr int MAX_PENALTY_FOR_ADDED = SOURCE_RANK_MIMEAPPS_ADDED - SOURCE_RANK_CACHE_OR_SCAN - 1;
+			static constexpr int MAX_PENALTY_FOR_MIMEINFO_CACHE = SOURCE_RANK_CACHE_OR_SCAN - 1;
 		};
 
 
@@ -248,6 +255,9 @@ namespace openwith
 			RankedCandidate(const DesktopEntry* d, int r, AssociationFact f)
 				: desktop_entry(d), rank(r), origin_fact(std::move(f)) {}
 
+			RankedCandidate(int r, AssociationFact f)
+					: desktop_entry(nullptr), rank(r), origin_fact(std::move(f)) {}
+
 			bool operator<(const RankedCandidate& other) const {
 				if (rank != other.rank) {
 					return rank > other.rank; // Descending by rank.
@@ -257,17 +267,6 @@ namespace openwith
 				}
 				return desktop_entry == nullptr && other.desktop_entry != nullptr;
 			}
-		};
-
-
-		// Temporary structure to track the best score found for a specific Desktop ID
-		// while iterating through multiple MIME types (specific -> generic).
-		struct AssociationScore
-		{
-			int rank;
-			AssociationFact origin_fact;
-			AssociationScore(int r, AssociationFact f)
-				: rank(r), origin_fact(std::move(f)) {}
 		};
 
 
@@ -317,16 +316,18 @@ namespace openwith
 
 		// RAII helper to manage "Operation-Scoped" state.
 		// Caches expensive lookups (like parsing all .desktop files or checking tool existence)
-		// for the duration of a single user action (GetAppCandidates), then releases them.
+		// for the duration of a single user action (GetAppCandidates()), then releases them.
 		// This avoids passing massive context structures through every function.
 
 		struct OperationContext
 		{
 			XDGBasedAppProvider& provider;
-			OperationContext(XDGBasedAppProvider& p);
+			explicit OperationContext(XDGBasedAppProvider& p);
 			~OperationContext();
+
+			OperationContext(const OperationContext &) = delete;
+			OperationContext &operator=(const OperationContext &) = delete;
 		};
-		friend struct OperationContext;
 
 
 		// ******************************************************************************
@@ -335,7 +336,7 @@ namespace openwith
 
 		using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKey::Hash>;
 		using MimeToDesktopEntryIndex = std::unordered_map<std::string, std::vector<const DesktopEntry*>>;
-		using MimeToDesktopAssociationsMap = std::unordered_map<std::string, std::vector<DesktopAssociation>>;
+		using MimeToDesktopAssociationsIndex = std::unordered_map<std::string, std::vector<DesktopAssociation>>;
 		using VisitedInodeSet = std::set<std::pair<dev_t, ino_t>>;
 
 
@@ -346,14 +347,14 @@ namespace openwith
 		// --- Candidate search and ranking ---
 		CandidateMap DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes);
 		std::string QuerySystemDefaultApplication(const std::string& mime);
-		void AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
+		void AppendCandidatesFromMimeappsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
 		void AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
-		void AppendCandidatesFromDesktopEntryIndex(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
+		void AppendCandidatesFromFullScan(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
 		void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id, int rank, const AssociationFact& origin_fact);
 		void RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const AssociationFact& origin_fact);
 		void AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const AssociationFact& origin_fact);
 		bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id, const MimeappsListsConfig& mimeapps_lists) const;
-		std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
+		std::vector<RankedCandidate> BuildSortedCandidates(const CandidateMap& candidate_map);
 		std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
 		std::wstring_view GetPackageTag(PackageType type);
 		static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
@@ -375,8 +376,8 @@ namespace openwith
 		void IndexDirectoryRecursively(std::unordered_map<std::string, std::string>& desktop_id_to_path_map, const std::string& current_path, const std::string& base_dir_prefix, VisitedInodeSet& visited_inodes);
 		const std::optional<XDGBasedAppProvider::DesktopEntry>& GetOrLoadDesktopEntry(const std::string& desktop_id);
 		MimeToDesktopEntryIndex ParseAllDesktopFiles();
-		MimeToDesktopAssociationsMap ParseAllMimeinfoCacheFiles();
-		static void ParseMimeinfoCache(const std::string& filepath, MimeToDesktopAssociationsMap& mime_to_desktop_associations_map);
+		MimeToDesktopAssociationsIndex ParseMimeinfoCaches();
+		static void ParseMimeinfoCache(const std::string& filepath, MimeToDesktopAssociationsIndex& mime_to_desktop_associations_index);
 		MimeappsListsConfig ParseMimeappsLists();
 		void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists);
 		std::optional<XDGBasedAppProvider::DesktopEntry> ParseDesktopFile(const std::string& filepath);
@@ -409,8 +410,12 @@ namespace openwith
 		static std::string GetEnv(const char* var, const char* default_val = "");
 		static std::string EscapeArgForShell(const std::string& arg);
 		static std::string GetBaseName(const std::string& filepath);
-		static std::string Trim(const std::string& str);
-		static std::vector<std::string> SplitString(const std::string& str, char delimiter);
+		static std::string_view TrimToStrV(std::string_view sv) noexcept;
+		static std::string TrimToStr(std::string_view sv);
+
+		enum class SplitBehavior { KeepEmpty, SkipEmpty };
+		static std::vector<std::string> SplitString(std::string_view str, char delimiter, SplitBehavior behavior = SplitBehavior::SkipEmpty);
+
 		static std::string ToLowerASCII(std::string str);
 
 		// ******************************************************************************
@@ -425,8 +430,8 @@ namespace openwith
 		// Maps a candidate's ID to its source info, i.e. where the association came from (e.g., 'mimeapps.list').
 		std::unordered_map<std::string, AssociationFact> _last_association_facts;
 
-		// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates call.
-		// This is used by GetMimeTypes to avoid redundant work.
+		// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates() call.
+		// This is used by GetMimeTypes() to avoid redundant work.
 		std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> _last_unique_mime_profiles;
 
 		// --- Platform-specific settings (values are loaded from INI) ---
@@ -465,7 +470,7 @@ namespace openwith
 		};
 
 		// --- Operation-Scoped State ---
-		// Fields managed by OperationContext. Valid only during a GetAppCandidates call.
+		// Fields managed by OperationContext. Valid only during a GetAppCandidates() call.
 		std::vector<std::string> _op_locale_suffixes;
 		std::vector<std::string> _op_current_desktop_names;  // from $XDG_CURRENT_DESKTOP
 		bool _op_xdg_mime_exists = false;
@@ -481,7 +486,7 @@ namespace openwith
 		std::unordered_map<std::string, std::string> _op_subclass_to_parent_cache;  // from 'subclasses'
 		MimeappsListsConfig _op_mimeapps_lists_cache;  // from 'mimeapps.list'
 		std::unordered_map<std::string, std::string> _op_mime_to_default_desktop_id_cache;  // from 'xdg-mime query default'
-		MimeToDesktopAssociationsMap _op_mime_to_desktop_associations_index; 	// from 'mimeinfo.cache'
+		MimeToDesktopAssociationsIndex _op_mime_to_desktop_associations_index; 	// from 'mimeinfo.cache'
 		MimeToDesktopEntryIndex _op_mime_to_desktop_entry_index;  // from full .desktop scan
 	};
 

@@ -115,5 +115,5 @@ class Plugin(PluginBase):
         self.info.DialogFree(dlg.hDlg)
         log.debug("end dialog")
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.Configure()

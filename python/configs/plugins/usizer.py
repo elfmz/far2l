@@ -26,7 +26,7 @@ class Plugin(PluginBase):
     label = "Python Dialog Demo"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         msg2name = {}
         for name in dir(self.ffic):
             if name[:3] == 'DN_':

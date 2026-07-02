@@ -151,6 +151,10 @@ class PluginManager:
             ffic.OPEN_FILEPANEL: "FILEPANEL",
         }
         name = id2name[OpenFrom]
+        if OpenFrom == ffic.OPEN_DIALOG:
+            ptr = self.ffi.cast("struct OpenDlgPluginData *", Item)
+            hDLG = ptr.hDlg
+            Item = ptr.ItemNumber
         log.debug("pluginGetFrom({0} ({1}), {2})".format(
             OpenFrom, name, Item))
         plugins = []
@@ -316,7 +320,7 @@ class PluginManager:
         plugin = self.pluginGetFrom(OpenFrom, Item)
         if plugin is not None:
             plugin = plugin.Plugin(self, self.info, ffi, ffic)
-            rc = plugin.OpenPlugin(OpenFrom)
+            rc = plugin.OpenPlugin(OpenFrom, Item)
             if rc not in (-1, None):
                 rc = id(plugin)
                 self.openplugins[rc] = plugin

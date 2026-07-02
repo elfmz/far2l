@@ -127,7 +127,7 @@ class Plugin(PluginBase):
         # dlg.EnableRedraw(True)
         # dlg.RedrawDialog()
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.rows = 9
         self.cols = 16
         self.bombs = 10

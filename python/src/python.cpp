@@ -41,8 +41,8 @@ static void python_log(const char *function, unsigned int line, const char *form
     va_list args;
     auto str_size = strlen(format) + strlen(function) + 64;
     char *xformat = (char *)alloca(str_size);
-    snprintf(xformat, str_size, "[PYTHON %lu]: %s@%u%s%s",
-        (unsigned long)GetProcessUptimeMSec(), function, line, (*format != '\n') ? " - " : "", format);
+    snprintf(xformat, str_size, "[PYTHON]: %s@%u%s%s",
+        function, line, (*format != '\n') ? " - " : "", format);
 
     va_start(args, format);
     vfprintf(stderr, xformat, args);
@@ -85,10 +85,22 @@ far2l_WINPORT(PyObject *self, PyObject *args)
     return pValue;
 }
 
+static PyObject *
+far2l_GetPluginsIni(PyObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    std::string configfile = InMyConfig("plugins/python/plugins.ini");
+    PyObject *pValue = PyUnicode_FromStringAndSize(configfile.c_str(), configfile.length());
+    return pValue;
+}
+
 static PyMethodDef Far2lcMethods[] = {
     {"CheckForInput", far2l_CheckForInput, METH_VARARGS, "CheckForInput"},
     {"CheckForEscape", far2l_CheckForEscape, METH_VARARGS, "CheckForEscape"},
     {"WINPORT", far2l_WINPORT, METH_VARARGS, "WINPORT"},
+    {"GetPluginsIni", far2l_GetPluginsIni, METH_VARARGS, "GetPluginsIni"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

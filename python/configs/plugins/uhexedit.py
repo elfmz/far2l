@@ -294,7 +294,7 @@ class Plugin(PluginBase):
     label = "Python Hex Edit"
     openFrom = ["PLUGINSMENU", "EDITOR", "VIEWER"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         # 5=edit, 6=viewer, 1=panel
         if OpenFrom == 5:
             fqname = Editor(self).GetFileName()

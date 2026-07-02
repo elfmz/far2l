@@ -160,7 +160,7 @@ class Plugin(PluginBase):
 
         self.info.DialogFree(dlg.hDlg)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         if OpenFrom == 5:
             # EDITOR
             self.Dialog()

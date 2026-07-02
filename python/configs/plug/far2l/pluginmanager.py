@@ -6,7 +6,11 @@ import configparser
 import logging
 import logging.config
 
-USERHOME = os.path.expanduser("~/.config/far2l/plugins/python")
+import far2lc
+
+PLUGINSINI = far2lc.GetPluginsIni()
+USERHOME = PLUGINSINI[:-len('plugins.ini')-1]
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,7 +32,6 @@ log = logging.getLogger(__name__)
 log.debug("%s start" % ("*" * 20))
 log.debug("sys.path={0}".format(sys.path))
 log.debug("userhome={0}".format(USERHOME))
-
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -89,8 +92,6 @@ class PluginManager:
             if self.plugins[i].Plugin.name == name:
                 del self.plugins[i]
                 del sys.modules[name]
-                for i in range(len(self.plugins)):
-                    self.plugins[i].Plugin.number = i
                 return
         log.error("install plugin: {0} - not installed".format(name))
 
@@ -105,12 +106,12 @@ class PluginManager:
         plugin = __import__(name)
         cls = getattr(plugin, "Plugin", None)
         if type(cls) == type(PluginBase) and issubclass(cls, PluginBase):
+            log.debug("loaded plugin: {0} from {1}".format(cls.label, name))
             # inject plugin name
             cls.USERHOME = USERHOME
             cls.name = name
             self.plugins.append(plugin)
-            for i in range(len(self.plugins)):
-                self.plugins[i].Plugin.number = i
+            self.plugins = sorted(self.plugins, key=lambda p:p.Plugin.label)
             if autorun:
                 plugin = plugin.Plugin(self, self.info, ffi, ffic)
                 hplugin = id(plugin)
@@ -150,42 +151,39 @@ class PluginManager:
             ffic.OPEN_FILEPANEL: "FILEPANEL",
         }
         name = id2name[OpenFrom]
-        log.debug("pluginGetFrom({0} ({1}), {2})".format(OpenFrom, name, Item))
-        if OpenFrom in [ffic.OPEN_DISKMENU, ffic.OPEN_FINDLIST]:
+        if OpenFrom == ffic.OPEN_DIALOG:
+            ptr = self.ffi.cast("struct OpenDlgPluginData *", Item)
+            hDLG = ptr.hDlg
+            Item = ptr.ItemNumber
+        log.debug("pluginGetFrom({0} ({1}), {2})".format(
+            OpenFrom, name, Item))
+        plugins = []
+        if OpenFrom == ffic.OPEN_DISKMENU:
             for plugin in self.plugins:
                 openFrom = plugin.Plugin.openFrom
-                log.debug(
-                    "pluginGetFrom(openok={0}, no={1} : {2})".format(
-                        name in openFrom, Item, plugin.Plugin.name
-                    )
-                )
-                if name in openFrom:
-                    if not Item:
-                        return plugin
-                    Item -= 1
-        elif OpenFrom == ffic.OPEN_DIALOG:
-            plugins = []
-            for plugin in self.plugins:
-                openFrom = plugin.Plugin.openFrom
-                log.debug(
-                    "pluginGetFrom(openok={0}, no={1} : {2})".format(
-                        name in openFrom, Item, plugin.Plugin.name
-                    )
-                )
-                if name in openFrom:
+                if "DISKMENU" in openFrom:
                     plugins.append(plugin)
-            if len(plugins) == 1:
-                plugin = plugins[0]
-            elif len(plugins) > 1:
-                names = [p.name for p in plugins]
-                n = self.menu(names, 'Select plugin')
-                plugin = plugins[n]
-            else:
-                return None
-            return plugin
-        elif Item < len(self.plugins):
-            return self.plugins[Item]
-        return None
+        else:
+            for plugin in self.plugins:
+                openFrom = plugin.Plugin.openFrom
+                if "PLUGINSMENU" in openFrom:
+                    plugins.append(plugin)
+        plugin = plugins[Item]
+        if name not in plugin.Plugin.openFrom:
+            log.debug("pluginGetFrom({0} ({1}), {2}) unhandled by {3} {4}".format(
+            OpenFrom, name, Item, plugin.Plugin.label, plugin.Plugin.openFrom))
+            msg = [
+                'The author of the selected plugin:',
+                plugin.Plugin.label,
+                'did not intend for it to be used from: '+name,
+                'Allowed places:',
+                ','.join(plugin.Plugin.openFrom)
+            ]
+            self.Message(msg)
+            return None
+        log.debug("pluginGetFrom({0} ({1}), {2}) = {3}".format(
+            OpenFrom, name, Item, plugin.Plugin.label))
+        return plugin
 
     def menu(self, names, title='', selected=0):
         """
@@ -322,7 +320,7 @@ class PluginManager:
         plugin = self.pluginGetFrom(OpenFrom, Item)
         if plugin is not None:
             plugin = plugin.Plugin(self, self.info, ffi, ffic)
-            rc = plugin.OpenPlugin(OpenFrom)
+            rc = plugin.OpenPlugin(OpenFrom, Item)
             if rc not in (-1, None):
                 rc = id(plugin)
                 self.openplugins[rc] = plugin

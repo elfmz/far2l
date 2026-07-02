@@ -65,7 +65,7 @@ class DockerBase:
         del self.f2s
         del self.clt
 
-    def OpenPlugin(self, OpenFrom): # pylint: disable=unused-argument, invalid-name
+    def OpenPlugin(self, OpenFrom, Item): # pylint: disable=unused-argument, invalid-name
         self.names = []
         self.Items = []
         return True
@@ -560,8 +560,8 @@ class Plugin(PluginVFS):
         self.clt = Docker()
         self.handler = DockerDevices(self)
 
-    def OpenPlugin(self, OpenFrom): # pylint: disable=unused-argument, invalid-name
-        return self.handler.OpenPlugin(OpenFrom)
+    def OpenPlugin(self, OpenFrom, Item): # pylint: disable=unused-argument, invalid-name
+        return self.handler.OpenPlugin(OpenFrom, Item)
 
     def GetOpenPluginInfo(self, OpenInfo): # pylint: disable=unused-argument, invalid-name
         return self.handler.GetOpenPluginInfo(OpenInfo)

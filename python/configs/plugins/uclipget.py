@@ -30,7 +30,7 @@ class Plugin(PluginBase):
                             break
                         fo.write(rec)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         winport = self.ffi.cast("struct WINPORTDECL *", far2lc.WINPORT())
         clipurifmt = winport.RegisterClipboardFormat("text/uri-list")
         if not clipurifmt:

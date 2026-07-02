@@ -19,9 +19,9 @@ class Plugin(PluginBase):
     label = "Python Character Map"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER", "DIALOG"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         try:
-            return self._OpenPlugin(OpenFrom)
+            return self._OpenPlugin(OpenFrom, Item)
         except Exception as ex:
             log.exception('run')
 
@@ -34,7 +34,7 @@ class Plugin(PluginBase):
         cpos = self.ffi.new("COORD *", dict(X=col, Y=row))
         self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
 
-    def _OpenPlugin(self, OpenFrom):
+    def _OpenPlugin(self, OpenFrom, Item):
         def GetColor(no):
             data = self.ffi.new("DWORD *")
             rc = self.info.AdvControl(

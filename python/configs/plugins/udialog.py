@@ -93,7 +93,7 @@ class Plugin(PluginBase):
             line = line.split(" ", 1)[1]
             exec(line, globals(), locals())
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         _MsgItems = [
             self.s2f("Python"),
             self.s2f(""),

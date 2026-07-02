@@ -82,7 +82,7 @@ limit {}, {}
         cur.close()
         #log.debug('desc:{}'.format(self.desc))
 
-    def GetOpenPluginInfo(self, OpenInfo):
+    def GetOpenPluginInfo(self, OpenInfo, Item):
         #log.debug("usqlite.SqlDataHandler.GetOpenPluginInfo")
         self.paneltitle = self.parent.label+': {}/{}'.format(self.parent.dbname.split('/')[-1], self.tablename)
 

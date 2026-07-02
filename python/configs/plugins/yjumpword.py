@@ -19,7 +19,7 @@ class Plugin(FarPlugin):
     label = 'Jump Between Words in Editor'
     openFrom = ['PLUGINSMENU', 'EDITOR']
 
-    def OpenPlugin(self, _):
+    def OpenPlugin(self, OpenFrom, Item):
         editor = self.get_editor()
         x, y = editor.cursor
         line = editor[y]

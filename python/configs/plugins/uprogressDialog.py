@@ -52,7 +52,7 @@ class Plugin(PluginBase):
         fprog = (('='*n)+' '*20)[:20]
         dlg.SetText(dlg.ID_fprog, '[{}]'.format(fprog))
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         t = ProgressThread()
 
         @self.ffi.callback("FARWINDOWPROC")

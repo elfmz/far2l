@@ -31,7 +31,7 @@ class Plugin(PluginBase):
     label = "Python GTK"
     openFrom = ["PLUGINSMENU", "EDITOR"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         if OpenFrom == 5:
             # EDITOR
             def proc():

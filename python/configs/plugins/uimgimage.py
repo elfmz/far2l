@@ -98,7 +98,7 @@ class Plugin(PluginBase):
         finally:
             return False
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         if OpenFrom == 5:
             fqname = Editor(self).GetFileName()
         elif OpenFrom == 6:

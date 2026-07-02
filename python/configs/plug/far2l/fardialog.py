@@ -62,15 +62,21 @@ class Dialog:
 
     def GetText(self, ID):
         sptr = self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCONSTTEXTPTR, ID, 0)
+        if sptr == 0:
+            return None
         return self.f2s(sptr)
 
     def SetText(self, ID, Str):
-        sptr = self.s2f(Str)
+        if isinstance(Str, str):
+            sptr = self.s2f(Str)
+        else:
+            sptr = Str
         # preserve item.data ?
         # self.id2item[ID][1] = sptr
         self.info.SendDlgMessage(
             self.hDlg, self.ffic.DM_SETTEXTPTR, ID, self.ffi.cast("LONG_PTR", sptr)
         )
+        return sptr
 
     def GetCheck(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCHECK, ID, 0)

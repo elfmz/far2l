@@ -37,7 +37,7 @@ class Plugin(PluginBase):
             self.ffi.memmove(ptr, fqname, len(fqname)) 
             res = winport.SetClipboardData(fmt, ptr)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         winport = self.ffi.cast("struct WINPORTDECL *", far2lc.WINPORT())
         clipurifmt = winport.RegisterClipboardFormat("text/uri-list")
         if not clipurifmt:

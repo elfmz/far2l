@@ -62,6 +62,8 @@ class Dialog:
 
     def GetText(self, ID):
         sptr = self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCONSTTEXTPTR, ID, 0)
+        if sptr == 0:
+            return None
         return self.f2s(sptr)
 
     def SetText(self, ID, Str):

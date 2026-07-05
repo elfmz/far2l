@@ -1,7 +1,43 @@
 ## How to run tests
-To run tests execute ./far2l-smoke-run.sh with argument - path to far2l which was built by cmake configured with -DTESTING=Yes  
-Example: `./far2l-smoke-run.sh ../../far2l.build/install/far2l`  
+To run all tests execute ./far2l-smoke-run.sh with `--all` flag and path to far2l which was built by cmake configured with -DTESTING=Yes  
+Example: `./far2l-smoke-run.sh --all ../_build/install/far2l`  
+This runs every test in the `tests/` directory, prints a summary with pass/fail per test, and exits with code 1 if any test failed. Individual test panics are recovered so subsequent tests still run.  
 Note: if provided far2l is built without testing support this will stuck for a while and fail then.
+
+To run a single test, omit `--all` and append the test name:  
+Example: `./far2l-smoke-run.sh ../_build/install/far2l 0004-vt-shell`
+
+## Test Analysis: Kitty Protocol State Management
+
+**Ctrl+C key delivery** (vtshell.cpp):
+
+When kitty protocol is active (`_kitty_kb_flags != 0`) and Ctrl+C is pressed via `TypeVK(0x43)` with LCtrl toggled:
+
+1. `TranslateKeyEvent()` catches `ctrl && !shift && VK=='C'` → calls `OnCtrlC(false)`
+2. `OnCtrlC` → only calls `SendSignalToVT(SIGINT)` when `_slavename.empty()` (pipes-fallback mode). In PTY mode (test harness), this is a no-op.
+3. Falls through to kitty block, then Ctrl+letter bypass skips kitty encoding
+4. Legacy `VT_TranslateSpecialKey` → raw `\x03` byte → written to PTY → ISIG delivers **one SIGINT**
+
+**Kitty flag state management**:
+
+- `_kitty_kb_flags` is reset to 0 in `ExecuteCommandCommonTail()` (vtshell.cpp)
+- `kitty_flag_stack` lives in `vtansi.cpp` (global `std::vector<DWORD>` under `vta_kitty_mtx`) — it persists across command boundaries and is NOT cleared on exit
+- Stale stack entries from a previous session can corrupt flag state when popped in a subsequent session
+
+**Test harness input paths**:
+
+- `TypeText/TypeVK` → `TEST_CMD_SEND_KEY` → `OnInputKey` → `TranslateKeyEvent` (internal key translation)
+- `TTYWriteRaw` → `TEST_CMD_SEND_RAW` → `VTShell_InjectRawInput` → raw PTY write (bypasses all input parsing)
+
+## Test Descriptions
+
+| Test | Description |
+|------|-------------|
+| 0014-vt-kitty-state-race | Interleaves TTYWriteRaw kitty push/pop escapes with TypeVK keystrokes to test flag ordering. Verifies kitty mode enable/disable, flag push/pop cycles, and rapid toggle sequences. |
+| 0015-vt-kitty-state-leak | Tests kitty flag state across shell session boundaries. Verifies `_kitty_kb_flags` resets on shell exit, flag stack remains clean, and Ctrl+C during kitty mode leaves shell responsive. |
+| 0017-editor-undo-redo | Tests editor undo/redo state machine: undo/redo cycles, UndoSize stack limit, coalescing (adjacent edits merge), non-coalesced multi-line edits. Pre-configures `EditorUndoSize=5` in profile. |
+| 0018-commands-menu | Tests F9 Commands menu structure and navigation. Verifies menu opens, items are visible, and closes cleanly without state corruption. |
+| 0019-file-delete | Tests F8 file deletion with direct disk verification. Covers single/multi-file delete, cancel, spaces in filenames, and single-cursor delete. |
 
 ## How to write tests
 Actual tests written in JS and located under tests directory. They can use predefined functions described below to perform some actions.  
@@ -32,7 +68,7 @@ Note that low-level problems, like communication issues or failure to start far2
 `Inspect() string`  
 This function useful in calm mode.  
 If no problem happened so far - it returns empty string.  
-Otherwise - it returns error description and empties it for next invokations of `Inspect()`.
+Otherwise - it returns error description and empties it for next invocations of `Inspect()`.
 
 ---------------------------------------------------------
 
@@ -72,7 +108,7 @@ Returns structure which has following fields:
 
 `ReadCell(x, y)`  
 Reads screen cell at specified coordinates.  
-Returns more 'decomposed' (comparing to Raw version) structure wich has following fields:
+Returns more 'decomposed' (comparing to Raw version) structure which has following fields:
  * Text string           - string representing contained character
  * BackTC uint32         - 24 bit foreground color if its used
  * ForeTC uint32         - 24 bit background color if its used
@@ -116,7 +152,7 @@ Returns actual line.
 
 `SurroundedLines(x, y, "║═│─", " \t")`  
 Returns array of lines bounded by any of specified in boundary_chars characters.  
-x, y represends coordinates of any cell inside of required area  
+x, y represents coordinates of any cell inside of required area  
 Optionally trims edges of each line from trim_chars characters if its not empty.
 
 ---------------------------------------------------------

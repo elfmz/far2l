@@ -115,6 +115,7 @@ void FileList::ShowFileList(int Fast)
 	}
 
 	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
+	Hint(X1, Y1, X2, Y2, HintPanel, HintObjectNone);
 	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 
 	if (Opt.ShowColumnTitles) {
@@ -310,6 +311,8 @@ void FileList::ShowFileList(int Fast)
 
 		CtrlObject->CmdLine->Show();
 	}
+
+    /* vk: panel title drawing here */
 
 	int TitleX2 = Opt.Clock && !Opt.ShowMenuBar ? Min(ScrX - 4, X2) : X2;
 	int TruncSize = TitleX2 - X1 - 3;
@@ -1093,7 +1096,29 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 									strName.Lower();
 							}
 
-							Text(strName);
+							// vk: highlight on hover
+							if (LastHoveredIndex == ListPos && ListPos >= 0) {
+								DWORD64 color = GetColor();
+								// highlight full bar
+								if (wcslen(NamePtr) >= Width || TooLong || CurFile == LastHoveredIndex || ListData[ListPos]->Selected) {
+									SetColor(SoftenItemColor(color, 0, 1, 0, 0));
+									Text(strName);
+								}
+								else {
+									int x = WhereX(), y = WhereY();
+									Text(strName);
+									GotoXY(x, y);
+
+									SetColor(SoftenItemColor(color, 0, 1, 0, 0));
+									ConvertName(strName, NamePtr, wcslen(NamePtr), RightAlign, 
+										ShowStatus, ListData[ListPos]->FileAttr, ListData[ListPos]);
+									Text(strName);
+								}
+								SetColor(color);
+							}
+							else
+								Text(strName);
+
 //							Text(NamePtr);
 							int NameX = WhereX();
 

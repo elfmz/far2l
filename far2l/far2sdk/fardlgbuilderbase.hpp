@@ -190,6 +190,7 @@ class DialogBuilderBase
 		int ColumnStartY;
 		int ColumnEndY;
 		int ColumnMinWidth;
+		BOOL UseModernLook;
 
 		static const int SECOND_COLUMN = -2;
 
@@ -274,13 +275,15 @@ class DialogBuilderBase
 			T *Title = AddDialogItem(DI_DOUBLEBOX, TitleText);
 			Title->X1 = 3;
 			Title->Y1 = 1;
+
+			if (UseModernLook) AddEmptyLine();
 		}
 
 		void UpdateBorderSize()
 		{
 			T *Title = &DialogItems[0];
 			Title->X2 = Title->X1 + MaxTextWidth() + 3;
-			Title->Y2 = DialogItems [DialogItemsCount-1].Y2 + 1;
+			Title->Y2 = DialogItems [DialogItemsCount-1].Y2 + 1 /* + (UseModernLook ? 1 : 0) */;
 		}
 
 		int MaxTextWidth()
@@ -387,7 +390,7 @@ class DialogBuilderBase
 
 		DialogBuilderBase()
 			: DialogItems(nullptr), DialogItemsCount(0), DialogItemsAllocated(0), NextY(2),
-			  ColumnStartIndex(-1), ColumnBreakIndex(-1), ColumnMinWidth(0)
+			  ColumnStartIndex(-1), ColumnBreakIndex(-1), ColumnMinWidth(0), UseModernLook(0)
 		{
 		}
 
@@ -528,6 +531,8 @@ class DialogBuilderBase
 		// Начинает располагать поля диалога в две колонки.
 		void StartColumns()
 		{
+			if (UseModernLook) AddEmptyLine();
+
 			ColumnStartIndex = DialogItemsCount;
 			ColumnStartY = NextY;
 		}
@@ -557,6 +562,8 @@ class DialogBuilderBase
 
 			ColumnStartIndex = -1;
 			ColumnBreakIndex = -1;
+
+			if (UseModernLook) AddEmptyLine();
 		}
 
 		// Добавляет пустую строку.
@@ -596,16 +603,23 @@ class DialogBuilderBase
 		// Добавляет сепаратор.
 		void AddSeparator(FarLangMsg MessageId=FarLangMsg{-1})
 		{
+			if (UseModernLook) AddEmptyLine();
+
 			ItemReference Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
 			Separator->Flags = DIF_SEPARATOR;
 			Separator->X1 = 3;
 			Separator->Y1 = Separator->Y2 = NextY++;
+
+			if (UseModernLook) AddEmptyLine();
 		}
 
 		// Добавляет сепаратор, кнопки OK и Cancel.
 		void AddOKCancel(FarLangMsg OKMessageId, FarLangMsg CancelMessageId)
 		{
-			AddSeparator();
+			if (UseModernLook) 
+				AddEmptyLine();
+			else
+				AddSeparator();
 
 			auto OKButton = AddDialogItem(DI_BUTTON, GetLangString(OKMessageId));
 			OKButton->Flags = DIF_CENTERGROUP;

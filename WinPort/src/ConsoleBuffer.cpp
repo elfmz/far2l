@@ -13,6 +13,7 @@ void ConsoleBuffer::SetSizeSimple(unsigned int width, unsigned int height, uint6
 	unsigned int prev_height = _width ? (SHORT)(_console_chars.size() / _width) : (SHORT)0;
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
+	fill_ci.Extra.Hint.Container = HintConsoleBuffer;
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
 	if (!new_chars.empty() && !_console_chars.empty()) {
 		size_t y_offset = (prev_height > height) ? prev_height - height : 0;
@@ -53,6 +54,7 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
+	fill_ci.Extra.Hint.Container = HintConsoleBuffer;
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
 	if (_width && !_console_chars.empty() && !new_chars.empty()) {
 		size_t nc_cursor_offset = (size_t)-1;
@@ -233,9 +235,21 @@ void ConsoleBuffer::Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL
 	}
 }
 
-static inline bool AreSameChars(const CHAR_INFO &one, const CHAR_INFO &another)
+static inline bool AreSameChars (const CHAR_INFO& left, const CHAR_INFO& right)
 {
-	return one.Char.UnicodeChar == another.Char.UnicodeChar && one.Attributes == another.Attributes;
+	return left.Char.UnicodeChar == right.Char.UnicodeChar &&
+			left.Attributes == right.Attributes &&
+			left.Extra.Hint.Container == right.Extra.Hint.Container &&
+			left.Extra.Hint.Object == right.Extra.Hint.Object && 
+			left.Extra.Hint.Tag == right.Extra.Hint.Tag &&
+			left.Extra.Hint.Focus == right.Extra.Hint.Focus &&
+			left.Extra.Hint.Hover == right.Extra.Hint.Hover &&
+			left.Extra.Hint.Enabled == right.Extra.Hint.Enabled &&
+			left.Extra.Hint.Default == right.Extra.Hint.Default &&
+			left.Extra.Hint.Beveled == right.Extra.Hint.Beveled &&
+			left.Extra.Hint.Checked == right.Extra.Hint.Checked &&
+			left.Extra.Hint.Shadow == right.Extra.Hint.Shadow
+		;
 }
 
 void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect)

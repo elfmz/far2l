@@ -420,6 +420,7 @@ public:
 		_present_full_copy = true;
 		_present_dirty_rects.clear();
 
+		// vk: main drawing cycle
 		for (unsigned int row = 0; row < _rows; ++row) {
 			IConsoleOutput::DirectLineAccess dla(g_winport_con_out, row);
 			const CHAR_INFO *line = dla.Line();
@@ -427,15 +428,46 @@ public:
 			if (!line || !width) {
 				continue;
 			}
+
+            line_custom_chars.clear();
+            line_hints.clear();
+            bool prev_space = false;
+            SMALL_RECT area_in {0, 0, (SHORT)width, (SHORT)_rows};
+
 			unsigned int col = 0;
 			while (col < width) {
 				if (col > 0 && line[col].Char.UnicodeChar == 0 && CI_FULL_WIDTH_CHAR(line[col - 1])) {
 					++col;
 					continue;
 				}
-				DrawCell(col, row, line[col]);
-				col += CI_FULL_WIDTH_CHAR(line[col]) ? 2 : 1;
+
+    			const wchar_t *pwcz;
+                wchar_t tmp_wcz[2] = {0, 0};
+    			if (UNLIKELY(CI_USING_COMPOSITE_CHAR(line[col]))) {
+    				pwcz = WINPORT(CompositeCharLookup)(line[col].Char.UnicodeChar);
+    			} else {
+    				tmp_wcz[0] = line[col].Char.UnicodeChar ? wchar_t(line[col].Char.UnicodeChar) : L' ';
+    				pwcz = tmp_wcz;
+    			}
+
+				DrawCell(col, row, line[col], prev_space, pwcz);
+
+                prev_space = line[col].Char.UnicodeChar == L' ';
+                int nx = CI_FULL_WIDTH_CHAR(line[col]) ? 2 : 1;
+                ConsumeHintAt(line[col], col, nx, row, width, _rows, area_in, pwcz);
+                col += nx;
 			}
+
+       		for(size_t x = 0; x < line_custom_chars.size(); ++x) {
+       			CustomCharPos c = line_custom_chars[x];
+       			DrawBoxCharacterImpl(c);
+       		}
+       		line_custom_chars.clear();
+       		for(size_t x = 0; x < line_hints.size(); ++x) {
+       			HintPos c = line_hints[x];
+       			DrawHint(c);
+       		}
+       		line_hints.clear();
 		}
 	}
 
@@ -832,6 +864,67 @@ const RenderLayout &ResolveLayout() const
 		}
 	}
 
+    struct CustomCharPos {
+    	SDLBoxChar::DrawT custom_draw;
+    	bool prev_space;
+
+		uint32_t codepoint;
+		SDL_Color fg;
+		WinPortRGB clr_text; 
+		WinPortRGB clr_back;
+		int px;
+		int py;
+		int ascent;
+		int cw, ch;
+
+    	CustomCharPos(uint32_t _cc, SDLBoxChar::DrawT _custom_draw, 
+    			const SDL_Color &_fg, const WinPortRGB& _clr_text, const WinPortRGB& _clr_back,
+				int _px, int _py, int _ascent, bool _prev_space, int _cw, int _ch) 
+		{
+        	codepoint = _cc;
+            custom_draw = _custom_draw;
+            prev_space = _prev_space;
+            px = _px;
+            py = _py;
+            ascent = _ascent;
+            clr_text = _clr_text;
+            clr_back = _clr_back;
+            fg = _fg;
+            cw = _cw;
+            ch = _ch;
+    	}
+    };
+
+    struct HintPos {
+        struct {
+            HintContainerType Container; /* e.g menu, dialog, console, editor, viewer, panels, ... */
+            HintObjectType Object; /* e.g push button, text, box, separator, combo box, ...  */
+            
+            int Focus: 1;
+            int Hover: 1;
+            int Enabled: 1;
+            int Default: 1; 
+            int Beveled: 1;
+            int Shadow: 1;
+            int Checked: 1;
+        } Hint;
+
+        int tag;
+
+    	int cx;
+    	int nx;
+        int cy;
+
+        unsigned cw, ch;
+
+    	DWORD64 attributes;
+        std::wstring text;
+        SMALL_RECT area;
+    };
+
+    std::vector<CustomCharPos> line_custom_chars;
+    std::vector<HintPos> line_hints;
+
 	void DrawArea(const SMALL_RECT &area_in)
     {
         const SHORT top = std::max<SHORT>(0, area_in.Top);
@@ -855,21 +948,50 @@ const RenderLayout &ResolveLayout() const
                 continue;
             }
 
+            line_custom_chars.clear();
+            line_hints.clear();
+
             const SHORT max_col = static_cast<SHORT>(width - 1);
             const SHORT col_end = std::min(right, max_col);
             SHORT col = left;
+            bool prev_space = col > 0 && line[col - 1].Char.UnicodeChar == L' ';
+
             while (col <= col_end) {
                 if (col > 0 && line[col].Char.UnicodeChar == 0 && CI_FULL_WIDTH_CHAR(line[col - 1])) {
                     ++col;
                     continue;
                 }
-                DrawCell(col, row, line[col]);
-                col += CI_FULL_WIDTH_CHAR(line[col]) ? 2 : 1;
+
+    			const wchar_t *pwcz;
+                wchar_t tmp_wcz[2] = {0, 0};
+    			if (UNLIKELY(CI_USING_COMPOSITE_CHAR(line[col]))) {
+    				pwcz = WINPORT(CompositeCharLookup)(line[col].Char.UnicodeChar);
+    			} else {
+    				tmp_wcz[0] = line[col].Char.UnicodeChar ? wchar_t(line[col].Char.UnicodeChar) : L' ';
+    				pwcz = tmp_wcz;
+    			}
+
+                DrawCell(col, row, line[col], prev_space, pwcz);
+                prev_space = line[col].Char.UnicodeChar == L' ';
+                int nx = CI_FULL_WIDTH_CHAR(line[col]) ? 2 : 1;
+                ConsumeHintAt(line[col], col, nx, row, col_end - left + 1, bottom - top + 1, area_in, pwcz);
+                col += nx;
             }
+
+       		for(size_t x = 0; x < line_custom_chars.size(); ++x) {
+       			CustomCharPos c = line_custom_chars[x];
+       			DrawBoxCharacterImpl(c);
+       		}
+       		line_custom_chars.clear();
+       		for(size_t x = 0; x < line_hints.size(); ++x) {
+       			HintPos c = line_hints[x];
+       			DrawHint(c);
+       		}
+       		line_hints.clear();
         }
     }
 
-	void DrawCell(int col, int row, const CHAR_INFO &ci)
+	void DrawCell(int col, int row, const CHAR_INFO &ci, bool prev_space, const wchar_t* text)
     {
         const RenderLayout &layout = CurrentLayout();
 		_last_draw_color_valid = false;
@@ -921,7 +1043,7 @@ const RenderLayout &ResolveLayout() const
             return;
         }
 
-        if (cluster.size() == 1 && DrawBoxCharacter(cluster[0], fg_color, rect.x, rect.y)) {
+        if (cluster.size() == 1 && DrawBoxCharacter(cluster[0], fg_color, fg, bg, rect.x, rect.y, layout.ascent_px, prev_space)) {
             return;
         }
 
@@ -1336,6 +1458,11 @@ const RenderLayout &ResolveLayout() const
 			if (!width) {
 				continue;
 			}
+
+            line_custom_chars.clear();
+            line_hints.clear();
+            bool prev_space = left > 0 && line[left - 1].Char.UnicodeChar == L' ';
+
 			const SHORT max_col = static_cast<SHORT>(width - 1);
 			const SHORT col_end = std::min(right, max_col);
 			for (SHORT col = left; col <= col_end; ++col) {
@@ -1351,15 +1478,48 @@ const RenderLayout &ResolveLayout() const
 					attributes ^= 0xffffff0000000000;
 				}
 				tmp.Attributes = attributes;
-				DrawCell(col, row, tmp);
+
+    			const wchar_t *pwcz;
+                wchar_t tmp_wcz[2] = {0, 0};
+    			if (UNLIKELY(CI_USING_COMPOSITE_CHAR(line[col]))) {
+    				pwcz = WINPORT(CompositeCharLookup)(line[col].Char.UnicodeChar);
+    			} else {
+    				tmp_wcz[0] = line[col].Char.UnicodeChar ? wchar_t(line[col].Char.UnicodeChar) : L' ';
+    				pwcz = tmp_wcz;
+    			}
+
+				DrawCell(col, row, tmp, prev_space, pwcz);
+
+                prev_space = line[col].Char.UnicodeChar == L' ';
+                int nx = CI_FULL_WIDTH_CHAR(line[col]) ? 2 : 1;
+                ConsumeHintAt(line[col], col, nx, row, right - left + 1, bottom - top + 1, area, pwcz);
 			}
+
+       		for(size_t x = 0; x < line_custom_chars.size(); ++x) {
+       			CustomCharPos c = line_custom_chars[x];
+       			DrawBoxCharacterImpl(c);
+       		}
+       		line_custom_chars.clear();
+       		for(size_t x = 0; x < line_hints.size(); ++x) {
+       			HintPos c = line_hints[x];
+       			DrawHint(c);
+       		}
+       		line_hints.clear();
 		}
 	}
 
-	bool DrawBoxCharacter(uint32_t codepoint, const SDL_Color &fg, int px, int py);
+	bool DrawBoxCharacter(uint32_t codepoint, const SDL_Color &fg, const WinPortRGB& _fg, const WinPortRGB& _bg, int px, int py, int accent, bool prev_space);
+	bool DrawBoxCharacterImpl(const CustomCharPos& cc);
 	bool EnsureBackingTexture(const RenderLayout &layout);
 	void DestroyBackingTexture();
+
+	void ConsumeHintAt(const CHAR_INFO& ci, int cx, int nx, int cy, unsigned cw, unsigned ch, const SMALL_RECT& area, const wchar_t* pwcz);
+	void DrawHint(const HintPos& x);
+
+	void DrawCheckboxDecorations(int cx_s, unsigned int cx_e, unsigned int cy, const WinPortRGB& clr_text, const WinPortRGB& clr_back, const HintPos& pos);
+	void DrawButtonDecorations(int cx_s, unsigned int cx_e, unsigned int cy, const WinPortRGB& clr_text, const WinPortRGB& clr_back, const HintPos& pos);
 };
+
 bool SDLConsoleRendererImpl::CursorBlinkDue()
 {
 	if (!g_winport_con_out) {
@@ -1508,7 +1668,13 @@ bool SDLConsoleRendererImpl::DeleteImage(const std::string &id)
 	return ok;
 }
 
-bool SDLConsoleRendererImpl::DrawBoxCharacter(uint32_t codepoint, const SDL_Color &fg, int px, int py)
+
+bool SDLConsoleRendererImpl::DrawBoxCharacter(
+	uint32_t codepoint, 
+	const SDL_Color &fg, 
+	const WinPortRGB& clr_text, const WinPortRGB& clr_back, 
+	int px, int py,
+	int accent, bool prev_space)
 {
 	const int cell_w = _font_manager.CellWidth();
 	const int cell_h = _font_manager.CellHeight();
@@ -1519,17 +1685,190 @@ bool SDLConsoleRendererImpl::DrawBoxCharacter(uint32_t codepoint, const SDL_Colo
 	if (!draw) {
 		return false;
 	}
+
+   	CustomCharPos x(codepoint, draw, fg, clr_text, clr_back, px, py, accent, prev_space, cell_w, cell_h);
+    line_custom_chars.push_back(x);
+	return true;
+}
+
+bool SDLConsoleRendererImpl::DrawBoxCharacterImpl(const CustomCharPos& cc)
+{
+	if (!_renderer) {
+		return false;
+	}
+
 	SDLBoxChar::Painter painter;
 	painter.renderer = _renderer;
-	painter.color = fg;
-	painter.origin_x = px;
-	painter.origin_y = py;
-	painter.fw = cell_w;
-	painter.fh = cell_h;
-	painter.thickness = std::max(1, std::min(cell_w, cell_h) / 8);
-	painter.wc = codepoint;
-	draw(painter, 0, 0);
+	painter.color = cc.fg;
+	painter.origin_x = cc.px;
+	painter.origin_y = cc.py;
+	painter.fw = cc.cw;
+	painter.fh = cc.ch;
+	painter.thickness = std::max(1, std::min(cc.cw, cc.ch) / 8);
+	painter.wc = cc.codepoint;
+	painter.text_accent = cc.ascent;
+	painter.prev_space = cc.prev_space;
+
+	painter._clr_text = cc.clr_text;
+	painter._clr_back = cc.clr_back;
+
+	// SDL_RenderSetClipRect(_renderer, nullptr);
+	painter.SetFillColor(cc.clr_text);
+
+	cc.custom_draw(painter, 0, 0);
 	return true;
+}
+
+void SDLConsoleRendererImpl::ConsumeHintAt(const CHAR_INFO& ci, int cx, int nx, int cy, unsigned cw, unsigned ch, const SMALL_RECT& area, const wchar_t* pwcz) {
+	if (SDLBackend::options && !SDLBackend::options->UseModernLook) return;
+
+	if (ci.Extra.Hint.Container != HintDialog) return;
+	if (ci.Extra.Hint.Object == HintObjectNone) return;
+
+    /*
+	if (ci.Extra.Hint.Object == HintButton)
+		fprintf(stderr, "    ...(%d..%d, %d) = %d:%d +`%ls` tag=%d\n", 
+			cx, cx + nx - 1, cy, 
+			ci.Extra.Hint.Container, ci.Extra.Hint.Object, pwcz, 
+			ci.Extra.Hint.Tag);
+    */
+
+	std::wstring text(pwcz);
+
+	if (line_hints.size() > 0) {
+		for(int i = line_hints.size() - 1; i >= 0; --i) {
+			if (line_hints[i].Hint.Object == ci.Extra.Hint.Object && line_hints[i].tag == ci.Extra.Hint.Tag) {
+				line_hints[i].nx = cx;
+				line_hints[i].text += text;
+				return;
+			}
+		}
+	}
+
+	HintPos pos { {
+			ci.Extra.Hint.Container, ci.Extra.Hint.Object, 
+			ci.Extra.Hint.Focus, ci.Extra.Hint.Hover, ci.Extra.Hint.Enabled, 
+			ci.Extra.Hint.Default, ci.Extra.Hint.Beveled, ci.Extra.Hint.Shadow, ci.Extra.Hint.Checked },
+		ci.Extra.Hint.Tag,
+		cx, cx,
+		cy, 
+		cw, ch,
+		ci.Attributes, text,
+		area };
+
+	line_hints.push_back(pos);
+}
+
+void SDLConsoleRendererImpl::DrawHint(const HintPos& x) {
+    WinPortRGB clr_text = SDLConsoleForeground2RGB(x.attributes);
+    WinPortRGB clr_back = SDLConsoleBackground2RGB(x.attributes);
+
+	int cx_start = x.cx;
+	int cx_end = x.nx;
+	int cy = x.cy;
+
+	if (cy < 0 || cy < x.area.Top || cy > x.area.Bottom) return;
+	if (cx_end < 0 || cx_end < x.area.Left) return;
+	if (cx_start > x.area.Right  /* || (unsigned)cx_start > x.cw*/) return;
+
+	if (cx_start < x.area.Left) cx_start = x.area.Left;
+	if (cx_start > x.area.Right) cx_start = x.area.Right;
+	if (cx_end < x.area.Left) cx_end = x.area.Left;
+	if (cx_end > x.area.Right) cx_end = x.area.Right;
+
+	if (cx_end <= cx_start) return;
+
+	switch(x.Hint.Object){
+    case HintEdit:
+    case HintFixEdit:
+    case HintPswEdit:
+    case HintMemoEdit:
+    	break;
+    case HintComboBox:
+    	break;
+    case HintButton:
+    	fprintf(stderr, "...paint: button: %d..%d, %d -> %d..%d, %d `%ls` /..%d/ in %d..%d, %d..%d, tag=%d focus=%c hover=%c type=%d\n", 
+        	x.cx, x.nx, x.cy,
+    		cx_start, cx_end, cy, 
+            x.text.c_str(), (int)(cx_start + x.text.size()),
+            (int)x.area.Left, (int)x.area.Right, (int)x.area.Top, (int)x.area.Bottom,
+    		((int)x.tag) & 0x00FF, x.Hint.Focus ? 'Y': 'N', x.Hint.Hover ? 'Y': 'N', x.Hint.Object);
+
+        if (x.Hint.Enabled && !x.Hint.Beveled) {
+        	/*
+	        if(SDLBackend::options->Use3D) 
+		        DrawButtonDecorationsAsNew(cx_start, cx_end, cy, clr_text, clr_back, x);
+			else */
+				DrawButtonDecorations(cx_start, cx_end, cy, clr_text, clr_back, x);
+		}
+    	break;
+    case HintCheckbox:
+    case HintRadioButton:
+        DrawCheckboxDecorations(cx_start, cx_end, cy, clr_text, clr_back, x);
+    	break;
+    case HintListBox:
+    	break;
+    case HintLine:
+    case HintBox:
+    	break;
+    case HintTitle:
+    case HintImage:
+    case HintScrollBar:
+    case HintUserControl:
+    case HintText:
+    case HintVerticalText:
+    default:
+    	break;
+	}
+}
+
+void SDLConsoleRendererImpl::DrawCheckboxDecorations(
+	int cx_start, unsigned int cx_end, unsigned int cy, 
+	const WinPortRGB& c_text, const WinPortRGB& c_back, 
+	const HintPos& pos)
+{
+	const int cell_w = _font_manager.CellWidth();
+	const int cell_h = _font_manager.CellHeight();
+
+	if (pos.Hint.Focus) {
+		int Y2 = cy * cell_h + cell_h - 1;
+		int X1 = (cx_start + 3) * cell_w;
+		int X2 = (cx_end + 1) * cell_w  - 1;
+
+		WinPortRGB c_a_text, c_a_back;
+		ComputeAccents(c_text, c_back, c_a_text, c_a_back);
+
+		WinPortRGB emboss = c_a_back; // GetSoftenColorIf(c_text);
+
+		SDL_SetRenderDrawColor(_renderer, emboss.r, emboss.g, emboss.b, 255);
+		DrawFilledTriangle(_renderer, X1, Y2, X2, Y2, X1, Y2 - 1);
+	}
+}
+
+void SDLConsoleRendererImpl::DrawButtonDecorations(
+	int cx_start, unsigned int cx_end, unsigned int cy, 
+	const WinPortRGB& c_text, const WinPortRGB& c_back,
+	const HintPos& pos) 
+{
+	const int cell_w = _font_manager.CellWidth();
+	const int cell_h = _font_manager.CellHeight();
+
+	int Y1 = cy * cell_h, Y2 = cy * cell_h + cell_h - 1;
+	int X1 = cx_start * cell_w, X2 = cx_end * cell_w + cell_w - 1;
+	int W = X2 - X1 + 1, H = Y2 - Y1 + 1;
+
+	WinPortRGB c_a_text, c_a_back;
+	ComputeAccents(c_text, c_back, c_a_text, c_a_back);
+
+	WinPortRGB emboss = c_a_back; // GetSoftenColorIf(c_text);
+	SDL_SetRenderDrawColor(_renderer, emboss.r, emboss.g, emboss.b, 255);
+	if (pos.Hint.Focus || pos.Hint.Hover) {
+		SDL_Rect rect{ X1, Y1, W, H};
+		SDL_RenderDrawRect(_renderer, &rect);
+		emboss = c_a_text; // GetSoftenColorIf(c_text);
+		SDL_SetRenderDrawColor(_renderer, emboss.r, emboss.g, emboss.b, 255);
+	}
+	SDL_RenderDrawLine(_renderer, X1, Y2, X2, Y2);
 }
 
 void SDLConsoleRendererImpl::DescribeImageCaps(WinportGraphicsInfo &wgi) const

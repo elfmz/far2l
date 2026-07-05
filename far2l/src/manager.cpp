@@ -426,6 +426,28 @@ public:
 	}
 };
 
+void Manager::enumerateWindowsByType(std::vector<std::wstring>& v, int type) 
+{
+	for (int I = 0; I < FrameCount; I++) {
+		if (type != -1 && FrameList[I]->GetType() != type) continue;
+
+		FARString strType, strName;
+		FrameList[I]->GetTypeAndName(strType, strName);
+		v.push_back(strName.CPtr());
+	}
+}
+
+Frame* Manager::getWindowByTypeAndIndex(int type, int indexInType) 
+{
+	int x = 0;
+	for (int I = 0; I < FrameCount; I++) {
+		if (type != -1 && FrameList[I]->GetType() != type) continue;
+		if (x == indexInType) return FrameList[I];
+        ++x;
+	}
+	return 0;
+}
+
 Frame *Manager::FrameMenu()
 {
 	/*

@@ -23,6 +23,7 @@ public:
 	virtual COORD OnConsoleGetLargestWindowSize() = 0;
 	virtual void OnConsoleAdhocQuickEdit() = 0;
 	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks) = 0;
+	virtual DWORD64 OnConsoleGetTweaks() = 0;
 	virtual void OnConsoleChangeFont() = 0;
 	virtual void OnConsoleSaveWindowState() = 0;
 	virtual void OnConsoleSetMaximized(bool maximized) = 0;
@@ -190,9 +191,9 @@ public:
 	virtual bool Read(CHAR_INFO &data, COORD screen_pos) = 0;
 	virtual bool Write(const CHAR_INFO &data, COORD screen_pos) = 0;
 
-	virtual size_t WriteString(const WCHAR *data, size_t count) = 0;
-	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos) = 0;
-	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos) = 0;
+	virtual size_t WriteString(const WCHAR *data, size_t count, HintContainerType, HintObjectType) = 0;
+	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos, HintContainerType, HintObjectType) = 0;
+	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos, HintContainerType, HintObjectType) = 0;
 	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos) = 0;
 
 	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle,
@@ -204,6 +205,7 @@ public:
 
 	virtual void AdhocQuickEdit() = 0;
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks) = 0;
+	virtual DWORD64 GetConsoleTweaks() = 0;
 	virtual void ConsoleChangeFont() = 0;
 	virtual void ConsoleSaveWindowState() = 0;
 	virtual bool IsActive() = 0;
@@ -346,6 +348,49 @@ public:
 	{
 		if (_is_set) {
 			IPrinterSupport *cb = WinPortPrinterSupport_SetBackend(_prev_cb);
+			if (cb != _prev_cb) {
+				delete cb;
+			}
+		}
+	}
+};
+
+//////////////////////////////////////////////////////////////////////////////////
+
+class IShareBackendOptions {
+public:
+	virtual void ShareBackendOptions(PVOID options) = 0;
+	virtual ~IShareBackendOptions() {};
+};
+
+IShareBackendOptions *WinPortShareBackendOptions_SetBackend(IShareBackendOptions *share_backend);
+
+class ShareBackendOptionsBackendSetter
+{
+	IShareBackendOptions *_prev_cb = nullptr;
+	bool _is_set = false;
+
+public:
+	inline bool IsSet() const { return _is_set; }
+
+	template <class BACKEND_T, typename... ArgsT>
+		inline void Set(ArgsT... args)
+	{
+		IShareBackendOptions *cb = new BACKEND_T(args...);
+		IShareBackendOptions *prev_cb = WinPortShareBackendOptions_SetBackend(cb);
+		if (!_is_set) {
+			_prev_cb = prev_cb;
+			_is_set = true;
+
+		} else {
+			delete prev_cb;
+		}
+	}
+
+	inline ~ShareBackendOptionsBackendSetter()
+	{
+		if (_is_set) {
+			IShareBackendOptions *cb = WinPortShareBackendOptions_SetBackend(_prev_cb);
 			if (cb != _prev_cb) {
 				delete cb;
 			}

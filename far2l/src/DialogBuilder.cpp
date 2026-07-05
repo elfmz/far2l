@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "dialog.hpp"
 #include "codepage.hpp"
+#include "config.hpp"
 
 struct EditFieldBinding : public DialogItemBinding<DialogItemEx>
 {
@@ -85,6 +86,7 @@ DialogBuilder::DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic
 	HelpTopic(HelpTopic)
 {
 	UserDlgProc = nullptr;
+	UseModernLook = Opt.Backend.UseModernLook;
 	AddBorder(GetLangString(TitleMessageId));
 }
 
@@ -266,6 +268,7 @@ int DialogBuilder::DoShowDialog()
 	Dialog Dlg(DialogItems, DialogItemsCount, DlgProc, (LONG_PTR)this);
 	Dlg.SetHelp(HelpTopic);
 	Dlg.SetPosition(-1, -1, DialogItems[0].X2 + 4, DialogItems[0].Y2 + 2);
+	Dlg.SetResizable(true);
 	Dlg.Process();
 	return Dlg.GetExitCode();
 }

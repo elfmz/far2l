@@ -1496,7 +1496,7 @@ void Panel::DrawSeparator(int Y)
 	if (Y < Y2) {
 		SetFarColor(COL_PANELBOX);
 		GotoXY(X1, Y);
-		ShowSeparator(X2 - X1 + 1, 1);
+		ShowSeparator(X2 - X1 + 1, 12 /* strict; was re;axed e.g. was 1 */);
 	}
 }
 

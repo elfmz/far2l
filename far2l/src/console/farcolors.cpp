@@ -72,7 +72,7 @@ ColorsInit[]
 	{"Panel.Info.Total",                            F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTOTALINFO,
 	{"Panel.Info.Selected",                         F_YELLOW | B_CYAN,        }, // COL_PANELSELECTEDINFO,
 	{"Dialog.Text",                                 F_BLACK | B_LIGHTGRAY,    }, // COL_DIALOGTEXT,
-	{"Dialog.Text.Highlight",                       F_YELLOW | B_LIGHTGRAY,   }, // COL_DIALOGHIGHLIGHTTEXT,
+	{"Dialog.Text.Highlight",                       F_BROWN | B_LIGHTGRAY,   }, // COL_DIALOGHIGHLIGHTTEXT,
 	{"Dialog.Box",                                  F_BLACK | B_LIGHTGRAY,    }, // COL_DIALOGBOX,
 	{"Dialog.Box.Title",                            F_BLACK | B_LIGHTGRAY,    }, // COL_DIALOGBOXTITLE,
 	{"Dialog.Box.Title.Highlight",                  F_YELLOW | B_LIGHTGRAY,   }, // COL_DIALOGHIGHLIGHTBOXTITLE,
@@ -219,14 +219,13 @@ uint64_t FarColors::setcolors[SIZE_ARRAY_FARCOLORS];
 uint32_t FarColors::GammaCorrection = 0;
 bool FarColors::GammaChanged = false;
 
-static void extractColorComponents(int color, int& r, int& g, int& b) {
+void extractColorComponents(int color, int& r, int& g, int& b) {
 	r = (color >> 16) & 0xFF;
 	g = (color >> 8)  & 0xFF;
 	b =  color        & 0xFF;
 }
 
-static void extractColor(uint64_t color, RGB& fg, RGB& bg) 
-{
+void extractColor(uint64_t color, RGB& fg, RGB& bg) {
 	// color is not truly RGB -- convert it first
 	if ((color & (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR)) != (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR) ) {
 		// if (color < SIZE_ARRAY_FARCOLORS) color = FarColors::setcolors[color];
@@ -255,11 +254,11 @@ static void extractColor(uint64_t color, RGB& fg, RGB& bg)
 	bg = toRGB(r, g, b);
 }
 
-static int assembleColorComponents(int r, int g, int b) {
+int assembleColorComponents(int r, int g, int b) {
 	return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
 }
 
-static uint64_t assembleColor(RGB& fg, RGB& bg) {
+uint64_t assembleColor(RGB& fg, RGB& bg) {
 	iRGB ifg = toIRGB(fg);
 	iRGB ibg = toIRGB(bg);
 	uint64_t color = 0;
@@ -305,11 +304,9 @@ void FarColors::AdjustContrastLevels() noexcept
 }
 
 FarColors::FarColors() noexcept {
-
 }
 
 FarColors::~FarColors() noexcept {
-
 }
 
 #define FARCOLORS_SECTION "farcolors"

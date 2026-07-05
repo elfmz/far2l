@@ -153,6 +153,9 @@
 #define    GetClipboardData              WINPORT(GetClipboardData)
 #define    SetClipboardData              WINPORT(SetClipboardData)
 
+//backend options
+#define    ShareBackendOptions               WINPORT(ShareBackendOptions);
+
 //printer support
 #define    PrintTextFragment                WINPORT(PrintTextFragment)
 #define    PrintHtmlFragment                WINPORT(PrintHtmlFragment)

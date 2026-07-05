@@ -8,6 +8,7 @@ src/APIPrinterSupport.cpp
 src/APIConsole.cpp
 src/APIFiles.cpp
 src/APIKeyboard.cpp
+src/APIBackendOptions.cpp
 src/APIOther.cpp
 src/APIPrintFormat.cpp
 src/APIRegistry.cpp
@@ -45,6 +46,7 @@ src/Backend/TTY/OSC52ClipboardBackend.cpp
 src/Backend/TTY/TTYCaps.cpp
 src/Backend/TTY/TTYXGlue.cpp
 src/Backend/TTY/TTYPrinterSupport.cpp
+src/Backend/TTY/TTYShareBackendOptions.cpp
 )
 
 if(TESTING)

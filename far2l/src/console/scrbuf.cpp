@@ -64,12 +64,17 @@ extern int DirectRT;
 
 ScreenBuf ScrBuf;
 
+// this is the shadow-specific only so we are not interested in extra data
+static bool Equal (const CHAR_INFO& left, const CHAR_INFO& right)
+{
+	return left.Char.UnicodeChar == right.Char.UnicodeChar &&
+			left.Attributes == right.Attributes;
+}
+
 static bool AreSameCharInfoBuffers(const CHAR_INFO *left, const CHAR_INFO *right, size_t count)
 {	// use this instead of memcmp cuz it can produce wrong results due to uninitialized alignment gaps
 	for (; count; --count, ++left, ++right) {
-		if (left->Char.UnicodeChar != right->Char.UnicodeChar)
-			return false;
-		if (left->Attributes != right->Attributes)
+		if (!Equal(*left, *right))
 			return false;
 	}
 	return true;
@@ -128,6 +133,13 @@ void ScreenBuf::AllocBuf(int X, int Y)
 	Buf = new (std::nothrow) CHAR_INFO[Cnt]();
 	Shadow = new (std::nothrow) CHAR_INFO[Cnt]();
 
+	for (unsigned int i = 0; i < Cnt; ++i) {
+		Shadow[i].Extra.Hint.Container = HintNone;
+		Shadow[i].Extra.Hint.Object = HintObjectNone;
+		Shadow[i].Extra.Hint.Tag = 0;
+		Shadow[i].Extra.Hint.Shadow = 1;
+	}
+
 	if (!Buf || !Shadow) {
 		fprintf(stderr, "FATAL: Failed to allocate screen buffer (%d x %d)\n", X, Y);
 		delete[] Buf;
@@ -156,6 +168,14 @@ void ScreenBuf::FillBuf()
 	SMALL_RECT ReadRegion = {0, 0, (SHORT)(BufX - 1), (SHORT)(BufY - 1)};
 	Console.ReadOutput(*Buf, BufferSize, BufferCoord, ReadRegion);
 	memcpy(Shadow, Buf, BufX * BufY * sizeof(CHAR_INFO));
+
+	for (int i = 0; i < BufX * BufY; ++i) {
+		Shadow[i].Extra.Hint.Container = HintNone;
+		Shadow[i].Extra.Hint.Object = HintObjectNone;
+		Shadow[i].Extra.Hint.Tag = 0;
+		Shadow[i].Extra.Hint.Shadow = 1;
+	}
+
 	SBFlags.Set(SBFLAGS_USESHADOW);
 	COORD CursorPosition;
 	Console.GetCursorPosition(CursorPosition);
@@ -210,6 +230,7 @@ void ScreenBuf::Write(int X, int Y, const CHAR_INFO *Text, int TextLength)
 	for (int i = 0; i < TextLength; i++) {
 		SetVidChar(PtrBuf[i], Text[i].Char.UnicodeChar);
 		PtrBuf[i].Attributes = Text[i].Attributes;
+		PtrBuf[i].Extra = Text[i].Extra;
 	}
 
 	SBFlags.Clear(SBFLAGS_FLUSHED);
@@ -274,6 +295,11 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 			uint8_t cc = attr & 0x07;
 			DstBuf->Attributes = ((attr & 0xFEFEFEFEFEFE0000ULL) >> 1) |
 									(attr & 0x000000000000FF00ULL) | (cc ? cc : 8);
+			// VK: todo: apply shadow: do we need to track it and how to turn it off?
+			DstBuf->Extra.Hint.Container = HintNone;
+			DstBuf->Extra.Hint.Object = HintObjectNone;
+			DstBuf->Extra.Hint.Tag = 0;
+			DstBuf->Extra.Hint.Shadow = 1;
 		}
 	}
 
@@ -317,6 +343,48 @@ void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask
 	if (DirectRT)
 		Flush();
 
+#endif
+}
+
+void ScreenBuf::Unhint() 
+{
+	ApplyHint(0, 0, BufX - 1, BufY - 1, 0, HintNone, HintObjectNone, false, false, false, false, false, false);
+}
+
+void ScreenBuf::ApplyHint(int X1, int Y1, int X2, int Y2, 
+	int tag,
+	HintContainerType hcc, HintObjectType hco, 
+	bool focused, bool hovered, bool disabled, bool checked, bool defaultCtrl, bool bevel)
+{
+	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
+	int Width = X2 - X1 + 1;
+	int Height = Y2 - Y1 + 1;
+
+	for (int I = 0; I < Height; I++) {
+		CHAR_INFO *PtrBuf = Buf + (Y1 + I) * BufX + X1;
+
+		for (int J = 0; J < Width; J++, ++PtrBuf) {
+			PtrBuf->Extra.Hint.Container = hcc;
+			PtrBuf->Extra.Hint.Object = hco;
+			PtrBuf->Extra.Hint.Icon = 0;
+			PtrBuf->Extra.Hint.Focus = focused ? 1 : 0;
+			PtrBuf->Extra.Hint.Hover = hovered ? 1 : 0;
+			PtrBuf->Extra.Hint.Enabled = disabled ? 0 : 1;
+			PtrBuf->Extra.Hint.Default = defaultCtrl ? 1 : 0;
+			PtrBuf->Extra.Hint.Beveled = bevel ? 1 : 0;
+			PtrBuf->Extra.Hint.Checked = checked ? 1 : 0;
+			PtrBuf->Extra.Hint.Tag = tag;
+		}
+	}
+
+#ifdef DIRECT_SCREEN_OUT
+	Flush();
+#elif defined(DIRECT_RT)
+	if (DirectRT)
+		Flush();
 #endif
 }
 
@@ -403,6 +471,11 @@ void ScreenBuf::FillRect(int X1, int Y1, int X2, int Y2, WCHAR Ch, DWORD64 Color
 	int Height = Y2 - Y1 + 1;
 	CHAR_INFO CI;
 	CI.Attributes = Color;
+	
+	CI.Extra.Hint.Container = HintNone;
+	CI.Extra.Hint.Object = HintObjectNone;
+	CI.Extra.Hint.Tag = 0;
+
 	SetVidChar(CI, Ch);
 
 	for (int I = 0; I < Height; I++) {
@@ -427,14 +500,15 @@ void ScreenBuf::FillRect(int X1, int Y1, int X2, int Y2, WCHAR Ch, DWORD64 Color
 */
 void ScreenBuf::Flush()
 {
-	ConsoleRepaintsDeferScope crds(NULL);
-
 	CriticalSectionLock Lock(CS);
 
 	if (!Buf || !Shadow)
 		return;
 
 	if (!LockCount) {
+
+		ConsoleRepaintsDeferScope crds(NULL);
+
 		if (CtrlObject && (CtrlObject->Macro.IsRecording() || CtrlObject->Macro.IsExecuting())) {
 			MacroChar = Buf[0];
 			MacroCharUsed = true;
@@ -529,6 +603,13 @@ void ScreenBuf::Flush()
 					Console.WriteOutput(*Buf, BufferSize, BufferCoord, WriteRegion);
 				}
 				memcpy(Shadow, Buf, BufX * BufY * sizeof(CHAR_INFO));
+
+				for(int i = 0; i < BufX * BufY; ++i) {
+					Shadow[i].Extra.Hint.Container = HintNone;
+					Shadow[i].Extra.Hint.Object = HintObjectNone;
+					Shadow[i].Extra.Hint.Tag = 0;
+					Shadow[i].Extra.Hint.Shadow = 1;
+				}
 			}
 		}
 

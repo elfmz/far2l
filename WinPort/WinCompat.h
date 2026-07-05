@@ -432,6 +432,46 @@ typedef struct _CONSOLE_CURSOR_INFO {
 
 typedef DWORD64 COMP_CHAR;
 
+typedef enum {
+    HintNone = 0,
+    HintConsoleBuffer = 1,
+    HintDialog,
+    HintMenu,
+    HintHMenu,
+    HintEditor,
+    HintViewer,
+    HintPanel,
+    HintTree,
+    HintQuickView,
+    HintScreenSaver,
+    HintInfoList,
+    HintHelpViewer,
+    HintCommandLine,
+    HintKeyBar,
+    HintPanic
+} HintContainerType;
+
+typedef enum {
+    HintObjectNone = 0,
+    HintEdit = 1,
+    HintFixEdit,
+    HintPswEdit,
+    HintComboBox,
+    HintMemoEdit,
+    HintButton,
+    HintCheckbox,
+    HintRadioButton,
+    HintListBox,
+    HintUserControl,
+    HintText,
+    HintVerticalText,
+    HintLine,
+    HintBox,
+    HintTitle,
+    HintImage,
+    HintScrollBar
+} HintObjectType;
+
 typedef struct _CHAR_INFO {
     union {
         // WCHAR or result of CompositeCharRegister() can be differentiated
@@ -445,6 +485,26 @@ typedef struct _CHAR_INFO {
     // low 16 bits - usual attributes, followed by two 24-bit RGB colors that used
     // if FOREGROUND_TRUECOLOR/BACKGROUND_TRUECOLOR defined and backend supports truecolor
     DWORD64 Attributes;
+
+    union {
+        DWORD64 ExtraFlags;
+        void* ArbitraryPointer;
+        struct {
+            HintContainerType Container: 8; /* e.g menu, dialog, console, editor, viewer, panels, ... */
+            HintObjectType Object: 8; /* e.g push button, text, box, separator, combo box, ...  */
+            
+            int Tag: 8; /* ID if the element */
+            int Icon: 8; /* e.g. search, settings, ... */
+            
+            int Focus: 1;
+            int Hover: 1;
+            int Enabled: 1;
+            int Default: 1; 
+            int Beveled: 1;
+            int Shadow: 1;
+            int Checked: 1;
+        } Hint;
+    } Extra;
 } CHAR_INFO, *PCHAR_INFO;
 
 #define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
@@ -1037,7 +1097,8 @@ typedef void *HMODULE;
 #define FILE_ATTRIBUTE_DEVICE_FIFO          0x01000000
 #define FILE_ATTRIBUTE_DEVICE_SOCK          0x02000000
 #define FILE_ATTRIBUTE_HARDLINKS            0x08000000
-
+#define FILE_ATTRIBUTE_APPEND               0x10000000
+#define FILE_ATTRIBUTE_IMMUTABLE            0x20000000
 
 #define FILE_ATTRIBUTE_DEVICE               (FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_DEVICE_BLOCK | FILE_ATTRIBUTE_DEVICE_FIFO | FILE_ATTRIBUTE_DEVICE_SOCK)
 

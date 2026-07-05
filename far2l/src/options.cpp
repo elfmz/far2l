@@ -67,7 +67,10 @@ enum enumMenus
 	MENU_LEFT,
 	MENU_FILES,
 	MENU_COMMANDS,
+	MENU_OBJECT,
 	MENU_OPTIONS,
+	MENU_NAVIGATE,
+	MENU_VIEW,
 	MENU_RIGHT
 };
 
@@ -148,7 +151,9 @@ enum enumCommandsMenu
 	MENU_COMMANDS_FARCONFIG,
 	MENU_COMMANDS_MACROBROWSER,
 	MENU_COMMANDS_ABOUTFAR,
-	MENU_COMMANDS_HOTPLUGLIST
+	MENU_COMMANDS_HOTPLUGLIST,
+	MENU_PANELHELP,
+	MENU_PANELEXIT
 };
 
 enum enumOptionsMenu
@@ -181,6 +186,91 @@ enum enumOptionsMenu
 	MENU_OPTIONS_NOTIFICATIONSSETTINGS,
 	MENU_OPTIONS_SEPARATOR4,
 	MENU_OPTIONS_SAVESETUP
+};
+
+enum enumNavigateMenu {
+	MENU_PANELGOTOHOME,
+	MENU_PANELGOTOTOP,
+	MENU_PANELUPTO,
+	MENU_PANELGOTOMOUNTPOINT,
+	MENU_PANELGODEEPER,
+	MENU_PANELREVERTSYMLINKTRAVERSE,
+	MENU_PANELNAVSEPARATOR1,
+	MENU_PANELPINSHORTCUT0,
+	MENU_PANELPINSHORTCUT1,
+	MENU_PANELPINSHORTCUT2,
+	MENU_PANELPINSHORTCUT3,
+	MENU_PANELPINSHORTCUT4,
+	MENU_PANELPINSHORTCUT5,
+	MENU_PANELPINSHORTCUT6,
+	MENU_PANELPINSHORTCUT7,
+	MENU_PANELPINSHORTCUT8,
+	MENU_PANELPINSHORTCUT9,
+	MENU_PANELNAVSEPARATOR2,
+	MENU_PANELGOTOSHORTCUT0,
+	MENU_PANELGOTOSHORTCUT1,
+	MENU_PANELGOTOSHORTCUT2,
+	MENU_PANELGOTOSHORTCUT3,
+	MENU_PANELGOTOSHORTCUT4,
+	MENU_PANELGOTOSHORTCUT5,
+	MENU_PANELGOTOSHORTCUT6,
+	MENU_PANELGOTOSHORTCUT7,
+	MENU_PANELGOTOSHORTCUT8,
+	MENU_PANELGOTOSHORTCUT9
+};
+
+enum enumObjectsMenu {
+	MENU_PANELSELECTFILE,
+	MENU_PANELUNSELECT,
+	MENU_PANELSELECT,
+	MENU_PANELUNSELECTBYEXT,
+	MENU_PANELSELECTBYEXT,
+	MENU_PANELUNSELECTBYNAME,
+	MENU_PANELSELECTBYNAME,
+	//MENU_FOLDERTREENEXT,
+	//MENU_FOLDERTREEPREV,
+	MENU_PANELOBJSEPARATOR1,
+	MENU_PANELEXECUTE,
+	MENU_PANELCOPYTO,
+	MENU_PANELRENAMETO,
+	MENU_PANELREMOVECURRENT,
+	MENU_PANELREMOVEPERMANENTLY,
+	MENU_PANELPRINT,
+	MENU_PANELOBJSEPARATOR2,
+	MENU_PANELCOPYTOCMDLINE,
+	//MENU_PANELCOPYCLIPBOARD,
+	MENU_PANELCOPYNAMES,
+	MENU_PANELCOPYFULLNAMES,
+	MENU_PANELCOPYNAMESPASSIVE,
+	MENU_PANELCOPYUNCNAMES,
+	MENU_PANELCOPYFNACTIVEREAL,
+	MENU_PANELCOPYFNPASSIVEREAL,
+	MENU_PANELCOPYFNLEFT,
+	MENU_PANELCOPYFNRIGHT
+};
+
+enum enumViewMenu {
+	MENU_PANELSHOWHIDDEN,
+	MENU_PANELSHOWFILEMARKS,
+	MENU_PANELSHOWAUTOCOLUMNWIDTH,
+	MENU_PANELSHOWFILEMARKSSTSTUS,
+	MENU_PANELSHIFTLONGTEXTLEFT,
+	MENU_PANELSHIFTLONGTEXTRIGHT,
+	MENU_PANELVIEWSEPARATOR1,
+	MENU_PANELSORTBYNAME,
+	MENU_PANELSORTBYEXT,
+	MENU_PANELSORTBYMTIME,
+	MENU_PANELSORTBYSIZE,
+	MENU_PANELUNSORT,
+	MENU_PANELSORTBYCTIME,
+	MENU_PANELSORTBYATIME,
+	MENU_PANELSORTBYDIZ,
+	MENU_PANELSORTBYOWNER,
+	MENU_PANELSORTBYGROUPS,
+	MENU_PANELSORTBYSELECTED,
+	MENU_PANELVIEWSEPARATOR2,
+	MENU_PANELTOGGLEFULLSCREEN,
+	MENU_PANELDIRECTORYNAMESETTINGS
 };
 
 void SetLeftRightMenuChecks(MenuDataEx *pMenu, bool bLeft)
@@ -281,7 +371,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{L"",                       LIF_SEPARATOR, 0         },
 		{Msg::MenuFarConfig,        0,             0         },
 		{Msg::MenuMacroBrowser,     0,             0         },
-		{Msg::MenuAboutFar,         0,             0         }
+		{Msg::MenuAboutFar,         0,             0         },
+		{Msg::PanelHelp,	0,	KEY_F1  },
+		{Msg::PanelExit,	0,	KEY_F10  }
 	};
 	MenuDataEx OptionsMenu[] = {
 		{Msg::MenuSystemSettings,         LIF_SELECTED,  0          },
@@ -312,6 +404,88 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{L"",                             LIF_SEPARATOR, 0          },
 		{Msg::MenuSaveSetup,              0,             KEY_SHIFTF9}
 	};
+	MenuDataEx ObjectsMenu[] = {
+		{Msg::PanelSelectFile,	0,	KEY_INS  },
+		{Msg::PanelUnselect,	0,	KEY_SHIFTSUBTRACT  },
+		{Msg::PanelSelect,	0,	KEY_SHIFTADD  },
+		{Msg::PanelUnselectByExt,	0,	KEY_CTRLSUBTRACT  },
+		{Msg::PanelSelectByExt,	0,	KEY_CTRLADD  },
+		{Msg::PanelUnselectByName,	0,	KEY_ALTSUBTRACT  },
+		{Msg::PanelSelectByName,	0,	KEY_ALTADD  },
+		//{Msg::FolderTreeNext,	0,	KEY_CTRLENTER  },
+		//{Msg::FolderTreePrev,	0,	KEY_CTRLSHIFTENTER  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelExecute,	0,	KEY_SHIFTENTER  },
+		{Msg::PanelCopyTo,	0,	KEY_SHIFTF5  },
+		{Msg::PanelRenameTo,	0,	KEY_SHIFTF6  },
+		{Msg::PanelRemoveCurrent,	0,	KEY_SHIFTF8  },
+		{Msg::PanelRemovePermanently,	0,	KEY_SHIFTDEL  },
+		{Msg::PanelPrint,	0,	KEY_ALTF5  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelCopyToCmdLine,	0,	KEY_CTRLENTER  },
+		//{Msg::PanelCopyClipboard,	0,	KEY_CTRLALTINS  },
+		{Msg::PanelCopyNames,	0,	KEY_CTRLINS  },
+		{Msg::PanelCopyFullNames,	0,	KEY_CTRLALTINS  },
+		{Msg::PanelCopyNamesPassive,	0,	KEY_CTRL | KEY_SEMICOLON  },
+		{Msg::PanelCopyUncNames,	0,	KEY_CTRLALTF  },
+		{Msg::PanelCopyFnActiveReal,	0,	KEY_ALTSHIFTBRACKET  },
+		{Msg::PanelCopyFnPassiveReal,	0,	KEY_ALTSHIFTBACKBRACKET  },
+		{Msg::PanelCopyFnLeft,	0,	KEY_CTRLBRACKET  },
+		{Msg::PanelCopyFnRight,	0,	KEY_CTRLBACKBRACKET  }
+	};
+	MenuDataEx NavigateMenu[] = {
+		{Msg::PanelGoToHome,	0,	KEY_CTRL | '`'  },
+		{Msg::PanelGoToTop,	0,	KEY_CTRLBACKSLASH  },
+		{Msg::PanelUpTo,	0,	KEY_CTRLPGUP  },
+		{Msg::PanelGoToMountPoint,	0,	KEY_ALT | KEY_CTRLBACKSLASH  },
+		{Msg::PanelGoDeeper,	0,	KEY_CTRLPGDN  },
+		{Msg::PanelRevertSymlinkTraverse,	0,	KEY_CTRLSHIFTPGUP  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelPinShortcut0,	0,	KEY_CTRLSHIFT0  },
+		{Msg::PanelPinShortcut1,	0,	KEY_CTRLSHIFT1  },
+		{Msg::PanelPinShortcut2,	0,	KEY_CTRLSHIFT2  },
+		{Msg::PanelPinShortcut3,	0,	KEY_CTRLSHIFT3  },
+		{Msg::PanelPinShortcut4,	0,	KEY_CTRLSHIFT4  },
+		{Msg::PanelPinShortcut5,	0,	KEY_CTRLSHIFT5  },
+		{Msg::PanelPinShortcut6,	0,	KEY_CTRLSHIFT6  },
+		{Msg::PanelPinShortcut7,	0,	KEY_CTRLSHIFT7  },
+		{Msg::PanelPinShortcut8,	0,	KEY_CTRLSHIFT8  },
+		{Msg::PanelPinShortcut9,	0,	KEY_CTRLSHIFT9  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelGotoShortcut0,	0,	KEY_RCTRL0  },
+		{Msg::PanelGotoShortcut1,	0,	KEY_RCTRL1  },
+		{Msg::PanelGotoShortcut2,	0,	KEY_RCTRL2  },
+		{Msg::PanelGotoShortcut3,	0,	KEY_RCTRL3  },
+		{Msg::PanelGotoShortcut4,	0,	KEY_RCTRL4  },
+		{Msg::PanelGotoShortcut5,	0,	KEY_RCTRL5  },
+		{Msg::PanelGotoShortcut6,	0,	KEY_RCTRL6  },
+		{Msg::PanelGotoShortcut7,	0,	KEY_RCTRL7  },
+		{Msg::PanelGotoShortcut8,	0,	KEY_RCTRL8  },
+		{Msg::PanelGotoShortcut9,	0,	KEY_RCTRL9  }
+	};
+	MenuDataEx ViewMenu[] = {
+		{Msg::PanelShowHidden,	0,	KEY_CTRLH  },
+		{Msg::PanelShowFileMarks,	0,	KEY_CTRLALTM  },
+		{Msg::PanelShowAutoColumnWidth,	0,	KEY_CTRLALTL  },
+		{Msg::PanelShowFileMarksStstus,	0,	KEY_CTRLALTN  },
+		{Msg::PanelShiftLongTextLeft,	0,	KEY_ALTLEFT  },
+		{Msg::PanelShiftLongTextRight,	0,	KEY_ALTRIGHT  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelSortByName,	0,	KEY_CTRLF3  },
+		{Msg::PanelSortByExt,	0,	KEY_CTRLF4  },
+		{Msg::PanelSortByMTime,	0,	KEY_CTRLF5  },
+		{Msg::PanelSortBySize,	0,	KEY_CTRLF6  },
+		{Msg::PanelUnsort,	0,	KEY_CTRLF7  },
+		{Msg::PanelSortByCTime,	0,	KEY_CTRLF8  },
+		{Msg::PanelSortByATime,	0,	KEY_CTRLF9  },
+		{Msg::PanelSortByDiz,	0,	KEY_CTRLF10  },
+		{Msg::PanelSortByOwner,	0,	KEY_CTRLF11  },
+		{Msg::PanelSortByGroups,	0,	KEY_SHIFTF11  },
+		{Msg::PanelSortBySelected,	0,	KEY_SHIFTF12  },
+		{L"",	LIF_SEPARATOR,	0  },
+		{Msg::PanelToggleFullScreen,	0,	KEY_F5  },
+		{Msg::PanelDirectoryNameSettings,	0,	KEY_CTRLALTD  }
+	};
 	MenuDataEx RightMenu[] = {
 		{Msg::MenuBriefView,        LIF_SELECTED,  KEY_CTRL1  },
 		{Msg::MenuMediumView,       0,             KEY_CTRL2  },
@@ -333,13 +507,18 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuReread,           0,             KEY_CTRLR  },
 		{Msg::MenuChangeDriveRight, 0,             KEY_ALTF2  }
 	};
+	
 	HMenuData MainMenu[] = {
 		{Msg::MenuLeftTitle,     1, LeftMenu,    ARRAYSIZE(LeftMenu),    L"LeftRightMenu"},
 		{Msg::MenuFilesTitle,    0, FilesMenu,   ARRAYSIZE(FilesMenu),   L"FilesMenu"    },
 		{Msg::MenuCommandsTitle, 0, CmdMenu,     ARRAYSIZE(CmdMenu),     L"CmdMenu"      },
+		{Msg::MenuObjectTitle, 0, ObjectsMenu,     ARRAYSIZE(ObjectsMenu),     L"ObjectsMenu"      },
 		{Msg::MenuOptionsTitle,  0, OptionsMenu, ARRAYSIZE(OptionsMenu), L"OptMenu"      },
+		{Msg::MenuNavigateTitle, 0, NavigateMenu,     ARRAYSIZE(NavigateMenu),     L"NavigateMenu"      },
+		{Msg::MenuViewTitle, 0, ViewMenu,     ARRAYSIZE(ViewMenu),     L"ViewMenu"      },
 		{Msg::MenuRightTitle,    0, RightMenu,   ARRAYSIZE(RightMenu),   L"LeftRightMenu"}
 	};
+
 	static int LastHItem = -1, LastVItem = 0;
 	int HItem, VItem;
 
@@ -356,18 +535,19 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 	SetLeftRightMenuChecks(RightMenu, false);
 	// Навигация по меню
 	{
+		int lastHMenuPos = ARRAYSIZE(MainMenu) - 1;
 		HMenu HOptMenu(MainMenu, ARRAYSIZE(MainMenu));
 		HOptMenu.SetHelp(L"Menus");
 		HOptMenu.SetPosition(0, 0, ScrX, 0);
 
 		if (LastCommand) {
-			MenuDataEx *VMenuTable[] = {LeftMenu, FilesMenu, CmdMenu, OptionsMenu, RightMenu};
+			MenuDataEx *VMenuTable[] = {LeftMenu, FilesMenu, CmdMenu, ObjectsMenu, OptionsMenu, NavigateMenu, ViewMenu, RightMenu};
 			int HItemToShow = LastHItem;
 
 			if (HItemToShow == -1) {
 				if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->RightPanel
 						&& CtrlObject->Cp()->ActivePanel->IsVisible())
-					HItemToShow = 4;
+					HItemToShow = lastHMenuPos;
 				else
 					HItemToShow = 0;
 			}
@@ -385,7 +565,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 			if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->RightPanel
 					&& CtrlObject->Cp()->ActivePanel->IsVisible()) {
 				MainMenu[0].Selected = 0;
-				MainMenu[4].Selected = 1;
+				MainMenu[lastHMenuPos].Selected = 1;
 			}
 		}
 
@@ -401,6 +581,12 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		}
 
 		HOptMenu.GetExitCode(HItem, VItem);
+	}
+
+	FarKey key = 0;
+
+	if (HItem >= 0 && VItem >= 0) {
+		key = MainMenu[HItem].SubMenu[VItem].AccelKey;
 	}
 
 	// "Исполнятор команд меню"
@@ -571,6 +757,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 				case MENU_COMMANDS_HOTPLUGLIST:		// HotPlug list
 													//					ShowHotplugDevice();
 					break;
+				default:
+					if (key) FrameManager->ProcessKey(key);
+					break;
 			}
 
 			break;
@@ -653,6 +842,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 
 			break;
 		}
+		default:
+			if (key) FrameManager->ProcessKey(key);
+			break;
 	}
 
 	int _CurrentFrame = FrameManager->GetCurrentFrame()->GetType();

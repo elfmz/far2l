@@ -158,31 +158,33 @@ public:
 		MenuItemEx mi;
 		FARString fsn, fssave;
 		if (align_dot)
-		 fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
+		    fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
 		else {
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save == OST_COMMON ? "c" : (_opt.save == OST_PANELS ? "p" : "-"));
+		const wchar_t* ChangedMark = Opt.Backend.UseModernLook ? L"★" : L"*";
+
 		FormatString out;
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL: {
-				out << (*_opt.value.b == _opt.def.b ? L" " : L"*")
+				out << (*_opt.value.b == _opt.def.b ? L" " : ChangedMark)
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"  bool"
 					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
 					<< (*_opt.value.b ? L"true" : L"false");
 				break;
 			}
 			case ConfigOpt::T_INT: {
-				out << (*_opt.value.i == _opt.def.i ? L" " : L"*")
+				out << (*_opt.value.i == _opt.def.i ? L" " : ChangedMark)
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"   int"
 					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
 					<< *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
 				break;
 			}
 			case ConfigOpt::T_DWORD: {
-				out << (*_opt.value.dw == _opt.def.dw ? L" " : L"*")
+				out << (*_opt.value.dw == _opt.def.dw ? L" " : ChangedMark)
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L" dword"
 					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
 					<< *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
@@ -190,7 +192,7 @@ public:
 			}
 			case ConfigOpt::T_STR: {
 				out << (_opt.def.str == nullptr ? L"?"
-						: (*_opt.value.str == _opt.def.str ? L" " : L"*"))
+						: (*_opt.value.str == _opt.def.str ? L" " : ChangedMark))
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"string"
 					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
 					<< _opt.value.str->CPtr();
@@ -198,7 +200,7 @@ public:
 			}
 			case ConfigOpt::T_BIN: {
 				out << (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? L"?"
-						: (memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? L" " : L"*"))
+						: (memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? L" " : ChangedMark))
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"binary"
 					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
 					<< L"(binary has length " << static_cast<unsigned int>(_opt.bin_size) << L" bytes)";
@@ -402,12 +404,12 @@ public:
 			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.strValue()},
 			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
 			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
-			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
+			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
 			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediately in FAR2L"},
 			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
 			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
-			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
+			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 			/*  40 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
 			/*  41 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
 		};
@@ -538,7 +540,7 @@ static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 	FARString title (Msg::MenuFarConfig);
 	title+= L" - far:config";
 	if (hide_unchanged) {
-		title+= L" *";
+		title+= Opt.Backend.UseModernLook ? L" ★" : L" *";
 	}
 	RemoveChar(title, L'&');
 	return title;

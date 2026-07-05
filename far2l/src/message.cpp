@@ -282,7 +282,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 		for (PtrMsgDlg = MsgDlg + 1, I = 1; I < ItemCount; ++I, ++PtrMsgDlg, ++CurItem) {
 			if (I == StrCount + 1 && !StrSeparator && !Separator) {
 				PtrMsgDlg->Type = DI_TEXT;
-				PtrMsgDlg->Flags = DIF_SEPARATOR;
+				PtrMsgDlg->Flags = (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR);
 				PtrMsgDlg->Y1 = PtrMsgDlg->Y2 = I + 1;
 				CurItem--;
 				I--;
@@ -314,7 +314,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 
 				if (Chr == L'\1' || Chr == L'\2') {
 					CPtrStr++;
-					PtrMsgDlg->Flags|= (Chr == 2 ? DIF_SEPARATOR2 : DIF_SEPARATOR);
+					if(!Opt.Backend.UseModernLook) PtrMsgDlg->Flags|= (Chr == 2 ? DIF_SEPARATOR2 : DIF_SEPARATOR);
 					if (I == StrCount) {
 						StrSeparator = true;
 					}
@@ -344,6 +344,8 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 			Dialog Dlg(MsgDlg, ItemCount, MsgDlgProc);
 			Dlg.SetPosition(X1, Y1, X2, Y2);
 
+			Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
+
 			if (!strHelpTopic.IsEmpty())
 				Dlg.SetHelp(strHelpTopic);
 
@@ -368,6 +370,8 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 		free(Str);
 		return (RetCode < 0 ? RetCode : RetCode - StrCount - 1 - (Separator ? 1 : 0));
 	}
+
+	Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
 
 	// *** Без Диалога! ***
 	SetCursorType(0, 0);

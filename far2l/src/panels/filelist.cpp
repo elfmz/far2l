@@ -2762,7 +2762,19 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-	if (MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED && MouseEvent->dwEventFlags != MOUSE_MOVED) {
+	if (Opt.Backend.UseModernLook && IsVisible() && (MouseEvent->dwEventFlags & MOUSE_MOVED) && !IsDragging() && 
+			!(MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) && !(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)) {
+        /* vk: simple mouse move, highhlight the file */
+		int file = MouseToPosition(MouseEvent);
+		// ASSERT(file < ListData.Count());
+		// CurPtr = ListData[file];
+		LastHoveredIndex = file;
+		Redraw();
+        /* no return, continue processing */
+	}
+
+	if ((MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) && MouseEvent->dwEventFlags != MOUSE_MOVED) {
+
 		FarKey Key = KEY_ENTER;
 		if (MouseEvent->dwControlKeyState & SHIFT_PRESSED) {
 			Key|= KEY_SHIFT;
@@ -2892,6 +2904,29 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 */
 void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
+	int CurColumn = MouseToColumn(MouseEvent);
+
+	int OldCurFile = CurFile;
+	CurFile = MouseToPosition(MouseEvent);
+
+	CorrectPosition();
+
+	/*
+		$ 11.09.2000 SVS
+		Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
+	*/
+	if (Opt.PanelRightClickRule == 1)
+		IsEmpty = ((CurColumn - 1) * Height > ListData.Count());
+	else if (Opt.PanelRightClickRule == 2 && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)
+			&& ((CurColumn - 1) * Height > ListData.Count())) {
+		CurFile = OldCurFile;
+		IsEmpty = TRUE;
+	} else
+		IsEmpty = FALSE;
+}
+
+int FileList::MouseToColumn(MOUSE_EVENT_RECORD *MouseEvent)
+{
 	int CurColumn = 1, ColumnsWidth, I;
 	int PanelX = MouseEvent->dwMousePosition.X - X1 - 1;
 	int Level = 0;
@@ -2910,29 +2945,19 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		ColumnsWidth++;
 		Level++;
 	}
+	return CurColumn;
+}
 
+int FileList::MouseToPosition(MOUSE_EVENT_RECORD *MouseEvent)
+{
+	int CurColumn = MouseToColumn(MouseEvent);
 	//	if (!CurColumn)
 	//		CurColumn=1;
-	int OldCurFile = CurFile;
-	CurFile = CurTopFile + MouseEvent->dwMousePosition.Y - Y1 - 1 - Opt.ShowColumnTitles;
+	int CurFile = CurTopFile + MouseEvent->dwMousePosition.Y - Y1 - 1 - Opt.ShowColumnTitles;
 
 	if (CurColumn > 1)
 		CurFile+= (CurColumn - 1) * Height;
-
-	CorrectPosition();
-
-	/*
-		$ 11.09.2000 SVS
-		Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
-	*/
-	if (Opt.PanelRightClickRule == 1)
-		IsEmpty = ((CurColumn - 1) * Height > ListData.Count());
-	else if (Opt.PanelRightClickRule == 2 && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)
-			&& ((CurColumn - 1) * Height > ListData.Count())) {
-		CurFile = OldCurFile;
-		IsEmpty = TRUE;
-	} else
-		IsEmpty = FALSE;
+	return CurFile;
 }
 
 void FileList::SetViewMode(int ViewMode)
@@ -3309,7 +3334,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 		{DI_CHECKBOX,  5, 3, 49, 3, {(DWORD_PTR)Opt.SelectFolders}, 0, Msg::SelectFolders},
 		{DI_CHECKBOX,  5, 4, 49, 4, {(DWORD_PTR)Opt.PanelCaseSensitiveCompareSelect}, 0, Msg::SelectCase},
 		{DI_TEXT,      4, 5, 50,  5, {}, DIF_DISABLE | DIF_CENTERTEXT, Msg::SelectNote},
-		{DI_TEXT,      0, 6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      0, 6, 0,  6, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::SelectFilter},
 		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}

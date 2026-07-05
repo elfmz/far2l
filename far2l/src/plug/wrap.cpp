@@ -1191,6 +1191,9 @@ void UnicodeListItemToAnsi(FarListItem *li, oldfar::FarListItem *liA)
 	if (li->Flags & LIF_SELECTED)
 		liA->Flags|= oldfar::LIF_SELECTED;
 
+	if (li->Flags & LIF_HOVERED)
+		liA->Flags|= oldfar::LIF_HOVERED;
+
 	if (li->Flags & LIF_CHECKED)
 		liA->Flags|= oldfar::LIF_CHECKED;
 
@@ -1277,6 +1280,9 @@ void AnsiListItemToUnicode(oldfar::FarListItem *liA, FarListItem *li)
 
 	if (liA->Flags & oldfar::LIF_SELECTED)
 		li->Flags|= LIF_SELECTED;
+
+	if (liA->Flags & oldfar::LIF_HOVERED)
+		li->Flags|= LIF_HOVERED;
 
 	if (liA->Flags & oldfar::LIF_CHECKED)
 		li->Flags|= LIF_CHECKED;

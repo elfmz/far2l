@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "strmix.hpp"
 #include "panelmix.hpp"
+#include "config.hpp"
 
 #define PANELMODES_INI "panel_modes.ini"
 
@@ -239,14 +240,14 @@ void FileList::SetFilePanelModes()
 			{DI_EDIT,      38, 3,  70, 3,  {}, 0, L""},
 			{DI_TEXT,      38, 4,  0,  4,  {}, 0, Msg::EditPanelModeStatusWidths},
 			{DI_EDIT,      38, 5,  70, 5,  {}, 0, L""},
-			{DI_TEXT,      3,  6,  0,  6,  {}, DIF_SEPARATOR, Msg::EditPanelReadHelp},
+			{DI_TEXT,      3,  6,  0,  6,  {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), Msg::EditPanelReadHelp},
 			{DI_CHECKBOX,  5,  7,  0,  7,  {}, 0, Msg::EditPanelModeFullscreen},
 			{DI_CHECKBOX,  5,  8,  0,  8,  {}, 0, Msg::EditPanelModeAlignExtensions},
 			{DI_CHECKBOX,  5,  9,  0,  9,  {}, 0, Msg::EditPanelModeAlignFolderExtensions},
 			{DI_CHECKBOX,  5,  10, 0,  10, {}, 0, Msg::EditPanelModeFoldersUpperCase},
 			{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::EditPanelModeFilesLowerCase},
 			{DI_CHECKBOX,  5,  12, 0,  12, {}, 0, Msg::EditPanelModeUpperToLowerCase},
-			{DI_TEXT,      3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+			{DI_TEXT,      3,  13, 0,  13, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 			{DI_BUTTON,    0,  14, 0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 			{DI_BUTTON,    0,  14, 0,  14, {}, DIF_CENTERGROUP, Msg::Reset},
 			{DI_BUTTON,    0,  14, 0,  14, {}, DIF_CENTERGROUP, Msg::Cancel}

@@ -2,6 +2,8 @@
 #include <mutex>
 #include <wchar.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 #include "Globals.h"
 #include <utils.h>
 #include "SitesConfig.h"
@@ -118,24 +120,67 @@ PluginImpl::~PluginImpl()
 	g_all_netrocks.Remove(this);
 }
 
+// formats the URL pasted on Ctrl-Alt-F according to protocol and optional
+// paste-format presets (env vars now, config later). real_path is the bare
+// absolute remote path (always leading '/').
+static std::string FormatPasteURL(const IHost::Identity &identity, const std::string &real_path)
+{
+	const std::string &proto = identity.protocol;
+
+	// ssh family: NETROCKS_SSH_PASTE = url (default) | scp | rsync
+	if (proto == "sftp" || proto == "scp" || proto == "shell") {
+		const char *preset = getenv("NETROCKS_SSH_PASTE");
+		if (preset && (strcmp(preset, "scp") == 0 || strcmp(preset, "rsync") == 0)) {
+			// user@host:/path (scp/rsync remote spec; non-default port not expressible here)
+			std::string out;
+			if (!identity.username.empty()) {
+				out+= identity.username;
+				out+= '@';
+			}
+			out+= identity.host;
+			out+= ':';
+			out+= real_path;
+			return out;
+		}
+	}
+
+	// smb: NETROCKS_SMB_PASTE = url (default) | unc
+	if (proto == "smb") {
+		const char *preset = getenv("NETROCKS_SMB_PASTE");
+		if (preset && strcmp(preset, "unc") == 0) {
+			// //host/share/path
+			std::string out = "//";
+			out+= identity.host;
+			out+= real_path; // starts with '/'
+			return out;
+		}
+	}
+
+	// default: proto://[user@]host[:port]/path
+	std::string out = proto;
+	out+= "://";
+	if (!identity.username.empty()) {
+		out+= identity.username;
+		out+= '@';
+	}
+	out+= identity.host;
+	const auto *pi = ProtocolInfoLookup(proto.c_str());
+	if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+		out+= StrPrintf(":%u", identity.port);
+	}
+	out+= real_path; // starts with '/'
+	return out;
+}
+
 void PluginImpl::UpdatePathInfo()
 {
 	std::wstring tmp;
 	if (_remote) {
 		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
-		// make up URL string start
 		IHost::Identity identity;
 		_remote->GetIdentity(identity);
-		tmp = StrMB2Wide(StrPrintf("%s://", identity.protocol.c_str()));
-		if (!identity.username.empty()) {
-			tmp += StrMB2Wide(StrPrintf("%s@", identity.username.c_str()));
-		}
-		tmp += StrMB2Wide(identity.host);
-		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
-		if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
-			tmp += StrMB2Wide(StrPrintf(":%u", identity.port));
-		}
+
 		// resolve real absolute path on the server (home dir was resolved once at connect)
 		std::string real_path;
 		try {
@@ -147,10 +192,11 @@ void PluginImpl::UpdatePathInfo()
 		if (real_path.empty() || real_path[0] != '/') {
 			real_path.insert(0, "/");
 		}
-		tmp += StrMB2Wide(real_path);
-		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
+
+		// _cur_path: bare absolute path (Ctrl-F); _cur_URL: portable form (Ctrl-Alt-F)
 		wcsncpy(_cur_path, StrMB2Wide(real_path).c_str(), ARRAYSIZE(_cur_path) - 1 );
-		// make up URL string end
+		wcsncpy(_cur_URL, StrMB2Wide(FormatPasteURL(identity, real_path)).c_str(), ARRAYSIZE(_cur_URL) - 1 );
+
 		tmp = _cur_dir;
 
 	} else {

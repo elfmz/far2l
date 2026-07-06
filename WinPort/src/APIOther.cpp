@@ -54,4 +54,20 @@ extern "C" {
 	{
 		return g_winport_con_out->BackendInfo(entity);
 	}
+
+	// visibility("default") so the bundled backend (.so/.dylib) resolves
+	// these against the bundle_loader executable on macOS.
+	static BOOL g_use_right_alt_as_altgr = FALSE;
+
+	__attribute__((visibility("default")))
+	void WinPortSetUseRightAltAsAltGr(BOOL on)
+	{
+		g_use_right_alt_as_altgr = on ? TRUE : FALSE;
+	}
+
+	__attribute__((visibility("default")))
+	BOOL WinPortGetUseRightAltAsAltGr()
+	{
+		return g_use_right_alt_as_altgr;
+	}
 }

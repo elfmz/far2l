@@ -16,6 +16,7 @@ class PluginImpl
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH], _format[256];
 	wchar_t _cur_URL[MAX_PATH];
+	wchar_t _cur_path[MAX_PATH]; // bare absolute remote path (for Ctrl-F paste)
 
 	Location _location;
 	bool _allow_remember_location_dir = false;

@@ -49,6 +49,7 @@ class PluginImpl
 	bool ByKey_TryExecuteSelected();
 	bool ByKey_TryEnterSelectedSite();
 	void ByKey_EditAttributesSelected();
+	bool ByKey_CopySSHCommand();
 
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,

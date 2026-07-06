@@ -768,6 +768,10 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return TRUE;
 	}
 
+	if (Key == 'S' && ControlState == PKF_CONTROL && _remote) {
+		return ByKey_CopySSHCommand() ? TRUE : FALSE;
+	}
+
 	if (Key == 'R' && ControlState == PKF_CONTROL && !_remote && g_conn_pool) {
 		g_conn_pool->PurgeAll();
 	}
@@ -942,6 +946,85 @@ void PluginImpl::ByKey_EditAttributesSelected()
 	} catch (std::exception &ex) {
 		NR_ERR("%s", ex.what());
 	}
+}
+
+// wraps s in single quotes for a POSIX shell, escaping embedded single quotes
+static std::string ShSingleQuote(const std::string &s)
+{
+	std::string out = "'";
+	for (size_t i = 0; i < s.size(); ++i) {
+		if (s[i] == '\'') {
+			out+= "'\\''";
+		} else {
+			out+= s[i];
+		}
+	}
+	out+= "'";
+	return out;
+}
+
+// copies to clipboard an ssh command that opens an interactive terminal in the
+// current remote directory (kept open via 'exec $SHELL')
+bool PluginImpl::ByKey_CopySSHCommand()
+{
+	if (!_remote) {
+		return false;
+	}
+
+	IHost::Identity identity;
+	_remote->GetIdentity(identity);
+	if (identity.protocol != "sftp" && identity.protocol != "scp" && identity.protocol != "shell") {
+		return false;
+	}
+
+	// item under the cursor (the ".." parent entry is treated as "no item")
+	GetFocusedItem gfi(this);
+	std::string name;
+	bool is_dir = false;
+	if (gfi.IsValid() && gfi->FindData.lpwszFileName) {
+		name = Wide2MB(gfi->FindData.lpwszFileName);
+		is_dir = (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	}
+	if (name == "..") {
+		name.clear();
+	}
+
+	const std::string &dir = Wide2MB(_cur_path);
+	std::string remote_cmd;
+	if (is_dir && !name.empty()) {
+		// enter the directory under the cursor
+		std::string sub = dir;
+		if (sub.empty() || sub[sub.size() - 1] != '/') {
+			sub+= '/';
+		}
+		sub+= name;
+		remote_cmd = "cd " + ShSingleQuote(sub) + "; exec $SHELL -l";
+	} else {
+		// stay in the current dir; list the file under the cursor if any
+		remote_cmd = "cd " + ShSingleQuote(dir) + ";";
+		if (!name.empty()) {
+			remote_cmd+= " ls -la " + ShSingleQuote(name) + ";";
+		}
+		remote_cmd+= " exec $SHELL -l";
+	}
+
+	std::string cmd = "ssh -t ";
+	const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
+	if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+		cmd+= StrPrintf("-p %u ", identity.port);
+	}
+	if (!identity.username.empty()) {
+		cmd+= identity.username;
+		cmd+= '@';
+	}
+	cmd+= identity.host;
+	cmd+= ' ';
+	cmd+= ShSingleQuote(remote_cmd);
+
+	if (G.info.FSF && G.info.FSF->CopyToClipboard) {
+		G.info.FSF->CopyToClipboard(StrMB2Wide(cmd).c_str());
+	}
+	return true;
 }
 
 

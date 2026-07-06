@@ -4173,6 +4173,42 @@ void FileList::SetReturnCurrentFile(int Mode)
 	ReturnCurrentFile = Mode;
 }
 
+static bool ApplyCommandUsesCombinedListMeta(const FARString &command)
+{
+	const wchar_t *cur = command.CPtr();
+
+	while ((cur = wcschr(cur, L'!')) != nullptr) {
+		if (!cur[1])
+			break;
+
+		if (!StrCmpN(cur, L"!!", 2)) {
+			cur += 2;
+			continue;
+		}
+
+		// Skip !?title?init! interactive prompts
+		if (!StrCmpN(cur, L"!?", 2)) {
+			const wchar_t *end = wcschr(cur + 2, L'!');
+			cur = end ? end + 1 : cur + 2;
+			continue;
+		}
+
+		if (!StrCmpN(cur, L"!@", 2) || !StrCmpN(cur, L"!$", 2)) {
+			const wchar_t *end = wcschr(cur + 2, L'!');
+			if (end) {
+				for (const wchar_t *mod = cur + 2; mod < end; ++mod) {
+					if (*mod == L'B')
+						return true;
+				}
+			}
+		}
+
+		++cur;
+	}
+
+	return false;
+}
+
 bool FileList::ApplyCommand()
 {
 	static FARString strPrevCommand;
@@ -4194,32 +4230,28 @@ bool FileList::ApplyCommand()
 
 	FARString strSelName;
 	DWORD FileAttr;
+	const bool apply_once = ApplyCommandUsesCombinedListMeta(strCommand);
+	const bool had_selection = SelFileCount != 0;
 
 	SaveSelection();
 
 	++UpdateDisabled;
-	GetSelNameCompat(nullptr, FileAttr);
 	CtrlObject->CmdLine->LockUpdatePanel(true);
-	while (GetSelNameCompat(&strSelName, FileAttr) && !CheckForEsc()) {
-		FARString strListName, strAnotherListName;
-		FARString strConvertedCommand = strCommand;
-		/*int PreserveLFN=*/SubstFileName(strConvertedCommand, strSelName, &strListName, &strAnotherListName);
-		bool ListFileUsed = !strListName.IsEmpty() || !strAnotherListName.IsEmpty();
+	if (apply_once) {
+		GetSelNameCompat(nullptr, FileAttr);
+		if (GetSelNameCompat(&strSelName, FileAttr)) {
+			FARString strListName, strAnotherListName;
+			FARString strConvertedCommand = strCommand;
+			/*int PreserveLFN=*/SubstFileName(strConvertedCommand, strSelName, &strListName, &strAnotherListName);
+			bool ListFileUsed = !strListName.IsEmpty() || !strAnotherListName.IsEmpty();
 
-		{
-			// PreserveLongName PreserveName(PreserveLFN);
 			RemoveExternalSpaces(strConvertedCommand);
 
 			if (!strConvertedCommand.IsEmpty()) {
-				// ProcessOSAliases(strConvertedCommand);
-
-				if (CtrlObject->CmdLine->ProcessFarCommands(strConvertedCommand))	// far commands always not silent
+				if (CtrlObject->CmdLine->ProcessFarCommands(strConvertedCommand))
 					;
-				else if (!isSilent)																		// TODO: Здесь не isSilent!
-				{
-					CtrlObject->CmdLine->ExecString(strConvertedCommand, FALSE, 0, 0, ListFileUsed);	// Param2 == TRUE?
-																										// if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTAPPLYCMD))
-					//	CtrlObject->CmdHistory->AddToHistory(strConvertedCommand);
+				else if (!isSilent) {
+					CtrlObject->CmdLine->ExecString(strConvertedCommand, FALSE, 0, 0, ListFileUsed);
 				} else {
 					CtrlObject->Cp()->LeftPanel->CloseFile();
 					CtrlObject->Cp()->RightPanel->CloseFile();
@@ -4228,19 +4260,59 @@ bool FileList::ApplyCommand()
 			}
 
 			ClearLastGetSelection();
+
+			if (!strListName.IsEmpty())
+				apiDeleteFile(strListName);
+
+			if (!strAnotherListName.IsEmpty())
+				apiDeleteFile(strAnotherListName);
 		}
+	} else {
+		GetSelNameCompat(nullptr, FileAttr);
+		while (GetSelNameCompat(&strSelName, FileAttr) && !CheckForEsc()) {
+			FARString strListName, strAnotherListName;
+			FARString strConvertedCommand = strCommand;
+			/*int PreserveLFN=*/SubstFileName(strConvertedCommand, strSelName, &strListName, &strAnotherListName);
+			bool ListFileUsed = !strListName.IsEmpty() || !strAnotherListName.IsEmpty();
 
-		if (!strListName.IsEmpty())
-			apiDeleteFile(strListName);
+			{
+				// PreserveLongName PreserveName(PreserveLFN);
+				RemoveExternalSpaces(strConvertedCommand);
 
-		if (!strAnotherListName.IsEmpty())
-			apiDeleteFile(strAnotherListName);
+				if (!strConvertedCommand.IsEmpty()) {
+					// ProcessOSAliases(strConvertedCommand);
+
+					if (CtrlObject->CmdLine->ProcessFarCommands(strConvertedCommand))	// far commands always not silent
+						;
+					else if (!isSilent)																		// TODO: Здесь не isSilent!
+					{
+						CtrlObject->CmdLine->ExecString(strConvertedCommand, FALSE, 0, 0, ListFileUsed);	// Param2 == TRUE?
+																											// if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTAPPLYCMD))
+						//	CtrlObject->CmdHistory->AddToHistory(strConvertedCommand);
+					} else {
+						CtrlObject->Cp()->LeftPanel->CloseFile();
+						CtrlObject->Cp()->RightPanel->CloseFile();
+						Execute(strConvertedCommand, FALSE, 0, ListFileUsed, true);
+					}
+				}
+
+				ClearLastGetSelection();
+			}
+
+			if (!strListName.IsEmpty())
+				apiDeleteFile(strListName);
+
+			if (!strAnotherListName.IsEmpty())
+				apiDeleteFile(strAnotherListName);
+		}
 	}
 
 	CtrlObject->CmdLine->LockUpdatePanel(false);
 	CtrlObject->CmdLine->Show();
 	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
-	if (GetSelPosition >= ListData.Count())
+	if (apply_once && had_selection)
+		ClearSelection();
+	else if (GetSelPosition >= ListData.Count())
 		ClearSelection();
 
 	--UpdateDisabled;

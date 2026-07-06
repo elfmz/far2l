@@ -136,7 +136,18 @@ void PluginImpl::UpdatePathInfo()
 		if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
 			tmp += StrMB2Wide(StrPrintf(":%u", identity.port));
 		}
-		tmp += L"/" + StrMB2Wide(_location.ToString(false));
+		// resolve real absolute path on the server (home dir was resolved once at connect)
+		std::string real_path;
+		try {
+			real_path = _remote->RealPath(_location.ToString(false));
+		} catch (std::exception &e) {
+			NR_ERR("RealPath: %s", e.what());
+			real_path = _location.ToString(false);
+		}
+		if (real_path.empty() || real_path[0] != '/') {
+			real_path.insert(0, "/");
+		}
+		tmp += StrMB2Wide(real_path);
 		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
 		// make up URL string end
 		tmp = _cur_dir;

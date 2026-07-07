@@ -102,7 +102,8 @@ to obtain file group
 * See several additional with arclie in farplug-wide.h in [3b60489](https://github.com/elfmz/far2l/commit/3b6048914bd025a61b24cf6ed237f0e0da2e364c)
 
 ### Added following entries to 	struct OpenPluginInfo:
-* `CurURL` pointer to retrieve URL path from plugin. Not always useful, but for network-related plugins it allows to provide URLs useful in external utilites.
+* `CurURL` pointer to retrieve URL path from plugin. Not always useful, but for network-related plugins it allows to provide URLs useful in external utilites. Pasted on Ctrl+Alt+F.
+* `CurPath` pointer to retrieve the bare absolute path (no scheme/host) from plugin. For network-related plugins this is the server-side absolute path, useful as an argument to remote commands. Pasted on Ctrl+F.
 
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item

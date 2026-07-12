@@ -574,6 +574,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED TRANSFORMER OR TRANSFORMER)
+    message(STATUS "TRANSFORMER plugin enabled")
+    add_subdirectory (transformer)
+else()
+    message(STATUS "${ColorRed}TRANSFORMER plugin disabled due to TRANSFORMER=${TRANSFORMER}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/transformer/plug/transformer.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED IMAGEVIEWER OR IMAGEVIEWER)
     message(STATUS "IMAGEVIEWER plugin enabled")
     add_subdirectory (ImageViewer)

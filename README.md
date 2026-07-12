@@ -33,6 +33,7 @@ OpenWith,
 Python <sub>(optional scripting support, see [readme](python/configs/plugins/read-en.txt) and [info](python/configs/plugins/readme-plugins.txt))</sub>,
 SimpleIndent,
 tmppanel,
+Transformer <sub>(generic external-command text transformations for the editor and file panels)</sub>,
 truncate.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
@@ -384,7 +385,7 @@ There're also options to toggle other plugins build in same way:
 `-DNETROCKS=no`,
 `-DOPENWITH=no`,
 `-DSIMPLEINDENT=no`,
-`-DTMPPANEL=no`, `-DTRUNCATE=no`
+`-DTMPPANEL=no`, `-DTRANSFORMER=no`, `-DTRUNCATE=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
 #### macOS build

@@ -202,7 +202,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 				throw std::runtime_error(StrPrintf("Cannot read key file: %s", key_path_spec.c_str()));
 
 			case SSH_ERROR:
-				throw ProtocolAuthFailedError();
+				throw ProtocolKeyPassphraseNeededError(key_path_spec);
 
 			case SSH_OK:
 				break;

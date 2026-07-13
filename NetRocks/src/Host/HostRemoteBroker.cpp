@@ -348,6 +348,9 @@ public:
 			SendPOD(IPC_PI_SERVER_IDENTITY_CHANGED);
 			SendString(ex.what());
 
+		} catch (ProtocolKeyPassphraseNeededError &ex) {
+			SendPOD(IPC_PI_KEY_PASSPHRASE_NEEDED);
+			SendString(ex.what());
 		} catch (ProtocolAuthFailedError &ex) {
 			SendPOD(IPC_PI_AUTHORIZATION_FAILED);
 			SendString(ex.what());

@@ -31,6 +31,11 @@
 "Authentication - retry"
 "Authenting to:"
 "Reauthenting to:"
+"Private key passphrase"
+"Private key passphrase - retry"
+"Unlocking key for:"
+"Re-unlocking key for:"
+"&Passphrase:"
 
 "P&rotocol           :"
 "&Host name          :"

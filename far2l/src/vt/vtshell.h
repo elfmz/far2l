@@ -4,6 +4,7 @@
 
 int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_notify);
 void VTShell_Shutdown();
+void VTShell_InjectRawInput(const char *data, size_t len);
 
 bool VTShell_Busy();
 

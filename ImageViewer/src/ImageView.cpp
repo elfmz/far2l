@@ -1,7 +1,11 @@
 #include "Common.h"
 #include "ImageView.h"
+#include "lng.h"
 #include "Settings.h"
 #include "ToolExec.h"
+#include <iomanip>
+#include <locale>
+#include <sstream>
 
 // following constants used for incremental image display moderation
 #define SETIMG_INITALLY_ASSUMED_SPEED    8192 // 8kb per ms = 8MB/second
@@ -813,4 +817,201 @@ void ImageView::RunProcessingCommand()
 		}
 	}
 	ForceShow();
+}
+
+namespace
+{
+	struct AutoShowGuard
+	{
+		ImageView* viewer;
+		explicit AutoShowGuard(ImageView* v) : viewer(v) {}
+		AutoShowGuard(const AutoShowGuard&) = delete;
+		AutoShowGuard& operator=(const AutoShowGuard&) = delete;
+		~AutoShowGuard()
+		{
+			if (viewer) {
+				viewer->ForceShow();
+			}
+		}
+		void dismiss() {
+			viewer = nullptr;
+		}
+	};
+
+	enum ExifDlgItem
+	{
+		EXIF_DOUBLEBOX_IDX,
+		EXIF_MEMO_IDX,
+	};
+
+	void SetExifDlgItemPositions(HANDLE hDlg, int dlg_width, int dlg_height)
+	{
+		SMALL_RECT doublebox_rect  = {0, 0, (SHORT)(dlg_width - 1), (SHORT)(dlg_height - 1)};
+		SMALL_RECT memo_rect       = {1, 1, (SHORT)(dlg_width - 2), (SHORT)(dlg_height - 2)};
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_DOUBLEBOX_IDX, reinterpret_cast<LONG_PTR>(&doublebox_rect));
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_MEMO_IDX,      reinterpret_cast<LONG_PTR>(&memo_rect));
+	}
+
+	LONG_PTR WINAPI ExifDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+	{
+		switch (Msg) {
+			case DN_INITDIALOG: {
+				SMALL_RECT dlg_rect{};
+				if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, reinterpret_cast<LONG_PTR>(&dlg_rect))) {
+					SetExifDlgItemPositions(hDlg, dlg_rect.Right - dlg_rect.Left + 1, dlg_rect.Bottom - dlg_rect.Top + 1);
+				}
+				return TRUE;
+			}
+			case DN_DRAGGED: {
+				return FALSE;
+			}
+			case DN_RESIZECONSOLE: {
+				const COORD *console_size = reinterpret_cast<const COORD *>(Param2);
+				g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, reinterpret_cast<LONG_PTR>(console_size));
+				SetExifDlgItemPositions(hDlg, console_size->X, console_size->Y);
+				if (bool *resized = reinterpret_cast<bool *>(g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0))) {
+					*resized = true;
+				}
+				return TRUE;
+			}
+			default: {
+				return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
+			}
+		}
+	}
+}
+
+bool ImageView::ShowExifInfo()
+{
+	AutoShowGuard guard(this);
+	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+	ToolExec exiftool(_cancel);
+	exiftool.AddArguments("exiftool", "-charset", "UTF8", "-g", "--", CurFile());
+	if (!exiftool.Run(CurFile(), _file_size_str, "exiftool", "Reading EXIF metadata...")) {
+		return false;
+	}
+	if (exiftool.ExecError() != 0) {
+		return false;
+	}
+
+	const std::wstring exiftool_output = StrMB2Wide(exiftool.FetchStdout());
+	if (exiftool_output.empty()) {
+		const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE), g_settings.Msg(M_NO_EXIF_OR_UNSUPPORTED_FORMAT)};
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, nullptr, MsgItems, ARRAYSIZE(MsgItems), 0);
+		return false;
+	}
+
+	SMALL_RECT far_rect{};
+	if (!g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &far_rect, 0)) {
+		return false;
+	}
+
+	std::wstring dlg_title = g_settings.Msg(M_TITLE);
+	dlg_title += g_settings.Msg(M_MEDIA_METADATA);
+
+	FarDialogItem items[2]{};
+	items[EXIF_DOUBLEBOX_IDX].Type    = DI_DOUBLEBOX;
+	items[EXIF_DOUBLEBOX_IDX].PtrData = dlg_title.c_str();
+	items[EXIF_MEMO_IDX].Type         = DI_MEMOEDIT;
+	items[EXIF_MEMO_IDX].Flags        = DIF_READONLY | DIF_FOCUS;
+	items[EXIF_MEMO_IDX].PtrData      = exiftool_output.c_str();
+
+	bool resized = false;
+	HANDLE hdlg = g_far.DialogInit(g_far.ModuleNumber, far_rect.Left, far_rect.Top, far_rect.Right, far_rect.Bottom, nullptr, items, ARRAYSIZE(items), 0, 0, ExifDlgProc, reinterpret_cast<LONG_PTR>(&resized));
+	if (hdlg != INVALID_HANDLE_VALUE) {
+		g_far.DialogRun(hdlg);
+		g_far.DialogFree(hdlg);
+	}
+	if (resized) {
+		guard.dismiss();
+	}
+	return resized;
+}
+
+void ImageView::ShowGpsInfo()
+{
+	AutoShowGuard guard(this);
+
+	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+	ToolExec exiftool(_cancel);
+	exiftool.AddArguments("exiftool", "-n", "-T", "-GPSLatitude", "-GPSLongitude", "--", CurFile());
+
+	if (!exiftool.Run(CurFile(), _file_size_str, "exiftool", "Reading GPS metadata...")) {
+		return;
+	}
+	if (exiftool.ExecError() != 0) {
+		return;
+	}
+
+	double latitude = 0.0, longitude = 0.0;
+	std::istringstream stream(exiftool.FetchStdout());
+	stream.imbue(std::locale::classic());
+
+	if (!(stream >> latitude >> longitude)) {
+		const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE), g_settings.Msg(M_NO_GPS_METADATA_FOUND)};
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, nullptr, MsgItems, ARRAYSIZE(MsgItems), 0);
+		return;
+	}
+
+	auto format_coords = [](double val) {
+		std::ostringstream oss;
+		oss.imbue(std::locale::classic());
+		oss << std::fixed << std::setprecision(6) << val;
+		return oss.str();
+	};
+
+	const std::string lat     = format_coords(latitude);
+	const std::string lon     = format_coords(longitude);
+	const std::string abs_lat = format_coords(std::abs(latitude));
+	const std::string abs_lon = format_coords(std::abs(longitude));
+	const std::string lat_dir = (latitude >= 0) ? "N" : "S";
+	const std::string lon_dir = (longitude >= 0) ? "E" : "W";
+
+	struct MapProvider
+	{
+		std::wstring name;
+		std::string url_template;
+	};
+
+	static const std::vector<MapProvider> providers = {
+		{ L"2gis",          "https://2gis.ru/geo/{lon},{lat}" },
+		{ L"Apple Maps",    "https://maps.apple.com/?q=loc:{lat},{lon}"},
+		{ L"Bing Maps",     "https://www.bing.com/maps?where1={lat},{lon}&lvl=15" },
+		{ L"GeoHack",       "https://geohack.toolforge.org/geohack.php?params={abs_lat}_{lat_dir}_{abs_lon}_{lon_dir}_" },
+		{ L"Google Maps",   "https://www.google.com/maps/search/?api=1&query={lat},{lon}"},
+		{ L"OpenStreetMap", "https://www.openstreetmap.org/?mlat={lat}&mlon={lon}"},
+		{ L"Organic Maps",  "https://omaps.app/{lat},{lon}"},
+		{ L"Wikimapia",     "https://wikimapia.org/#lat={lat}&lon={lon}&z=11&m=w"},
+		{ L"Yandex Maps",   "https://yandex.com/maps?whatshere%5Bpoint%5D={lon},{lat}"},
+	};
+
+	std::vector<FarMenuItem> menu_items(providers.size());
+	for (size_t i = 0; i < providers.size(); ++i) {
+		menu_items[i].Text = providers[i].name.c_str();
+	}
+	static int s_last_provider = 0;
+	menu_items[s_last_provider].Selected = 1;
+
+	const std::wstring ws_coords = StrMB2Wide(abs_lat) + L"\u00B0" + StrMB2Wide(lat_dir) + L", "
+			+ StrMB2Wide(abs_lon) + L"\u00B0" + StrMB2Wide(lon_dir);
+	wchar_t title_buf[256];
+	swprintf(title_buf, ARRAYSIZE(title_buf), g_settings.Msg(M_OPEN_GPS_COORDINATES_IN), ws_coords.c_str());
+
+	const int choice = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, title_buf,
+								  nullptr, nullptr, nullptr, nullptr, menu_items.data(), menu_items.size());
+
+	if (choice >= 0 && choice < static_cast<int>(providers.size())) {
+		s_last_provider = choice;
+		std::string url = providers[choice].url_template;
+		while(CmdFindAndReplace(url, "{lat}", lat)) {}
+		while(CmdFindAndReplace(url, "{lon}", lon)) {}
+		while(CmdFindAndReplace(url, "{abs_lat}", abs_lat)) {}
+		while(CmdFindAndReplace(url, "{abs_lon}", abs_lon)) {}
+		while(CmdFindAndReplace(url, "{lat_dir}", lat_dir)) {}
+		while(CmdFindAndReplace(url, "{lon_dir}", lon_dir)) {}
+		const std::wstring ws_url = L"'" + StrMB2Wide(url) + L"'";
+		g_fsf.Execute(ws_url.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
+	}
 }

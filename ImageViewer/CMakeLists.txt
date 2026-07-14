@@ -16,7 +16,7 @@ add_library (ImageViewer MODULE ${SOURCES})
 target_link_libraries(ImageViewer utils far2l)
 
 target_compile_options(ImageViewer PRIVATE -ffast-math)
-target_compile_definitions(ImageViewer PRIVATE -DUNICODE )
+target_compile_definitions(ImageViewer PRIVATE -DUNICODE -DFAR_USE_INTERNALS)
 
 target_include_directories(ImageViewer PRIVATE .)
 target_include_directories(ImageViewer PRIVATE ../WinPort)

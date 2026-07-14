@@ -20,6 +20,7 @@ $^#Using the Plugin#
   Required external packages:
    - #ImageMagick# (#convert# command) - for image processing and conversion;
    - #ffmpeg# (#ffmpeg# and #ffprobe# commands) - for creating video frame previews;
+   - #exiftool# - for metadata and GPS queries;
    - any other utilities used in your ~custom commands~@ExtraCommands@.
 
 
@@ -87,6 +88,10 @@ the following shortcuts are available.
    Toggle Windowed / Fullscreen               #F5# or #F#
     (switching also performs #=#)
    ~Plugin Configuration~@settings@                       #F9#
+   Show media metadata (exiftool)             #I#
+   Choose a map service and open              #G#
+    the GPS location from the file’s
+    EXIF metadata in a browser
 
 
  #HEADER INFORMATION#
@@ -122,7 +127,7 @@ $^#Plugin Configuration#
 
   Here you can define file masks for content treated as media by the plugin, enable image auto-rotation based on camera metadata,
 and set the plugin as the default handler for standard shortcuts: #Enter#, #Ctrl+PgDn#, #F3# (replacing the ~internal viewer~@:Viewer@),
-and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel). 
+and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel).
   The ~Extra commands~@ExtraCommands@ button opens the processing scripts editor (also accessible via #F4# in viewer mode).
 
   Configuration is stored in: #~~/.config/far2l/plugins/ImageViewer/config.ini#

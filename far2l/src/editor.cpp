@@ -1494,11 +1494,6 @@ int Editor::ProcessKey(FarKey Key)
 	if (Key == KEY_NONE)
 		return TRUE;
 
-	if (Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-		if (CtrlObject->Plugins.ProcessEditorInput(FrameManager->GetLastInputRecord()))
-			return TRUE;
-	}
-
 	_KEYMACRO(CleverSysLog SL(L"Editor::ProcessKey()"));
 	_KEYMACRO(SysLog(L"Key=%ls", _FARKEY_ToName(Key)));
 	int CurPos, CurVisPos, I;
@@ -6852,6 +6847,9 @@ int Editor::EditorControl(int Command, void *Param)
 				if (EdOpt.ShowGutterMarks)
 					Info->Options|= EOPT_SHOWGUTTER;
 
+				if (Flags.Check(FEDITOR_DIALOGMEMOEDIT))
+					Info->Options|= EOPT_MEMOEDIT;
+
 				Info->TabSize = EdOpt.TabSize;
 				Info->BookMarkCount = POSCACHE_BOOKMARK_COUNT;
 				Info->CurState = Flags.Check(FEDITOR_LOCKMODE) ? ECSTATE_LOCKED : 0;
@@ -6860,7 +6858,6 @@ int Editor::EditorControl(int Command, void *Param)
 				Info->CodePage = m_codepage;
 				Info->WindowX = X1;
 				Info->WindowY = Y1;
-				Info->IsMemoEdit = Flags.Check(FEDITOR_DIALOGMEMOEDIT) ? 1 : 0;
 				if (m_bWordWrap)
 				{
 					// For plugins (e.g., Colorer) to correctly process long lines that are wrapped,

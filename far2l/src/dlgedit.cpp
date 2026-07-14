@@ -168,6 +168,8 @@ int DlgEdit::ProcessKey(FarKey Key)
 
 	if (Type == DLGEDIT_MULTILINE) {
 		DialogEditorPluginScope scope(multiEdit);
+		if (CtrlObject->Plugins.ProcessEditorInput(FrameManager->GetLastInputRecord()))
+			return TRUE;
 		return multiEdit->ProcessKey(Key);
 	} else
 		return lineEdit->ProcessKey(Key);

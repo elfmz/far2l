@@ -82,8 +82,6 @@ Fills up to specified count handles, but returns background terminal session cou
 
 * added sort mode option "executables first", that works with the file panel by `FILE_ATTRIBUTE_EXECUTABLE` option. It is available for plug-ins in the same manner as "directories first" option so plug-ins are able to handle it as they need.
 
-* new "`IsMemoEdit`" member in `struct EditorInfo`.
-
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * `FCTL_GETPANELPLUGINHANDLE`
 Can be used to interact with plugin that renders other panel.
@@ -130,6 +128,9 @@ Size of colors array is `DLG_ITEM_MAX_CUST_COLORS` which is currently 5.
     - `LIFIND_KEEPAMPERSAND` (in `enum FARLISTFINDFLAGS`);
 * Flags in `enum PROCESSNAME_FLAGS` (added in #2452):
     - `PN_GENERATENAME`, `PN_CHECKMASK`, `PN_SHOWERRORMESSAGE`, `PN_RESERVED1`, `PN_CASESENSITIVE`, `PN_NONE`
+* Flags in `enum EDITOR_OPTIONS` (used in `struct EditorInfo.Options`, added in #3248 and #3449):
+    - `EOPT_SHOWNUMBERS`, `EOPT_SHOWGUTTER`. `EOPT_MEMOEDIT`
+
 
 ### Non-modal dialogs:
  `FDLG_NONMODAL` is now available (see https://github.com/elfmz/far2l/issues/2867#issuecomment-3368134072).

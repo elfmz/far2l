@@ -86,5 +86,7 @@ public:
 	void Deselect();
 	void ToggleSelection();
 	void RunProcessingCommand();
+	bool ShowExifInfo();
+	void ShowGpsInfo();
 };
 

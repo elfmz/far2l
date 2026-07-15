@@ -67,39 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AllXLats.hpp"
 #include "ConfigOpt.hpp"
 #include "ConfigOptSaveLoad.hpp"
-
-static size_t WrapStaticText(const wchar_t *text, int width, FARString *lines, size_t lines_count)
-{
-	if (!lines || !lines_count)
-		return 0;
-
-	FARString wrapped;
-	FarFormatText((text && *text) ? text : L"(no description)", width, wrapped, L"\n", 0);
-
-	size_t wrapped_lines_count = 1;
-	for (size_t i = 0; i < wrapped.GetLength(); ++i) {
-		if (wrapped.At(i) == L'\n')
-			++wrapped_lines_count;
-	}
-
-	size_t start = 0;
-	for (size_t i = 0; i < lines_count; ++i) {
-		lines[i].Clear();
-
-		if (start >= wrapped.GetLength())
-			continue;
-
-		size_t end = start;
-		while (end < wrapped.GetLength() && wrapped.At(end) != L'\n')
-			++end;
-
-		lines[i] = wrapped.SubStr(start, end - start);
-		lines[i].TruncateByCells(width);
-		start = end + 1;
-	}
-
-	return wrapped_lines_count;
-}
+#include "strmix.hpp"
 
 class ConfigOptProps
 {
@@ -208,11 +176,26 @@ public:
 
 	const wchar_t *SaveName() const
 	{
-		if (_opt.save == OST_COMMON)
-			return L"common";
-		if (_opt.save == OST_PANELS)
-			return L"panels";
-		return L"never";
+		switch (_opt.save) {
+			case OST_COMMON:
+				return L"common";
+			case OST_PANELS:
+				return L"panels";
+			default:
+				return L"never";
+		}
+	}
+
+	const wchar_t *SaveNameShort() const
+	{
+		switch (_opt.save) {
+			case OST_COMMON:
+				return L"c";
+			case OST_PANELS:
+				return L"p";
+			default:
+				return L"-";
+		}
 	}
 
 	void MenuListAppend(VMenu &vm,
@@ -222,66 +205,74 @@ public:
 	{
 		MenuItemEx mi;
 		FARString fsn;
+
 		if (align_dot)
 		 fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
 		else {
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
+
 		FormatString out1;
 		FormatString out2;
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL: {
 				out1 << (*_opt.value.b == _opt.def.b ? L" " : L"*")
-					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"  bool" << BoxSymbols[BS_V1];
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"  bool";
 				out2 << (*_opt.value.b ? L"[x] true" : L"[ ] false");
 				break;
 			}
 			case ConfigOpt::T_INT: {
 				out1 << (*_opt.value.i == _opt.def.i ? L" " : L"*")
-					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"   int" << BoxSymbols[BS_V1];
-				out2 << *_opt.value.i << L" (" << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true) << L")";
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"   int";
+				out2 << *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
 				break;
 			}
 			case ConfigOpt::T_DWORD: {
 				out1 << (*_opt.value.dw == _opt.def.dw ? L" " : L"*")
-					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L" dword" << BoxSymbols[BS_V1];
-				out2 << *_opt.value.dw << L" (" << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true) << L")";
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L" dword";
+				out2 << *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
 				break;
 			}
 			case ConfigOpt::T_STR: {
 				out1 << (_opt.def.str == nullptr ? L"?"
 						: (*_opt.value.str == _opt.def.str ? L" " : L"*"))
-					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"string" << BoxSymbols[BS_V1];
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"string";
 				out2 << _opt.value.str->CPtr();
 				break;
 			}
 			case ConfigOpt::T_BIN: {
 				out1 << (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? L"?"
 						: (memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? L" " : L"*"))
-					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"binary" << BoxSymbols[BS_V1];
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"binary";
 				out2 << L"(binary has length " << static_cast<unsigned int>(_opt.bin_size) << L" bytes)";
 				break;
 			}
 			default: {
-				out1 << L"? " << fsn << L' ' << BoxSymbols[BS_V1];
+				out1 << L"? " << fsn << L' ';
 				out2 << L"unknown type ???";
 			}
 		}
+
+		out1 << BoxSymbols[BS_V1] << SaveNameShort() << BoxSymbols[BS_V1];
+
 		mi.strName = out1.strValue();
 		mi.strName += out2.strValue();
+
 		FARString description;
-		description = L"Selected: ";
 		description += _opt.section;
 		description += L'.';
 		description += _opt.key;
-		description += L"  Type: ";
+		description += L" (type: ";
 		description += TypeName();
-		description += L"  Saved: ";
+		description += L", saved: ";
 		description += SaveName();
-		description += L"  Value: ";
-		description += out2.strValue();
+		description += L")\nValue";
+		if (_opt.type == ConfigOpt::T_STR)
+			description.AppendFormat(L" (symbols: %zu): \"%ls\"", out2.strValue().GetLength(), out2.strValue().CPtr() );
+		else
+			description += L": " + out2.strValue();
 		if (_opt.description && _opt.description[0]) {
 			description += L"\n\n";
 			description += _opt.description;
@@ -483,7 +474,7 @@ public:
 		const wchar_t *HexMask = L"HHHHHHHH";
 		const short DLG_WIDTH = 76;
 		const int DESCRIPTION_WIDTH = DLG_WIDTH - 12;
-		const size_t MIN_DESCRIPTION_LINES = 3;
+		const size_t MIN_DESCRIPTION_LINES = 1;
 		const size_t MAX_DESCRIPTION_LINES = 8;
 		const size_t max_description_lines =
 			std::min(MAX_DESCRIPTION_LINES, static_cast<size_t>(std::max(1, ScrY - 24)));
@@ -511,7 +502,7 @@ public:
 			/*   3 */ {DI_TEXT,			 5,  3, 20,             3, {}, 0, L"           Key:"},
 			/*   4 */ {DI_TEXT,			21,  3, TEXT_X2,  3, {}, 0, fs_key.CPtr()},
 			/*   5 */ {DI_TEXT,			 5,  4, 20,             4, {}, 0, L"to config file:"},
-			/*   6 */ {DI_TEXT,			21,  4, TEXT_X2,  4, {}, 0, (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never"))},
+			/*   6 */ {DI_TEXT,			21,  4, TEXT_X2,  4, {}, 0, SaveName()},
 			/*   7 */ {DI_TEXT,			 5,  5, 20,             5, {}, 0, L"          Type:"},
 			/*   8 */ {DI_TEXT,			21,  5, TEXT_X2,  5, {}, 0, type_pwsz},
 			/*   9 */ {DI_TEXT,			 3,  6, 20,             6, {}, DIF_SEPARATOR, L" Values "},
@@ -701,8 +692,9 @@ static void ConfigOptAppendHeader(VMenu &vm, size_t len_sections_keys)
 	MenuItemEx mi;
 	FormatString header;
 	header << L"  " << fmt::Cells() << fmt::LeftAlign() << fmt::Size(len_sections_keys)
-		<< L"Key Path" << L' ' << BoxSymbols[BS_V1]
+		<< L"Section.Parameter" << L' ' << BoxSymbols[BS_V1]
 		<< L"  Type" << BoxSymbols[BS_V1]
+		<< L" " << BoxSymbols[BS_V1]
 		<< L"Value";
 	mi.strName = header.strValue();
 	mi.Flags = LIF_DISABLE;
@@ -763,7 +755,7 @@ void ConfigOptEdit()
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
 	ListConfig.SetHelp(L"FarConfig");
 
-	ListConfig.SetBottomTitle(L"[Ctrl-Alt-F] Search  [Enter/F4] Edit  [Del] Reset  [Ctrl-H] Changed  [Ctrl-A] Align  [Esc] Exit");
+	ListConfig.SetBottomTitle(L"[Ctrl-Alt-F] Filter  [Enter/F4] Edit  [Del] Reset  [Ctrl-H] Changed  [Ctrl-A] Align  [Esc/F10] Exit");
 
 	for (size_t i = ConfigOptCount(); i--;) {
 		ConfigOptProps(g_cfg_opts[i])

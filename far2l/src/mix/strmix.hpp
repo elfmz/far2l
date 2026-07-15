@@ -149,3 +149,5 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
+
+size_t WrapStaticText(const wchar_t *text, int width, FARString *lines, size_t lines_count);

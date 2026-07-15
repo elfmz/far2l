@@ -1413,3 +1413,36 @@ void ClearSearchStringCache()
 	s_RegexCache.pattern.Clear();
 	s_RegexCache.flags = 0;
 }
+
+size_t WrapStaticText(const wchar_t *text, int width, FARString *lines, size_t lines_count)
+{
+	if (!lines || !lines_count)
+		return 0;
+
+	FARString wrapped;
+	FarFormatText((text && *text) ? text : L"(no description)", width, wrapped, L"\n", 0);
+
+	size_t wrapped_lines_count = 1;
+	for (size_t i = 0; i < wrapped.GetLength(); ++i) {
+		if (wrapped.At(i) == L'\n')
+			++wrapped_lines_count;
+	}
+
+	size_t start = 0;
+	for (size_t i = 0; i < lines_count; ++i) {
+		lines[i].Clear();
+
+		if (start >= wrapped.GetLength())
+			continue;
+
+		size_t end = start;
+		while (end < wrapped.GetLength() && wrapped.At(end) != L'\n')
+			++end;
+
+		lines[i] = wrapped.SubStr(start, end - start);
+		lines[i].TruncateByCells(width);
+		start = end + 1;
+	}
+
+	return wrapped_lines_count;
+}

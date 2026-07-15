@@ -260,24 +260,22 @@ public:
 		mi.strName = out1.strValue();
 		mi.strName += out2.strValue();
 
-		FARString description;
-		description += _opt.section;
-		description += L'.';
-		description += _opt.key;
-		description += L" (type: ";
-		description += TypeName();
-		description += L", saved: ";
-		description += SaveName();
-		description += L")\nValue";
+		mi.strDescription = _opt.section;
+		mi.strDescription += L'.';
+		mi.strDescription += _opt.key;
+		mi.strDescription += L" (type: ";
+		mi.strDescription += TypeName();
+		mi.strDescription += L", saved: ";
+		mi.strDescription += SaveName();
+		mi.strDescription += L")\nValue";
 		if (_opt.type == ConfigOpt::T_STR)
-			description.AppendFormat(L" (symbols: %zu): \"%ls\"", out2.strValue().GetLength(), out2.strValue().CPtr() );
+			mi.strDescription.AppendFormat(L" (symbols: %zu): \"%ls\"", out2.strValue().GetLength(), out2.strValue().CPtr() );
 		else
-			description += L": " + out2.strValue();
+			mi.strDescription += L": " + out2.strValue();
 		if (_opt.description && _opt.description[0]) {
-			description += L"\n\n";
-			description += _opt.description;
+			mi.strDescription += L"\n\n";
+			mi.strDescription += _opt.description;
 		}
-		mi.strDescription = description;
 		mi.UserData = reinterpret_cast<char *>(static_cast<DWORD_PTR>(option_index + 1));
 		mi.UserDataSize = sizeof(option_index);
 		vm.AddItem(&mi);

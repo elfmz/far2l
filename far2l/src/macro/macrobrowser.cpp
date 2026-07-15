@@ -860,7 +860,7 @@ void MacroBrowser::PrepareVMenu()
 		stat_macros_deleted = 0,
 		stat_glbConsts = 0, stat_glbVars = 0;
 
-	fs.Format(L"Total Macros in all areas: %d,  MacroFunctions: %zu",
+	fs.Format(L"Total macros across all areas: %d; macro functions: %zu",
 		Macro->MacroLIBCount, Macro->GetCountMacroFunction());
 	ListMacro.AddItem(fs);
 	fs2copy += fs;
@@ -917,8 +917,8 @@ void MacroBrowser::PrepareVMenu()
 				macro_area,
 				strKeyName.CPtr(),
 				((Macro->MacroLIB[imacro].Flags & MFLAGS_DISABLEMACRO)  ? L"Disabled" : L"Enabled"),
-				((Macro->MacroLIB[imacro].Flags & MFLAGS_NEEDSAVEMACRO) ? L"NeedSave" : L"Saved"),
-				((!Macro->MacroLIB[imacro].BufferSize || !Macro->MacroLIB[imacro].Src) ? L"  DELETED" : L""),
+				((Macro->MacroLIB[imacro].Flags & MFLAGS_NEEDSAVEMACRO) ? L"Needs saving" : L"Saved"),
+				((!Macro->MacroLIB[imacro].BufferSize || !Macro->MacroLIB[imacro].Src) ? L"  Marked for deletion" : L""),
 				(Macro->MacroLIB[imacro].Src ? Macro->MacroLIB[imacro].Src : L"[empty]"),
 				(Macro->MacroLIB[imacro].Description ? Macro->MacroLIB[imacro].Description : L"[empty]"));
 
@@ -991,7 +991,7 @@ void MacroBrowser::PrepareVMenu()
 	}
 
 	mi.PrefixLen = 0;
-	mi.strName.Format(L"MacroFunctions (%zu items)", Macro->GetCountMacroFunction());
+	mi.strName.Format(L"Macro functions (%zu items)", Macro->GetCountMacroFunction());
 	mi.Flags = LIF_SEPARATOR;
 	mi.strDescription.Clear();
 	ListMacro.AddItem(&mi);
@@ -1009,7 +1009,7 @@ void MacroBrowser::PrepareVMenu()
 				mi.strName.AppendFormat(L"%-25ls%lc %-12ls %lc ",
 					mf->Name, BoxSymbols[BS_V1], MacroLib_GetFunctionType(mf), BoxSymbols[BS_V1] );
 				mi.strDescription.Format(L"%ls: %ls (%ls)", macro_area, mf->Name, MacroLib_GetFunctionType(mf));
-				mi.strDescription.AppendFormat(L"\nParameters: %d (all), %d (optional)", mf->nParam, mf->oParam);
+				mi.strDescription.AppendFormat(L"\nParameters: %d total, %d optional", mf->nParam, mf->oParam);
 				mi.strDescription.AppendFormat(L"   GUID: %ls", mf->fnGUID ? mf->fnGUID : L"");
 				if (mf->Syntax && mf->Syntax[0]) {
 					mi.strName+= mf->Syntax;
@@ -1044,14 +1044,14 @@ void MacroBrowser::PrepareVMenu()
 	fs2copy += "\n" + mi.strName;
 	v_menu_macroindex.emplace_back(-1, -1);
 
-	mi.strName.Format(L"                  (NS) need save=%d, (D) marked as deleted=%d",
+	mi.strName.Format(L"                  (NS) Needs saving=%d, (D) marked for deletion=%d",
 		stat_need_save, stat_macros_deleted);
 	mi.Flags = 0;
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n" + mi.strName;
 	v_menu_macroindex.emplace_back(-1, -1);
 
-	mi.strName.Format(L" Global: Constants=%d, Variables=%d, MacroFunctions=%d",
+	mi.strName.Format(L" Global: constants=%d, variables=%d, macro functions=%d",
 		stat_glbConsts, stat_glbVars, Macro->CMacroFunction);
 	mi.Flags = 0;
 	ListMacro.AddItem(&mi);

@@ -269,7 +269,7 @@ public:
 		mi.strDescription += SaveName();
 		mi.strDescription += L")\nValue";
 		if (_opt.type == ConfigOpt::T_STR)
-			mi.strDescription.AppendFormat(L" (symbols: %zu): \"%ls\"", out2.strValue().GetLength(), out2.strValue().CPtr() );
+			mi.strDescription.AppendFormat(L" (length: %zu): \"%ls\"", out2.strValue().GetLength(), out2.strValue().CPtr() );
 		else
 			mi.strDescription += L": " + out2.strValue();
 		if (_opt.description && _opt.description[0]) {
@@ -327,7 +327,7 @@ public:
 		em.AddFormat(L"%ls - %s.%s", title, _opt.section, _opt.key);
 		em.AddFormat(L"        Section: %s", _opt.section);
 		em.AddFormat(L"            Key: %s", _opt.key);
-		em.AddFormat(L" to config file: %ls", (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never")));
+		em.AddFormat(L"       Saved in: %ls", (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never")));
 		em.AddFormat(L"           Type: %s", type_psz);
 		em.AddDup(def_str.strValue());
 		em.AddDup(val_str.strValue());
@@ -337,10 +337,9 @@ public:
 		}
 		if (IsNotDefault()==1) {
 			em.AddDup(L"");
-			em.Add(L"Note: some parameters after update/reset");
-			em.Add(L"      not applied immediately in FAR2L");
-			em.Add(L"      and need relaunch feature");
-			em.Add(L"      or may be need save config & restart FAR2L");
+			em.Add(L"Note: Some changes may not take effect immediately.");
+			em.Add(L"      Save the configuration and restart FAR2L");
+			em.Add(L"      if necessary.");
 		}
 		em.Add(L"Continue");
 		SetMessageHelp(L"FarConfig");
@@ -499,7 +498,7 @@ public:
 			/*   2 */ {DI_TEXT,			21,  2, TEXT_X2,  2, {}, 0, fs_section.CPtr()},
 			/*   3 */ {DI_TEXT,			 5,  3, 20,             3, {}, 0, L"           Key:"},
 			/*   4 */ {DI_TEXT,			21,  3, TEXT_X2,  3, {}, 0, fs_key.CPtr()},
-			/*   5 */ {DI_TEXT,			 5,  4, 20,             4, {}, 0, L"to config file:"},
+			/*   5 */ {DI_TEXT,			 5,  4, 20,             4, {}, 0, L"      Saved in:"},
 			/*   6 */ {DI_TEXT,			21,  4, TEXT_X2,  4, {}, 0, SaveName()},
 			/*   7 */ {DI_TEXT,			 5,  5, 20,             5, {}, 0, L"          Type:"},
 			/*   8 */ {DI_TEXT,			21,  5, TEXT_X2,  5, {}, 0, type_pwsz},
@@ -538,10 +537,10 @@ public:
 			/*  41 */ {DI_TEXT,		5, 18, TEXT_X2, 18, {}, DIF_SHOWAMPERSAND, description_lines[6].CPtr()},
 			/*  42 */ {DI_TEXT,		5, 19, TEXT_X2, 19, {}, DIF_SHOWAMPERSAND, description_lines[7].CPtr()},
 			/*  43 */ {DI_TEXT,		3, desc_separator_y, 20, desc_separator_y, {}, DIF_SEPARATOR, L""},
-			/*  44 */ {DI_TEXT,		5, note_y, TEXT_X2, note_y, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
-			/*  45 */ {DI_TEXT,		5, note_y1, TEXT_X2, note_y1, {}, DIF_SHOWAMPERSAND, L"      not applied immediately in FAR2L"},
-			/*  46 */ {DI_TEXT,		5, note_y2, TEXT_X2, note_y2, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
-			/*  47 */ {DI_TEXT,		5, note_y3, TEXT_X2, note_y3, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
+			/*  44 */ {DI_TEXT,		5, note_y, TEXT_X2, note_y, {}, DIF_SHOWAMPERSAND, L"Note: Some changes may not take effect immediately."},
+			/*  45 */ {DI_TEXT,		5, note_y1, TEXT_X2, note_y1, {}, DIF_SHOWAMPERSAND, L"      Save the configuration and restart FAR2L"},
+			/*  46 */ {DI_TEXT,		5, note_y2, TEXT_X2, note_y2, {}, DIF_SHOWAMPERSAND, L"      if necessary."},
+			/*  47 */ {DI_TEXT,		5, note_y3, TEXT_X2, note_y3, {}, DIF_SHOWAMPERSAND, L""},
 			/*  48 */ {DI_TEXT,		3, bottom_separator_y, 20, bottom_separator_y, {}, DIF_SEPARATOR, L""},
 			/*  49 */ {DI_BUTTON,	0, button_y, 0,  button_y, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
 			/*  50 */ {DI_BUTTON,	0, button_y, 0,  button_y, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel},

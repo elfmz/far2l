@@ -181,6 +181,7 @@ private:
 
 	FARString strOriginalCurDir;
 	FARString strPluginDizName;
+	FARString strFailedReadDir;
 	ListDataVec ListData;
 	std::map<std::wstring, FARString> SymlinksCache;
 	HANDLE hPlugin;
@@ -323,6 +324,7 @@ public:
 		что панель невидима
 	*/
 	virtual void UpdateIfRequired();
+	virtual void RetryFailedRead();
 
 	virtual int SendKeyToPlugin(DWORD Key, BOOL Pred = FALSE);
 	virtual void CreateChangeNotification(int CheckTree);

@@ -102,6 +102,14 @@ void FileList::UpdateIfRequired()
 	}
 }
 
+void FileList::RetryFailedRead()
+{
+	if (strFailedReadDir == strCurDir && !strFailedReadDir.IsEmpty()
+			&& TestCurrentDirectory(strCurDir)) {
+		Update(0);
+	}
+}
+
 void ReadFileNamesMsg(const wchar_t *Msg)
 {
 	Message(0, 0, Msg::ReadingTitleFiles, Msg);
@@ -148,7 +156,13 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	FARString strSaveDir;
 	apiGetCurrentDirectory(strSaveDir);
 	{
+		FARString strReadDir = strCurDir;
 		if (!SetCurPath()) {
+			if (strCurDir == strReadDir)
+				strFailedReadDir = strReadDir;
+			else
+				strFailedReadDir.Clear();
+
 			// Do not leave a list read from another directory visible when the
 			// panel's current directory cannot be entered.
 			ListData.Clear();
@@ -171,6 +185,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			return;
 		}
 	}
+	strFailedReadDir.Clear();
 	SortGroupsRead = FALSE;
 
 	if (GetFocus())

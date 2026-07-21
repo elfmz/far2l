@@ -76,6 +76,62 @@ static std::pair<std::string, bool> GetPanelItem(int cmd, int index)
 	return out;
 }
 
+static std::string GetActivePanelDir()
+{
+	const int size = g_far.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0, 0);
+	if (size <= 0) {
+		return {};
+	}
+	std::vector<wchar_t> buf(size);
+	if (!g_far.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, size, (LONG_PTR)buf.data())) {
+		return {};
+	}
+	return Wide2MB(buf.data());
+}
+
+static void GoToPanelFile(const std::string &file)
+{
+	PanelInfo pi{};
+	if (!g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi) || pi.ItemsNumber <= 0 || pi.PanelType != PTYPE_FILEPANEL) {
+		return;
+	}
+
+	const size_t last_slash = file.rfind('/');
+	std::string target_filename;
+
+	if (!pi.Plugin) {
+		// Regular panel: FCTL_GETPANELITEM returns basename.
+		// If file is a full path (opened via OpenPluginAtSomePath), navigate to its directory first.
+		if (last_slash != std::string::npos) {
+			const std::string dir = last_slash > 0 ? file.substr(0, last_slash) : "/";
+			if (GetActivePanelDir() != dir) {
+				if (!g_far.Control(PANEL_ACTIVE, FCTL_SETPANELDIR, 0, (LONG_PTR)StrMB2Wide(dir).c_str())) {
+					return;
+				}
+				g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+			}
+		}
+		target_filename = last_slash != std::string::npos ? file.substr(last_slash + 1) : file;
+	} else {
+		// Plugin panel (e.g. tmppanel): FCTL_GETPANELITEM returns full path.
+		// Do NOT call FCTL_SETPANELDIR — for tmppanel it triggers FCTL_CLOSEPLUGIN.
+		if (!(pi.Flags & PFLAGS_REALNAMES)) {
+			return;
+		}
+		target_filename = file;
+	}
+
+	for (int i = 0; i < pi.ItemsNumber; ++i) {
+		if (GetPanelItem(FCTL_GETPANELITEM, i).first == target_filename) {
+			PanelRedrawInfo pri{};
+			pri.CurrentItem = i;
+			g_far.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
+			return;
+		}
+	}
+	// File not found on panel — do nothing.
+}
+
 static std::string GetCurrentPanelItem()
 {
 	const auto &fn_sel = GetPanelItem(FCTL_GETCURRENTPANELITEM, 0);
@@ -144,7 +200,8 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 	}
 
 	std::unordered_set<std::string> selection;
-	auto ed = ShowImageAtFull(initial_file, all_items, selection, false);
+	std::string goto_file;
+	auto ed = ShowImageAtFull(initial_file, all_items, selection, false, &goto_file);
 	if (ed == EXITED_DUE_ENTER) {
 		PanelInfo pi{};
 		g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
@@ -160,16 +217,23 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 				BOOL selected = selection_to_apply[i] ? TRUE : FALSE;
 				g_far.Control(PANEL_ACTIVE, FCTL_SETSELECTION, i, (LONG_PTR)selected);
 			}
-			g_far.Control(PANEL_ACTIVE,FCTL_ENDSELECTION, 0, 0);
-			g_far.Control(PANEL_ACTIVE,FCTL_REDRAWPANEL, 0, 0);
+			g_far.Control(PANEL_ACTIVE, FCTL_ENDSELECTION, 0, 0);
+			g_far.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 		}
+	} else if (ed == EXITED_DUE_GOTO_CURFILE) {
+		GoToPanelFile(goto_file);
 	}
 	return ed;
 }
 
 static EXITED_DUE OpenPluginAtSomePath(const std::string &name, bool silent)
 {
-	return ShowImageAtFull(name, silent);
+	std::string goto_file;
+	auto ed = ShowImageAtFull(name, silent, &goto_file);
+	if (!goto_file.empty()) {
+		GoToPanelFile(goto_file);
+	}
+	return ed;
 }
 
 static void OpenAtCurrentPanelItem()
@@ -260,7 +324,7 @@ SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
 			if (IsShowingImageAtQV()) {
 				DismissImageAtQV();
 			}
-						
+
 			if (Event == VE_READ && (!pi.Visible || pi.PanelType != PTYPE_QVIEWPANEL) && g_settings.OpenInFV()) {
 				ViewerInfo vi{sizeof(ViewerInfo), 0};
 				if (g_far.ViewerControl(VCTL_GETINFO, &vi)) {

@@ -89,4 +89,3 @@ public:
 	bool ShowExifInfo();
 	void ShowGpsInfo();
 };
-

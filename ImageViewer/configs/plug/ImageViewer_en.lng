@@ -31,3 +31,5 @@
 "No EXIF metadata or unsupported format"
 "No GPS metadata found in this image"
 "Open (%ls) in..."
+
+"The command list has been modified. Save changes?"

@@ -155,6 +155,7 @@ $^#Extra Commands#
    Edit existing command                      #F4#
    Add new command                            #Ins#
    Delete command                             #Del#
+   Move command up/down                       #Ctrl+Up/Down#
 
   When editing a command, provide the following:
    1. #Command Name# - the label displayed in the menu;

@@ -289,7 +289,7 @@ void Image::ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const
 					if (cnt) {
 						v/= cnt;
 						cnt = 1;
-					}					
+					}
 				}
 //				if (v > 255) {fprintf(stderr, "!!!v=%d\n", v); abort();}
 				*dst.Ptr(dst_x, dst_y, ch) = (unsigned char)v;
@@ -297,4 +297,3 @@ void Image::ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const
 		}
 	}
 }
-

@@ -31,7 +31,7 @@ private:
 	struct Commands : std::vector<std::pair<std::wstring, std::wstring>> {}_commands;
 
 	bool ExtraCommandsMenuInternal(Commands &commands, std::string *selected_cmd = nullptr);
-
+	bool AskSaveCommandsChanges();
 	void SaveCommands();
 
 public:

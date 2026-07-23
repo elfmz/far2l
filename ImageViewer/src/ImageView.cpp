@@ -1,5 +1,5 @@
-#include "Common.h"
 #include "ImageView.h"
+#include "Common.h"
 #include "lng.h"
 #include "Settings.h"
 #include "ToolExec.h"
@@ -897,8 +897,7 @@ bool ImageView::ShowExifInfo()
 
 	const std::wstring exiftool_output = StrMB2Wide(exiftool.FetchStdout());
 	if (exiftool_output.empty()) {
-		const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE), g_settings.Msg(M_NO_EXIF_OR_UNSUPPORTED_FORMAT)};
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, nullptr, MsgItems, ARRAYSIZE(MsgItems), 0);
+		ShowError({g_settings.Msg(M_NO_EXIF_OR_UNSUPPORTED_FORMAT)});
 		return false;
 	}
 
@@ -950,8 +949,7 @@ void ImageView::ShowGpsInfo()
 	stream.imbue(std::locale::classic());
 
 	if (!(stream >> latitude >> longitude)) {
-		const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE), g_settings.Msg(M_NO_GPS_METADATA_FOUND)};
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, nullptr, MsgItems, ARRAYSIZE(MsgItems), 0);
+		ShowError({g_settings.Msg(M_NO_GPS_METADATA_FOUND)});
 		return;
 	}
 
@@ -1005,12 +1003,20 @@ void ImageView::ShowGpsInfo()
 	if (choice >= 0 && choice < static_cast<int>(providers.size())) {
 		s_last_provider = choice;
 		std::string url = providers[choice].url_template;
-		while(CmdFindAndReplace(url, "{lat}", lat)) {}
-		while(CmdFindAndReplace(url, "{lon}", lon)) {}
-		while(CmdFindAndReplace(url, "{abs_lat}", abs_lat)) {}
-		while(CmdFindAndReplace(url, "{abs_lon}", abs_lon)) {}
-		while(CmdFindAndReplace(url, "{lat_dir}", lat_dir)) {}
-		while(CmdFindAndReplace(url, "{lon_dir}", lon_dir)) {}
+
+		const std::pair<const char*, const std::string&> replacements[] = {
+					{"{lat}", lat},
+					{"{lon}", lon},
+					{"{abs_lat}", abs_lat},
+					{"{abs_lon}", abs_lon},
+					{"{lat_dir}", lat_dir},
+					{"{lon_dir}", lon_dir}
+		};
+
+		for (const auto& [gps_tag, gps_val] : replacements) {
+			while (CmdFindAndReplace(url, gps_tag, gps_val)) {}
+		}
+
 		const std::wstring ws_url = L"'" + StrMB2Wide(url) + L"'";
 		g_fsf.Execute(ws_url.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
 	}

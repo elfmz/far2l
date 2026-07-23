@@ -1,6 +1,7 @@
 #ifndef FAR_SETTINGS_H
 #define FAR_SETTINGS_H
 #include <string>
+#include <vector>
 #include <stdint.h>
 #include "lng.h"
 

@@ -1,7 +1,7 @@
-#include <unordered_set>
-#include "Common.h"
 #include "ToolExec.h"
+#include "Common.h"
 #include "Settings.h"
+#include <unordered_set>
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300

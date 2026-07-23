@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "ImageView.h"
+#include "lng.h"
 #include "Settings.h"
 
 class ImageViewAtFull : public ImageView
@@ -337,13 +338,7 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 			} else if (exit_code == EXITED_DUE_ERROR && !silent_exit_on_error) {
 				std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
 				std::wstring werr_str = StrMB2Wide(iv.ErrorString());
-				const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE),
-					L"Failed to load image file:",
-					ws_cur_file.c_str(),
-					werr_str.c_str(),
-					L"Ok"
-				};
-				g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+				ShowError({g_settings.Msg(M_FAILED_TO_LOAD_IMAGE), ws_cur_file, werr_str});
 			}
 			return exit_code;
 		}

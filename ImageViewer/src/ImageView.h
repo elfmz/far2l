@@ -1,16 +1,13 @@
 #pragma once
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <cwctype>
-#include <memory>
-#include <cstdio>
-#include <unordered_set>
-#include <signal.h>
-#include <dirent.h>
-#include <utils.h>
-#include <math.h>
 #include "Image.h"
+#include "WinCompat.h"
+#include <cstdio>
+#include <string>
+#include <unordered_set>
+#include <vector>
+#include <dirent.h>
+#include <math.h>
+#include <utils.h>
 
 class ImageView
 {

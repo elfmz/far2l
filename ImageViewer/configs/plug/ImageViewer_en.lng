@@ -33,3 +33,6 @@
 "Open (%ls) in..."
 
 "The command list has been modified. Save changes?"
+
+"Failed to load image file:"
+"ImageViewer requires a file panel with real local file paths."

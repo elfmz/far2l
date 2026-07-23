@@ -1,9 +1,9 @@
 #include "Common.h"
 #include "ImageView.h"
-#include <optional>
-#include <mutex>
-#include <condition_variable>
 #include <Threaded.h>
+#include <condition_variable>
+#include <mutex>
+#include <optional>
 
 // quick view processing happens in background thread, that keeps UI fluent,
 // even if decoding of some file takes long time - it happens in background

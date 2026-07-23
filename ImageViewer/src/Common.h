@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_set>
+#include <vector>
 #include <assert.h>
 
 #include <farplug-wide.h>
@@ -21,6 +22,8 @@ enum EXITED_DUE
 
 extern PluginStartupInfo g_far;
 extern FarStandardFunctions g_fsf;
+
+void ShowError(const std::vector<std::wstring> &lines, const wchar_t *help_topic = nullptr);
 
 void PurgeAccumulatedInputEvents();
 bool CheckForEscAndPurgeAccumulatedInputEvents();

@@ -1,8 +1,9 @@
 #pragma once
+#include "utils.h"
+#include "WinCompat.h"
+#include "ExecAsync.h"
 #include <atomic>
 #include <string>
-#include "utils.h"
-#include "ExecAsync.h"
 
 class ToolExec : public ExecAsync
 {

@@ -1,6 +1,9 @@
 #include "Common.h"
 #include "ImageView.h"
+#include "lng.h"
 #include "Settings.h"
+#include <string>
+#include <vector>
 
 PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;
@@ -146,11 +149,7 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 		return -1;
 	}
 	if (pi.PanelType != PTYPE_FILEPANEL || (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES))) {
-		const wchar_t *MsgItems[] = { g_settings.Msg(M_TITLE),
-			L"The active panel must be with files accessible locally via real path",
-			L"Close"
-		};
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+		ShowError({g_settings.Msg(M_REQUIRES_REAL_LOCAL_PATHS)});
 		return -1;
 	}
 
@@ -253,6 +252,17 @@ static void OpenAtCurrentPanelItem()
 			OpenPluginAtCurrentPanel(fn_sel);
 		}
 	}
+}
+
+void ShowError(const std::vector<std::wstring> &lines, const wchar_t *help_topic)
+{
+	std::vector<const wchar_t *> items;
+	items.reserve(lines.size() + 1);
+	items.push_back(g_settings.Msg(M_TITLE));
+	for (const auto &line : lines) {
+		items.push_back(line.c_str());
+	}
+	g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, help_topic, items.data(), items.size(), 0);
 }
 
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)

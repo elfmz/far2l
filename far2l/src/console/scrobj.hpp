@@ -53,17 +53,19 @@ enum
 class ScreenObject
 {
 protected:
-	BitFlags Flags;
 	SaveScreen *ShadowSaveScr;
-	int X1, Y1, X2, Y2;
-	int ObjWidth, ObjHeight;
-
-	int nLockCount;
 	ScreenObject *pOwner;
 
 public:
 	SaveScreen *SaveScr;
 	static ScreenObject *CaptureMouseObject;
+
+protected:
+	BitFlags Flags;
+	int X1, Y1, X2, Y2;
+	int ObjWidth, ObjHeight;
+
+	int nLockCount;
 
 private:
 	virtual void DisplayObject(){};

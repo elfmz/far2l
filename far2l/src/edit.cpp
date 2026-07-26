@@ -61,6 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static int Recurse = 0;
 
+static std::vector<wchar_t> s_render_buffer;
+
 enum
 {
 	EOL_NONE,
@@ -109,16 +111,17 @@ bool TranslateInsertKey(FarKey &Key)
 class DisableCallback
 {
 	bool OldState;
-	bool *CurState;
+	BitFlags &m_Flags;
 
 public:
-	DisableCallback(bool &State)
+	DisableCallback(BitFlags &Flags)
+		:
+		OldState(Flags.Check(FEDITLINE_CALLBACKACTIVE)),
+		m_Flags(Flags)
 	{
-		OldState = State;
-		CurState = &State;
-		State = false;
+		m_Flags.Clear(FEDITLINE_CALLBACKACTIVE);
 	}
-	void Restore() { *CurState = OldState; }
+	void Restore() { m_Flags.Change(FEDITLINE_CALLBACKACTIVE, OldState); }
 	~DisableCallback() { Restore(); }
 };
 
@@ -128,64 +131,174 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	m_prev(nullptr),
 	Str(bAllocateData ? reinterpret_cast<wchar_t *>(malloc(sizeof(wchar_t))) : nullptr),
 	StrSize(0),
-	MaxLength(-1),
-	Mask(nullptr),
 	LeftPos(0),
 	CurPos(0),
 	PrevCurPos(0),
 	MSelStart(-1),
 	SelStart(-1),
 	SelEnd(0),
-	CursorSize(-1),
-	CursorPos(0),
-	HasSpecialWidthChars(false),
-	m_bWordWrapState(false)
+	CursorPos(0)
 {
-	m_Callback.Active = true;
-	m_Callback.m_Callback = nullptr;
-	m_Callback.m_Param = nullptr;
-
-	if (aCallback)
-		m_Callback = *aCallback;
-
 	SetOwner(pOwner);
-	SetWordDiv(Opt.strWordDiv);
+	Flags.Set(FEDITLINE_CALLBACKACTIVE);
+	if (aCallback) {
+		auto &settings = GetLocalSettings();
+		settings.CallbackFunc = aCallback->m_Callback;
+		settings.CallbackParam = aCallback->m_Param;
+		Flags.Change(FEDITLINE_CALLBACKACTIVE, aCallback->Active);
+	}
 
 	if (bAllocateData)
 		*Str = 0;
 
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
 	Flags.Set(FEDITLINE_CURSORVISIBLE);
-	Color = F_LIGHTGRAY | B_BLACK;
-	SelColor = F_WHITE | B_BLACK;
-	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
-	EndType = EOL_NONE;
-	TabSize = Opt.EdOpt.TabSize;
-	TabExpandMode = EXPAND_NOTABS;
+	SetEndType(EOL_NONE);
 	Flags.Change(FEDITLINE_DELREMOVESBLOCKS, Opt.EdOpt.DelRemovesBlocks);
 	Flags.Change(FEDITLINE_PERSISTENTBLOCKS, Opt.EdOpt.PersistentBlocks);
 	Flags.Change(FEDITLINE_SHOWWHITESPACE, Opt.EdOpt.ShowWhiteSpace);
-	m_codepage = 0;		// BUGBUG
 }
 
 Edit::~Edit()
 {
-	if (Mask)
-		free(Mask);
+	if (m_LocalSettings && m_LocalSettings->Mask)
+		free(m_LocalSettings->Mask);
 
 	if (Str)
 		free(Str);
 }
 
+Editor *Edit::GetEditorOwner()
+{
+	if (!Flags.Check(FEDITLINE_PARENT_EDITOR))
+		return nullptr;
+
+	return static_cast<Editor *>(GetOwner());
+}
+
+Edit::LocalSettings &Edit::GetLocalSettings()
+{
+	if (!m_LocalSettings) {
+		m_LocalSettings = std::make_unique<LocalSettings>();
+		m_LocalSettings->Mask = nullptr;
+		m_LocalSettings->TabSize = Opt.EdOpt.TabSize;
+		m_LocalSettings->TabExpandMode = EXPAND_NOTABS;
+		m_LocalSettings->strWordDiv = &Opt.strWordDiv;
+		m_LocalSettings->codepage = 0;
+		m_LocalSettings->Color = F_LIGHTGRAY | B_BLACK;
+		m_LocalSettings->SelColor = F_WHITE | B_BLACK;
+		m_LocalSettings->ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
+		m_LocalSettings->CallbackFunc = nullptr;
+		m_LocalSettings->CallbackParam = nullptr;
+		m_LocalSettings->MaxLength = -1;
+		m_LocalSettings->CursorSize = -1;
+	}
+
+	return *m_LocalSettings;
+}
+
+void Edit::SetTabSize(int NewSize)
+{
+	if (auto *editor = GetEditorOwner())
+		editor->SetTabSize(NewSize);
+	else
+		GetLocalSettings().TabSize = NewSize;
+}
+
+int Edit::GetTabSize()
+{
+	if (auto *editor = GetEditorOwner())
+		return editor->GetTabSize();
+
+	return m_LocalSettings ? m_LocalSettings->TabSize : Opt.EdOpt.TabSize;
+}
+
+void Edit::SetMaxLength(int Length)
+{
+	if (Length != -1 || m_LocalSettings)
+		GetLocalSettings().MaxLength = Length;
+}
+
+int Edit::GetMaxLength() const
+{
+	return m_LocalSettings ? m_LocalSettings->MaxLength : -1;
+}
+
+void Edit::SetConvertTabs(int Mode)
+{
+	if (auto *editor = GetEditorOwner())
+		editor->SetConvertTabs(Mode);
+	else
+		GetLocalSettings().TabExpandMode = Mode;
+}
+
+int Edit::GetConvertTabs()
+{
+	if (auto *editor = GetEditorOwner())
+		return editor->GetConvertTabs();
+
+	return m_LocalSettings ? m_LocalSettings->TabExpandMode : EXPAND_NOTABS;
+}
+
+void Edit::SetWordDiv(const FARString &WordDiv)
+{
+	if (auto *editor = GetEditorOwner())
+		editor->SetWordDiv(WordDiv.CPtr());
+	else
+		GetLocalSettings().strWordDiv = &WordDiv;
+}
+
+const wchar_t *Edit::WordDiv()
+{
+	if (auto *editor = GetEditorOwner())
+		return editor->GetWordDiv();
+
+	return m_LocalSettings ? m_LocalSettings->strWordDiv->CPtr() : Opt.strWordDiv.CPtr();
+}
+
+void Edit::GetObjectColors(uint64_t &Color, uint64_t &SelColor, uint64_t &ColorUnChanged)
+{
+	if (auto *editor = GetEditorOwner()) {
+		Color = editor->m_Color;
+		SelColor = editor->m_SelColor;
+		ColorUnChanged = editor->m_ColorUnChanged;
+		return;
+	}
+
+	if (m_LocalSettings) {
+		Color = m_LocalSettings->Color;
+		SelColor = m_LocalSettings->SelColor;
+		ColorUnChanged = m_LocalSettings->ColorUnChanged;
+		return;
+	}
+
+	Color = F_LIGHTGRAY | B_BLACK;
+	SelColor = F_WHITE | B_BLACK;
+	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
+}
+
 DWORD Edit::SetCodePage(UINT codepage)
+{
+	if (auto *editor = GetEditorOwner())
+		return editor->SetCodePage(codepage) ? SETCP_NOERROR : SETCP_OTHERERROR;
+
+	const UINT oldCodepage = GetCodePage();
+	const DWORD result = TranscodeCodePage(oldCodepage, codepage);
+	if (!(result & SETCP_OTHERERROR))
+		GetLocalSettings().codepage = codepage;
+
+	return result;
+}
+
+DWORD Edit::TranscodeCodePage(UINT oldCodepage, UINT codepage)
 {
 	DWORD Ret = SETCP_NOERROR;
 	DWORD wc2mbFlags = WC_NO_BEST_FIT_CHARS;
 	BOOL UsedDefaultChar = FALSE;
 	LPBOOL lpUsedDefaultChar = &UsedDefaultChar;
 
-	if (m_codepage == CP_UTF7 || m_codepage == CP_UTF8 || m_codepage == CP_UTF16LE
-			|| m_codepage == CP_UTF16BE)	// BUGBUG: CP_SYMBOL, 50xxx, 57xxx too
+	if (oldCodepage == CP_UTF7 || oldCodepage == CP_UTF8 || oldCodepage == CP_UTF16LE
+			|| oldCodepage == CP_UTF16BE)	// BUGBUG: CP_SYMBOL, 50xxx, 57xxx too
 	{
 		wc2mbFlags = 0;
 		lpUsedDefaultChar = nullptr;
@@ -198,10 +311,9 @@ DWORD Edit::SetCodePage(UINT codepage)
 		mb2wcFlags = 0;
 	}
 
-	if (codepage != m_codepage) {
+	if (codepage != oldCodepage) {
 		if (Str && *Str) {
-			// m_codepage = codepage;
-			int length = WINPORT(WideCharToMultiByte)(m_codepage, wc2mbFlags, Str, StrSize, nullptr, 0,
+			int length = WINPORT(WideCharToMultiByte)(oldCodepage, wc2mbFlags, Str, StrSize, nullptr, 0,
 					nullptr, lpUsedDefaultChar);
 
 			if (UsedDefaultChar)
@@ -214,7 +326,7 @@ DWORD Edit::SetCodePage(UINT codepage)
 				return Ret;
 			}
 
-			WINPORT(WideCharToMultiByte)(m_codepage, 0, Str, StrSize, decoded, length, nullptr, nullptr);
+			WINPORT(WideCharToMultiByte)(oldCodepage, 0, Str, StrSize, decoded, length, nullptr, nullptr);
 			int length2 = WINPORT(MultiByteToWideChar)(codepage, mb2wcFlags, decoded, length, nullptr, 0);
 
 			if (!length2 && WINPORT(GetLastError)() == ERROR_NO_UNICODE_TRANSLATION) {
@@ -236,11 +348,10 @@ DWORD Edit::SetCodePage(UINT codepage)
 			free(Str);
 			Str = encoded;
 			StrSize = length2;
-			HasSpecialWidthChars = false;
+			Flags.Clear(FEDITLINE_HASSPECIALWIDTHCHARS);
 			CheckForSpecialWidthChars();
 		}
 
-		m_codepage = codepage;
 		Changed();
 	}
 
@@ -249,7 +360,10 @@ DWORD Edit::SetCodePage(UINT codepage)
 
 UINT Edit::GetCodePage()
 {
-	return m_codepage;
+	if (auto *editor = GetEditorOwner())
+		return editor->GetCodePage();
+
+	return m_LocalSettings ? m_LocalSettings->codepage : 0;
 }
 
 void Edit::DisplayObject()
@@ -277,9 +391,11 @@ void Edit::DisplayObject()
 		else {
 			if (Flags.Check(FEDITLINE_OVERTYPE)) {
 				int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+				const int CursorSize = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
 				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
 			} else {
 				int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				const int CursorSize = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
 				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
 			}
 		}
@@ -291,19 +407,20 @@ void Edit::DisplayObject()
 void Edit::SetCursorType(bool Visible, DWORD Size)
 {
 	Flags.Change(FEDITLINE_CURSORVISIBLE, Visible);
-	CursorSize = Size;
+	GetLocalSettings().CursorSize = Size;
 	::SetCursorType(Visible, Size);
 }
 
 void Edit::GetCursorType(bool &Visible, DWORD &Size)
 {
 	Visible = Flags.Check(FEDITLINE_CURSORVISIBLE) != FALSE;
-	Size = CursorSize;
+	Size = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
 }
 
 // Вычисление нового положения курсора в строке с учётом Mask.
 int Edit::GetNextCursorPos(int Position, int Where)
 {
+	const wchar_t *Mask = GetInputMask();
 	int Result = Position;
 
 	if (Mask && *Mask && (Where == -1 || Where == 1)) {
@@ -343,11 +460,16 @@ int Edit::GetNextCursorPos(int Position, int Where)
 
 void Edit::FastShow()
 {
+	auto &OutStr = s_render_buffer;
+	const wchar_t *Mask = GetInputMask();
+	uint64_t Color, SelColor, ColorUnChanged;
+	GetObjectColors(Color, SelColor, ColorUnChanged);
 	int EditLength = ObjWidth;
 
 	if (!Flags.Check(FEDITLINE_EDITBEYONDEND) && CurPos > StrSize && StrSize >= 0)
 		CurPos = StrSize;
 
+	const int MaxLength = GetMaxLength();
 	if (MaxLength != -1) {
 		if (StrSize > MaxLength) {
 			Str[MaxLength] = 0;
@@ -373,7 +495,7 @@ void Edit::FastShow()
 				- avoid LeftPos pointing into middle of full-width char cells pair
 				- ensure RealLeftPos really shifted in case string starts by some long character
 			*/
-			for (int ShiftBy = 1; ShiftBy <= std::max(TabSize, 2); ++ShiftBy) {
+			for (int ShiftBy = 1; ShiftBy <= std::max(GetTabSize(), 2); ++ShiftBy) {
 				RealLeftPos = CellPosToReal(CellCurPos - EditLength + ShiftBy);
 				int NewLeftPos = RealPosToCell(RealLeftPos);
 				if (LeftPos != NewLeftPos) {
@@ -455,7 +577,7 @@ void Edit::FastShow()
 		}
 
 		if (wc == L'\t') {
-			for (int j = 0, S = TabSize - ((LeftPos + OutStrCells) % TabSize);
+			for (int j = 0, S = GetTabSize() - ((LeftPos + OutStrCells) % GetTabSize());
 					j < S && int(OutStrCells) < EditLength; ++j, ++OutStrCells) {
 				OutStr.emplace_back(
 						(showSymbols && !j)
@@ -775,6 +897,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 int Edit::ProcessKey(FarKey Key)
 {
+	const wchar_t *Mask = GetInputMask();
 	TranslateInsertKey(Key);
 
 	switch (Key) {
@@ -976,6 +1099,7 @@ int Edit::ProcessKey(FarKey Key)
 			if (CurPos >= StrSize)
 				return FALSE;
 
+			const int MaxLength = GetMaxLength();
 			RecurseProcessKey(KEY_SHIFTRIGHT);
 
 			while (CurPos < StrSize
@@ -1045,7 +1169,7 @@ int Edit::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_CTRLSHIFTBS: {
-			DisableCallback DC(m_Callback.Active);
+			DisableCallback DC(Flags);
 
 			// BUGBUG
 			for (int i = CurPos; i >= 0; i--) {
@@ -1064,7 +1188,7 @@ int Edit::ProcessKey(FarKey Key)
 
 			Lock();
 
-			DisableCallback DC(m_Callback.Active);
+			DisableCallback DC(Flags);
 
 			// BUGBUG
 			for (;;) {
@@ -1153,7 +1277,7 @@ int Edit::ProcessKey(FarKey Key)
 				return FALSE;
 
 			Lock();
-			DisableCallback DC(m_Callback.Active);
+			DisableCallback DC(Flags);
 			if (Mask && *Mask) {
 				int MaskLen = StrLength(Mask);
 				int ptr = CurPos;
@@ -1312,9 +1436,9 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
-			if (m_bWordWrapState)
+			if (GetWordWrap())
 			{
-				RecalculateWordWrap(ObjWidth, TabSize);
+				RecalculateWordWrap(ObjWidth, GetTabSize());
 			}
 			Changed(true);
 			Show();
@@ -1402,13 +1526,13 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTINS:
 		case KEY_SHIFTNUMPAD0: {
-			wchar_t *ClipText = PasteFromClipboardEx(MaxLength);
+			wchar_t *ClipText = PasteFromClipboardEx(GetMaxLength());
 
 			if (!ClipText)
 				return TRUE;
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				DisableCallback DC(m_Callback.Active);
+				DisableCallback DC(Flags);
 				DeleteBlock();
 			}
 
@@ -1443,7 +1567,7 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTTAB: {
 			PrevCurPos = CurPos;
-			CursorPos-= (CursorPos - 1) % TabSize + 1;
+			CursorPos-= (CursorPos - 1) % GetTabSize() + 1;
 
 			if (CursorPos < 0)
 				CursorPos = 0;	// CursorPos=0,TabSize=1 case
@@ -1462,7 +1586,7 @@ int Edit::ProcessKey(FarKey Key)
 					SelStart = PrevSelStart;
 					SelEnd = PrevSelEnd;
 				}
-				DisableCallback DC(m_Callback.Active);
+				DisableCallback DC(Flags);
 				DeleteBlock();
 			}
 
@@ -1524,6 +1648,7 @@ int Edit::ProcessInsPlainText(const wchar_t *str)
 
 int Edit::InsertKey(FarKey Key)
 {
+	const wchar_t *Mask = GetInputMask();
 	bool changed = false;
 	wchar_t *NewStr;
 
@@ -1532,7 +1657,7 @@ int Edit::InsertKey(FarKey Key)
 
 	if (Key == KEY_TAB && Flags.Check(FEDITLINE_OVERTYPE)) {
 		PrevCurPos = CurPos;
-		CursorPos+= TabSize - (CursorPos % TabSize);
+		CursorPos+= GetTabSize() - (CursorPos % GetTabSize());
 		SetCellCurPos(CursorPos);
 		return TRUE;
 	}
@@ -1576,6 +1701,7 @@ int Edit::InsertKey(FarKey Key)
 			changed = true;
 		}
 	} else {
+		const int MaxLength = GetMaxLength();
 		if (MaxLength == -1 || StrSize < MaxLength) {
 			if (CurPos >= StrSize) {
 				if (!(NewStr = (wchar_t *)realloc(Str, (CurPos + 2) * sizeof(wchar_t))))
@@ -1589,7 +1715,7 @@ int Edit::InsertKey(FarKey Key)
 			} else if (!Flags.Check(FEDITLINE_OVERTYPE))
 				StrSize++;
 
-			if (Key == KEY_TAB && (TabExpandMode == EXPAND_NEWTABS || TabExpandMode == EXPAND_ALLTABS)) {
+			if (Key == KEY_TAB && (GetConvertTabs() == EXPAND_NEWTABS || GetConvertTabs() == EXPAND_ALLTABS)) {
 				StrSize--;
 				InsertTab();
 				return TRUE;
@@ -1640,37 +1766,37 @@ int Edit::InsertKey(FarKey Key)
 
 int Edit::GetVisualLineCount() const
 {
-	if (!m_bWordWrapState || m_WrapBreaks.empty())
+	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty())
 		return 1;
-	return m_WrapBreaks.size();
+	return m_WrapBreaks->size();
 }
 
 int Edit::FindVisualLine(int Pos) const
 {
-	if (!m_bWordWrapState || m_WrapBreaks.empty())
+	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty())
 		return 0;
 
 	if (Pos <= 0)
 		return 0;
 
-	const auto it = std::upper_bound(m_WrapBreaks.begin(), m_WrapBreaks.end(), Pos);
-	return std::max(0, static_cast<int>(it - m_WrapBreaks.begin()) - 1);
+	const auto it = std::upper_bound(m_WrapBreaks->begin(), m_WrapBreaks->end(), Pos);
+	return std::max(0, static_cast<int>(it - m_WrapBreaks->begin()) - 1);
 }
 
 void Edit::GetVisualLine(int line, int& start, int& end) const
 {
-	if (!m_bWordWrapState || m_WrapBreaks.empty() || line < 0)
+	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty() || line < 0)
 	{
 		start = 0;
 		end = StrSize;
 		return;
 	}
 
-	if (static_cast<size_t>(line) < m_WrapBreaks.size())
+	if (static_cast<size_t>(line) < m_WrapBreaks->size())
 	{
-		start = m_WrapBreaks[line];
-		if (static_cast<size_t>(line + 1) < m_WrapBreaks.size())
-			end = m_WrapBreaks[line + 1];
+		start = (*m_WrapBreaks)[line];
+		if (static_cast<size_t>(line + 1) < m_WrapBreaks->size())
+			end = (*m_WrapBreaks)[line + 1];
 		else
 			end = StrSize;
 	}
@@ -1685,15 +1811,14 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 {
     Width--; // save last column for cursor
 
-	m_WrapBreaks.clear();
-	if (!m_bWordWrapState || Width <= 1)
+	if (!GetWordWrap() || Width <= 1)
 	{
+		m_WrapBreaks.reset();
 		return;
 	}
 
-	m_WrapBreaks.push_back(0);
-
 	int CurrentStart = 0;
+	bool HasWrap = false;
 	while (CurrentStart < StrSize)
 	{
 		int CurrentPos = CurrentStart;
@@ -1733,16 +1858,48 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 
 		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
 
-		m_WrapBreaks.push_back(NextStart);
+		if (!HasWrap) {
+			if (!m_WrapBreaks)
+				m_WrapBreaks = std::make_unique<std::vector<int>>();
+
+			m_WrapBreaks->clear();
+			m_WrapBreaks->push_back(0);
+			HasWrap = true;
+		}
+
+		m_WrapBreaks->push_back(NextStart);
 		CurrentStart = NextStart;
 	}
+
+	if (!HasWrap)
+		m_WrapBreaks.reset();
 }
 
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
-	this->Color = Color;
-	this->SelColor = SelColor;
-	this->ColorUnChanged = ColorUnChanged;
+	if (auto *editor = GetEditorOwner()) {
+		editor->SetObjectColor(Color, SelColor, ColorUnChanged);
+		return;
+	}
+
+	auto &settings = GetLocalSettings();
+	settings.Color = Color;
+	settings.SelColor = SelColor;
+	settings.ColorUnChanged = ColorUnChanged;
+}
+
+long Edit::GetObjectColor()
+{
+	uint64_t Color, SelColor, ColorUnChanged;
+	GetObjectColors(Color, SelColor, ColorUnChanged);
+	return MAKELONG(Color, SelColor);
+}
+
+int Edit::GetObjectColorUnChanged()
+{
+	uint64_t Color, SelColor, ColorUnChanged;
+	GetObjectColors(Color, SelColor, ColorUnChanged);
+	return ColorUnChanged;
 }
 
 void Edit::GetString(wchar_t *Str, int MaxSize)
@@ -1785,29 +1942,29 @@ void Edit::SetString(const wchar_t *Str, int Length)
 
 void Edit::SetEOL(const wchar_t *EOL)
 {
-	EndType = EOL_NONE;
+	SetEndType(EOL_NONE);
 
 	if (EOL && *EOL) {
 		if (EOL[0] == L'\r')
 			if (EOL[1] == L'\n')
-				EndType = EOL_CRLF;
+				SetEndType(EOL_CRLF);
 			else if (EOL[1] == L'\r' && EOL[2] == L'\n')
-				EndType = EOL_CRCRLF;
+				SetEndType(EOL_CRCRLF);
 			else
-				EndType = EOL_CR;
+				SetEndType(EOL_CR);
 		else if (EOL[0] == L'\n')
-			EndType = EOL_LF;
+			SetEndType(EOL_LF);
 	}
 }
 
 const wchar_t *Edit::GetEOL()
 {
-	return EOL_TYPE_CHARS[EndType];
+	return EOL_TYPE_CHARS[GetEndType()];
 }
 
 void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 {
-	if (HasSpecialWidthChars) return;
+	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS)) return;
 
 	if (!CheckStr) {
 		CheckStr = Str;
@@ -1818,7 +1975,7 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 		auto wc = CheckStr[i];
 		if (wc == L'\t' || CharClasses::IsFullWidth(wc)
 						|| CharClasses::IsXxxfix(wc) ) {
-			HasSpecialWidthChars = true;
+			Flags.Set(FEDITLINE_HASSPECIALWIDTHCHARS);
 			return;
 		}
 	}
@@ -1833,9 +1990,11 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 */
 void Edit::SetBinaryString(const wchar_t *Str, int Length)
 {
+	const wchar_t *Mask = GetInputMask();
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
 
+	const int MaxLength = GetMaxLength();
 	// коррекция вставляемого размера, если определен MaxLength
 	if (MaxLength != -1 && Length > MaxLength) {
 		Length = MaxLength;		// ??
@@ -1843,7 +2002,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 
 	if (Length > 0 && !Flags.Check(FEDITLINE_PARENT_SINGLELINE)) {
 		if (Str[Length - 1] == L'\r') {
-			EndType = EOL_CR;
+			SetEndType(EOL_CR);
 			Length--;
 		} else {
 			if (Str[Length - 1] == L'\n') {
@@ -1854,13 +2013,13 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 
 					if (Length > 0 && Str[Length - 1] == L'\r') {
 						Length--;
-						EndType = EOL_CRCRLF;
+						SetEndType(EOL_CRCRLF);
 					} else
-						EndType = EOL_CRLF;
+						SetEndType(EOL_CRLF);
 				} else
-					EndType = EOL_LF;
+					SetEndType(EOL_LF);
 			} else
-				EndType = EOL_NONE;
+				SetEndType(EOL_NONE);
 		}
 	}
 
@@ -1910,17 +2069,17 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		wmemcpy(this->Str, Str, Length);
 		this->Str[Length] = 0;
 
-		if (TabExpandMode == EXPAND_ALLTABS)
+		if (GetConvertTabs() == EXPAND_ALLTABS)
 			ExpandTabs();
 
 		PrevCurPos = CurPos;
 		CurPos = StrSize;
 
-		HasSpecialWidthChars=false;
+		Flags.Clear(FEDITLINE_HASSPECIALWIDTHCHARS);
 		CheckForSpecialWidthChars();
 	}
 
-	if (m_bWordWrapState) {
+	if (GetWordWrap()) {
 		int Width = ObjWidth;
 		if (Flags.Check(FEDITLINE_EDITORMODE)) { // Corresponds to editor.cpp's EdOpt.ShowScrollBar
 			// This logic is a bit of a guess, assuming FEDITLINE_EDITORMODE is a good proxy.
@@ -1929,7 +2088,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 			// A better solution would be to pass this info down.
 			// For now, let's just use ObjWidth as it is passed down correctly.
 		}
-		RecalculateWordWrap(Width, TabSize);
+		RecalculateWordWrap(Width, GetTabSize());
 	}
 	Changed();
 }
@@ -1939,7 +2098,7 @@ void Edit::GetBinaryString(const wchar_t **Str, const wchar_t **EOL, int &Length
 	*Str = this->Str;
 
 	if (EOL)
-		*EOL = EOL_TYPE_CHARS[EndType];
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
 
 	Length = StrSize;	//???
 }
@@ -1986,6 +2145,7 @@ void Edit::InsertString(const wchar_t *Str)
 
 void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 {
+	const wchar_t *Mask = GetInputMask();
 	wchar_t *NewStr;
 
 	if (Flags.Check(FEDITLINE_READONLY | FEDITLINE_DROPDOWNBOX))
@@ -2035,6 +2195,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		RefreshStrByMask();
 		//_SVS(SysLog(L"InsertBinaryString ==> this->Str='%ls'",this->Str));
 	} else {
+		const int MaxLength = GetMaxLength();
 		if (MaxLength != -1 && StrSize + Length > MaxLength) {
 			// коррекция вставляемого размера, если определен MaxLength
 			if (StrSize < MaxLength) {
@@ -2075,12 +2236,12 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			this->Str[StrSize] = 0;
 			delete[] TmpStr;
 
-			if (TabExpandMode == EXPAND_ALLTABS)
+			if (GetConvertTabs() == EXPAND_ALLTABS)
 				ExpandTabs();
 
-			if (m_bWordWrapState)
+			if (GetWordWrap())
 			{
-				RecalculateWordWrap(ObjWidth, TabSize);
+				RecalculateWordWrap(ObjWidth, GetTabSize());
 			}
 			CheckForSpecialWidthChars(Str, Length);
 			Changed();
@@ -2098,21 +2259,29 @@ int Edit::GetLength()
 // Функция установки маски ввода в объект Edit
 void Edit::SetInputMask(const wchar_t *InputMask)
 {
-	if (Mask)
-		free(Mask);
+	if (!InputMask || !*InputMask) {
+		if (m_LocalSettings && m_LocalSettings->Mask) {
+			free(m_LocalSettings->Mask);
+			m_LocalSettings->Mask = nullptr;
+		}
+		return;
+	}
 
-	if (InputMask && *InputMask) {
-		if (!(Mask = wcsdup(InputMask)))
-			return;
+	auto &settings = GetLocalSettings();
+	if (settings.Mask)
+		free(settings.Mask);
+	settings.Mask = nullptr;
 
-		RefreshStrByMask(TRUE);
-	} else
-		Mask = nullptr;
+	if (!(settings.Mask = wcsdup(InputMask)))
+		return;
+
+	RefreshStrByMask(TRUE);
 }
 
 // Функция обновления состояния строки ввода по содержимому Mask
 void Edit::RefreshStrByMask(int InitMode)
 {
+	const wchar_t *Mask = GetInputMask();
 	if (Mask && *Mask) {
 		int MaskLen = StrLength(Mask);
 
@@ -2127,7 +2296,8 @@ void Edit::RefreshStrByMask(int InitMode)
 			for (int i = StrSize; i < MaskLen; i++)
 				Str[i] = L' ';
 
-			StrSize = MaxLength = MaskLen;
+			StrSize = MaskLen;
+			SetMaxLength(MaskLen);
 			Str[StrSize] = 0;
 		}
 
@@ -2205,7 +2375,7 @@ void Edit::InsertTab()
 		return;
 
 	Pos = CurPos;
-	S = TabSize - (Pos % TabSize);
+	S = GetTabSize() - (Pos % GetTabSize());
 
 	if (SelStart != -1) {
 		if (Pos <= SelStart) {
@@ -2241,7 +2411,7 @@ void Edit::ExpandTabs()
 	while ((TabPtr = (wchar_t *)wmemchr(Str + Pos, L'\t', StrSize - Pos))) {
 		changed = true;
 		Pos = (int)(TabPtr - Str);
-		S = TabSize - ((int)(TabPtr - Str) % TabSize);
+		S = GetTabSize() - ((int)(TabPtr - Str) % GetTabSize());
 
 		if (SelStart != -1) {
 			if (Pos <= SelStart) {
@@ -2277,6 +2447,7 @@ int Edit::GetCellCurPos()
 
 void Edit::SetCellCurPos(int NewPos)
 {
+	const wchar_t *Mask = GetInputMask();
 	if (Mask && *Mask) {
 		int NewPosLimit = CalcRTrimmedStrSize();
 		if (NewPos > NewPosLimit)
@@ -2303,7 +2474,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 	// Если предыдущая позиция за концом строки, то табов там точно нет и
 	// вычислять особо ничего не надо, иначе производим вычисление
-	if (PrevPos >= StrSize || !HasSpecialWidthChars)
+	if (PrevPos >= StrSize || !Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS))
 		TabPos+= Pos - PrevPos;
 	else {
 		// Начинаем вычисление с предыдущей позиции
@@ -2314,7 +2485,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 		for (; Index < Min(Pos, StrSize); Index++)
 
 			// Обрабатываем табы
-			if (Str[Index] == L'\t' && TabExpandMode != EXPAND_ALLTABS) {
+			if (Str[Index] == L'\t' && GetConvertTabs() != EXPAND_ALLTABS) {
 				// Если есть необходимость делать корректировку табов и эта корректировка
 				// ещё не проводилась, то увеличиваем длину обрабатываемой строки на единицу
 				if (bCorrectPos) {
@@ -2324,7 +2495,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 				}
 
 				// Расчитываем длину таба с учётом настроек и текущей позиции в строке
-				TabPos+= TabSize - (TabPos % TabSize);
+				TabPos+= GetTabSize() - (TabPos % GetTabSize());
 				joining = false;
 			}
 			// Обрабатываем все остальные символы
@@ -2355,7 +2526,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 int Edit::CellPosToReal(int Pos)
 {
 	if (Pos < 0) return 0;
-	if (!HasSpecialWidthChars) return Pos;
+	if (!Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS)) return Pos;
 	int Index = 0;
 	bool joining = false;
 	for (int CellPos = 0; CellPos < Pos || joining; Index++) {
@@ -2364,8 +2535,8 @@ int Edit::CellPosToReal(int Pos)
 			break;
 		}
 
-		if (Str[Index] == L'\t' && TabExpandMode != EXPAND_ALLTABS) {
-			int NewCellPos = CellPos + TabSize - (CellPos % TabSize);
+		if (Str[Index] == L'\t' && GetConvertTabs() != EXPAND_ALLTABS) {
+			int NewCellPos = CellPos + GetTabSize() - (CellPos % GetTabSize());
 
 			if (NewCellPos > Pos)
 				break;
@@ -2398,7 +2569,7 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
-	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
+	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS) && SelEnd >= SelStart && SelStart >= 0) {
 		bool joining = false;
 		for ( ; SelStart > 0; SelStart--) {
 			if (Str[SelStart] == CharClasses::ZERO_WIDTH_JOINER) {
@@ -2496,6 +2667,7 @@ void Edit::GetRealSelection(int &Start, int &End)
 
 void Edit::DeleteBlock()
 {
+	const wchar_t *Mask = GetInputMask();
 	if (Flags.Check(FEDITLINE_READONLY | FEDITLINE_DROPDOWNBOX))
 		return;
 
@@ -2548,43 +2720,57 @@ void Edit::DeleteBlock()
 
 void Edit::AddColor(const ColorItem *col)
 {
-	ColorList.emplace_back(*col);
+	if (!ColorList)
+		ColorList = std::make_unique<std::vector<ColorItem>>();
+
+	ColorList->emplace_back(*col);
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
+	if (!ColorList)
+		return 0;
+
 	size_t Dest, Src;
 
-	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
-		if (ColorPos != -1 && ColorList[Src].StartPos != ColorPos) {
+	for (Src = Dest = 0; Src < ColorList->size(); ++Src)
+		if (ColorPos != -1 && (*ColorList)[Src].StartPos != ColorPos) {
 			if (Dest != Src)
-				ColorList[Dest] = ColorList[Src];
+				(*ColorList)[Dest] = (*ColorList)[Src];
 
 			++Dest;
 		}
 
-	const size_t DelCount = ColorList.size() - Dest;
-	ColorList.resize(Dest);
+	const size_t DelCount = ColorList->size() - Dest;
+	ColorList->resize(Dest);
+	if (ColorList->empty())
+		ColorList.reset();
 
 	return DelCount;
 }
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	if (Item >= (int)ColorList.size())
+	if (!ColorList || Item >= (int)ColorList->size())
 		return false;
 
-	*col = ColorList[Item];
+	*col = (*ColorList)[Item];
 	return true;
 }
 
 void Edit::ApplyColor()
 {
+	if (!ColorList)
+		return;
+
+	uint64_t Color, SelColor, ColorUnChanged;
+	GetObjectColors(Color, SelColor, ColorUnChanged);
+
 	// Для оптимизации сохраняем вычисленные позиции между итерациями цикла
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
 	// Обрабатываем элементы ракраски
-	for (auto &CurItem : ColorList) {
+	for (auto &CurItem : *ColorList) {
 
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
@@ -2778,6 +2964,7 @@ void Edit::Xlat(bool All)
 */
 int Edit::KeyMatchedMask(FarKey Key)
 {
+	const wchar_t *Mask = GetInputMask();
 	int Inserted = FALSE;
 
 	if (Mask[CurPos] == EDMASK_ANY)
@@ -2821,8 +3008,8 @@ void Edit::SetDialogParent(DWORD Sets)
 
 void Edit::Changed(bool DelBlock)
 {
-	if (m_Callback.Active && m_Callback.m_Callback) {
-		m_Callback.m_Callback(m_Callback.m_Param);
+	if (Flags.Check(FEDITLINE_CALLBACKACTIVE) && m_LocalSettings && m_LocalSettings->CallbackFunc) {
+		m_LocalSettings->CallbackFunc(m_LocalSettings->CallbackParam);
 	}
 }
 
@@ -2970,7 +3157,7 @@ void EditControl::FastShow()
 
 void EditControl::Changed(bool DelBlock)
 {
-	if (m_Callback.Active) {
+	if (Flags.Check(FEDITLINE_CALLBACKACTIVE)) {
 		Edit::Changed();
 		AutoComplete(false, DelBlock);
 	}
@@ -3119,7 +3306,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 										CurPos--;
 									}
 
-									DisableCallback DC(m_Callback.Active);
+									DisableCallback DC(Flags);
 									InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
 									if (X2 - X1 > GetLength())
 										SetLeftPos(0);

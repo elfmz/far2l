@@ -74,7 +74,7 @@ public:
 	{
 	}
 
-	bool Setup(SMALL_RECT &rc, HANDLE dlg)
+	ImageOpResult Setup(SMALL_RECT &rc, HANDLE dlg)
 	{
 		_dlg = dlg;
 		_first_draw = true;
@@ -154,10 +154,12 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			if (!iv->full_size) {
 				RectReduce(rc);
 			}
-			if (iv->Setup(rc, hDlg)) {
+			const auto result = iv->Setup(rc, hDlg);
+			if (result == ImageOpResult::OK) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
-				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
+				const auto exit_code = (result == ImageOpResult::CANCELLED) ? EXITED_DUE_CANCELLED : EXITED_DUE_ERROR;
+				g_far.SendDlgMessage(hDlg, DM_CLOSE, exit_code, 0);
 			}
 		}
 		return TRUE;
@@ -339,6 +341,8 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 				std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
 				std::wstring werr_str = StrMB2Wide(iv.ErrorString());
 				ShowError({g_settings.Msg(M_FAILED_TO_LOAD_IMAGE), ws_cur_file, werr_str});
+			} else if (exit_code == EXITED_DUE_CANCELLED) {
+				// user cancelled loading - do nothing
 			}
 			return exit_code;
 		}

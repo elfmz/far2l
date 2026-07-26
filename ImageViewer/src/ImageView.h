@@ -9,6 +9,8 @@
 #include <math.h>
 #include <utils.h>
 
+enum class ImageOpResult { OK, FAILED, CANCELLED };
+
 class ImageView
 {
 	volatile bool *_cancel{nullptr};
@@ -31,8 +33,8 @@ class ImageView
 	bool _force_render{false};
 
 	bool IterateFile(bool forward);
-	bool PrepareImage();
-	bool ReadImage();
+	ImageOpResult PrepareImage();
+	ImageOpResult ReadImage();
 	void ApplyEXIFOrientation(int orientation);
 
 	bool RefreshWGI();
@@ -40,11 +42,11 @@ class ImageView
 	bool EnsureReadyAndScaled();
 	uint16_t EnsureTransformed();
 
-	bool SendWholeImage(const SMALL_RECT *area, const Image &img);
-	bool SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h);
+	ImageOpResult SendWholeImage(const SMALL_RECT *area, const Image &img);
+	ImageOpResult SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h);
 	bool SendScrollAttachH(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
 	bool SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
-	bool RenderImage();
+	ImageOpResult RenderImage();
 	void DenoteState(const char *stage = NULL);
 	void JustReset(bool keep_rotmir = false);
 
@@ -62,7 +64,7 @@ public:
 
 	std::unordered_set<std::string> GetSelection() const;
 
-	bool Setup(SMALL_RECT &rc, volatile bool *cancel = nullptr);
+	ImageOpResult Setup(SMALL_RECT &rc, volatile bool *cancel = nullptr);
 
 	void Home();
 	bool Iterate(bool forward);
@@ -76,7 +78,7 @@ public:
 	void ForceShow()
 	{
 		_force_render = true;
-		RenderImage();
+		(void)RenderImage();
 		DenoteState();
 	};
 	void Select();

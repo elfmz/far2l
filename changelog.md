@@ -21,7 +21,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _edsort plugin_: Support unique row sorting and preserve dialog values
 * _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** to open the nearest hunk at or below the current editor line
 * _OpenWith plugin_: Update to v1.3. **General**: Added a progress dialog allowing cancellation of application discovery; allow plugin invocation on `..` (treated as the current directory); new option "Display filename in the menu title"; bugfixes and help updates. **Linux/BSD**: new options "Show package qualifiers", "Ignore [Removed Associations] section", "Query system defaults via xdg-mime"; new buttons "GoTo .desktop", "GoTo TryExec", and "GoTo source" in the "Details" dialog. **macOS**: more comprehensive information in the "Details" dialog; new "GoTo bundle location" button in the "Details" dialog; new options "Show UTI instead of MIME types", "Respect system ranking", "Disable ranking and sort alphabetically".
-* _python plugin_: plugin manager (upluginmanager.py), fixes and new subplugins uimgimage.py, uimgpdf.py, ustealer.py (see: [#3346](https://github.com/elfmz/far2l/issues/3346) and [#3439](https://github.com/elfmz/far2l/pull/3439))
+* _python plugin_: plugin manager (upluginmanager.py), fixes and new subplugins uhashes.py uimgimage.py, uimgpdf.py, ustealer.py (see: [#3346](https://github.com/elfmz/far2l/issues/3346) and [#3439](https://github.com/elfmz/far2l/pull/3439))
 * Several bugfixes and improvements
 
 ## 2.8.0 beta (2026-03-23)

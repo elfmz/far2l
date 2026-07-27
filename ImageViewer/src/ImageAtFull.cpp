@@ -65,7 +65,7 @@ protected:
 public:
 	bool may_select{false};
 	bool full_size{false};
-	bool _first_draw{true};
+	bool _bgr_drawn{false};
 
 	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 		: ImageView(initial_file, all_files)
@@ -75,7 +75,7 @@ public:
 	bool Setup(SMALL_RECT &rc, HANDLE dlg)
 	{
 		_dlg = dlg;
-		_first_draw = true;
+		_bgr_drawn = false;
 		return ImageView::Setup(rc);
 	}
 
@@ -238,21 +238,30 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 		case DN_CLOSE:
 			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 			break;
+		case DN_DRAWDIALOG:
+		{
+			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+			if (iv) {
+				iv->_bgr_drawn = true;
+			}
+		}
+		break;
+
 		case DN_ENTERIDLE:
 		{
 
-			// WezTerm erases the kitty protocol image if text (even spaces) is displayed over it.
-			// As a result, when opening ImageViewer, the background erases the image.
+			// WezTerm and Kitty erase the kitty protocol image if text (even spaces) is displayed over it.
+			// As a result, when opening ImageViewer or navigating, the background redraw erases the image.
 			// DN_ENTERIDLE is the first event that ensures that the dialog has been fully rendered.
-			// Calling ForceShow() at this point draws the image
+			// Calling ForceRender() at this point draws the image
 			// over the now-definitely-drawn background, and it remains visible.
 			//
-			// See #3201 and #3209 for details.
-			
+			// See #3201, #3209, and #3486 for details.
+
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-			if (iv && iv->_first_draw) {
-				iv->_first_draw = false;
-				iv->ForceShow();
+			if (iv && iv->_bgr_drawn) {
+				iv->_bgr_drawn = false;
+				iv->ForceRender();
 			}
 		}
 		break;

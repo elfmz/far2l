@@ -76,6 +76,11 @@ public:
 	void MirrorH();
 	void MirrorV();
 	void Reset(bool keep_rotmir);
+	void ForceRender()
+	{
+		_force_render = true;
+		RenderImage();
+	};
 	void ForceShow()
 	{
 		_force_render = true;

@@ -87,6 +87,9 @@ ueduniq.py
 ugtkhello.py
     The plugin shows how to open a window from the gtk library.
 
+uhashes.py
+    The plugin calculates the hash functions known to Python for the specified file (editor, viewer, plugin selection).
+
 uhexedit.py
     The prototype of the standard hexitor plugin.
 

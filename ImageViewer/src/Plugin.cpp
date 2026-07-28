@@ -56,7 +56,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->PluginMenuStrings = menu_strings;
 	Info->PluginMenuStringsNumber = 1;
 
-	Info->CommandPrefix = L"img:";
+	Info->CommandPrefix = L"img";
 }
 
 static std::pair<std::string, bool> GetPanelItem(int cmd, int index)

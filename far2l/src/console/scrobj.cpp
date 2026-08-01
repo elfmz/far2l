@@ -42,15 +42,15 @@ ScreenObject *ScreenObject::CaptureMouseObject = nullptr;
 ScreenObject::ScreenObject()
 	:
 	ShadowSaveScr(nullptr),
+	pOwner(nullptr),
+	SaveScr(nullptr),
 	X1(0),
 	Y1(0),
 	X2(0),
 	Y2(0),
 	ObjWidth(0),
 	ObjHeight(0),
-	nLockCount(0),
-	pOwner(nullptr),
-	SaveScr(nullptr)
+	nLockCount(0)
 {
 	//  _OT(SysLog(L"[%p] ScreenObject::ScreenObject()", this));
 }

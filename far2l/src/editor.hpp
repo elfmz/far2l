@@ -152,6 +152,7 @@ class Edit;
 
 class Editor : public ScreenObject
 {
+	friend class Edit;
 	friend class DlgEdit;
 	friend class FileEditor;
 
@@ -224,6 +225,9 @@ private:
 	int m_WordWrapPreferredCellPos;
 
 	UINT m_codepage;	// BUGBUG
+	uint64_t m_Color;
+	uint64_t m_SelColor;
+	uint64_t m_ColorUnChanged;
 
 	int StartLine;
 	int StartChar;

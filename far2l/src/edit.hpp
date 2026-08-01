@@ -62,6 +62,11 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_PARENT_SINGLELINE = 0x00100000,		// обычная строка ввода в диалоге
 	FEDITLINE_PARENT_MULTILINE  = 0x00200000,		// для будущего Memo-Edit (DI_EDITOR или DIF_MULTILINE)
 	FEDITLINE_PARENT_EDITOR     = 0x00400000,		// "вверху" обычный редактор
+	FEDITLINE_CALLBACKACTIVE    = 0x00800000,
+	FEDITLINE_HASSPECIALWIDTHCHARS = 0x01000000,
+	FEDITLINE_WORDWRAP          = 0x02000000,
+	FEDITLINE_EOLTYPE_MASK      = 0x1c000000,
+	FEDITLINE_EOLTYPE_SHIFT     = 26,
 };
 
 struct ColorItem
@@ -141,46 +146,34 @@ public:
 	Edit *m_prev;
 
 private:
-	std::vector<wchar_t> OutStr;
+	struct LocalSettings
+	{
+		wchar_t *Mask;
+		int TabSize;
+		int TabExpandMode;
+		const FARString *strWordDiv;
+		UINT codepage;
+		uint64_t Color;
+		uint64_t SelColor;
+		uint64_t ColorUnChanged;
+		EDITCHANGEFUNC CallbackFunc;
+		void *CallbackParam;
+		int MaxLength;
+		int CursorSize;
+	};
 	wchar_t *Str;
+	std::unique_ptr<std::vector<ColorItem>> ColorList;
+	std::unique_ptr<LocalSettings> m_LocalSettings;
+	std::unique_ptr<std::vector<int>> m_WrapBreaks;
 
 	int StrSize;
-	int MaxLength;
-
-	wchar_t *Mask;
-
-	std::vector<ColorItem> ColorList;
-
-	uint64_t Color;
-	uint64_t SelColor;
-	uint64_t ColorUnChanged;		// 28.07.2000 SVS - для диалога
-
 	int LeftPos;
 	int CurPos;
 	int PrevCurPos;		// 12.08.2000 KM - предыдущее положение курсора
-
-	int TabSize;		// 14.02.2001 IS - Размер табуляции - по умолчанию равен Opt.TabSize;
-
-	int TabExpandMode;
-
 	int MSelStart;
 	int SelStart;
 	int SelEnd;
-
-	int EndType;
-
-	int CursorSize;
 	int CursorPos;
-	const FARString *strWordDiv;
-
-	UINT m_codepage;	// BUGBUG
-
-	Callback m_Callback;
-
-	std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
-	bool HasSpecialWidthChars;
-	bool m_bWordWrapState;
-	std::vector<int> m_WrapBreaks;
 private:
 	virtual void DisplayObject();
 	int InsertKey(FarKey Key);
@@ -201,7 +194,13 @@ private:
 
 	int RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos);
 	void SanitizeSelectionRange();
-	inline const wchar_t *WordDiv() { return strWordDiv->CPtr(); };
+	Editor *GetEditorOwner();
+	LocalSettings &GetLocalSettings();
+	DWORD TranscodeCodePage(UINT oldCodepage, UINT codepage);
+	const wchar_t *WordDiv();
+	void GetObjectColors(uint64_t &Color, uint64_t &SelColor, uint64_t &ColorUnChanged);
+	int GetEndType() const { return (Flags.Flags & FEDITLINE_EOLTYPE_MASK) >> FEDITLINE_EOLTYPE_SHIFT; }
+	void SetEndType(int Type) { Flags.Flags = (Flags.Flags & ~FEDITLINE_EOLTYPE_MASK) | (static_cast<DWORD>(Type) << FEDITLINE_EOLTYPE_SHIFT); }
 	void CheckForSpecialWidthChars(const wchar_t *CheckStr = nullptr, int Length = 0);
 
 protected:
@@ -232,11 +231,11 @@ public:
 	// ! Функция установки текущих Color,SelColor и ColorUnChanged!
 	void SetObjectColor(uint64_t Color, uint64_t SelColor = 0xf, uint64_t ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED));
 	// + Функция получения текущих Color,SelColor
-	long GetObjectColor() { return MAKELONG(Color, SelColor); }
-	int GetObjectColorUnChanged() { return ColorUnChanged; }
+	long GetObjectColor();
+	int GetObjectColorUnChanged();
 
-	void SetTabSize(int NewSize) { TabSize = NewSize; }
-	int GetTabSize() { return TabSize; }
+	void SetTabSize(int NewSize);
+	int GetTabSize();
 
 	void SetDelRemovesBlocks(int Mode) { Flags.Change(FEDITLINE_DELREMOVESBLOCKS, Mode); }
 	int GetDelRemovesBlocks() { return Flags.Check(FEDITLINE_DELREMOVESBLOCKS); }
@@ -285,19 +284,19 @@ public:
 	int GetLeftPos() { return (LeftPos); }
 	void SetLeftPos(int NewPos) { LeftPos = NewPos; }
 	void SetPasswordMode(int Mode) { Flags.Change(FEDITLINE_PASSWORDMODE, Mode); };
-	void SetMaxLength(int Length) { MaxLength = Length; };
+	void SetMaxLength(int Length);
 
 	// Получение максимального значения строки для потребностей Dialod API
-	int GetMaxLength() { return MaxLength; };
+	int GetMaxLength() const;
 
 	void SetInputMask(const wchar_t *InputMask);
-	const wchar_t *GetInputMask() { return Mask; }
+	const wchar_t *GetInputMask() const { return m_LocalSettings ? m_LocalSettings->Mask : nullptr; }
 
 	void SetOvertypeMode(int Mode) { Flags.Change(FEDITLINE_OVERTYPE, Mode); };
 	int GetOvertypeMode() { return Flags.Check(FEDITLINE_OVERTYPE); };
 
-	void SetConvertTabs(int Mode) { TabExpandMode = Mode; };
-	int GetConvertTabs() { return TabExpandMode; };
+	void SetConvertTabs(int Mode);
+	int GetConvertTabs();
 
 	int RealPosToCell(int Pos);
 	int CellPosToReal(int Pos);
@@ -307,11 +306,10 @@ public:
 	BOOL IsSelection() { return SelStart == -1 && !SelEnd ? FALSE : TRUE; };
 	void GetRealSelection(int &Start, int &End);
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
-	void SetWordWrap(int Wrap) {
-		m_bWordWrapState = (Wrap != 0);
-		}
-	bool GetWordWrap() const { return m_bWordWrapState; }
+	void SetWordWrap(int Wrap) { Flags.Change(FEDITLINE_WORDWRAP, Wrap != 0); }
+	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }
 	void SetEditorMode(int Mode) { Flags.Change(FEDITLINE_EDITORMODE, Mode); };
+	void SetEditorParent(int Mode) { Flags.Change(FEDITLINE_PARENT_EDITOR, Mode); };
 	void ExpandTabs();
 
 	void InsertTab();
@@ -330,7 +328,7 @@ public:
 	void SetReadOnly(int NewReadOnly) { Flags.Change(FEDITLINE_READONLY, NewReadOnly); }
 	int GetDropDownBox() { return Flags.Check(FEDITLINE_DROPDOWNBOX); }
 	void SetDropDownBox(int NewDropDownBox) { Flags.Change(FEDITLINE_DROPDOWNBOX, NewDropDownBox); }
-	void SetWordDiv(const FARString &WordDiv) { strWordDiv = &WordDiv; }
+	void SetWordDiv(const FARString &WordDiv);
 	virtual void Changed(bool DelBlock = false);
 };
 
@@ -343,6 +341,7 @@ class EditControl : public Edit
 {
 	friend class DlgEdit;
 
+	std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
 	const std::vector<std::string> *pCustomCompletionList;
 	History *pHistory;
 	FarList *pList;
@@ -374,7 +373,7 @@ public:
 	virtual void FastShow();
 	virtual void Show();
 	virtual void Changed(bool DelBlock = false);
-	void SetCallbackState(bool Enable) { m_Callback.Active = Enable; }
+	void SetCallbackState(bool Enable) { Flags.Change(FEDITLINE_CALLBACKACTIVE, Enable); }
 
 	void AutoComplete(bool Manual, bool DelBlock);
 	void EnableAC(bool Permanent = false);

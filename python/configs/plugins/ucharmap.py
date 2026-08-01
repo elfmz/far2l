@@ -1,3 +1,4 @@
+import os
 import logging
 from far2l.plugin import PluginBase
 from far2l.fardialogbuilder import (
@@ -159,6 +160,13 @@ class Plugin(PluginBase):
                     return 0
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
+                elif Param2 == self.ffic.KEY_F1:
+                    fn = os.path.normpath(__file__)
+                    dn = os.path.dirname(fn)
+                    bn = os.path.splitext(os.path.basename(fn))[0]
+                    nn = os.path.join(dn, 'help', bn, bn)+'.hlp'
+                    self.info.ShowHelp(self.s2f(nn), self.ffi.NULL, 0)
+                    return 1
                 else:
                     return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
                 if col == self.max_col:

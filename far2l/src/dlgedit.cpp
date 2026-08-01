@@ -168,6 +168,8 @@ int DlgEdit::ProcessKey(FarKey Key)
 
 	if (Type == DLGEDIT_MULTILINE) {
 		DialogEditorPluginScope scope(multiEdit);
+		if (CtrlObject->Plugins.ProcessEditorInput(FrameManager->GetLastInputRecord()))
+			return TRUE;
 		return multiEdit->ProcessKey(Key);
 	} else
 		return lineEdit->ProcessKey(Key);
@@ -388,7 +390,7 @@ void DlgEdit::GetString(wchar_t *Str, int MaxSize, int Row)
 		} else {
 			wchar_t *buf = nullptr;
 			int size = 0;
-			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+			if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 				*Str = 0;
 				return;
 			}
@@ -419,7 +421,7 @@ void DlgEdit::GetString(FARString &strStr, int Row)
 		} else {
 			wchar_t *buf = nullptr;
 			int size = 0;
-			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+			if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 				strStr.Clear();
 				return;
 			}
@@ -599,7 +601,7 @@ int DlgEdit::GetLength()
 			return 0;
 		wchar_t *buf = nullptr;
 		int size = 0;
-		if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+		if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 			fprintf(stderr, "DlgEdit::GetLength multiline getraw failed\n");
 			return 0;
 		}

@@ -6909,6 +6909,9 @@ int Editor::EditorControl(int Command, void *Param)
 				if (EdOpt.ShowGutterMarks)
 					Info->Options|= EOPT_SHOWGUTTER;
 
+				if (Flags.Check(FEDITOR_DIALOGMEMOEDIT))
+					Info->Options|= EOPT_MEMOEDIT;
+
 				Info->TabSize = EdOpt.TabSize;
 				Info->BookMarkCount = POSCACHE_BOOKMARK_COUNT;
 				Info->CurState = Flags.Check(FEDITOR_LOCKMODE) ? ECSTATE_LOCKED : 0;
@@ -7185,6 +7188,21 @@ int Editor::EditorControl(int Command, void *Param)
 				}
 			}
 			return TRUE;
+		}
+		case ECTL_PROCESSINPUT: {
+			if (Param) {
+				INPUT_RECORD *rec = (INPUT_RECORD *)Param;
+				if (CtrlObject->Plugins.ProcessEditorInput(rec))
+					return TRUE;
+				if (rec->EventType == MOUSE_EVENT)
+					ProcessMouse(&rec->Event.MouseEvent);
+				else {
+					FarKey Key = CalcKeyCode(rec, false);
+					ProcessKey(Key);
+				}
+				return TRUE;
+			}
+			return FALSE;
 		}
 		// должно выполняется в FileEditor::EditorControl()
 		case ECTL_PROCESSKEY: {

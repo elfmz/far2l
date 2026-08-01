@@ -785,7 +785,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 	}
 
 	/*
-		Все сотальные необработанные клавиши пустим далее
+		Все остальные необработанные клавиши пустим далее
 		$ 28.04.2001 DJ
 		не передаем KEY_MACRO* плагину - поскольку ReadRec в этом случае
 		никак не соответствует обрабатываемой клавише, возникают разномастные
@@ -2178,10 +2178,8 @@ void FileEditor::ResizeConsole()
 
 int FileEditor::ProcessEditorInput(INPUT_RECORD *Rec)
 {
-	int RetCode;
 	CtrlObject->Plugins.CurEditor = this;
-	RetCode = CtrlObject->Plugins.ProcessEditorInput(Rec);
-	return RetCode;
+	return CtrlObject->Plugins.ProcessEditorInput(Rec);
 }
 
 

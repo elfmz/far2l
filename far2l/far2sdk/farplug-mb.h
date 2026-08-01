@@ -1318,6 +1318,7 @@ namespace oldfar
 		EOPT_BOM               = 0x00000200,
 		EOPT_SHOWNUMBERS       = 0x00000400,
 		EOPT_SHOWGUTTER        = 0x00000800,
+		EOPT_MEMOEDIT          = 0x00001000,
 	};
 
 

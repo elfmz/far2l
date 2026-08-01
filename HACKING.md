@@ -128,6 +128,9 @@ Size of colors array is `DLG_ITEM_MAX_CUST_COLORS` which is currently 5.
     - `LIFIND_KEEPAMPERSAND` (in `enum FARLISTFINDFLAGS`);
 * Flags in `enum PROCESSNAME_FLAGS` (added in #2452):
     - `PN_GENERATENAME`, `PN_CHECKMASK`, `PN_SHOWERRORMESSAGE`, `PN_RESERVED1`, `PN_CASESENSITIVE`, `PN_NONE`
+* Flags in `enum EDITOR_OPTIONS` (used in `struct EditorInfo.Options`, added in #3248 and #3449):
+    - `EOPT_SHOWNUMBERS`, `EOPT_SHOWGUTTER`. `EOPT_MEMOEDIT`
+
 
 ### Non-modal dialogs:
  `FDLG_NONMODAL` is now available (see https://github.com/elfmz/far2l/issues/2867#issuecomment-3368134072).

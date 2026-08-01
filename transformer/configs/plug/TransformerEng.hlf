@@ -1,0 +1,130 @@
+.Language=English,English
+.PluginContents=Transformer
+
+@Contents
+$ #Transformer#
+    #Contents#
+      1. Overview
+      2. Editor integration
+      3. File-panel integration
+      4. Configuration
+      5. Input and output encoding
+      6. Errors and transactional replacement
+
+    #Overview#
+    Transformer is a generic Unix-style text transformation dispatcher. It
+sends text to the standard input of an external command and, when the command
+succeeds, applies its standard output to the source text.
+
+    Transformer contains no formatter, parser, validator, encoding converter,
+or language-specific transformation logic. All such behavior comes from the
+commands in its INI files. Configured commands remain visible even when their
+programs are not installed, so invoking one reports the shell error and makes
+the missing dependency discoverable.
+
+    #Editor integration#
+    Open the editor plugin menu with #F11# and choose #Transformer#. If the
+editor has a selection, only the selected text is sent to the command and the
+successful output replaces that selection. With no selection, the complete
+editor buffer is transformed.
+
+    Stream selections are supported. Column selections are rejected because
+the public editor API has no generic vertical-paste operation for arbitrary
+command output.
+
+    The operation works directly on the in-memory buffer; an unsaved file does
+not need to be written first. Transformer attempts to retain the cursor and
+selection positions and uses editor operations so the change remains undoable.
+
+    #File-panel integration#
+    Select one or more regular files, invoke #Transformer# from the plugin
+menu, and choose a transformation. The command is run separately for every
+selected file.
+
+    A file is never overwritten before its command finishes successfully.
+Standard output is first collected in a temporary file and only then replaces
+the original. Set #Backup=true# to retain the previous contents as
+#filename.bak# for each successful replacement.
+
+    #Configuration#
+    Shipped settings and presets are installed with the plugin:
+
+    #Plugins/transformer/plug/transformer.ini#
+    #Plugins/transformer/plug/formats/*.ini#
+
+    Profile-specific files can be placed below the active far2l configuration
+directory (normally #~~/.config/far2l/#):
+
+    #plugins/transformer/transformer.ini#
+    #plugins/transformer/formats/*.ini#
+
+    The profile root follows the #FARSETTINGS# and #XDG_CONFIG_HOME# settings
+used by far2l. Format files use ordered, repeatable key sequences. Each #Item#
+is the menu label and its following #Command# is the shell command:
+
+    #[FileType "JSON"]#
+    #Masks=*.json;*.jsonc#
+    #Item="Pretty print"#
+    #Command=jq .#
+    #Item="Validate"#
+    #Command=jq empty#
+    #Output=Message#
+
+    A command can show successful standard output in a modal viewer instead:
+
+    #Item="Preview"#
+    #Command=glow -s dark -#
+    #Output=Viewer#
+
+    Section names become menu groups. #Masks# is a semicolon-separated list
+used to select file-type-specific groups. #[Common]# is offered for all input,
+and other unmatched groups are listed alphabetically after file-type-specific
+and Common groups.
+
+    #Item#/#Command# pairs may be repeated and their order is significant.
+#Output# belongs to the immediately preceding pair and accepts #Replace#,
+#Message#, or #Viewer#. It defaults to #Replace#. #Message# displays the command
+result without changing the source. #Viewer# opens successful standard output
+in a modal UTF-8 viewer backed by a temporary file. The viewer is centered at 90%
+of the current screen size. Its title line shows the transformation name,
+success state, output size, and the source filename when invoked from a panel.
+ANSI escape sequences in command output are rendered as colors by far2l's
+processed-view mode; the underlying text is still interpreted as UTF-8. If a
+command produces no standard output, Transformer shows its result and standard
+error in a message instead of opening an empty viewer.
+
+    Commands are passed to the existing far2l shell execution path. Shell
+quoting, pipelines such as #jq . | jq -S .#, and user-defined scripts can be
+used directly. Transformer does not probe executables or hide unavailable
+items.
+
+    The global option in #transformer.ini# is:
+
+    #Backup=false#            Do not create panel-file backups.
+    #Backup=true#             Create #.bak# backups before replacement (default).
+
+    Adding a new format requires only another INI file in the #formats#
+directory; the plugin itself does not need to be rebuilt.
+
+    #Input and output encoding#
+    In editor mode, selected or buffered editor text is encoded as #UTF-8# on
+the command's standard input. Standard output is decoded as UTF-8 back into
+editor text. Embedded NUL bytes are rejected because the editor's public text
+insertion API is NUL-terminated.
+
+    In panel mode, file input and command output are handled as #raw bytes#.
+No decoding, newline conversion, or encoding detection is performed. This
+makes byte-oriented tools and explicit filters such as #iconv# usable without
+Transformer altering their data.
+
+    #Errors and transactional replacement#
+    A nonzero command exit status, launch failure, invalid editor output, or
+file-system error leaves the source unchanged. Reports without standard output
+use a message box; reports containing standard output use the scrollable
+viewer. Both identify the command and include diagnostic output and the exit
+code when available.
+
+    For panel files, command output is staged separately. Backup creation (when
+enabled) and replacement happen only after command success. If either step
+cannot be completed safely, the original file is retained and the error is
+reported.

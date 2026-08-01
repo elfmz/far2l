@@ -1,0 +1,37 @@
+.Language=English,English
+
+"Transformer"
+"No transformations are configured for this context"
+
+"Command failed"
+"Command: %ls"
+"Exit code: %d"
+
+"Cannot read input file: %ls"
+"Cannot create temporary output for: %ls"
+"Cannot create backup: %ls"
+"Cannot replace original file: %ls"
+"Cannot modify the editor buffer"
+"No regular files are selected"
+
+"Transforming files"
+"Transforming: %ls"
+
+"Transformer settings"
+"Create .bak backups before replacing panel files"
+"&OK"
+"&Cancel"
+"Cannot transform: text modification is disabled (Ctrl+L)"
+"Column selections are not supported; use a stream selection"
+"Command completed successfully"
+"Standard output:"
+"Standard error:"
+"File: %ls"
+"Signal: %d"
+"Cannot start command"
+"Configuration problems:"
+"Command output contains NUL bytes and cannot be inserted into the editor"
+"Cannot create the temporary viewer file"
+"Success, %llu output bytes"
+"Command completed without standard output"
+"Transform"

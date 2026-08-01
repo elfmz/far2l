@@ -2461,12 +2461,19 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 	SudoClientRegion sdc_rgn;
 
 	Panel *AnotherPanel;
-
-	if (PanelMode != PLUGIN_PANEL && !IsAbsolutePath(NewDir) && !TestCurrentDirectory(strCurDir))
-		FarChDir(strCurDir);
-
 	FARString strFindDir, strSetDir = NewDir;
 	bool dot2Present = !StrCmp(strSetDir, L"..");
+
+	if (PanelMode != PLUGIN_PANEL && !dot2Present && !IsAbsolutePath(NewDir) && !TestCurrentDirectory(strCurDir))
+		FarChDir(strCurDir);
+
+	if (PanelMode != PLUGIN_PANEL && dot2Present && !TestCurrentDirectory(strCurDir)) {
+		FARString strParentDir = strCurDir;
+		CutToFolderNameIfFolder(strParentDir);
+		if (!strParentDir.IsEmpty() && StrCmp(strParentDir, strCurDir))
+			strSetDir = strParentDir;
+	}
+
 	fprintf(stderr, "NewDir=%ls strCurDir=%ls dot2Present=%u\n", NewDir, strCurDir.CPtr(), dot2Present);
 
 	if (!dot2Present && StrCmp(strSetDir, L"."))

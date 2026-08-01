@@ -76,19 +76,13 @@ FilePanels::FilePanels()
 	//_D(SysLog(L"MainKeyBar=0x%p",&MainKeyBar));
 }
 
-static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
+static void PrepareOptFolder(FARString &strSrc)
 {
 	if (strSrc.IsEmpty()) {
 		strSrc = DefaultPanelInitialDirectory();
 	} else {
 		apiExpandEnvironmentStrings(strSrc, strSrc);
 	}
-
-	if (strSrc != WGOOD_SLASH) {
-		CheckShortcutFolder(strSrc, false, true);
-	}
-
-	// ConvertNameToFull(strSrc,strSrc);
 }
 
 void FilePanels::Init()
@@ -128,44 +122,34 @@ void FilePanels::Init()
 	}
 
 	ActivePanel->SetFocus();
-	// пытаемся избавится от зависания при запуске
-	int IsLocalPath_FarPath = IsLocalPath(g_strFarPath);
-	PrepareOptFolder(Opt.strLeftFolder, IsLocalPath_FarPath);
-	PrepareOptFolder(Opt.strRightFolder, IsLocalPath_FarPath);
+	PrepareOptFolder(Opt.strLeftFolder);
+	PrepareOptFolder(Opt.strRightFolder);
 
 	if (Opt.AutoSaveSetup || !Opt.SetupArgv) {
-		if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-			LeftPanel->InitCurDir(Opt.strLeftFolder);
-
-		if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-			RightPanel->InitCurDir(Opt.strRightFolder);
+		LeftPanel->InitCurDir(Opt.strLeftFolder);
+		RightPanel->InitCurDir(Opt.strRightFolder);
 	}
 
 	if (!Opt.AutoSaveSetup) {
 		if (Opt.SetupArgv >= 1) {
 			if (ActivePanel == RightPanel) {
-				if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-					RightPanel->InitCurDir(Opt.strRightFolder);
+				RightPanel->InitCurDir(Opt.strRightFolder);
 			} else {
-				if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-					LeftPanel->InitCurDir(Opt.strLeftFolder);
+				LeftPanel->InitCurDir(Opt.strLeftFolder);
 			}
 
 			if (Opt.SetupArgv == 2) {
 				if (ActivePanel == LeftPanel) {
-					if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-						RightPanel->InitCurDir(Opt.strRightFolder);
+					RightPanel->InitCurDir(Opt.strRightFolder);
 				} else {
-					if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-						LeftPanel->InitCurDir(Opt.strLeftFolder);
+					LeftPanel->InitCurDir(Opt.strLeftFolder);
 				}
 			}
 		}
 
 		const wchar_t *PassiveFolder = PassiveIsLeftFlag ? Opt.strLeftFolder : Opt.strRightFolder;
 
-		if (Opt.SetupArgv < 2 && *PassiveFolder
-				&& (apiGetFileAttributes(PassiveFolder) != INVALID_FILE_ATTRIBUTES)) {
+		if (Opt.SetupArgv < 2 && *PassiveFolder) {
 			PassivePanel->InitCurDir(PassiveFolder);
 		}
 	}
@@ -478,6 +462,12 @@ int FilePanels::SwapPanels()
 int64_t FilePanels::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	return ActivePanel->VMProcess(OpCode, vParam, iParam);
+}
+
+void FilePanels::RetryActivePanelRead()
+{
+	if (ActivePanel->GetType() == FILE_PANEL)
+		static_cast<FileList *>(ActivePanel)->RetryFailedRead();
 }
 
 int FilePanels::ProcessKey(FarKey Key)
@@ -824,6 +814,7 @@ int FilePanels::ProcessKey(FarKey Key)
 		}
 	}
 
+	RetryActivePanelRead();
 	return TRUE;
 }
 

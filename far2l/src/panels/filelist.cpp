@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filepanels.hpp"
 #include "help.hpp"
 #include "fileedit.hpp"
+#include "fileholder.hpp"
 #include "namelist.hpp"
 #include "savescr.hpp"
 #include "fileview.hpp"
@@ -806,74 +807,6 @@ int64_t FileList::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
-class FileList_TempFileHolder : public TempFileUploadHolder
-{
-	HANDLE hPlugin;
-
-	virtual bool UploadTempFile()
-	{
-		FARString strSaveDir;
-		apiGetCurrentDirectory(strSaveDir);
-
-		FARString strPath = _file_path_name;
-
-		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES) {
-			FARString strFindName;
-			CutToSlash(strPath, false);
-			strFindName = strPath + L"*";
-			FAR_FIND_DATA_EX FindData;
-			::FindFile Find(strFindName);
-			while (Find.Get(FindData)) {
-				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-					strPath+= FindData.strFileName;
-					break;
-				}
-			}
-		}
-
-		bool out = false;
-
-		PluginPanelItem PanelItem;
-		if (FileList::FileNameToPluginItem(strPath, &PanelItem)) {
-			PutCode = CtrlObject->Plugins.PutFiles(hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
-
-			if (PutCode == 0) {
-				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, strPath.CPtr(),
-						Msg::Ok);
-			} else
-				out = true;
-		}
-
-		FarChDir(strSaveDir);
-
-		if (out) {
-			CheckPanelUpdate(CtrlObject->Cp()->LeftPanel);
-			CheckPanelUpdate(CtrlObject->Cp()->RightPanel);
-		}
-
-		return out;
-	}
-
-	void CheckPanelUpdate(Panel *panel)
-	{
-		if (panel && panel->GetPluginHandle() == hPlugin) {
-			ShellUpdatePanels(panel, FALSE);
-		}
-	}
-
-public:
-	int PutCode = -1;
-
-	FileList_TempFileHolder(const FARString &strTempFileName_, HANDLE hPlugin_)
-		:
-		TempFileUploadHolder(strTempFileName_), hPlugin(hPlugin_)
-	{
-		CtrlObject->Plugins.RetainPlugin(hPlugin);
-	}
-
-	virtual ~FileList_TempFileHolder() { CtrlObject->Plugins.ClosePlugin(hPlugin); }
-};
-
 int FileList::ProcessKey(FarKey Key)
 {
 
@@ -1430,8 +1363,8 @@ int FileList::ProcessKey(FarKey Key)
 				FARString strInfoCurDir = Info.CurDir;
 				bool PluginMode = PanelMode == PLUGIN_PANEL
 						&& !CtrlObject->Plugins.UseFarCommand(hPlugin, PLUGIN_FARGETFILE);
-				FileHolderPtr FHP; // std::shared_ptr<FileList_TempFileHolder>
-				std::shared_ptr<FileList_TempFileHolder> TFHP;
+				FileHolderPtr FHP;
+				std::shared_ptr<PluginTempFileHolder> TFHP;
 
 				if (PluginMode) {
 					if (Info.Flags & OPIF_REALNAMES)
@@ -1543,7 +1476,7 @@ int FileList::ProcessKey(FarKey Key)
 					}
 
 					// TFHP will upload edited file when user will press F2 and will delete it whenever it will not be needed
-					TFHP = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
+					TFHP = std::make_shared<PluginTempFileHolder>(strTempName, hPlugin);
 					FHP = TFHP;
 				} else if (!strFileName.IsEmpty()) {
 					FHP = std::make_shared<FileHolder>(strFileName);

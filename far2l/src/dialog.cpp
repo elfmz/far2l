@@ -451,6 +451,7 @@ void Dialog::Init(FARWINDOWPROC DlgProc,	// Диалоговая процеду�
 	SetDropDownOpened(FALSE);
 	IsEnableRedraw = 0;
 	InCtlColorDlgItem = 0;
+	SuppressCloseOnInactiveResize = false;
 	FocusPos = (unsigned)-1;
 	PrevFocusPos = (unsigned)-1;
 
@@ -4697,6 +4698,15 @@ void Dialog::SetExitCode(int Code)
 
 void Dialog::OnChangeFocus(int focus)
 {
+	// A resize may have been deferred while this dialog was below another modal
+	// frame. Apply it only after it becomes the active frame again.
+	if (focus && DialogMode.Check(DMODE_RESIZED)) {
+		ResizeConsole();
+		if (DialogMode.Check(DMODE_ENDLOOP)) {
+			return;
+		}
+	}
+
 	Frame::OnChangeFocus(focus);
 	if (GetCanLoseFocus())
 		DlgProc(this, focus ? DN_GOTFOCUS : DN_KILLFOCUS, -1, 0);
@@ -4734,13 +4744,24 @@ void Dialog::ResizeConsole()
 	CriticalSectionLock Lock(CS);
 
 	DialogMode.Set(DMODE_RESIZED);
+	const bool IsInactive = !IsTopFrame();
 
-	if (IsVisible()) {
+	if (!IsInactive && IsVisible()) {
 		Hide();
 	}
 
 	COORD c = {(SHORT)(ScrX + 1), (SHORT)(ScrY + 1)};
+	// Inactive modal dialogs still need the notification to update their
+	// layout.  A close requested from that notification must wait until the
+	// dialog becomes active; OnChangeFocus() will then notify it again.
+	const bool WasSuppressingClose = SuppressCloseOnInactiveResize;
+	SuppressCloseOnInactiveResize = IsInactive;
 	SendDlgMessage(reinterpret_cast<HANDLE>(this), DN_RESIZECONSOLE, 0, reinterpret_cast<LONG_PTR>(&c));
+	SuppressCloseOnInactiveResize = WasSuppressingClose;
+
+	if (DialogMode.Check(DMODE_ENDLOOP)) {
+		return;
+	}
 
 	int x1, y1, x2, y2;
 	GetPosition(x1, y1, x2, y2);
@@ -5137,6 +5158,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 		/*****************************************************************/
 		case DM_CLOSE: {
+			if (Dlg->SuppressCloseOnInactiveResize) {
+				return TRUE;
+			}
+
 			if (Param1 == -1)
 				Dlg->ExitCode = Dlg->FocusPos;
 			else

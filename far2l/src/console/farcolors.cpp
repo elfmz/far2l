@@ -268,12 +268,6 @@ static uint64_t assembleColor(RGB& fg, RGB& bg) {
 	return color | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR;
 }
 
-static bool endsWith(const std::string& s, const std::string& suffix)
-{
-    return s.size() >= suffix.size() &&
-           s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
 void FarColors::AdjustContrastLevels() noexcept 
 {
 	if (!Opt.Dialogs.EnforceColorCorrection){ 
@@ -282,7 +276,7 @@ void FarColors::AdjustContrastLevels() noexcept
 
 	fprintf(stderr, "FarColors::AdjustContrastLevels()\n");
 	for (size_t i = 0; i < SIZE_ARRAY_FARCOLORS; i++) {
-		if (endsWith(ColorsInit[i].name, ".Box")) continue;
+		if (StrEndsBy(ColorsInit[i].name, ".Box")) continue;
 
 		uint64_t cc = FARColors.colors[i];
 

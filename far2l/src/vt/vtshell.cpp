@@ -530,28 +530,45 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	void OnConsoleLog(ConsoleLogKind kind)//NB: called not from main thread!
 	{
-		std::unique_lock<std::mutex> lock(_inout_control_mutex, std::try_to_lock);
-		if (!lock) {
-			fprintf(stderr, "VTShell::OnConsoleLog: SKIPPED\n");
-			return;
+		// Two-phase lock discipline to avoid main-thread starvation:
+		//   Phase 1: lock → stop output reader → unlock.
+		//            VTA is suspended before the lock (VTAnsiSuspend RAII).
+		//            Output reader stays stopped across the InterThreadCall.
+		//   Phase 2: blocking InterThreadCall with NO mutex held —
+		//            the main thread can freely call StartIOReaders/StopIOReaders.
+		//   VTAnsiSuspend destructor fires at inner-scope exit:
+		//   VTA is resumed BEFORE the reader is restarted.
+		//   Phase 3: lock → restart output reader (only if we stopped it) → unlock.
+		bool did_stop = false;
+		{
+			VTAnsiSuspend vta_suspend(_vta);
+			if (!vta_suspend)
+				return;
+			{
+				std::lock_guard<std::mutex> lock(_inout_control_mutex);
+				if (_output_reader.IsStarted()) {
+					_output_reader.Stop();
+					did_stop = true;
+				}
+			}
+			DeliverPendingWindowInfo();
+			InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
+		} // VTA resumed here, before reader restart
+		// Restart the output reader so terminal output flows again.
+		if (did_stop) {
+			std::lock_guard<std::mutex> lock(_inout_control_mutex);
+			if (!_output_reader.IsStarted()) {
+				_output_reader.Start(_fd_out);
+				if (!_output_reader.IsStarted()) {
+					fprintf(stderr, "VTShell::OnConsoleLog: failed to restart output reader\n");
+				}
+			}
 		}
-
-		//called in input thread context
-		//we're input, stop output and remember _vta state
-
-		StopAndStart<VTOutputReader> sas(_output_reader);
-		VTAnsiSuspend vta_suspend(_vta);
-		if (!vta_suspend)
-			return;
-
-		DeliverPendingWindowInfo();
-		InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		if (_far2l_exts)
 			_far2l_exts->OnTerminalResized();
 	}
-
 	void OnConsoleSwitch()
 	{
 		InterThreadLockAndWake ittlaw;

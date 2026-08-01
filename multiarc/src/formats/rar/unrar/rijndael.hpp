@@ -50,6 +50,7 @@ class Rijndael
     byte     m_expandedKey[_MAX_ROUNDS+1][4][4];
   public:
     Rijndael();
+    ~Rijndael();
     void Init(bool Encrypt,const byte *key,uint keyLen,const byte *initVector);
     void blockEncrypt(const byte *input, size_t inputLen, byte *outBuffer);
     void blockDecrypt(const byte *input, size_t inputLen, byte *outBuffer);

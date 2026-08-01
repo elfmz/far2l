@@ -460,9 +460,16 @@ uint RecVolumes5::ReadHeader(File *RecFile,bool FirstRev)
 
   if (Raw.Get1()!=1) // Version check.
     return 0;
-  DataCount=Raw.Get2();
-  RecCount=Raw.Get2();
+
+  uint CurDataCount=Raw.Get2();
+  uint CurRecCount=Raw.Get2();
+  if (!FirstRev && (CurDataCount!=DataCount || CurRecCount!=RecCount))
+    return 0;
+
+  DataCount=CurDataCount;
+  RecCount=CurRecCount;
   TotalCount=DataCount+RecCount;
+
   uint RecNum=Raw.Get2(); // Number of recovery volume.
   if (RecNum>=TotalCount || TotalCount>MaxVolumes)
     return 0;

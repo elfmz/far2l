@@ -143,7 +143,7 @@ static bool ExtractUnixLink50(CommandData *Cmd,const wchar *Name,FileHeader *hd)
   // the destination path as a prefix, which can confuse
   // IsRelativeSymlinkSafe algorithm.
   if (!Cmd->AbsoluteLinks && (IsFullPath(TargetW) ||
-      !IsRelativeSymlinkSafe(Cmd,hd->FileName.c_str(),Name,TargetW.c_str())))
+      !IsRelativeSymlinkSafe(Cmd,hd->FileName,Name,TargetW)))
   {
     uiMsg(UIERROR_SKIPUNSAFELINK,hd->FileName,TargetW);
     ErrHandler.SetErrorCode(RARX_WARNING);

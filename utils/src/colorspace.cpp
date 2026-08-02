@@ -493,7 +493,7 @@ ContrastLevel AnazlyzeContrastLevel(const RGB& fg, const RGB& bg) {
     // Thresholds (tweak to taste)
     // --------------------------------------------------------
     bool goodLab   = (dL >= 40.0) || (dE >= 50.0);
-    //bool warnLab   = (dL >= 25.0) || (dE >= 30.0);
+    bool warnLab   = (dL >= 25.0) || (dE >= 30.0);
 
     // for E2000 it will be
 	//   ΔE2000 ≥ 30 → good
@@ -501,7 +501,7 @@ ContrastLevel AnazlyzeContrastLevel(const RGB& fg, const RGB& bg) {
 	//   ΔE2000 < 20 → poor
 
     bool goodWcag  = ratio >= 7.0;
-    //bool warnWcag  = ratio >= 4.5;
+    bool warnWcag  = ratio >= 4.5;
 
     if (goodLab && goodWcag)
         return ContrastLevel::Good;

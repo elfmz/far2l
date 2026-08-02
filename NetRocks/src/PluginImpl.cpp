@@ -75,7 +75,7 @@ public:
 
 PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config, int OpMode)
 {
-	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
+	_cur_dir[0] = _panel_title[0] = _format[0] = _cur_URL[0] = 0;
 
 	_local = std::make_shared<HostLocal>();
 	if (path_is_standalone_config) {
@@ -144,6 +144,7 @@ void PluginImpl::UpdatePathInfo()
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		_cur_URL[0] = 0;
 		if (!_standalone_config.empty()) {
 			tmp = ExtractFileName(_standalone_config);
 

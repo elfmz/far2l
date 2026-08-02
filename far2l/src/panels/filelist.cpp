@@ -3740,18 +3740,20 @@ FARString &FileList::PluginGetURL(const wchar_t *Name, FARString &strDest)
 {
 	OpenPluginInfo Info = {0};
 	CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
+	FARString result;
 	if (Info.CurURL && Info.CurURL[0]) {
-		strDest = Info.CurURL;
+		result = Info.CurURL;
 	} else if (Info.CurDir && Info.CurDir[0]) {
-		strDest = Info.CurDir;
+		result = Info.CurDir;
 	} else {
 		//fprintf(stderr, "Both CurDir and CurURL are empty or null\n");
 	}
 
-	if (!strDest.IsEmpty())
-		AddEndSlash(strDest);
+	if (!result.IsEmpty())
+		AddEndSlash(result);
 
-	strDest += Name;
+	result += Name;
+	strDest = result;
 	return strDest;
 }
 

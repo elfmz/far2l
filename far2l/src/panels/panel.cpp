@@ -837,7 +837,7 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 bool Panel::SetLocation_Directory(const wchar_t *path)
 {
 	if (!FarChDir(path)) {
-		if (CtrlObject->Plugins.ProcessCommandLine(path)) {
+		if (CtrlObject->Plugins.ProcessCommandLine(path, nullptr, true)) {
 			fprintf(stderr, "SetLocation_Directory('%ls') PLUGIN\n", path);
 			return true;
 		}

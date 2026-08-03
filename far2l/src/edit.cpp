@@ -156,8 +156,6 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback)
 
 Edit::~Edit()
 {
-	if (m_LocalSettings && m_LocalSettings->Mask)
-		free(m_LocalSettings->Mask);
 }
 
 Editor *Edit::GetEditorOwner()
@@ -172,10 +170,8 @@ Edit::LocalSettings &Edit::GetLocalSettings()
 {
 	if (!m_LocalSettings) {
 		m_LocalSettings = std::make_unique<LocalSettings>();
-		m_LocalSettings->Mask = nullptr;
 		m_LocalSettings->TabSize = Opt.EdOpt.TabSize;
 		m_LocalSettings->TabExpandMode = EXPAND_NOTABS;
-		m_LocalSettings->strWordDiv = &Opt.strWordDiv;
 		m_LocalSettings->codepage = 0;
 		m_LocalSettings->Color = F_LIGHTGRAY | B_BLACK;
 		m_LocalSettings->SelColor = F_WHITE | B_BLACK;
@@ -232,20 +228,12 @@ int Edit::GetConvertTabs()
 	return m_LocalSettings ? m_LocalSettings->TabExpandMode : EXPAND_NOTABS;
 }
 
-void Edit::SetWordDiv(const FARString &WordDiv)
-{
-	if (auto *editor = GetEditorOwner())
-		editor->SetWordDiv(WordDiv.CPtr());
-	else
-		GetLocalSettings().strWordDiv = &WordDiv;
-}
-
 const wchar_t *Edit::WordDiv()
 {
 	if (auto *editor = GetEditorOwner())
 		return editor->GetWordDiv();
 
-	return m_LocalSettings ? m_LocalSettings->strWordDiv->CPtr() : Opt.strWordDiv.CPtr();
+	return Opt.strWordDiv.CPtr();
 }
 
 void Edit::GetObjectColors(uint64_t &Color, uint64_t &SelColor, uint64_t &ColorUnChanged)
@@ -2148,19 +2136,16 @@ int Edit::GetLength()
 void Edit::SetInputMask(const wchar_t *InputMask)
 {
 	if (!InputMask || !*InputMask) {
-		if (m_LocalSettings && m_LocalSettings->Mask) {
-			free(m_LocalSettings->Mask);
-			m_LocalSettings->Mask = nullptr;
+		if (m_LocalSettings) {
+			m_LocalSettings->Mask.reset();
 		}
 		return;
 	}
 
 	auto &settings = GetLocalSettings();
-	if (settings.Mask)
-		free(settings.Mask);
-	settings.Mask = nullptr;
+	settings.Mask.reset(wcsdup(InputMask));
 
-	if (!(settings.Mask = wcsdup(InputMask)))
+	if (!settings.Mask)
 		return;
 
 	RefreshStrByMask(TRUE);

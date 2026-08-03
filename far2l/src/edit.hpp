@@ -142,10 +142,13 @@ public:
 private:
 	struct LocalSettings
 	{
-		wchar_t *Mask;
+		struct MaskDeleter
+		{
+			void operator()(wchar_t *p) const { free(p); }
+		};
+		std::unique_ptr<wchar_t, MaskDeleter> Mask;
 		int TabSize;
 		int TabExpandMode;
-		const FARString *strWordDiv;
 		UINT codepage;
 		uint64_t Color;
 		uint64_t SelColor;
@@ -283,7 +286,7 @@ public:
 	int GetMaxLength() const;
 
 	void SetInputMask(const wchar_t *InputMask);
-	const wchar_t *GetInputMask() const { return m_LocalSettings ? m_LocalSettings->Mask : nullptr; }
+	const wchar_t *GetInputMask() const { return m_LocalSettings ? m_LocalSettings->Mask.get() : nullptr; }
 
 	void SetOvertypeMode(int Mode) { Flags.Change(FEDITLINE_OVERTYPE, Mode); };
 	int GetOvertypeMode() { return Flags.Check(FEDITLINE_OVERTYPE); };
@@ -319,7 +322,6 @@ public:
 	void SetReadOnly(int NewReadOnly) { Flags.Change(FEDITLINE_READONLY, NewReadOnly); }
 	int GetDropDownBox() { return Flags.Check(FEDITLINE_DROPDOWNBOX); }
 	void SetDropDownBox(int NewDropDownBox) { Flags.Change(FEDITLINE_DROPDOWNBOX, NewDropDownBox); }
-	void SetWordDiv(const FARString &WordDiv);
 	virtual void Changed(bool DelBlock = false);
 };
 

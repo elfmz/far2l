@@ -244,6 +244,8 @@ wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
 	if (ClipText) {
 		wmemcpy(ClipText, (const wchar_t *)ClipData, CharsCount);
 		ClipText[CharsCount] = 0;
+		if (ClipText[0] == L'\xFEFF')
+			wmemmove(ClipText, ClipText + 1, wcslen(ClipText));
 	}
 
 	IsVertical = false;

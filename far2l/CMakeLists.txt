@@ -157,6 +157,7 @@ src/base/InterThreadCall.cpp
 src/base/SafeMMap.cpp
 src/base/farqueue.cpp
 src/base/FARString.cpp
+src/base/EcoString.cpp
 src/base/farrtl.cpp
 src/base/DList.cpp
 

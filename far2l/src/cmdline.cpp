@@ -241,7 +241,7 @@ int ShowMultilinePasteDialog(FARString &text)
 
 CommandLine::CommandLine()
 	:
-	CmdStr(CtrlObject->Cp(), 0, true, CtrlObject->CmdHistory, 0,
+	CmdStr(CtrlObject->Cp(), 0, CtrlObject->CmdHistory, 0,
 			(Opt.CmdLine.AutoComplete ? EditControl::EC_ENABLEAUTOCOMPLETE : 0)
 					| EditControl::EC_ENABLEFNCOMPLETE
 					| EditControl::EC_ENABLEFNCOMPLETE_ESCAPED),

@@ -380,6 +380,8 @@ FileEditor::~FileEditor()
 
 	if (EditMenuBar) delete EditMenuBar;
 	EditMenuBar = nullptr;
+
+	malloc_trim(0); // trim heap to release memory used if huge file was edited
 }
 
 void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t *Title, DWORD InitFlags,

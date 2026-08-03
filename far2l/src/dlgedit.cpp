@@ -137,7 +137,7 @@ DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 					iFlags|= EditControl::EC_ENABLEFNCOMPLETE;
 				}
 			}
-			lineEdit = new EditControl(pOwner, &callback, true, iHistory, iList, iFlags);
+			lineEdit = new EditControl(pOwner, &callback, iHistory, iList, iFlags);
 		} break;
 	}
 }
@@ -644,7 +644,7 @@ int DlgEdit::GetStrSize(int Row)
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->
 	else
-		return lineEdit->StrSize;
+		return lineEdit->Str.Size();
 }
 
 void DlgEdit::SetCursorType(bool Visible, DWORD Size)

@@ -63,7 +63,6 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_PARENT_SINGLELINE = 0x00100000,		// обычная строка ввода в диалоге
 	FEDITLINE_PARENT_MULTILINE  = 0x00200000,		// для будущего Memo-Edit (DI_EDITOR или DIF_MULTILINE)
 	FEDITLINE_PARENT_EDITOR     = 0x00400000,		// "вверху" обычный редактор
-	FEDITLINE_CALLBACKACTIVE    = 0x00800000,
 	FEDITLINE_HASSPECIALWIDTHCHARS = 0x01000000,
 	FEDITLINE_WORDWRAP          = 0x02000000,
 	FEDITLINE_EOLTYPE_MASK      = 0x1c000000,
@@ -119,21 +118,21 @@ class Editor;
 
 bool TranslateInsertKey(FarKey &Key);
 
+class Edit;
+
+struct IEditListener
+{
+	virtual void OnEditChanged(Edit *edit) = 0;
+};
+
+
 class Edit : public ScreenObject
 {
 	friend class DlgEdit;
 	friend class Editor;
 	friend class CommandLine;
 	friend class EditControl;
-
-public:
-	typedef void (*EDITCHANGEFUNC)(void *aParam);
-	struct Callback
-	{
-		bool Active;
-		EDITCHANGEFUNC m_Callback;
-		void *m_Param;
-	};
+	friend class DisableListener;
 
 public:
 	Edit *m_next;
@@ -153,8 +152,7 @@ private:
 		uint64_t Color;
 		uint64_t SelColor;
 		uint64_t ColorUnChanged;
-		EDITCHANGEFUNC CallbackFunc;
-		void *CallbackParam;
+		IEditListener *Listener;
 		int MaxLength;
 		int CursorSize;
 	};
@@ -170,6 +168,32 @@ private:
 	int SelStart;
 	int SelEnd;
 	int CursorPos;
+
+	class DisableListener
+	{
+		Edit &_edit;
+		IEditListener *_saved_listener;
+
+	public:
+		DisableListener(Edit &edit) : _edit(edit), _saved_listener(nullptr)
+		{
+			if (edit.m_LocalSettings) {
+				_saved_listener = edit.m_LocalSettings->Listener;
+				edit.m_LocalSettings->Listener = nullptr;
+			}
+		}
+		void Restore()
+		{
+			if (_saved_listener && _edit.m_LocalSettings && !_edit.m_LocalSettings->Listener) {
+				_edit.m_LocalSettings->Listener = _saved_listener;
+			}
+		}
+		~DisableListener()
+		{
+			Restore();
+		}
+	};
+
 private:
 	virtual void DisplayObject();
 	int InsertKey(FarKey Key);
@@ -212,10 +236,12 @@ protected:
 	int GetVisualLineCount() const;
 	void GetVisualLine(int line, int& start, int& end) const;
 public:
-	Edit(ScreenObject *pOwner = nullptr, Callback *aCallback = nullptr);
+	Edit(ScreenObject *pOwner = nullptr);
 	virtual ~Edit();
 
-public:
+	void SetListener(IEditListener *Listener = nullptr);
+	IEditListener *GetListener();
+
 	DWORD SetCodePage(UINT codepage);	// BUGBUG
 	UINT GetCodePage();					// BUGBUG
 
@@ -359,14 +385,13 @@ public:
 		EC_ENABLEFNCOMPLETE_ESCAPED = 0x4,
 	};
 
-	EditControl(ScreenObject *pOwner = nullptr, Callback *aCallback = nullptr,
-			History *iHistory = 0, FarList *iList = 0, DWORD iFlags = 0);
+	EditControl(ScreenObject *pOwner = nullptr, History *iHistory = 0, FarList *iList = 0, DWORD iFlags = 0);
+
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual int ProcessKey(FarKey Key);
 	virtual void FastShow();
 	virtual void Show();
 	virtual void Changed(bool DelBlock = false);
-	void SetCallbackState(bool Enable) { Flags.Change(FEDITLINE_CALLBACKACTIVE, Enable); }
 
 	void AutoComplete(bool Manual, bool DelBlock);
 	void EnableAC(bool Permanent = false);

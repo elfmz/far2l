@@ -4093,7 +4093,7 @@ bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int Dr
 	int VisualLineEnd = 0;
 	CurLogicalLine->GetVisualLine(VisualLine, VisualLineStart, VisualLineEnd);
 
-	Edit ShowString(this, nullptr);
+	Edit ShowString(this);
 	ShowString.SetEditorMode(true);
 	ShowString.SetEditorParent(true);
 	ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
@@ -8270,7 +8270,7 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	Edit *pEdit = new (std::nothrow) Edit(this, nullptr);
+	Edit *pEdit = new (std::nothrow) Edit(this);
 
 	if (pEdit) {
 		pEdit->SetEditorMode(TRUE);

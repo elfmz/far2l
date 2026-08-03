@@ -108,24 +108,7 @@ bool TranslateInsertKey(FarKey &Key)
 #define EDMASK_ALPHA  L'A'		// позволяет вводить в строку ввода только буквы.
 #define EDMASK_HEX    L'H'		// позволяет вводить в строку ввода шестнадцатиричные символы.
 
-class DisableCallback
-{
-	bool OldState;
-	BitFlags &m_Flags;
-
-public:
-	DisableCallback(BitFlags &Flags)
-		:
-		OldState(Flags.Check(FEDITLINE_CALLBACKACTIVE)),
-		m_Flags(Flags)
-	{
-		m_Flags.Clear(FEDITLINE_CALLBACKACTIVE);
-	}
-	void Restore() { m_Flags.Change(FEDITLINE_CALLBACKACTIVE, OldState); }
-	~DisableCallback() { Restore(); }
-};
-
-Edit::Edit(ScreenObject *pOwner, Callback *aCallback)
+Edit::Edit(ScreenObject *pOwner)
 	:
 	m_next(nullptr),
 	m_prev(nullptr),
@@ -138,14 +121,6 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback)
 	CursorPos(0)
 {
 	SetOwner(pOwner);
-	Flags.Set(FEDITLINE_CALLBACKACTIVE);
-	if (aCallback) {
-		auto &settings = GetLocalSettings();
-		settings.CallbackFunc = aCallback->m_Callback;
-		settings.CallbackParam = aCallback->m_Param;
-		Flags.Change(FEDITLINE_CALLBACKACTIVE, aCallback->Active);
-	}
-
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
 	Flags.Set(FEDITLINE_CURSORVISIBLE);
 	SetEndType(EOL_NONE);
@@ -157,6 +132,17 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback)
 Edit::~Edit()
 {
 }
+
+void Edit::SetListener(IEditListener *Listener)
+{
+	GetLocalSettings().Listener = Listener;
+}
+
+IEditListener *Edit::GetListener()
+{
+	return m_LocalSettings ? m_LocalSettings->Listener : nullptr;
+}
+
 
 Editor *Edit::GetEditorOwner()
 {
@@ -176,8 +162,7 @@ Edit::LocalSettings &Edit::GetLocalSettings()
 		m_LocalSettings->Color = F_LIGHTGRAY | B_BLACK;
 		m_LocalSettings->SelColor = F_WHITE | B_BLACK;
 		m_LocalSettings->ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
-		m_LocalSettings->CallbackFunc = nullptr;
-		m_LocalSettings->CallbackParam = nullptr;
+		m_LocalSettings->Listener = nullptr;
 		m_LocalSettings->MaxLength = -1;
 		m_LocalSettings->CursorSize = -1;
 	}
@@ -1095,13 +1080,13 @@ int Edit::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_CTRLSHIFTBS: {
-			DisableCallback DC(Flags);
+			DisableListener DL(*this);
 
 			// BUGBUG
 			for (int i = CurPos; i >= 0; i--) {
 				RecurseProcessKey(KEY_BS);
 			}
-			DC.Restore();
+			DL.Restore();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1114,7 +1099,7 @@ int Edit::ProcessKey(FarKey Key)
 
 			Lock();
 
-			DisableCallback DC(Flags);
+			DisableListener DL(*this);
 
 			// BUGBUG
 			for (;;) {
@@ -1133,7 +1118,7 @@ int Edit::ProcessKey(FarKey Key)
 			}
 
 			Unlock();
-			DC.Restore();
+			DL.Restore();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1203,7 +1188,7 @@ int Edit::ProcessKey(FarKey Key)
 				return FALSE;
 
 			Lock();
-			DisableCallback DC(Flags);
+			DisableListener DL(*this);
 			if (Mask && *Mask) {
 				int MaskLen = StrLength(Mask);
 				int ptr = CurPos;
@@ -1237,7 +1222,7 @@ int Edit::ProcessKey(FarKey Key)
 			}
 
 			Unlock();
-			DC.Restore();
+			DL.Restore();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1449,7 +1434,7 @@ int Edit::ProcessKey(FarKey Key)
 				return TRUE;
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				DisableCallback DC(Flags);
+				DisableListener DL(*this);
 				DeleteBlock();
 			}
 
@@ -1503,7 +1488,7 @@ int Edit::ProcessKey(FarKey Key)
 					SelStart = PrevSelStart;
 					SelEnd = PrevSelEnd;
 				}
-				DisableCallback DC(Flags);
+				DisableListener DL(*this);
 				DeleteBlock();
 			}
 
@@ -2826,8 +2811,8 @@ void Edit::SetDialogParent(DWORD Sets)
 
 void Edit::Changed(bool DelBlock)
 {
-	if (Flags.Check(FEDITLINE_CALLBACKACTIVE) && m_LocalSettings && m_LocalSettings->CallbackFunc) {
-		m_LocalSettings->CallbackFunc(m_LocalSettings->CallbackParam);
+	if (m_LocalSettings && m_LocalSettings->Listener) {
+		m_LocalSettings->Listener->OnEditChanged(this);
 	}
 }
 
@@ -2921,10 +2906,9 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
-EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, History *iHistory,
-		FarList *iList, DWORD iFlags)
+EditControl::EditControl(ScreenObject *pOwner, History *iHistory, FarList *iList, DWORD iFlags)
 	:
-	Edit(pOwner, aCallback),
+	Edit(pOwner),
 	pCustomCompletionList(nullptr),
 	pHistory(iHistory),
 	pList(iList),
@@ -2975,7 +2959,7 @@ void EditControl::FastShow()
 
 void EditControl::Changed(bool DelBlock)
 {
-	if (Flags.Check(FEDITLINE_CALLBACKACTIVE)) {
+	if (Edit::GetListener()) {
 		Edit::Changed();
 		AutoComplete(false, DelBlock);
 	}
@@ -3124,7 +3108,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 										CurPos--;
 									}
 
-									DisableCallback DC(Flags);
+									DisableListener DL(*this);
 									InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
 									if (X2 - X1 > GetLength())
 										SetLeftPos(0);

@@ -1011,9 +1011,9 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				}
 			}
 
-			DialogEdit->SetCallbackState(false);
+			DialogEdit->SetListening(false);
 			DialogEdit->SetString(CurItem->strData);
-			DialogEdit->SetCallbackState(true);
+			DialogEdit->SetListening(true);
 
 			if (Type == DI_FIXEDIT)
 				DialogEdit->SetCurPos(0);
@@ -1371,9 +1371,9 @@ void Dialog::GetDialogObjectsData()
 						// как бы грязный хак, нам нужно обновить строку чтоб отдавалась правильная строка
 						// для различных DM_* после закрытия диалога, но ни в коем случае нельзя чтоб
 						// высылался DN_EDITCHANGE для этого изменения, ибо диалог уже закрыт.
-						EditPtr->SetCallbackState(false);
+						EditPtr->SetListening(false);
 						EditPtr->SetString(strData);
-						EditPtr->SetCallbackState(true);
+						EditPtr->SetListening(true);
 					}
 
 					CurItem->strData = strData;
@@ -5748,7 +5748,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			INT_PTR I = 0;
 			if (CurItem->Type == DI_EDIT || CurItem->Type == DI_COMBOBOX || CurItem->Type == DI_FIXEDIT
 					|| CurItem->Type == DI_PSWEDIT) {
-				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(false);
+				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(false);
 				const wchar_t *original_PtrData = Item.PtrData;
 				I = Dlg->CallDlgProc(DN_EDITCHANGE, Param1, (LONG_PTR)&Item);
 				if (I) {
@@ -5757,7 +5757,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				}
 				if (original_PtrData)
 					free((void *)original_PtrData);
-				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(true);
+				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(true);
 			}
 
 			return I;
@@ -6064,10 +6064,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			if (CurItem->Type != DI_FIXEDIT && CurItem->Type != DI_EDIT)
 				return 0;
 
-			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(false);
+			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(false);
 			FarDialogItemData IData = {(size_t)StrLength((wchar_t *)Param2), (wchar_t *)Param2};
 			intptr_t rv = SendDlgMessage(hDlg, DM_SETTEXT, Param1, (LONG_PTR)&IData);
-			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(true);
+			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(true);
 
 			return rv;
 		}

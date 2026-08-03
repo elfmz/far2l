@@ -63,6 +63,7 @@ namespace
 		MViewerResultFormat,
 		MNoStandardOutput,
 		MPluginMenu,
+		MMenuFiles,
 	};
 
 	const wchar_t *Msg(MessageId id)
@@ -899,6 +900,24 @@ namespace
 		return g_fsf.LStricmp(left.c_str(), right.c_str()) < 0;
 	}
 
+	std::wstring TransformMenuTitle(const std::vector<std::wstring> &filenames)
+	{
+		std::wstring title = Msg(MTitle);
+		if (filenames.empty()) {
+			return title;
+		}
+		if (filenames.size() != 1) {
+			return title + L": " + std::to_wstring(filenames.size()) + L" " + Msg(MMenuFiles);
+		}
+
+		title += L": ";
+		std::wstring filename = filenames.front();
+		if (const auto separator = filename.find_last_of(L"/\\"); separator != std::wstring::npos) {
+			filename.erase(0, separator + 1);
+		}
+		return title + L'"' + filename + L'"';
+	}
+
 	const Transformer::Transform *ChooseTransform(const Transformer::Config &config,
 		const std::vector<std::wstring> &filenames)
 	{
@@ -968,8 +987,9 @@ namespace
 			item.Text = row.text.c_str();
 			items.emplace_back(item);
 		}
+		const std::wstring title = TransformMenuTitle(filenames);
 		const int selected = g_info.Menu(g_info.ModuleNumber, -1, -1, 0,
-			FMENU_USEEXT | FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT, Msg(MTitle), nullptr, L"Contents", nullptr,
+			FMENU_USEEXT | FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT, title.c_str(), nullptr, L"Contents", nullptr,
 			nullptr, reinterpret_cast<const FarMenuItem *>(items.data()),
 			static_cast<int>(items.size()));
 		return selected >= 0 && selected < static_cast<int>(rows.size())
@@ -1093,14 +1113,14 @@ namespace
 			DCancel,
 		};
 		FarDialogItem items[] = {
-			{DI_DOUBLEBOX, 3, 1, 64, 6, FALSE, {}, DIF_NONE, FALSE, Msg(MSettingsTitle), 0},
+			{DI_DOUBLEBOX, 3, 1, 64, 5, FALSE, {}, DIF_NONE, FALSE, Msg(MSettingsTitle), 0},
 			{DI_CHECKBOX, 5, 2, 0, 2, FALSE, {}, DIF_NONE, FALSE, Msg(MCreateBackups), 0},
 			{DI_TEXT, 0, 3, 0, 3, FALSE, {}, DIF_SEPARATOR, FALSE, L"", 0},
 			{DI_BUTTON, 0, 4, 0, 4, FALSE, {}, DIF_CENTERGROUP, TRUE, Msg(MOk), 0},
 			{DI_BUTTON, 0, 4, 0, 4, FALSE, {}, DIF_CENTERGROUP, FALSE, Msg(MCancel), 0},
 		};
 		items[DBackup].Selected = LoadBackupSetting();
-		HANDLE dialog = g_info.DialogInit(g_info.ModuleNumber, -1, -1, 68, 8, L"Contents",
+		HANDLE dialog = g_info.DialogInit(g_info.ModuleNumber, -1, -1, 68, 7, L"Contents",
 			items, std::size(items), 0, 0, nullptr, 0);
 		if (dialog == INVALID_HANDLE_VALUE) {
 			return;

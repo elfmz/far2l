@@ -425,35 +425,6 @@ static inline mode_t MakeFileMode(struct stat &filestat)
 	return (filestat.st_mode | 0600) & 0777;
 }
 
-static void SetFileOwnerFromTargetOrParent(int fd, const std::string &filename)
-{
-	struct stat owner_stat {};
-	if (stat(filename.c_str(), &owner_stat) == -1) {
-		if (errno != ENOENT)
-			throw std::runtime_error("stat target file failed");
-
-		std::string parent_dir = filename;
-		const size_t slash = parent_dir.rfind(GOOD_SLASH);
-		if (slash == std::string::npos)
-			parent_dir = ".";
-		else if (slash == 0)
-			parent_dir = GOOD_SLASH;
-		else
-			parent_dir.resize(slash);
-
-		if (stat(parent_dir.c_str(), &owner_stat) == -1)
-			throw std::runtime_error("stat target parent directory failed");
-	}
-
-	struct stat temporary_stat {};
-	if (fstat(fd, &temporary_stat) == -1)
-		throw std::runtime_error("stat temporary file failed");
-
-	if ((temporary_stat.st_uid != owner_stat.st_uid || temporary_stat.st_gid != owner_stat.st_gid)
-			&& fchown(fd, owner_stat.st_uid, owner_stat.st_gid) == -1)
-		throw std::runtime_error("set target file owner failed");
-}
-
 static bool LoadKeyFileContent(const std::string &filename, struct stat &filestat, std::string &content)
 {
 	for (size_t load_attempts = 0;; ++load_attempts) {
@@ -784,7 +755,6 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 		if (!fd.Valid()) {
 			throw std::runtime_error("create file failed");
 		}
-		SetFileOwnerFromTargetOrParent(fd, _filename);
 
 		std::string content;
 		KFEscaping esc;

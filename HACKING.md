@@ -148,3 +148,9 @@ which uses a modeless dialog to function.
     ```
 
 * You delete the instance when the handler is called with the `DN_CLOSE` parameter. Remember to set `DM_SETDLGDATA` to null at end.
+
+### Help language:
+* Anchor support in **.hlf** files (since [PR #3437](https://github.com/elfmz/far2l/pull/3437)):
+    - **Define an anchor:** Place `@??anchor_name` on its own line immediately before the target text.
+    - **Standard link:** `~LinkTitle~@TopicId??anchor_name@` scrolls to the specific anchor in a target topic.
+    - **Intra-topic shorthand:** `~LinkTitle~@??anchor_name@` allows for cleaner navigation within the current topic by omitting the `TopicId`.

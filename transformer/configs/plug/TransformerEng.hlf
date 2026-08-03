@@ -53,13 +53,14 @@ the original. Set #Backup=true# to retain the previous contents as
     #Plugins/transformer/plug/formats/*.ini#
 
     Profile-specific files can be placed below the active far2l configuration
-directory (normally #~~/.config/far2l/#):
+directory (normally #~~/.config/far2l/#, the profile root
+in ~far2l is overridden~@:Far2lGettingStarted??ConfigDirs@
+by the command line parameter #far2l -u# or by the #FARSETTINGS# and #XDG_CONFIG_HOME# settings):
 
     #plugins/transformer/transformer.ini#
     #plugins/transformer/formats/*.ini#
 
-    The profile root follows the #FARSETTINGS# and #XDG_CONFIG_HOME# settings
-used by far2l. Format files use ordered, repeatable key sequences. Each #Item#
+    Format files use ordered, repeatable key sequences. Each #Item#
 is the menu label and its following #Command# is the shell command:
 
     #[FileType "JSON"]#

@@ -7,6 +7,7 @@ struct SFTPConnection;
 class ProtocolSFTP : public IProtocol
 {
 	std::shared_ptr<SFTPConnection> _conn;
+	std::string _home; // absolute home dir, resolved once at connect
 
 public:
 	ProtocolSFTP(const std::string &host, unsigned int port, const std::string &username,
@@ -28,6 +29,8 @@ public:
 
 	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target);
 	virtual void SymlinkQuery(const std::string &link_path, std::string &link_target);
+
+	virtual std::string RealPath(const std::string &path);
 
 
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path);

@@ -620,6 +620,19 @@ void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_ta
 	CodepageRemote2Local(link_target);
 }
 
+std::string HostRemote::RealPath(const std::string &path)
+{
+	CheckReady();
+
+	SendCommand(IPC_GET_REAL_PATH);
+	SendString(CodepageLocal2Remote(path));
+	RecvReply(IPC_GET_REAL_PATH);
+	std::string out;
+	RecvString(out);
+	CodepageRemote2Local(out);
+	return out;
+}
+
 ////////////////////////////////////////
 
 

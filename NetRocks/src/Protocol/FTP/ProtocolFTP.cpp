@@ -482,6 +482,11 @@ void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string 
 	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
+std::string ProtocolFTP::RealPath(const std::string &path)
+{
+	return RealPathFromHome(_cwd.home, path);
+}
+
 void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	if (_cmd.mlst != nullptr) {

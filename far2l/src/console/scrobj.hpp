@@ -53,11 +53,9 @@ enum
 class ScreenObject
 {
 protected:
-	SaveScreen *ShadowSaveScr;
 	ScreenObject *pOwner;
 
 public:
-	SaveScreen *SaveScr;
 	static ScreenObject *CaptureMouseObject;
 
 protected:
@@ -67,7 +65,6 @@ protected:
 
 	int nLockCount;
 
-private:
 	virtual void DisplayObject(){};
 
 public:
@@ -96,12 +93,28 @@ public:
 	void SetOwner(ScreenObject *pOwner);
 	ScreenObject *GetOwner();
 
-	void SavePrevScreen();
 	void Redraw();
 	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
 	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
-	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
-	void Shadow(bool Full = false);
 
 	static void SetCapture(ScreenObject *Obj);
 };
+
+class ComplexScreenObject : public ScreenObject
+{
+protected:
+	SaveScreen *ShadowSaveScr = nullptr;
+
+public:
+	SaveScreen *SaveScr = nullptr;
+
+	virtual ~ComplexScreenObject();
+
+	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
+	virtual void Hide();
+	virtual void Show();
+
+	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
+	void Shadow(bool Full = false);
+};
+

@@ -3236,7 +3236,7 @@ case KEY_CTRLNUMPAD3: {
 
 			// CurLine->TableSet ??? => UseDecodeTable?CurLine->TableSet:nullptr !!!
 			if (CalcWordFromString(CurLine->GetStringAddr(), CurPos, &SStart, &SEnd, EdOpt.strWordDiv)) {
-				CurLine->Select(SStart, SEnd + (SEnd < CurLine->StrSize ? 1 : 0));
+				CurLine->Select(SStart, SEnd + (SEnd < CurLine->Str.Size() ? 1 : 0));
 
 				if (CurLine->IsSelection()) {
 					Flags.Set(FEDITOR_MARKINGBLOCK);
@@ -4093,7 +4093,7 @@ bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int Dr
 	int VisualLineEnd = 0;
 	CurLogicalLine->GetVisualLine(VisualLine, VisualLineStart, VisualLineEnd);
 
-	Edit ShowString(this, nullptr, false);
+	Edit ShowString(this);
 	ShowString.SetEditorMode(true);
 	ShowString.SetEditorParent(true);
 	ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
@@ -7928,7 +7928,7 @@ void Editor::Xlat()
 
 			AddUndoData(UNDO_EDIT, CurPtr->GetStringAddr(), CurPtr->GetEOL(), BlockStartLine + Line,
 					CurLine->GetCurPos(), CurPtr->GetLength());
-			::Xlat(CurPtr->Str, TBlockX, TBlockX + CopySize, Opt.XLat.Flags);
+			::Xlat(CurPtr->Str.Ptr(), TBlockX, TBlockX + CopySize, Opt.XLat.Flags);
 		}
 
 		DoXlat = TRUE;
@@ -7954,14 +7954,14 @@ void Editor::Xlat()
 
 				AddUndoData(UNDO_EDIT, CurPtr->GetStringAddr(), CurPtr->GetEOL(), BlockStartLine + Line,
 						CurLine->GetCurPos(), CurPtr->GetLength());
-				::Xlat(CurPtr->Str, StartSel, EndSel, Opt.XLat.Flags);
+				::Xlat(CurPtr->Str.Ptr(), StartSel, EndSel, Opt.XLat.Flags);
 				Line++;
 				CurPtr = CurPtr->m_next;
 			}
 
 			DoXlat = TRUE;
 		} else {
-			wchar_t *Str = CurLine->Str;
+			wchar_t *Str = CurLine->Str.Ptr();
 			int start = CurLine->GetCurPos(), end, StrSize = CurLine->GetLength();	// StrLength(Str);
 			/*
 				$ 10.12.2000 IS
@@ -8270,7 +8270,7 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	Edit *pEdit = new (std::nothrow) Edit(this, nullptr, lpwszStr ? false : true);
+	Edit *pEdit = new (std::nothrow) Edit(this);
 
 	if (pEdit) {
 		pEdit->SetEditorMode(TRUE);

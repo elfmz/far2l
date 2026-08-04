@@ -41,9 +41,7 @@ ScreenObject *ScreenObject::CaptureMouseObject = nullptr;
 
 ScreenObject::ScreenObject()
 	:
-	ShadowSaveScr(nullptr),
 	pOwner(nullptr),
-	SaveScr(nullptr),
 	X1(0),
 	Y1(0),
 	X2(0),
@@ -57,20 +55,6 @@ ScreenObject::ScreenObject()
 
 ScreenObject::~ScreenObject()
 {
-	//  _OT(SysLog(L"[%p] ScreenObject::~ScreenObject()", this));
-	if (!Flags.Check(FSCROBJ_ENABLERESTORESCREEN)) {
-		if (ShadowSaveScr)
-			ShadowSaveScr->Discard();
-
-		if (SaveScr)
-			SaveScr->Discard();
-	}
-
-	if (ShadowSaveScr)
-		delete ShadowSaveScr;
-
-	if (SaveScr)
-		delete SaveScr;
 }
 
 void ScreenObject::Lock()
@@ -103,18 +87,6 @@ ScreenObject *ScreenObject::GetOwner()
 
 void ScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
 {
-	/*
-		$ 13.04.2002 KM
-		- Раз меняем позицию объекта на экране, то тогда
-		перед этим восстановим изображение под ним для
-		предотвращения восстановления ранее сохранённого
-		изображения в новом месте.
-	*/
-	if (SaveScr) {
-		delete SaveScr;
-		SaveScr = nullptr;
-	}
-
 	ScreenObject::X1 = X1;
 	ScreenObject::Y1 = Y1;
 	ScreenObject::X2 = X2;
@@ -144,16 +116,6 @@ void ScreenObject::Hide()
 		return;
 
 	Flags.Clear(FSCROBJ_VISIBLE);
-
-	if (ShadowSaveScr) {
-		delete ShadowSaveScr;
-		ShadowSaveScr = nullptr;
-	}
-
-	if (SaveScr) {
-		delete SaveScr;
-		SaveScr = nullptr;
-	}
 }
 
 /*
@@ -168,32 +130,17 @@ void ScreenObject::Hide0()
 
 void ScreenObject::Show()
 {
-	if (Locked())
-		return;
-
-	//	_tran(SysLog(L"[%p] ScreenObject::Show()",this));
-	if (!Flags.Check(FSCROBJ_SETPOSITIONDONE))
+	if (Locked() || !Flags.Check(FSCROBJ_SETPOSITIONDONE))
 		return;
 
 	//	if (Flags.Check(FSCROBJ_ISREDRAWING))
 	//		return;
 	//	Flags.Set(FSCROBJ_ISREDRAWING);
-	SavePrevScreen();
+	if (Flags.Check(FSCROBJ_SETPOSITIONDONE)) {
+		Flags.Set(FSCROBJ_VISIBLE);
+	}
 	DisplayObject();
 	//	Flags.Clear(FSCROBJ_ISREDRAWING);
-}
-
-void ScreenObject::SavePrevScreen()
-{
-	if (!Flags.Check(FSCROBJ_SETPOSITIONDONE))
-		return;
-
-	if (!Flags.Check(FSCROBJ_VISIBLE)) {
-		Flags.Set(FSCROBJ_VISIBLE);
-
-		if (Flags.Check(FSCROBJ_ENABLERESTORESCREEN) && !SaveScr)
-			SaveScr = new SaveScreen(X1, Y1, X2, Y2);
-	}
 }
 
 void ScreenObject::Redraw()
@@ -203,7 +150,85 @@ void ScreenObject::Redraw()
 		Show();
 }
 
-void ScreenObject::Shadow(bool Full)
+void ScreenObject::SetCapture(ScreenObject *Obj)
+{
+	ScreenObject::CaptureMouseObject = Obj;
+}
+
+///
+ComplexScreenObject::~ComplexScreenObject()
+{
+	//  _OT(SysLog(L"[%p] ScreenObject::~ScreenObject()", this));
+	if (!Flags.Check(FSCROBJ_ENABLERESTORESCREEN)) {
+		if (ShadowSaveScr)
+			ShadowSaveScr->Discard();
+
+		if (SaveScr)
+			SaveScr->Discard();
+	}
+
+	if (ShadowSaveScr)
+		delete ShadowSaveScr;
+
+	if (SaveScr)
+		delete SaveScr;
+}
+
+
+void ComplexScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
+{
+	/*
+		$ 13.04.2002 KM
+		- Раз меняем позицию объекта на экране, то тогда
+		перед этим восстановим изображение под ним для
+		предотвращения восстановления ранее сохранённого
+		изображения в новом месте.
+	*/
+	if (SaveScr) {
+		delete SaveScr;
+		SaveScr = nullptr;
+	}
+	ScreenObject::SetPosition(X1, Y1, X2, Y2);
+}
+
+void ComplexScreenObject::Hide()
+{
+	//  _tran(SysLog(L"[%p] ScreenObject::Hide()",this));
+	if (!Flags.Check(FSCROBJ_VISIBLE))
+		return;
+
+	Flags.Clear(FSCROBJ_VISIBLE);
+
+	if (ShadowSaveScr) {
+		delete ShadowSaveScr;
+		ShadowSaveScr = nullptr;
+	}
+
+	if (SaveScr) {
+		delete SaveScr;
+		SaveScr = nullptr;
+	}
+}
+
+void ComplexScreenObject::Show()
+{
+	if (Locked() || !Flags.Check(FSCROBJ_SETPOSITIONDONE))
+		return;
+
+	//	if (Flags.Check(FSCROBJ_ISREDRAWING))
+	//		return;
+	//	Flags.Set(FSCROBJ_ISREDRAWING);
+	if (Flags.Check(FSCROBJ_SETPOSITIONDONE) && !Flags.Check(FSCROBJ_VISIBLE)) {
+		Flags.Set(FSCROBJ_VISIBLE);
+		if (Flags.Check(FSCROBJ_ENABLERESTORESCREEN) && !SaveScr)
+			SaveScr = new SaveScreen(X1, Y1, X2, Y2);
+	}
+
+	DisplayObject();
+	//	Flags.Clear(FSCROBJ_ISREDRAWING);
+}
+
+void ComplexScreenObject::Shadow(bool Full)
 {
 	if (Flags.Check(FSCROBJ_VISIBLE)) {
 		if (Full) {
@@ -222,7 +247,3 @@ void ScreenObject::Shadow(bool Full)
 	}
 }
 
-void ScreenObject::SetCapture(ScreenObject *Obj)
-{
-	ScreenObject::CaptureMouseObject = Obj;
-}

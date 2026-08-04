@@ -1957,15 +1957,16 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 {
 	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS)) return;
 
+	bool AndTabs = true;
 	if (!CheckStr) {
 		CheckStr = Str.CPtr();
 		Length = Str.Size();
+	} else if (GetConvertTabs() == EXPAND_ALLTABS) {
+		AndTabs = false; // this is a string to be inserted and its tabs gonna be expanded to spaces, so ignore them
 	}
-
 	for (int i = 0; i < Length; ++i) {
-		auto wc = CheckStr[i];
-		if (wc == L'\t' || CharClasses::IsFullWidth(wc)
-						|| CharClasses::IsXxxfix(wc) ) {
+		const auto wc = CheckStr[i];
+		if ( (wc == L'\t' && AndTabs) || CharClasses::IsFullWidth(wc) || CharClasses::IsXxxfix(wc) ) {
 			Flags.Set(FEDITLINE_HASSPECIALWIDTHCHARS);
 			return;
 		}
@@ -2048,11 +2049,10 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		*/
 		RefreshStrByMask(!*Str);
 	} else {
-		if (!this->Str.Assign(Str, Length)) {
+		if (!this->Str.Assign(Str, Length, true)) {
 			fprintf(stderr, "Edit::SetBinaryString: failed to assign to length of %d\n", Length);
 			return;
 		}
-
 		if (GetConvertTabs() == EXPAND_ALLTABS)
 			ExpandTabs();
 
@@ -2060,7 +2060,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		CurPos = this->Str.Size();
 
 		Flags.Clear(FEDITLINE_HASSPECIALWIDTHCHARS);
-		CheckForSpecialWidthChars();
+		CheckForSpecialWidthChars(Str, Length);
 	}
 
 	if (GetWordWrap()) {

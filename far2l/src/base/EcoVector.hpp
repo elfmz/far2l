@@ -74,7 +74,7 @@ public:
 	{
 		if (_content) {
 			resize(0);
-			assert(!_content);
+			ASSERT(!_content);
 		}
 	}
 
@@ -104,7 +104,7 @@ public:
 
 	const T &at(size_t index) const
 	{
-		ASSERT_MSG(index < size(),  "EcoVector[] const: bad %ld while size=%ld\n", (long)index, size());
+		ASSERT_MSG(index < size(),  "EcoVector[]: bad %ld while size=%ld\n", (long)index, size());
 		return _content->data[index];
 	}
 

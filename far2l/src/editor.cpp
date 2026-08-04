@@ -284,8 +284,15 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 Editor::~Editor()
 {
 	//_SVS(SysLog(L"[%p] Editor::~Editor()",this));
+	auto t = GetProcessUptimeMSec();
+	EcoString::sDebugPrintStats("~Editor start");
 	FreeAllocatedData();
 	KeepInitParameters();
+	EcoString::sDebugPrintStats("~Editor finish");
+	t = GetProcessUptimeMSec() - t;
+	if (t > 30) {
+		fprintf(stderr, "~Editor took %lu msec\n", (unsigned long)t);
+	}
 	_KEYMACRO(SysLog(-1));
 	_KEYMACRO(SysLog(L"Editor::~Editor()"));
 }
@@ -8611,4 +8618,18 @@ void Editor::DrawScrollbar()
 		// Ensure XX2 is set even if scrollbar is off, especially for word wrap calculations
 		XX2 = X2;
 	}
+}
+
+void Editor::BeginBulkLoad()
+{
+	m_BulkLoadMode = true;
+	m_BulkLoadStartTime = GetProcessUptimeMSec();
+}
+
+void Editor::EndBulkLoad()
+{
+	m_BulkLoadMode = false;
+	m_LineCountDirty = true;
+	fprintf(stderr, "Editor: bulk load took %lu msec\n", (unsigned long)(GetProcessUptimeMSec() - m_BulkLoadStartTime));
+	EcoString::sDebugPrintStats("loaded");
 }

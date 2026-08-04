@@ -1557,7 +1557,7 @@ struct PluginData
 	DWORD PluginFlags;
 };
 
-int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target)
+int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target, bool AllowPathPrefix)
 {
 	size_t PrefixLength = 0, slash_pos = 0;
 	FARString strPrefix;
@@ -1565,16 +1565,32 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target
 	UnquoteExternal(strCommand);
 	RemoveLeadingSpaces(strCommand);
 
-	std::wstring command(strCommand.CPtr());
-	PrefixLength = command.find(L':');
-	if (PrefixLength == std::wstring::npos)
-		return FALSE;
+	if (AllowPathPrefix) {
+		std::wstring command(strCommand.CPtr());
+		PrefixLength = command.find(L':');
+		if (PrefixLength == std::wstring::npos)
+			return FALSE;
 
-	slash_pos = command.rfind(L'/',PrefixLength);
-	if (slash_pos == std::wstring::npos)
-		strPrefix = command.substr(0, PrefixLength);
-	else
-		strPrefix = command.substr(slash_pos + 1, PrefixLength - slash_pos - 1);
+		slash_pos = command.rfind(L'/', PrefixLength);
+		if (slash_pos == std::wstring::npos)
+			strPrefix = command.substr(0, PrefixLength);
+		else
+			strPrefix = command.substr(slash_pos + 1, PrefixLength - slash_pos - 1);
+	} else {
+		for (;;) {
+			const wchar_t Ch = strCommand.At(PrefixLength);
+			if (!Ch || IsSpace(Ch) || Ch == L'/' || Ch == L'\'' || Ch == L'"' || PrefixLength > 64)
+				return FALSE;
+			if (Ch == L':' && PrefixLength > 0)
+				break;
+			PrefixLength++;
+		}
+
+		strPrefix = FARString(strCommand, PrefixLength);
+	}
+
+	if (strPrefix.IsEmpty())
+		return FALSE;
 	
 	LoadIfCacheAbsent();
 	FARString strPluginPrefix;

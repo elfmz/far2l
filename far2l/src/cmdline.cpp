@@ -398,7 +398,7 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	if (SelectType == 6)
 		Panel = CtrlObject->Cp()->GetAnotherPanel(Panel);
 
-	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel)) {
+	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel, true)) {
 		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(strDir, false)) {
 			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
 			//fprintf(stderr, "=== ChangeDirFromHistory():\n  strDir=\"%ls\"\n  strFile=\"%ls\"\n", strDir.CPtr(), strFile.CPtr());

@@ -55,7 +55,7 @@ enum
 	MODALTYPE_USER,
 };
 
-class Frame : public ComplexScreenObject
+class Frame : public ScreenObject
 {
 	friend class Manager;
 

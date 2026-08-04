@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "savescr.hpp"
 #include "interf.hpp"
 
-ScreenObject::ScreenObject()
+ThinScreenObject::ThinScreenObject()
 	:
 	pOwner(nullptr),
 	X1(0),
@@ -48,19 +48,19 @@ ScreenObject::ScreenObject()
 	ObjHeight(0),
 	nLockCount(0)
 {
-	//  _OT(SysLog(L"[%p] ScreenObject::ScreenObject()", this));
+	//  _OT(SysLog(L"[%p] ThinScreenObject::ThinScreenObject()", this));
 }
 
-ScreenObject::~ScreenObject()
+ThinScreenObject::~ThinScreenObject()
 {
 }
 
-void ScreenObject::Lock()
+void ThinScreenObject::Lock()
 {
 	nLockCount++;
 }
 
-void ScreenObject::Unlock()
+void ThinScreenObject::Unlock()
 {
 	if (nLockCount > 0)
 		nLockCount--;
@@ -68,48 +68,48 @@ void ScreenObject::Unlock()
 		nLockCount = 0;
 }
 
-bool ScreenObject::Locked()
+bool ThinScreenObject::Locked()
 {
 	return (nLockCount > 0) || (pOwner ? pOwner->Locked() : false);
 }
 
-void ScreenObject::SetOwner(ScreenObject *pOwner)
+void ThinScreenObject::SetOwner(ThinScreenObject *pOwner)
 {
-	ScreenObject::pOwner = pOwner;
+	ThinScreenObject::pOwner = pOwner;
 }
 
-ScreenObject *ScreenObject::GetOwner()
+ThinScreenObject *ThinScreenObject::GetOwner()
 {
 	return pOwner;
 }
 
-void ScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
+void ThinScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
 {
-	ScreenObject::X1 = X1;
-	ScreenObject::Y1 = Y1;
-	ScreenObject::X2 = X2;
-	ScreenObject::Y2 = Y2;
+	ThinScreenObject::X1 = X1;
+	ThinScreenObject::Y1 = Y1;
+	ThinScreenObject::X2 = X2;
+	ThinScreenObject::Y2 = Y2;
 	ObjWidth = X2 - X1 + 1;
 	ObjHeight = Y2 - Y1 + 1;
 	Flags.Set(FSCROBJ_SETPOSITIONDONE);
 }
 
-void ScreenObject::SetScreenPosition()
+void ThinScreenObject::SetScreenPosition()
 {
 	Flags.Clear(FSCROBJ_SETPOSITIONDONE);
 }
 
-void ScreenObject::GetPosition(int &X1, int &Y1, int &X2, int &Y2)
+void ThinScreenObject::GetPosition(int &X1, int &Y1, int &X2, int &Y2)
 {
-	X1 = ScreenObject::X1;
-	Y1 = ScreenObject::Y1;
-	X2 = ScreenObject::X2;
-	Y2 = ScreenObject::Y2;
+	X1 = ThinScreenObject::X1;
+	Y1 = ThinScreenObject::Y1;
+	X2 = ThinScreenObject::X2;
+	Y2 = ThinScreenObject::Y2;
 }
 
-void ScreenObject::Hide()
+void ThinScreenObject::Hide()
 {
-	//  _tran(SysLog(L"[%p] ScreenObject::Hide()",this));
+	//  _tran(SysLog(L"[%p] ThinScreenObject::Hide()",this));
 	if (!Flags.Check(FSCROBJ_VISIBLE))
 		return;
 
@@ -120,13 +120,13 @@ void ScreenObject::Hide()
 	$ 15.07.2000 tran
 	add ugly new method
 */
-void ScreenObject::Hide0()
+void ThinScreenObject::Hide0()
 {
 	Flags.Clear(FSCROBJ_VISIBLE);
 }
 /* tran 15.07.2000 $ */
 
-void ScreenObject::Show()
+void ThinScreenObject::Show()
 {
 	if (Locked() || !Flags.Check(FSCROBJ_SETPOSITIONDONE))
 		return;
@@ -141,17 +141,17 @@ void ScreenObject::Show()
 	//	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
-void ScreenObject::Redraw()
+void ThinScreenObject::Redraw()
 {
-	//  _tran(SysLog(L"[%p] ScreenObject::Redraw()",this));
+	//  _tran(SysLog(L"[%p] ThinScreenObject::Redraw()",this));
 	if (Flags.Check(FSCROBJ_VISIBLE))
 		Show();
 }
 
 ///
-ComplexScreenObject::~ComplexScreenObject()
+ScreenObject::~ScreenObject()
 {
-	//  _OT(SysLog(L"[%p] ScreenObject::~ScreenObject()", this));
+	//  _OT(SysLog(L"[%p] ThinScreenObject::~ThinScreenObject()", this));
 	if (!Flags.Check(FSCROBJ_ENABLERESTORESCREEN)) {
 		if (ShadowSaveScr)
 			ShadowSaveScr->Discard();
@@ -168,7 +168,7 @@ ComplexScreenObject::~ComplexScreenObject()
 }
 
 
-void ComplexScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
+void ScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
 {
 	/*
 		$ 13.04.2002 KM
@@ -181,12 +181,12 @@ void ComplexScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
 		delete SaveScr;
 		SaveScr = nullptr;
 	}
-	ScreenObject::SetPosition(X1, Y1, X2, Y2);
+	ThinScreenObject::SetPosition(X1, Y1, X2, Y2);
 }
 
-void ComplexScreenObject::Hide()
+void ScreenObject::Hide()
 {
-	//  _tran(SysLog(L"[%p] ScreenObject::Hide()",this));
+	//  _tran(SysLog(L"[%p] ThinScreenObject::Hide()",this));
 	if (!Flags.Check(FSCROBJ_VISIBLE))
 		return;
 
@@ -203,7 +203,7 @@ void ComplexScreenObject::Hide()
 	}
 }
 
-void ComplexScreenObject::Show()
+void ScreenObject::Show()
 {
 	if (Locked() || !Flags.Check(FSCROBJ_SETPOSITIONDONE))
 		return;
@@ -221,7 +221,7 @@ void ComplexScreenObject::Show()
 	//	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
-void ComplexScreenObject::Shadow(bool Full)
+void ScreenObject::Shadow(bool Full)
 {
 	if (Flags.Check(FSCROBJ_VISIBLE)) {
 		if (Full) {

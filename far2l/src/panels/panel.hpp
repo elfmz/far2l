@@ -132,7 +132,7 @@ class VMenu;
 class Edit;
 struct PanelMenuItem;
 
-class Panel : public ComplexScreenObject
+class Panel : public ScreenObject
 {
 protected:
 	FARString strCurDir;

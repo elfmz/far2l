@@ -126,7 +126,7 @@ struct IEditListener
 };
 
 
-class Edit : public ScreenObject
+class Edit : public ThinScreenObject
 {
 	friend class DlgEdit;
 	friend class Editor;

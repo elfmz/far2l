@@ -50,10 +50,10 @@ enum
 	FSCROBJ_ISREDRAWING         = 0x00000008,		// идет процесс Show?
 };
 
-class ScreenObject
+class ThinScreenObject
 {
 protected:
-	ScreenObject *pOwner;
+	ThinScreenObject *pOwner;
 
 protected:
 	BitFlags Flags;
@@ -65,8 +65,8 @@ protected:
 	virtual void DisplayObject(){};
 
 public:
-	ScreenObject();
-	virtual ~ScreenObject();
+	ThinScreenObject();
+	virtual ~ThinScreenObject();
 
 public:
 	virtual int ProcessKey(FarKey Key) { return 0; };
@@ -87,15 +87,15 @@ public:
 	void Unlock();
 	bool Locked();
 
-	void SetOwner(ScreenObject *pOwner);
-	ScreenObject *GetOwner();
+	void SetOwner(ThinScreenObject *pOwner);
+	ThinScreenObject *GetOwner();
 
 	void Redraw();
 	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
 	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
 };
 
-class ComplexScreenObject : public ScreenObject
+class ScreenObject : public ThinScreenObject
 {
 protected:
 	SaveScreen *ShadowSaveScr = nullptr;
@@ -103,7 +103,7 @@ protected:
 public:
 	SaveScreen *SaveScr = nullptr;
 
-	virtual ~ComplexScreenObject();
+	virtual ~ScreenObject();
 
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 	virtual void Hide();

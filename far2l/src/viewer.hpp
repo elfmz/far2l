@@ -83,7 +83,7 @@ enum SHOW_MODES
 	SHOW_DOWN
 };
 
-class Viewer : public ComplexScreenObject
+class Viewer : public ScreenObject
 {
 	friend class FileViewer;
 

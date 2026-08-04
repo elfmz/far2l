@@ -344,6 +344,9 @@ int64_t CommandLine::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 
 void CommandLine::ProcessTabCompletion()
 {
+	if (CtrlObject->Cp()->ActivePanel->GetMode() == PLUGIN_PANEL)
+		  return;	// silent workaround for https://github.com/elfmz/far2l/issues/3485
+
 	FARString strStr;
 	CmdStr.GetString(strStr);
 	// show all possibilities on double tab on same input string

@@ -87,7 +87,7 @@ static class Edit2Settings
 public:
 	void Dismiss(const Edit *edit)
 	{
-		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS)) {
+		if (edit->Flags.Check(FEDITLINE_LOCAL_SETTINGS)) {
 			if (!_m.erase(edit)) {
 				fprintf(stderr, "Could not dismiss local edit settings\n");
 			}
@@ -96,7 +96,7 @@ public:
 
 	const LocalSettings *Get(const Edit *edit) const
 	{
-		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS)) {
+		if (edit->Flags.Check(FEDITLINE_LOCAL_SETTINGS)) {
 			if (auto it = _m.find(edit); it != _m.end()) {
 				return &it->second;
 			}
@@ -106,10 +106,10 @@ public:
 
 	LocalSettings *Get(Edit *edit, bool ensure = false)
 	{
-		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS) || ensure) {
+		if (edit->Flags.Check(FEDITLINE_LOCAL_SETTINGS) || ensure) {
 			auto ir = _m.emplace(edit, LocalSettings());
 			if (ir.second) {
-				edit->Flags.Set(FEDITLINE_MY_SETTINGS);
+				edit->Flags.Set(FEDITLINE_LOCAL_SETTINGS);
 				if (_m.size() < 0x10 || _m.size() == 0x80 || _m.size() == 0x100 || (_m.size() & 0xffff) == 0x1000) {
 					fprintf(stderr, "Local edit settings count %lu\n", (unsigned long)_m.size());
 				}
@@ -120,6 +120,34 @@ public:
 	}
 
 } s_e2s;
+
+
+class PauseEditListener
+{
+	Edit *_edit;
+	IEditListener *_saved_listener;
+public:
+	PauseEditListener(Edit &edit) : _edit(&edit), _saved_listener(nullptr)
+	{
+		if (auto *s = s_e2s.Get(_edit)) {
+			_saved_listener = s->Listener;
+			s->Listener = nullptr;
+		}
+	}
+	~PauseEditListener()
+	{
+		Resume();
+	}
+	void Resume()
+	{
+		if (_saved_listener) {
+			if (auto *s = s_e2s.Get(_edit); s && !s->Listener) {
+				s->Listener = _saved_listener;
+			}
+		}
+	}
+};
+
 
 static std::vector<wchar_t> s_render_buffer;
 
@@ -1148,13 +1176,13 @@ int Edit::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_CTRLSHIFTBS: {
-			DisableListener DL(*this);
+			PauseEditListener pel(*this);
 
 			// BUGBUG
 			for (int i = CurPos; i >= 0; i--) {
 				RecurseProcessKey(KEY_BS);
 			}
-			DL.Restore();
+			pel.Resume();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1167,7 +1195,7 @@ int Edit::ProcessKey(FarKey Key)
 
 			Lock();
 
-			DisableListener DL(*this);
+			PauseEditListener pel(*this);
 
 			// BUGBUG
 			for (;;) {
@@ -1186,7 +1214,7 @@ int Edit::ProcessKey(FarKey Key)
 			}
 
 			Unlock();
-			DL.Restore();
+			pel.Resume();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1256,7 +1284,7 @@ int Edit::ProcessKey(FarKey Key)
 				return FALSE;
 
 			Lock();
-			DisableListener DL(*this);
+			PauseEditListener pel(*this);
 			if (Mask && *Mask) {
 				int MaskLen = StrLength(Mask);
 				int ptr = CurPos;
@@ -1290,7 +1318,7 @@ int Edit::ProcessKey(FarKey Key)
 			}
 
 			Unlock();
-			DL.Restore();
+			pel.Resume();
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1502,7 +1530,7 @@ int Edit::ProcessKey(FarKey Key)
 				return TRUE;
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				DisableListener DL(*this);
+				PauseEditListener pel(*this);
 				DeleteBlock();
 			}
 
@@ -1556,7 +1584,7 @@ int Edit::ProcessKey(FarKey Key)
 					SelStart = PrevSelStart;
 					SelEnd = PrevSelEnd;
 				}
-				DisableListener DL(*this);
+				PauseEditListener pel(*this);
 				DeleteBlock();
 			}
 
@@ -2977,28 +3005,6 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
-Edit::DisableListener::DisableListener(Edit &edit) : _edit(edit), _saved_listener(nullptr)
-{
-	if (auto *s = s_e2s.Get(&edit)) {
-		_saved_listener = s->Listener;
-		s->Listener = nullptr;
-	}
-}
-
-Edit::DisableListener::~DisableListener()
-{
-	Restore();
-}
-
-void Edit::DisableListener::Restore()
-{
-	if (_saved_listener) {
-		if (auto *s = s_e2s.Get(&_edit); s && !s->Listener) {
-			s->Listener = _saved_listener;
-		}
-	}
-}
-
 ////
 static struct DummyEditListener : IEditListener
 {
@@ -3208,7 +3214,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 										CurPos--;
 									}
 
-									DisableListener DL(*this);
+									PauseEditListener pel(*this);
 									InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
 									if (X2 - X1 > GetLength())
 										SetLeftPos(0);

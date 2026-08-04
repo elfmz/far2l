@@ -64,7 +64,7 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_PARENT_SINGLELINE = 0x00100000,		// обычная строка ввода в диалоге
 	FEDITLINE_PARENT_MULTILINE  = 0x00200000,		// для будущего Memo-Edit (DI_EDITOR или DIF_MULTILINE)
 	FEDITLINE_PARENT_EDITOR     = 0x00400000,		// "вверху" обычный редактор
-	FEDITLINE_MY_SETTINGS       = 0x00800000,		// has own instance of settings
+	FEDITLINE_LOCAL_SETTINGS    = 0x00800000,		// has own instance of settings
 	FEDITLINE_HASSPECIALWIDTHCHARS = 0x01000000,
 	FEDITLINE_WORDWRAP          = 0x02000000,
 	FEDITLINE_EOLTYPE_MASK      = 0x1c000000,
@@ -134,7 +134,7 @@ class Edit : public ThinScreenObject
 	friend class Editor;
 	friend class CommandLine;
 	friend class EditControl;
-	friend class DisableListener;
+	friend class PauseEditListener;
 	friend class Edit2Settings;
 
 public:
@@ -153,17 +153,6 @@ private:
 	int SelStart;
 	int SelEnd;
 	int CursorPos;
-
-	class DisableListener
-	{
-		Edit &_edit;
-		IEditListener *_saved_listener;
-
-	public:
-		DisableListener(Edit &edit);
-		~DisableListener();
-		void Restore();
-	};
 
 private:
 	virtual void DisplayObject();

@@ -3,7 +3,7 @@
 
 @Contents
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Contents#
  The #OpenWith# plugin provides a context menu to open the selected file(s) with a suitable application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin uses native OS mechanisms: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
@@ -22,7 +22,7 @@ $^#Contents#
 
 @DetailsDialog
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Details Dialog (F3)#
  Displays comprehensive technical information about the selected file(s), the highlighted application, and the exact command that will be used to launch it. Accessible by pressing #F3# in the application selection menu.
@@ -35,10 +35,10 @@ $^#Details Dialog (F3)#
  #-# Filepaths
    The full (absolute) paths to the selected files, formatted as a semicolon-separated list.
 
- #-# MIME profiles
-   The file type(s) detected by the plugin. For multiple files, all unique detected profiles are shown. Format depends on the OS:
+ #-# File types
    #Linux/BSD#: "Raw" results from all detection methods (xdg-mime, file, etc) enabled in the ~configuration dialog~@ConfigurationDialog@. If tools disagree on the same file, the results are combined into a semicolon‑separated list: "(text/plain;application/x-shellscript)".
-   #macOS#: The MIME type corresponding to the file's system UTI.
+   #macOS#: The MIME type corresponding to the system UTI, or the UTI itself if the option "Show UTI instead of MIME types" is enabled in the ~configuration dialog~@ConfigurationDialog@.
+   For multiple files, all unique combinations of detected types are shown.
 
  #-# Launch command
    The final command line that will be executed if you press #Enter# or ~Shift+Enter~@ShiftEnter@.
@@ -106,28 +106,39 @@ $^#Details Dialog (F3)#
    Jumps to the file "mimeapps.list" or "mimeinfo.cache" from which the association was retrieved. Hidden when multiple files are selected, when the application was found by a full scan of .desktop files, or via 'xdg-mime query default'.
 
 
- #2.2. macOS Application Details#
-
- #-# Name
-   The application's display name from its bundle information.
+ #2.2.1. macOS Application Details#
 
  #-# Location
    The full path to the application bundle (e.g., "/Applications/TextEdit.app").
 
- #-# Executable
-   The name of the main executable file inside the application bundle.
+ #-# Bundle display name
+   The user-visible name for the bundle, used by Siri.
 
- #-# Version
-   The user-visible version string of the application (e.g., "1.14").
+ #-# Bundle name
+   A user-visible short name for the bundle.
 
- #-# Build Version
-   The internal build or bundle version (e.g., "329").
+ #-# Bundle short version
+   The release or version number of the bundle, formatted as three period-separated integers representing [Major].[Minor].[Patch] (e.g., "10.14.1"). Used throughout the system to identify the bundle version.
+
+ #-# Bundle version
+   A machine-readable string composed of one to three period-separated integers (e.g., "10.14.1" or abbreviated as "10.5") that identifies an iteration of the bundle. Required by the App Store and used throughout the system to identify the version of the build.
+
+ #-# Bundle executable
+   The name of the bundle’s executable file. macOS uses this key to locate the executable in cases where the user renames the app or bundle directory.
+
+ #-# Bundle identifier
+   A case-insensitive string of alphanumeric characters, hyphens, and periods — typically in a reverse-DNS format — that uniquely identifies a single app throughout the system. The operating system and Launch Services use this identifier to apply preferences, locate apps capable of opening specific files, and validate app signatures.
+
+ #2.2.2. macOS Actions#
+
+ #-# "GoTo bundle location" button
+   Jumps to the bundle folder in the active panel.
 
    ~Contents~@Contents@
 
 @ConfigurationDialog
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Configuration Dialog (F9)#
  Allows you to customize the plugin's behavior. Accessible via ~Main menu~@:Menus@ → ~Options~@:OptMenu@ → ~Plugins Configuration~@:PluginsConfig@ (#Alt+Shift+F9#), and by pressing #F9# in the application selection menu.
@@ -219,13 +230,20 @@ $^#Configuration Dialog (F9)#
 
  #2.2. macOS Settings#
 
- There are no platform‑specific settings for macOS. The plugin uses the native Launch Services framework and requires no additional configuration. Launch Services centrally and automatically manages application‑to‑document bindings and maintains a database of installed apps and their Uniform Type Identifiers (UTIs).
+ #-# Show UTI instead of MIME types
+   Display the native Uniform Type Identifier (UTI) instead of the derived MIME type in the ~Details dialog~@DetailsDialog@ and error messages.
+
+ #-# Respect system ranking
+   Apply the Launch Services rating when sorting candidates: after default handlers, applications deemed more suitable by the system are placed higher.
+
+ #-# Disable ranking and sort alphabetically
+   Override the complex ranking logic and list the applications strictly by name.
 
    ~Contents~@Contents@
 
 @Tips
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
     #1.# To quickly invoke the plugin, you can use a ~macro~@:KeyMacro@, assigning it to any shortcut of your choice — for example, the "#≣ Menu#"/"#Apps#" key:
@@ -260,7 +278,7 @@ $^#Tips & tricks#
 
 @Troubleshooting
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Troubleshooting#
  #Why do I get the error "No applications found" when selecting multiple files?#
@@ -352,7 +370,7 @@ $^#Troubleshooting#
 
 @ShiftEnter
 $^#OpenWith plugin#
-$^#Version 1.2#
+$^#Version 1.3#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Forced launch mode (Shift+Enter)#
  The effect of pressing #Shift+Enter# in the ~menu~@Contents@ depends on the currently selected application:

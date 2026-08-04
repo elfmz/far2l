@@ -26,6 +26,7 @@ src/EditorConfigOrg.cpp
 src/execute.cpp
 src/farwinapi.cpp
 src/fileattr.cpp
+src/filediff.cpp
 src/fileedit.cpp
 src/fileedit2options.cpp
 src/filefilter.cpp
@@ -156,6 +157,7 @@ src/base/InterThreadCall.cpp
 src/base/SafeMMap.cpp
 src/base/farqueue.cpp
 src/base/FARString.cpp
+src/base/EcoString.cpp
 src/base/farrtl.cpp
 src/base/DList.cpp
 

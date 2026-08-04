@@ -437,16 +437,19 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 
 			} else if (CharClasses::IsSuffix(*sm.str)) {
 				out = 0;
-				if (*sm.str == CharClasses::VARIATION_SELECTOR_16) {
-					// The previous character should be rendered as an image
-					out = 1;
-					needs_trailing_blank=true;
-				}
 				if (!readPrevChar(ch)) {
 					return false;
 				}
 				pos = _prev_pos;
 				std::wstring tmp  = extractString(ch);
+				if (*sm.str == CharClasses::VARIATION_SELECTOR_16
+						&& tmp.find(CharClasses::ZERO_WIDTH_JOINER) == std::wstring::npos) {
+					// A standalone VS16 changes its preceding narrow character into a
+					// two-cell emoji.  A ZWJ sequence has already reserved the width of
+					// its first character, so advancing here would widen the cluster.
+					out = 1;
+					needs_trailing_blank = true;
+				}
 				tmp+= *sm.str;
 				CI_SET_COMPOSITE(ch, tmp.c_str());
 			} else if (*sm.str == L'\t' && (_mode & ENABLE_PROCESSED_OUTPUT) != 0) {

@@ -25,6 +25,8 @@ UIASKREP_RESULT uiAskReplaceEx(CommandData *Cmd,std::wstring &Name,int64 FileSiz
 
   if (Choice==UIASKREP_R_REPLACE || Choice==UIASKREP_R_REPLACEALL)
   {
+    // When processing a symlink, it clears the symlink attributes and not
+    // target attributes, so we can delete the symlink below.
     PrepareToDelete(Name);
 
     // Overwrite the link itself instead of its target.

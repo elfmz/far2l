@@ -52,6 +52,7 @@ HSL toHSL(double h, double s, double l);
 
 const char* contrastToString(ContrastLevel lvl);
 ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg);
+ContrastLevel AnazlyzeContrastLevel(const RGB& fg, const RGB& bg);
 RGB ComputeRaiseColor_HSL(const RGB& bg, const RGB& line);
 RGB ComputeRaiseColor_LAB(const RGB& bg, const RGB& line);
 HoverResult ComputeHoverColors(const RGB& bg, const RGB& fg);

@@ -107,107 +107,134 @@ namespace openwith
 	}
 
 
-	std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths_wide)
+	AppProvider::GetCandidatesResult XDGBasedAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths_wide, ProgressCallback progress,
+															  const std::atomic<bool>* cancel_flag)
 	{
 		if (filepaths_wide.empty()) {
 			return {};
 		}
 
-		_desktop_id_to_desktop_entry_cache.clear();
-		_last_association_facts.clear();
-		_last_unique_mime_profiles.clear();
-		OperationContext op_context(*this);
+		ClearLastQueryCaches();
+		OperationGuard op_guard(*this, std::move(progress), cancel_flag);
 
-		CandidateMap final_candidates;
+		try {
+			OperationContext op_context(*this);
+			CandidateMap final_candidates;
 
-		if (filepaths_wide.size() == 1) {
+			if (filepaths_wide.size() == 1) {
 
-			// --- Single file logic ---
+				// --- Single file logic ---
 
-			auto profile = GetRawMimeProfile(StrWide2MB(filepaths_wide[0]));
-			_last_unique_mime_profiles.insert(profile);
-			auto expanded_mimes = ExpandAndPrioritizeMimeTypes(profile);
-			final_candidates = DiscoverCandidatesForExpandedMimes(expanded_mimes);
+				ReportProgress({GetMsg(MsgID::IdentifyingMimes), GetMsg(MsgID::PleaseWait)});
 
-		} else {
+				auto profile = GetRawMimeProfile(StrWide2MB(filepaths_wide[0]));
+				_last_unique_mime_profiles.insert(profile);
 
-			// --- Multiple files intersection logic ---
+				ReportProgress({GetMsg(MsgID::DiscoveringApplications), GetMsg(MsgID::MatchingFilteringRanking)});
+				CheckCancellation();
 
-			// 1. Profile Deduplication. Group N files into K unique MIME profiles.
-			for (const auto& filepath_wide : filepaths_wide) {
-				_last_unique_mime_profiles.insert(GetRawMimeProfile(StrWide2MB(filepath_wide)));
-			}
+				auto expanded_mimes = ExpandAndPrioritizeMimeTypes(profile);
+				final_candidates = DiscoverCandidatesForExpandedMimes(expanded_mimes);
 
-			// 2. Candidate gathering. Resolve applications for each unique profile.
-			std::unordered_map<RawMimeProfile, CandidateMap, RawMimeProfile::Hash> raw_mime_profile_to_candidate_map;
-			if (_last_unique_mime_profiles.empty()) {
-				return {};
-			}
-			for (const auto& profile : _last_unique_mime_profiles) {
-				auto expanded_mimes_for_profile = ExpandAndPrioritizeMimeTypes(profile);
-				auto candidates_for_profile = DiscoverCandidatesForExpandedMimes(expanded_mimes_for_profile);
-				// Fail-fast: If one profile has no handlers, the intersection for all files is empty.
-				if (candidates_for_profile.empty()) {
+			} else {
+
+				// --- Multiple files intersection logic ---
+
+				const size_t files_total = filepaths_wide.size();
+				size_t files_processed = 0;
+
+				// 1. Profile Deduplication. Group N files into K unique MIME profiles.
+
+				ReportProgress({GetMsg(MsgID::IdentifyingMimes), GetMsg(MsgID::PleaseWait)});
+
+				for (const auto& filepath_wide : filepaths_wide) {
+					wchar_t status_buf[256];
+					swprintf(status_buf, std::size(status_buf), GetMsg(MsgID::ProcessingFiles), ++files_processed, files_total);
+					ReportProgress({nullptr, status_buf});
+					CheckCancellation();
+
+					_last_unique_mime_profiles.insert(GetRawMimeProfile(StrWide2MB(filepath_wide)));
+				}
+
+				// 2. Candidate gathering. Resolve applications for each unique profile.
+				std::unordered_map<RawMimeProfile, CandidateMap, RawMimeProfile::Hash> raw_mime_profile_to_candidate_map;
+				if (_last_unique_mime_profiles.empty()) {
 					return {};
 				}
-				raw_mime_profile_to_candidate_map.try_emplace(profile, std::move(candidates_for_profile));
-			}
 
-			// 3. Intersection. Find common applications that exist in ALL profiles.
+				ReportProgress({GetMsg(MsgID::DiscoveringApplications), GetMsg(MsgID::MatchingFilteringRanking)});
 
-			// 3a. Optimization.
-			// Start with the most restrictive set to minimize lookups and removals.
-			auto smallest_set_it = _last_unique_mime_profiles.begin();
-			size_t min_size = raw_mime_profile_to_candidate_map.at(*smallest_set_it).size();
-			for (auto it = std::next(smallest_set_it); it != _last_unique_mime_profiles.end(); ++it) {
-				size_t current_size = raw_mime_profile_to_candidate_map.at(*it).size();
-				if (current_size < min_size) {
-					min_size = current_size;
-					smallest_set_it = it;
+				for (const auto& profile : _last_unique_mime_profiles) {
+					CheckCancellation();
+					auto expanded_mimes_for_profile = ExpandAndPrioritizeMimeTypes(profile);
+					auto candidates_for_profile = DiscoverCandidatesForExpandedMimes(expanded_mimes_for_profile);
+					// Fail-fast: If one profile has no handlers, the intersection for all files is empty.
+					if (candidates_for_profile.empty()) {
+						return {};
+					}
+					raw_mime_profile_to_candidate_map.try_emplace(profile, std::move(candidates_for_profile));
 				}
-			}
 
-			// 3b. Establish the baseline survivors set.
-			const RawMimeProfile base_profile = *smallest_set_it;
-			// std::move is safe because we explicitly skip 'base_profile' in the filtering loop below.
-			final_candidates = std::move(raw_mime_profile_to_candidate_map.at(base_profile));
+				// 3. Intersection. Find common applications that exist in ALL profiles.
 
-			// 3c. Filter survivors against other profiles.
-			for (const auto& filter_profile : _last_unique_mime_profiles) {
-				if (filter_profile == base_profile) {
-					continue;
-				}
-				const CandidateMap& filter_candidates = raw_mime_profile_to_candidate_map.at(filter_profile);
-				for (auto survivor_it = final_candidates.begin(); survivor_it != final_candidates.end(); ) {
-					const auto& survivor_key = survivor_it->first;
-					auto& survivor_candidate = survivor_it->second;
-					auto filter_match_it = filter_candidates.find(survivor_key);
-					if (filter_match_it == filter_candidates.end()) {
-						// The app is missing in the filter profile, so it cannot handle all files.
-						// It fails the intersection test -> remove it.
-						survivor_it = final_candidates.erase(survivor_it);
-					} else {
-						// The app exists in both lists. It survives this round.
-						// Check if the match in the filter profile offers a better (higher) rank.
-						const RankedCandidate& filter_candidate = filter_match_it->second;
-						if (filter_candidate.rank > survivor_candidate.rank) {
-							survivor_candidate.rank = filter_candidate.rank;
-						}
-						++survivor_it;
+				// 3a. Optimization.
+				// Start with the most restrictive set to minimize lookups and removals.
+				auto smallest_set_it = _last_unique_mime_profiles.begin();
+				size_t min_size = raw_mime_profile_to_candidate_map.at(*smallest_set_it).size();
+				for (auto it = std::next(smallest_set_it); it != _last_unique_mime_profiles.end(); ++it) {
+					size_t current_size = raw_mime_profile_to_candidate_map.at(*it).size();
+					if (current_size < min_size) {
+						min_size = current_size;
+						smallest_set_it = it;
 					}
 				}
-				if (final_candidates.empty()) {
-					return {};
+
+				// 3b. Establish the baseline survivors set.
+				const RawMimeProfile base_profile = *smallest_set_it;
+				// std::move is safe because we explicitly skip 'base_profile' in the filtering loop below.
+				final_candidates = std::move(raw_mime_profile_to_candidate_map.at(base_profile));
+
+				// 3c. Filter survivors against other profiles.
+				for (const auto& filter_profile : _last_unique_mime_profiles) {
+					if (filter_profile == base_profile) {
+						continue;
+					}
+					const CandidateMap& filter_candidates = raw_mime_profile_to_candidate_map.at(filter_profile);
+					for (auto survivor_it = final_candidates.begin(); survivor_it != final_candidates.end(); ) {
+						const auto& survivor_key = survivor_it->first;
+						auto& survivor_candidate = survivor_it->second;
+						auto filter_match_it = filter_candidates.find(survivor_key);
+						if (filter_match_it == filter_candidates.end()) {
+							// The app is missing in the filter profile, so it cannot handle all files.
+							// It fails the intersection test -> remove it.
+							survivor_it = final_candidates.erase(survivor_it);
+						} else {
+							// The app exists in both lists. It survives this round.
+							// Check if the match in the filter profile offers a better (higher) rank.
+							const RankedCandidate& filter_candidate = filter_match_it->second;
+							if (filter_candidate.rank > survivor_candidate.rank) {
+								survivor_candidate.rank = filter_candidate.rank;
+							}
+							++survivor_it;
+						}
+					}
+					if (final_candidates.empty()) {
+						return {};
+					}
 				}
 			}
+
+			// --- Common post-processing (for both 1 and >1 file cases) ---
+
+			auto final_candidates_sorted = BuildSortedCandidates(final_candidates);
+			// Only store source info (for F3) when a single file is selected,
+			// as sources vary per file in multi-selection mode.
+			return { FormatCandidatesForUI(final_candidates_sorted, /* store_source_info = */ (filepaths_wide.size() == 1)), false };
+
+		} catch (const OperationCancelledException&) {
+			ClearLastQueryCaches();
+			return {{}, true};
 		}
-
-		// --- Common post-processing (for both 1 and >1 file cases) ---
-
-		auto final_candidates_sorted = BuildSortedCandidates(final_candidates);
-		// Only store source info (for F3) when a single file is selected,
-		// as sources vary per file in multi-selection mode.
-		return FormatCandidatesForUI(final_candidates_sorted, /* store_source_info = */ (filepaths_wide.size() == 1));
 	}
 
 
@@ -341,13 +368,12 @@ namespace openwith
 
 	// Formats the unique MIME profiles collected during the last candidate search
 	// into human-readable strings for display in the Details dialog.
-	std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
+	std::vector<std::wstring> XDGBasedAppProvider::GetFileTypes()
 	{
 		std::set<std::wstring> unique_representations_wide;
 		bool has_none = false;
 
-		for (const auto& profile : _last_unique_mime_profiles)
-		{
+		for (const auto& profile : _last_unique_mime_profiles) {
 			std::set<std::string> profile_mimes;
 
 			auto add_if_present = [&](const std::string& s) {
@@ -363,14 +389,17 @@ namespace openwith
 
 			if (profile_mimes.empty()) {
 				has_none = true;
+			} else if (profile_mimes.size() == 1) {
+				unique_representations_wide.insert(StrMB2Wide(*profile_mimes.begin()));
 			} else {
 				std::string repr = "(";
+				bool is_first = true;
 				for (const auto& mime : profile_mimes) {
-					if (repr.size() > 1) repr += ';';
+					if (!is_first) repr += ';';
 					repr += mime;
+					is_first = false;
 				}
 				repr += ')';
-
 				unique_representations_wide.insert(StrMB2Wide(repr));
 			}
 		}
@@ -388,17 +417,25 @@ namespace openwith
 	// ****************************** Candidate search and ranking ******************************
 
 
+	void XDGBasedAppProvider::ClearLastQueryCaches()
+	{
+		_desktop_id_to_desktop_entry_cache.clear();
+		_last_association_facts.clear();
+		_last_unique_mime_profiles.clear();
+	}
+
+
 	// Queries all candidate sources (system default, mimeapps.list, mimeinfo.cache, full scan)
 	// for a prioritized list of MIME types and ranks results by specificity and association source.
 	XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes)
 	{
 		CandidateMap unique_candidates;
 
-		if (_query_xdg_mime_default && _op_xdg_mime_exists) {
+		if (_query_xdg_mime_default && _op_state->xdg_mime_exists) {
 			const auto mime_for_default = expanded_mimes.empty() ? "" : expanded_mimes[0];
 			std::string desktop_id = QuerySystemDefaultApplication(mime_for_default);
 			if (!desktop_id.empty()) {
-				if (!IsAssociationRemoved(mime_for_default, desktop_id, _op_mimeapps_lists_cache)) {
+				if (!IsAssociationRemoved(mime_for_default, desktop_id, _op_state->mimeapps_lists_cache)) {
 					// The system default always receives the top specificity rank (index 0 -> highest).
 					int rank = static_cast<int>(expanded_mimes.size()) * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_GLOBAL_DEFAULT;
 					RegisterCandidateById(unique_candidates, desktop_id, rank,
@@ -409,7 +446,7 @@ namespace openwith
 
 		AppendCandidatesFromMimeappsLists(expanded_mimes, unique_candidates);
 
-		if (!_op_mime_to_desktop_associations_index.empty()) {
+		if (!_op_state->mime_to_desktop_associations_index.empty()) {
 			AppendCandidatesFromMimeinfoCache(expanded_mimes, unique_candidates);
 		} else {
 			AppendCandidatesFromFullScan(expanded_mimes, unique_candidates);
@@ -425,15 +462,16 @@ namespace openwith
 			return "";
 		}
 
-		if (auto it = _op_mime_to_default_desktop_id_cache.find(mime);
-				 it != _op_mime_to_default_desktop_id_cache.end()) {
+		if (auto it = _op_state->mime_to_default_desktop_id_cache.find(mime);
+				 it != _op_state->mime_to_default_desktop_id_cache.end()) {
 			return it->second;
 		}
 
-		std::string cmd = "xdg-mime query default " + EscapeArgForShell(mime) + " 2>/dev/null";
+		std::string cmd = "xdg-mime query default " + QuoteArgForShell(mime) + " 2>/dev/null";
 
+		CheckCancellation();
 		auto desktop_id = RunCommandAndCaptureOutput(cmd);
-		_op_mime_to_default_desktop_id_cache.try_emplace(mime, desktop_id);
+		_op_state->mime_to_default_desktop_id_cache.try_emplace(mime, desktop_id);
 		return desktop_id;
 	}
 
@@ -447,8 +485,8 @@ namespace openwith
 			int mime_specificity_weight = (total_mimes - mime_idx);
 
 			// 1. Process [Default Applications].
-			if (auto it = _op_mimeapps_lists_cache.defaults.find(mime);
-					 it != _op_mimeapps_lists_cache.defaults.end()) {
+			if (auto it = _op_state->mimeapps_lists_cache.defaults.find(mime);
+					 it != _op_state->mimeapps_lists_cache.defaults.end()) {
 
 				const auto& default_associations = it->second;
 				int rank_penalty = 0;
@@ -462,8 +500,8 @@ namespace openwith
 			}
 
 			// 2. Process [Added Associations].
-			if (auto it = _op_mimeapps_lists_cache.added.find(mime);
-					 it != _op_mimeapps_lists_cache.added.end()) {
+			if (auto it = _op_state->mimeapps_lists_cache.added.find(mime);
+					 it != _op_state->mimeapps_lists_cache.added.end()) {
 
 				const auto& added_associations = it->second;
 				int rank_penalty = 0;
@@ -481,7 +519,7 @@ namespace openwith
 
 	void XDGBasedAppProvider::AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates)
 	{
-		if (_op_mime_to_desktop_associations_index.empty()) {
+		if (_op_state->mime_to_desktop_associations_index.empty()) {
 			return;
 		}
 		const int total_mimes = static_cast<int>(expanded_mimes.size());
@@ -490,8 +528,8 @@ namespace openwith
 
 		for (int mime_idx = 0; mime_idx < total_mimes; ++mime_idx) {
 			const auto& mime = expanded_mimes[mime_idx];
-			auto it = _op_mime_to_desktop_associations_index.find(mime);
-			if (it == _op_mime_to_desktop_associations_index.end()) {
+			auto it = _op_state->mime_to_desktop_associations_index.find(mime);
+			if (it == _op_state->mime_to_desktop_associations_index.end()) {
 				continue;
 			}
 			const auto& associations = it->second;
@@ -499,7 +537,7 @@ namespace openwith
 			int rank_penalty = 0;
 			for (const DesktopAssociation& association : associations) {
 				const auto& desktop_id = association.desktop_id;
-				if (desktop_id.empty() || (IsAssociationRemoved(mime, desktop_id, _op_mimeapps_lists_cache))) {
+				if (desktop_id.empty() || (IsAssociationRemoved(mime, desktop_id, _op_state->mimeapps_lists_cache))) {
 					continue;
 				}
 				const int rank = base_rank - std::min(rank_penalty, Ranking::MAX_PENALTY_FOR_MIMEINFO_CACHE);
@@ -518,21 +556,21 @@ namespace openwith
 
 	void XDGBasedAppProvider::AppendCandidatesFromFullScan(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates)
 	{
-		if (_op_mime_to_desktop_entry_index.empty()) {
+		if (_op_state->mime_to_desktop_entry_index.empty()) {
 			return;
 		}
 		const int total_mimes = static_cast<int>(expanded_mimes.size());
 		std::unordered_map<const DesktopEntry*, RankedCandidate> staged_candidates;
 		for (int mime_idx = 0; mime_idx < total_mimes; ++mime_idx) {
 			const auto& mime = expanded_mimes[mime_idx];
-			auto it = _op_mime_to_desktop_entry_index.find(mime);
-			if (it == _op_mime_to_desktop_entry_index.end()) {
+			auto it = _op_state->mime_to_desktop_entry_index.find(mime);
+			if (it == _op_state->mime_to_desktop_entry_index.end()) {
 				continue;
 			}
 			const auto& entries = it->second;
 			int rank = (total_mimes - mime_idx) * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_CACHE_OR_SCAN;
 			for (const DesktopEntry* entry : entries) {
-				if (!entry || IsAssociationRemoved(mime, entry->id, _op_mimeapps_lists_cache)) {
+				if (!entry || IsAssociationRemoved(mime, entry->id, _op_state->mimeapps_lists_cache)) {
 					continue;
 				}
 				AssociationFact fact{AssociationOriginTier::FullScan, "", mime};
@@ -573,7 +611,7 @@ namespace openwith
 			}
 		}
 
-		if (_filter_by_show_in && !_op_current_desktop_names.empty()) {
+		if (_filter_by_show_in && !_op_state->current_desktop_names.empty()) {
 
 			bool only_show_in_present = !desktop_entry.only_show_in.empty();
 			bool not_show_in_present = !desktop_entry.not_show_in.empty();
@@ -596,7 +634,7 @@ namespace openwith
 				};
 
 				bool explicitly_allowed = false;
-				for (const auto& current_desktop_name : _op_current_desktop_names) {
+				for (const auto& current_desktop_name : _op_state->current_desktop_names) {
 					if (current_desktop_name.empty()) {
 						continue;
 					}
@@ -776,7 +814,7 @@ namespace openwith
 	// RawMimeProfile. Content-based CLI tools are invoked only for readable regular files.
 	XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const std::string& filepath)
 	{
-		RawMimeProfile profile = {};
+		RawMimeProfile profile{};
 		struct stat st;
 
 		if (stat(filepath.c_str(), &st) != 0) {
@@ -787,28 +825,31 @@ namespace openwith
 			profile.is_regular_file = true;
 
 			// Filename-based detection methods are only meaningful for regular files.
-			if(_use_glob_rules) {
+			if (_use_glob_rules) {
 				profile.globs2_mime = DetectMimeTypeViaGlobRules(filepath);
 			}
 			if (_use_extension_based_fallback) {
 				profile.ext_mime = DetectMimeTypeByExtension(filepath);
 			}
 
-			auto should_run_cli_tools = ((_use_xdg_mime_tool && _op_xdg_mime_exists) || _op_file_tool_enabled_and_exists || _op_magika_tool_enabled_and_exists);
+			bool should_run_cli_tools = ((_use_xdg_mime_tool && _op_state->xdg_mime_exists) || _op_state->file_tool_enabled_and_exists || _op_state->magika_tool_enabled_and_exists);
 
 			// Run expensive external tools ONLY for accessible regular files.
 			if (should_run_cli_tools && access(filepath.c_str(), R_OK) == 0) {
 
-				auto filepath_escaped = EscapeArgForShell(filepath);
+				auto filepath_quoted = QuoteArgForShell(filepath);
 
-				if (_use_xdg_mime_tool && _op_xdg_mime_exists) {
-					profile.xdg_mime = DetectMimeTypeWithXdgMimeTool(filepath_escaped);
+				if (_use_xdg_mime_tool && _op_state->xdg_mime_exists) {
+					CheckCancellation();
+					profile.xdg_mime = DetectMimeTypeWithXdgMimeTool(filepath_quoted);
 				}
-				if (_op_file_tool_enabled_and_exists) {
-					profile.file_mime = DetectMimeTypeWithFileTool(filepath_escaped);
+				if (_op_state->file_tool_enabled_and_exists) {
+					CheckCancellation();
+					profile.file_mime = DetectMimeTypeWithFileTool(filepath_quoted);
 				}
-				if (_op_magika_tool_enabled_and_exists) {
-					profile.magika_mime = DetectMimeTypeWithMagikaTool(filepath_escaped);
+				if (_op_state->magika_tool_enabled_and_exists) {
+					CheckCancellation();
+					profile.magika_mime = DetectMimeTypeWithMagikaTool(filepath_quoted);
 				}
 			}
 
@@ -860,7 +901,7 @@ namespace openwith
 		add_unique(profile.ext_mime);
 
 		// --- Step 2: iteratively expand via aliases and subclass hierarchy ---
-		if (!_op_subclass_to_parent_cache.empty() || !_op_alias_to_canonical_cache.empty()) {
+		if (!_op_state->subclass_to_parent_cache.empty() || !_op_state->alias_to_canonical_cache.empty()) {
 
 			// Index-based loop intentional: newly added MIME types are appended to
 			// 'mimes' during iteration and must also be expanded by subsequent passes.
@@ -868,17 +909,17 @@ namespace openwith
 				const std::string current_mime = mimes[i];
 
 				// Expansion A: process aliases
-				if (!_op_alias_to_canonical_cache.empty()) {
+				if (!_op_state->alias_to_canonical_cache.empty()) {
 
 					// --- Standard forward lookup (alias -> canonical) ---
-					if (auto canonical_it = _op_alias_to_canonical_cache.find(current_mime);
-							 canonical_it != _op_alias_to_canonical_cache.end()) {
+					if (auto canonical_it = _op_state->alias_to_canonical_cache.find(current_mime);
+							 canonical_it != _op_state->alias_to_canonical_cache.end()) {
 						add_unique(canonical_it->second);
 					}
 
 					// --- Reverse lookup (canonical -> aliases) using major-type filtered map ---
-					if (auto aliases_it = _op_canonical_to_aliases_cache.find(current_mime);
-							 aliases_it != _op_canonical_to_aliases_cache.end()) {
+					if (auto aliases_it = _op_state->canonical_to_aliases_cache.find(current_mime);
+							 aliases_it != _op_state->canonical_to_aliases_cache.end()) {
 						for (const auto& alias : aliases_it->second) {
 							add_unique(alias);
 						}
@@ -886,9 +927,9 @@ namespace openwith
 				}
 
 				// Expansion B: Add parent from subclass hierarchy.
-				if (!_op_subclass_to_parent_cache.empty()) {
-					auto it = _op_subclass_to_parent_cache.find(current_mime);
-					if (it != _op_subclass_to_parent_cache.end()) {
+				if (!_op_state->subclass_to_parent_cache.empty()) {
+					auto it = _op_state->subclass_to_parent_cache.find(current_mime);
+					if (it != _op_state->subclass_to_parent_cache.end()) {
 						add_unique(it->second);
 					}
 				}
@@ -962,21 +1003,21 @@ namespace openwith
 	}
 
 
-	std::string XDGBasedAppProvider::DetectMimeTypeWithXdgMimeTool(const std::string& filepath_escaped)
+	std::string XDGBasedAppProvider::DetectMimeTypeWithXdgMimeTool(const std::string& filepath_quoted)
 	{
-		return RunCommandAndCaptureOutput("xdg-mime query filetype " + filepath_escaped + " 2>/dev/null");
+		return RunCommandAndCaptureOutput("xdg-mime query filetype " + filepath_quoted + " 2>/dev/null");
 	}
 
 
-	std::string XDGBasedAppProvider::DetectMimeTypeWithFileTool(const std::string& filepath_escaped)
+	std::string XDGBasedAppProvider::DetectMimeTypeWithFileTool(const std::string& filepath_quoted)
 	{
-		return RunCommandAndCaptureOutput("file --brief --dereference --mime-type " + filepath_escaped + " 2>/dev/null");
+		return RunCommandAndCaptureOutput("file --brief --dereference --mime-type " + filepath_quoted + " 2>/dev/null");
 	}
 
 
-	std::string XDGBasedAppProvider::DetectMimeTypeWithMagikaTool(const std::string& filepath_escaped)
+	std::string XDGBasedAppProvider::DetectMimeTypeWithMagikaTool(const std::string& filepath_quoted)
 	{
-		return RunCommandAndCaptureOutput("magika --no-colors --format '%m' " + filepath_escaped + " 2>/dev/null");
+		return RunCommandAndCaptureOutput("magika --no-colors --format '%m' " + filepath_quoted + " 2>/dev/null");
 	}
 
 
@@ -987,7 +1028,7 @@ namespace openwith
 			return "";
 		}
 
-		for (const auto& rule : _op_glob_rules_cache) {
+		for (const auto& rule : _op_state->glob_rules_cache) {
 			if (GlobMatch(filename, rule.pattern, rule.case_sensitive)) {
 				return rule.mime_type;
 			}
@@ -1040,7 +1081,7 @@ namespace openwith
 	// Recursively scans all XDG application directories to build an index mapping Desktop File IDs to their absolute file paths.
 	std::unordered_map<std::string, std::string> XDGBasedAppProvider::IndexAllDesktopFiles()
 	{
-		if (_op_desktop_file_dirpaths.empty()) {
+		if (_op_state->desktop_file_dirpaths.empty()) {
 			return {};
 		}
 
@@ -1048,7 +1089,8 @@ namespace openwith
 
 		VisitedInodeSet visited_inodes;
 
-		for (const auto& dirpath : _op_desktop_file_dirpaths) {
+		for (const auto& dirpath : _op_state->desktop_file_dirpaths) {
+			CheckCancellation();
 			IndexDirectoryRecursively(desktop_id_to_path_map, dirpath, dirpath, visited_inodes);
 		}
 
@@ -1068,14 +1110,25 @@ namespace openwith
 			return;
 		}
 
-		DIR* dir_stream = opendir(current_path.c_str());
+		struct DirCloser
+		{
+			void operator()(DIR* d) const
+			{
+				if (d) {
+					closedir(d);
+				}
+			}
+		};
+		using UniqueDir = std::unique_ptr<DIR, DirCloser>;
+
+		UniqueDir dir_stream(opendir(current_path.c_str()));
 		if (!dir_stream) {
 			return;
 		}
 
-		struct dirent* dir_entry;
+		const dirent *dir_entry;
 
-		while ((dir_entry = readdir(dir_stream))) {
+		while ((dir_entry = readdir(dir_stream.get()))) {
 			std::string_view name = dir_entry->d_name;
 			if (name == "." || name == "..") {
 				continue;
@@ -1132,8 +1185,6 @@ namespace openwith
 				}
 			}
 		}
-
-		closedir(dir_stream);
 	}
 
 
@@ -1144,8 +1195,9 @@ namespace openwith
 			return it->second;
 		}
 
-		if (auto path_it = _op_desktop_id_to_path_index.find(desktop_id); path_it != _op_desktop_id_to_path_index.end()) {
+		if (auto path_it = _op_state->desktop_id_to_path_index.find(desktop_id); path_it != _op_state->desktop_id_to_path_index.end()) {
 			const std::string& filepath = path_it->second;
+			CheckCancellation();
 			if (auto desktop_entry = ParseDesktopFile(filepath)) {
 				// Set the ID on the object, as ParseDesktopFile does not know it.
 				desktop_entry->id = desktop_id;
@@ -1165,7 +1217,7 @@ namespace openwith
 	{
 		MimeToDesktopEntryIndex index;
 
-		for (const auto& [id, filepath] : _op_desktop_id_to_path_index) {
+		for (const auto& [id, filepath] : _op_state->desktop_id_to_path_index) {
 
 			// Parsed entries are stored in the persistent _desktop_id_to_desktop_entry_cache
 			// so they can later be looked up cheaply by RegisterCandidateById().
@@ -1189,12 +1241,13 @@ namespace openwith
 
 	XDGBasedAppProvider::MimeToDesktopAssociationsIndex XDGBasedAppProvider::ParseMimeinfoCaches()
 	{
-		if (_op_desktop_file_dirpaths.empty()) {
+		if (_op_state->desktop_file_dirpaths.empty()) {
 			return {};
 		}
 
 		MimeToDesktopAssociationsIndex mime_to_desktop_associations_index;
-		for (const auto& dirpath : _op_desktop_file_dirpaths) {
+		for (const auto& dirpath : _op_state->desktop_file_dirpaths) {
+			CheckCancellation();
 			std::string filepath = dirpath + "/mimeinfo.cache";
 			if (IsReadableFile(filepath)) {
 				ParseMimeinfoCache(filepath, mime_to_desktop_associations_index);
@@ -1255,11 +1308,12 @@ namespace openwith
 
 	XDGBasedAppProvider::MimeappsListsConfig XDGBasedAppProvider::ParseMimeappsLists()
 	{
-		if (_op_mimeapps_list_filepaths.empty()) {
+		if (_op_state->mimeapps_list_filepaths.empty()) {
 			return {};
 		}
 		MimeappsListsConfig mimeapps_lists;
-		for (const auto& filepath : _op_mimeapps_list_filepaths) {
+		for (const auto& filepath : _op_state->mimeapps_list_filepaths) {
+			CheckCancellation();
 			ParseMimeappsList(filepath, mimeapps_lists);
 		}
 		return mimeapps_lists;
@@ -1449,7 +1503,7 @@ namespace openwith
 		key_buffer.reserve(base_key.size() + 16);
 		key_buffer = base_key;
 		const size_t base_len = base_key.size();
-		for (const auto& suffix : _op_locale_suffixes) {
+		for (const auto& suffix : _op_state->locale_suffixes) {
 			key_buffer.push_back('[');
 			key_buffer.append(suffix);
 			key_buffer.push_back(']');
@@ -1506,14 +1560,15 @@ namespace openwith
 
 	std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeAliases()
 	{
-		if (_op_mime_database_dirpaths.empty()) {
+		if (_op_state->mime_database_dirpaths.empty()) {
 			return {};
 		}
 
 		std::unordered_map<std::string, std::string> alias_to_canonical_map;
 
 		// Iterate paths from high priority (user) to low priority (system).
-		for (const auto& dirpath : _op_mime_database_dirpaths) {
+		for (const auto& dirpath : _op_state->mime_database_dirpaths) {
+			CheckCancellation();
 			std::string alias_filepath = dirpath + "/aliases";
 			std::ifstream file(alias_filepath);
 			if (!file.is_open()) {
@@ -1555,7 +1610,7 @@ namespace openwith
 
 	std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeSubclasses()
 	{
-		if (_op_mime_database_dirpaths.empty()) {
+		if (_op_state->mime_database_dirpaths.empty()) {
 			return {};
 		}
 
@@ -1563,7 +1618,8 @@ namespace openwith
 
 		// Iterate in reverse order (system -> user) so that user-defined entries,
 		// inserted last, overwrite system ones in the map.
-		for (auto it = _op_mime_database_dirpaths.rbegin(); it != _op_mime_database_dirpaths.rend(); ++it) {
+		for (auto it = _op_state->mime_database_dirpaths.rbegin(); it != _op_state->mime_database_dirpaths.rend(); ++it) {
+			CheckCancellation();
 			std::string subclasses_filepath = *it + "/subclasses";
 			std::ifstream file(subclasses_filepath);
 			if (!file.is_open()) {
@@ -1592,7 +1648,7 @@ namespace openwith
 
 	std::vector<XDGBasedAppProvider::GlobRule> XDGBasedAppProvider::LoadGlobRules()
 	{
-		if (_op_mime_database_dirpaths.empty()) {
+		if (_op_state->mime_database_dirpaths.empty()) {
 			return {};
 		}
 
@@ -1601,7 +1657,8 @@ namespace openwith
 
 		// Iterate in reverse order (system -> user). This assigns a higher source rank to user-specific directories,
 		// ensuring that rules defined by the user take precedence over system rules when weights are equal.
-		for (auto it = _op_mime_database_dirpaths.rbegin(); it != _op_mime_database_dirpaths.rend(); ++it) {
+		for (auto it = _op_state->mime_database_dirpaths.rbegin(); it != _op_state->mime_database_dirpaths.rend(); ++it) {
+			CheckCancellation();
 			std::string globs_path = *it + "/globs2";
 			if (IsReadableFile(globs_path)) {
 				ParseGlobs2File(globs_path, rules, current_source_rank);
@@ -1810,7 +1867,7 @@ namespace openwith
 					dir += "applications/";
 				}
 				// 1. Desktop-specific associations: $desktop-mimeapps.list
-				for (const auto& current_desktop_name : _op_current_desktop_names) {
+				for (const auto& current_desktop_name : _op_state->current_desktop_names) {
 					if (current_desktop_name.empty()) {
 						continue;
 					}
@@ -2006,7 +2063,7 @@ namespace openwith
 		// 2. Legacy behavior: If no execution model was deduced from field codes, explicitly append native file paths.
 		if (desktop_entry.execution_model == ExecutionModel::ImplicitFileAppend) {
 			for (const auto& filepath : filepaths) {
-				append_argument(EscapeArgForShell(filepath));
+				append_argument(QuoteArgForShell(filepath));
 			}
 		}
 
@@ -2019,7 +2076,7 @@ namespace openwith
 	{
 		// Fast-path: skip expansion for quoted arguments or if no field codes are present.
 		if (arg_template.is_quoted_literal || arg_template.value.find('%') == std::string::npos) {
-			return { EscapeArgForShell(arg_template.value) };
+			return { QuoteArgForShell(arg_template.value) };
 		}
 
 		const std::string& tmpl = arg_template.value;
@@ -2031,7 +2088,7 @@ namespace openwith
 			result.reserve(filepaths.size());
 			const bool should_convert_to_uri = (tmpl == "%U" && !_treat_urls_as_paths);
 			for (const auto& filepath : filepaths) {
-				result.push_back(EscapeArgForShell(should_convert_to_uri ? PathToUri(filepath) : filepath));
+				result.push_back(QuoteArgForShell(should_convert_to_uri ? PathToUri(filepath) : filepath));
 			}
 			return result;
 		}
@@ -2096,7 +2153,7 @@ namespace openwith
 			return {};
 		}
 
-		return { EscapeArgForShell(expanded_token) };
+		return { QuoteArgForShell(expanded_token) };
 	}
 
 
@@ -2246,7 +2303,7 @@ namespace openwith
 	}
 
 
-	std::string XDGBasedAppProvider::EscapeArgForShell(const std::string& arg)
+	std::string XDGBasedAppProvider::QuoteArgForShell(const std::string& arg)
 	{
 		if (arg.empty()) {
 			// An empty string is represented as '' in the shell.
@@ -2347,82 +2404,72 @@ namespace openwith
 
 	XDGBasedAppProvider::OperationContext::OperationContext(XDGBasedAppProvider& p) : provider(p)
 	{
-		// ----- Phase 1: Environment setup & tool availability checks -----
+		try {
+			p._op_state = OpState{};
+			auto& op = *provider._op_state;
 
-		provider._op_locale_suffixes = provider.GenerateLocaleSuffixes();
-		provider._op_current_desktop_names = provider.SplitString(provider.GetEnv("XDG_CURRENT_DESKTOP"), ':');
-		provider._op_xdg_mime_exists = provider.IsExecutableAvailable("xdg-mime");
-		provider._op_file_tool_enabled_and_exists = provider._use_file_tool && provider.IsExecutableAvailable("file");
-		provider._op_magika_tool_enabled_and_exists = provider._use_magika_tool && provider.IsExecutableAvailable("magika");
+			// ----- Phase 1: Environment setup & tool availability checks -----
+			op.locale_suffixes = provider.GenerateLocaleSuffixes();
+			op.current_desktop_names = provider.SplitString(provider.GetEnv("XDG_CURRENT_DESKTOP"), ':');
+			op.xdg_mime_exists = provider.IsExecutableAvailable("xdg-mime");
+			op.file_tool_enabled_and_exists = provider._use_file_tool && provider.IsExecutableAvailable("file");
+			op.magika_tool_enabled_and_exists = provider._use_magika_tool && provider.IsExecutableAvailable("magika");
 
-		// ----- Phase 2: Path resolution & desktop file indexing -----
+			// ----- Phase 2: Path resolution & desktop file indexing -----
+			op.desktop_file_dirpaths = provider.GetDesktopFileDirpaths();
+			op.mimeapps_list_filepaths = provider.GetMimeappsListFilepaths();
+			op.mime_database_dirpaths = provider.GetMimeDbDirpaths();
+			op.desktop_id_to_path_index = provider.IndexAllDesktopFiles();
 
-		provider._op_desktop_file_dirpaths = provider.GetDesktopFileDirpaths();
-		provider._op_mimeapps_list_filepaths = provider.GetMimeappsListFilepaths();
-		provider._op_mime_database_dirpaths = provider.GetMimeDbDirpaths();
-		provider._op_desktop_id_to_path_index = provider.IndexAllDesktopFiles();
+			// ----- Phase 3: Auxiliary MIME databases & user configuration -----
 
-		// ----- Phase 3: Auxiliary MIME databases & user configuration -----
-
-		if (provider._load_mimetype_aliases) {
-			provider._op_alias_to_canonical_cache = provider.LoadMimeAliases();
-			for (const auto& [alias, canonical] : provider._op_alias_to_canonical_cache) {
-				auto alias_major = GetMajorMimeType(alias);
-				auto canonical_major = GetMajorMimeType(canonical);
-				// Add the alias ONLY if its major type matches the canonical one.
-				// This prevents adding, for example, "text/ico" for "image/vnd.microsoft.icon",
-				// but allows adding "image/x-icon".
-				if (!alias_major.empty() && alias_major == canonical_major) {
-					provider._op_canonical_to_aliases_cache[canonical].push_back(alias);
+			if (provider._load_mimetype_aliases) {
+				op.alias_to_canonical_cache = provider.LoadMimeAliases();
+				for (const auto& [alias, canonical] : op.alias_to_canonical_cache) {
+					auto alias_major = GetMajorMimeType(alias);
+					auto canonical_major = GetMajorMimeType(canonical);
+					// Add the alias ONLY if its major type matches the canonical one.
+					// This prevents adding, for example, "text/ico" for "image/vnd.microsoft.icon",
+					// but allows adding "image/x-icon".
+					if (!alias_major.empty() && alias_major == canonical_major) {
+						op.canonical_to_aliases_cache[canonical].push_back(alias);
+					}
 				}
 			}
-		}
 
-		if (provider._load_mimetype_subclasses) {
-			provider._op_subclass_to_parent_cache = provider.LoadMimeSubclasses();
-		}
+			if (provider._load_mimetype_subclasses) {
+				op.subclass_to_parent_cache = provider.LoadMimeSubclasses();
+			}
 
-		if (provider._use_glob_rules) {
-			provider._op_glob_rules_cache = provider.LoadGlobRules();
-		}
+			if (provider._use_glob_rules) {
+				op.glob_rules_cache = provider.LoadGlobRules();
+			}
 
-		provider._op_mimeapps_lists_cache = provider.ParseMimeappsLists();
+			op.mimeapps_lists_cache = provider.ParseMimeappsLists();
 
 
-		// ----- Phase 4: Association database construction -----
+			// ----- Phase 4: Association database construction -----
+			if (provider._use_mimeinfo_cache) {
+				// Attempt to load from 'mimeinfo.cache' first, as per user setting.
+				op.mime_to_desktop_associations_index = provider.ParseMimeinfoCaches();
+			}
 
-		if (provider._use_mimeinfo_cache) {
-			// Attempt to load from 'mimeinfo.cache' first, as per user setting.
-			provider._op_mime_to_desktop_associations_index = provider.ParseMimeinfoCaches();
-		}
+			// If caching is disabled (by user) OR cache was empty...
+			if (op.mime_to_desktop_associations_index.empty()) {
+				// ...populate the index by performing a full scan.
+				op.mime_to_desktop_entry_index = provider.ParseAllDesktopFiles();
+			}
 
-		// If caching is disabled (by user) OR cache was empty...
-		if (provider._op_mime_to_desktop_associations_index.empty()) {
-			// ...populate the index by performing a full scan.
-			provider._op_mime_to_desktop_entry_index = provider.ParseAllDesktopFiles();
+		} catch (...) {
+			p._op_state.reset();
+			throw;
 		}
 	}
 
 
 	XDGBasedAppProvider::OperationContext::~OperationContext()
 	{
-		provider._op_locale_suffixes.clear();
-		provider._op_current_desktop_names.clear();
-		provider._op_xdg_mime_exists = false;
-		provider._op_file_tool_enabled_and_exists = false;
-		provider._op_magika_tool_enabled_and_exists = false;
-		provider._op_desktop_file_dirpaths.clear();
-		provider._op_mimeapps_list_filepaths.clear();
-		provider._op_mime_database_dirpaths.clear();
-		provider._op_desktop_id_to_path_index.clear();
-		provider._op_glob_rules_cache.clear();
-		provider._op_alias_to_canonical_cache.clear();
-		provider._op_canonical_to_aliases_cache.clear();
-		provider._op_subclass_to_parent_cache.clear();
-		provider._op_mimeapps_lists_cache = {};
-		provider._op_mime_to_default_desktop_id_cache.clear();
-		provider._op_mime_to_desktop_associations_index.clear();
-		provider._op_mime_to_desktop_entry_index.clear();
+		provider._op_state.reset();  // destroys OpState and all its fields
 	}
 
 } // namespace openwith

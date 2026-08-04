@@ -16695,6 +16695,17 @@ MenuCompareFolders
 "&Порівняння тек"
 "Пара&ўнанне каталогаў"
 
+MenuCompareFiles
+"Сравнение фа&йлов         Ctrl+D"
+"File &diff           Ctrl+D"
+"Porovnat &soubory               Ctrl+D"
+"D&ateien vergleichen  Ctrl+D"
+"Fájl &diff           Ctrl+D"
+"P&orównaj pliki            Ctrl+D"
+"C&omparar archivos     Ctrl+D"
+"Порівняння фа&йлів         Ctrl+D"
+"Параўнанне фа&йлаў         Ctrl+D"
+
 MenuUserMenu
 "Меню пользовател&я"
 "Edit user &menu"
@@ -16719,7 +16730,7 @@ MenuFileAssociations
 
 MenuBookmarks
 "Зак&ладки на папки"
-"Fol&der bookmarks"
+"Folder boo&kmarks"
 "A&dresářové zkratky"
 "Or&dnerschnellzugriff"
 "Mappa gyorsbillent&yűk"

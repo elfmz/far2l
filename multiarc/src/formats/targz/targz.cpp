@@ -319,6 +319,7 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
 	DWORD ReadSize;
 	BOOL SkipItem = FALSE;
 	std::vector<char> LongName;
+	std::vector<char> LongLink;
 	do {
 		NextPosition.Part.LowPart = WINPORT(SetFilePointer)(ArcHandle, NextPosition.Part.LowPart,
 				&NextPosition.Part.HighPart, FILE_BEGIN);
@@ -340,11 +341,11 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
 				|| TAR_hdr.header.typeflag == GNUTYPE_PAXHDR) {
 			SkipItem = TRUE;
 		} else {
-			// TODO: GNUTYPE_LONGLINK
 			DWORD dwUnixMode = 0;
 			SkipItem = FALSE;
 			if (!LongName.empty()) {
 				Info->PathName = LongName.data();
+				LongName.clear();
 			} else {
 				Info->PathName.clear();
 				if (TAR_hdr.header.prefix[0]) {
@@ -387,7 +388,12 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
 
 			if ((dwUnixMode & S_IFMT) == S_IFLNK)		// TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE
 			{
-				Info->LinkName.reset(new std::string(TAR_hdr.header.linkname));
+				if (!LongLink.empty()) {
+					Info->LinkName.reset(new std::string(LongLink.data()));
+					LongLink.clear();
+				} else {
+					Info->LinkName.reset(new std::string(TAR_hdr.header.linkname));
+				}
 				if (TAR_hdr.header.typeflag == LNKTYPE)
 					Info->LinkName->insert(0, "/");
 			}
@@ -426,38 +432,57 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
 			PrevPosition.i64+= (int64_t)sizeof(TAR_hdr);
 			WINPORT(SetFilePointer)
 			(ArcHandle, PrevPosition.Part.LowPart, &PrevPosition.Part.HighPart, FILE_BEGIN);
-			// we can't have two LONGNAME records in a row without a file between them
-			if (!LongName.empty())
-				return GETARC_BROKEN;
-			LongName.resize(Info->nPhysicalSize + 1);
-			DWORD BytesRead;
-			WINPORT(ReadFile)(ArcHandle, LongName.data(), Info->nPhysicalSize, &BytesRead, NULL);
-			if (BytesRead != Info->nPhysicalSize)
-				return GETARC_BROKEN;
 
-			if (TAR_hdr.header.typeflag == GNUTYPE_PAXHDR) {	// pax extended header: consists of sequence of "len key=value\n" strings
-				// currently using only "path" key - its a modern way to specify long file path
-				std::vector<char> PathRecord;
-				for (DWORD i = 0; i < BytesRead;) {
-					int len = atoi(&LongName[i]);
-					if (len <= 0 || (DWORD)len > BytesRead - i) {
-						fprintf(stderr, "%s: ext record bad len=%d at %x\n", __FUNCTION__, len, i);
-						break;
-					}
+			if (TAR_hdr.header.typeflag == GNUTYPE_LONGLINK) {
+				// Long linkname for the next entry
+				if (!LongLink.empty())
+					return GETARC_BROKEN;
+				LongLink.resize(Info->nPhysicalSize + 1);
+				LongLink.back() = 0;
+				DWORD BytesRead;
+				WINPORT(ReadFile)(ArcHandle, LongLink.data(), Info->nPhysicalSize, &BytesRead, NULL);
+				if (BytesRead != Info->nPhysicalSize)
+					return GETARC_BROKEN;
+			} else {
+				// we can't have two LONGNAME/PAXHDR records in a row without a file between them
+				if (!LongName.empty())
+					return GETARC_BROKEN;
+				LongName.resize(Info->nPhysicalSize + 1);
+				DWORD BytesRead;
+				WINPORT(ReadFile)(ArcHandle, LongName.data(), Info->nPhysicalSize, &BytesRead, NULL);
+				if (BytesRead != Info->nPhysicalSize)
+					return GETARC_BROKEN;
 
-					char *spc = strchr(&LongName[i], ' ');
-					char *eq = strchr(&LongName[i], '=');
-					if (!spc || !eq || eq < spc || LongName[i + len - 1] != '\n') {
-						fprintf(stderr, "%s: ext record bad at %x\n", __FUNCTION__, i);
-						break;
+				if (TAR_hdr.header.typeflag == GNUTYPE_PAXHDR) {	// pax extended header: consists of sequence of "len key=value\n" strings
+					// using "path" and "linkpath" keys
+					std::vector<char> PathRecord;
+					std::vector<char> LinkRecord;
+					for (DWORD i = 0; i < BytesRead;) {
+						int len = atoi(&LongName[i]);
+						if (len <= 0 || (DWORD)len > BytesRead - i) {
+							fprintf(stderr, "%s: ext record bad len=%d at %x\n", __FUNCTION__, len, i);
+							break;
+						}
+
+						char *spc = strchr(&LongName[i], ' ');
+						char *eq = strchr(&LongName[i], '=');
+						if (!spc || !eq || eq < spc || LongName[i + len - 1] != '\n') {
+							fprintf(stderr, "%s: ext record bad at %x\n", __FUNCTION__, i);
+							break;
+						}
+						if (strncmp(spc, " path=", 6) == 0) {
+							PathRecord.assign(eq + 1, &LongName[i + len - 1]);
+							PathRecord.emplace_back(0);
+						} else if (strncmp(spc, " linkpath=", 10) == 0) {
+							LinkRecord.assign(eq + 1, &LongName[i + len - 1]);
+							LinkRecord.emplace_back(0);
+						}
+						i+= len;
 					}
-					if (strncmp(spc, " path=", 6) == 0) {
-						PathRecord.assign(eq + 1, &LongName[i + len - 1]);
-						PathRecord.emplace_back(0);
-					}
-					i+= len;
+					LongName.swap(PathRecord);
+					if (!LinkRecord.empty())
+						LongLink.swap(LinkRecord);
 				}
-				LongName.swap(PathRecord);
 			}
 		}
 

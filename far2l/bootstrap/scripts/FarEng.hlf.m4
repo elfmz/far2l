@@ -217,6 +217,7 @@ and in #terminal settings# option #OSC 52 must be allowed#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
 
 
+@??SupportedTerminals
  #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
     - Internal terminal in #FAR2L-GUI# (Linux/BSD, macOS),
 see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
@@ -246,6 +247,8 @@ for clipboard need turn on OSC 52)
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
   Original PuTTY does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
+    - #Putty-Zeroes-Mod# (Windows ssh-client): ~https://github.com/Zeroes1/Putty-Zeroes-Mod~@https://github.com/Zeroes1/Putty-Zeroes-Mod@
+(_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     - #putty4far2l# (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
     - cyd01's #KiTTY# (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
@@ -256,6 +259,7 @@ for clipboard need turn on OSC 52)
 but vanilla PuTTY can not transfer clipboard.
 
 
+@??ConfigDirs
  #Location of FAR2L settings and history#
     - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l/#
     - command line switch #-u# (or #$FARSETTINGS# ~environment variable~@FAREnv@) allows to specify arbitrary settings location:
@@ -756,13 +760,13 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
-    Note: Print manager for Linux is unavailable. Instead, Editor has embedded 
+    Note: Print manager for Linux is unavailable. Instead, Editor has embedded
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 
     GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
     and printy itself; termibnal version expects the #lp# command works and your CUPS is
-    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    configured correctly. MacOS version uses native capabilities based upon WebKit
     printing automation.
 
   Create ~file links~@HardSymLink@                                           #Alt-F6#
@@ -1671,7 +1675,7 @@ TTY|X uses X11 to access clipboard):
         - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
         - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
         - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
-    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted@.
+    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted??SupportedTerminals@.
 
 @ConfirmDlg
 $ #Confirmations#
@@ -3212,13 +3216,13 @@ keypad inserts the character that has the specified code (0-65535).
     4. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
-    5. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    5. Print manager for Linux is unavailable. Instead, Editor has embedded
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 
     GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
     and printy itself; termibnal version expects the #lp# command works and your CUPS is
-    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    configured correctly. MacOS version uses native capabilities based upon WebKit
     printing automation.
 
 @EditorSearch
@@ -5209,7 +5213,7 @@ $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
   Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
-  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch);
   - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 

@@ -95,6 +95,13 @@ Rijndael::Rijndael()
 }
 
 
+Rijndael::~Rijndael()
+{
+  cleandata(m_initVector,sizeof(m_initVector));
+  cleandata(m_expandedKey,sizeof(m_expandedKey));
+}
+
+
 void Rijndael::Init(bool Encrypt,const byte *key,uint keyLen,const byte * initVector)
 {
   // Check SIMD here instead of constructor, so if object is a part of some

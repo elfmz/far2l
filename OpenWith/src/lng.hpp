@@ -41,15 +41,19 @@ namespace openwith
 		UseMimeinfoCache,
 		FilterByShowIn,
 		ValidateTryExec,
-		SortAlphabetically,
 		TreatUrlsAsPaths,
 		ShowPackageTags,
+
+		ShowUtiInsteadOfMime,
+		RespectSystemRanking,
+
+		SortAlphabetically,
 
 		Details,
 
 		FilesSelected,
 		Filepaths,
-		MimeProfiles,
+		FileTypes,
 		LaunchCommand,
 		Close,
 		Launch,
@@ -63,14 +67,28 @@ namespace openwith
 		GotoTryExec,
 		GotoSource,
 
-		AppName,
-		FullPath,
-		ExecutableFile,
-		Version,
+		Location,
+		BundleDisplayName,
+		BundleName,
+		BundleShortVersionString,
 		BundleVersion,
+		BundleExecutable,
+		BundleIdentifier,
+		GoToBundle,
+
+		Working,
+		PleaseWait,
+		ProcessingFiles,
+
+		IdentifyingMimes,
+		DiscoveringApplications,
+		MatchingFilteringRanking,
+
+		IdentifyingUTIsDiscoveringApps,
+		FilteringSortingResults,
 
 		ConfirmLaunchTitle,
-		ConfirmLaunchMessage
+		ConfirmLaunchMessage,
 	};
 
 	const wchar_t* GetMsg(MsgID msg_id);

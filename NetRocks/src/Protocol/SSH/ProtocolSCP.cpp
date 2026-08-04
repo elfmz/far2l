@@ -471,6 +471,13 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 	_now.tv_sec = time(nullptr);
 
 	SimpleCommand cmd(_conn);
+
+	// resolve absolute home dir once; leave empty (best effort) on failure
+	if (cmd.Execute("%s", "pwd") == 0) {
+		_home = cmd.Output();
+		StrTrim(_home, "\r\n\t ");
+	}
+
 	int rc = cmd.Execute("%s", "stat --format=\"%n %f %s %X %Y %Z %U %G\" -L .");
 	if (rc != 0) {
 		_quirks.use_ls = true;
@@ -851,6 +858,11 @@ void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_t
 	while (!link_target.empty() && (link_target[link_target.size() - 1] == '\r' || link_target[link_target.size() - 1] == '\n')) {
 		link_target.resize(link_target.size() - 1);
 	}
+}
+
+std::string ProtocolSCP::RealPath(const std::string &path)
+{
+	return RealPathFromHome(_home, path);
 }
 
 std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &path)

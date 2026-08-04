@@ -241,7 +241,7 @@ int ShowMultilinePasteDialog(FARString &text)
 
 CommandLine::CommandLine()
 	:
-	CmdStr(CtrlObject->Cp(), 0, true, CtrlObject->CmdHistory, 0,
+	CmdStr(CtrlObject->Cp(), CtrlObject->CmdHistory, 0,
 			(Opt.CmdLine.AutoComplete ? EditControl::EC_ENABLEAUTOCOMPLETE : 0)
 					| EditControl::EC_ENABLEFNCOMPLETE
 					| EditControl::EC_ENABLEFNCOMPLETE_ESCAPED),
@@ -344,6 +344,9 @@ int64_t CommandLine::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 
 void CommandLine::ProcessTabCompletion()
 {
+	if (CtrlObject->Cp()->ActivePanel->GetMode() == PLUGIN_PANEL)
+		  return;	// silent workaround for https://github.com/elfmz/far2l/issues/3485
+
 	FARString strStr;
 	CmdStr.GetString(strStr);
 	// show all possibilities on double tab on same input string
@@ -398,7 +401,7 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	if (SelectType == 6)
 		Panel = CtrlObject->Cp()->GetAnotherPanel(Panel);
 
-	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel)) {
+	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel, true)) {
 		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(strDir, false)) {
 			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
 			//fprintf(stderr, "=== ChangeDirFromHistory():\n  strDir=\"%ls\"\n  strFile=\"%ls\"\n", strDir.CPtr(), strFile.CPtr());

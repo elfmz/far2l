@@ -68,8 +68,8 @@ HANDLE PASCAL RAROpenArchiveEx(struct RAROpenArchiveDataEx *r)
 
     // Open shared mode is added by request of dll users, who need to
     // browse and unpack archives while downloading.
-    Data->Cmd.OpenShared = true;
-    if (!Data->Arc.Open(ArcName,FMF_OPENSHARED))
+    Data->Cmd.OpenShared=(r->OpFlags&ROADOF_SHARED)!=0;
+    if (!Data->Arc.Open(ArcName,Data->Cmd.OpenShared ? FMF_OPENSHARED:0))
     {
       r->OpenResult=ERAR_EOPEN;
       delete Data;
@@ -166,6 +166,12 @@ HANDLE PASCAL RAROpenArchiveEx(struct RAROpenArchiveDataEx *r)
     return NULL;
   }
   catch (std::bad_alloc&) // Catch 'new' exception.
+  {
+    r->OpenResult=ERAR_NO_MEMORY;
+    if (Data != NULL)
+      delete Data;
+  }
+  catch (std::length_error&)
   {
     r->OpenResult=ERAR_NO_MEMORY;
     if (Data != NULL)
@@ -421,6 +427,10 @@ int PASCAL ProcessFile(HANDLE hArcData,int Operation,char *DestPath,char *DestNa
     }
   }
   catch (std::bad_alloc&)
+  {
+    return ERAR_NO_MEMORY;
+  }
+  catch (std::length_error&)
   {
     return ERAR_NO_MEMORY;
   }

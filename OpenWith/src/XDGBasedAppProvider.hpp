@@ -27,9 +27,10 @@ namespace openwith
 	public:
 
 		XDGBasedAppProvider();
-		std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& filepaths_wide) override;
+		GetCandidatesResult GetAppCandidates(const std::vector<std::wstring>& filepaths_wide, ProgressCallback progress = nullptr,
+											 const std::atomic<bool>* cancel_flag = nullptr) override;
 		std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths_wide) override;
-		std::vector<std::wstring> GetMimeTypes() override;
+		std::vector<std::wstring> GetFileTypes() override;
 		std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
 		std::vector<CandidateContextLocation> GetCandidateContextLocations(const CandidateInfo& candidate) override;
 
@@ -277,7 +278,7 @@ namespace openwith
 			std::string_view name;
 			std::string_view exec;
 
-			[[nodiscard]] bool operator==(const AppUniqueKey& other) const {
+			bool operator==(const AppUniqueKey& other) const {
 				return name == other.name && exec == other.exec;
 			}
 
@@ -314,10 +315,32 @@ namespace openwith
 		// Group 6: Lifecycle & State Management
 		// ******************************************************************************
 
-		// RAII helper to manage "Operation-Scoped" state.
-		// Caches expensive lookups (like parsing all .desktop files or checking tool existence)
-		// for the duration of a single user action (GetAppCandidates()), then releases them.
-		// This avoids passing massive context structures through every function.
+		using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKey::Hash>;
+		using MimeToDesktopEntryIndex = std::unordered_map<std::string, std::vector<const DesktopEntry*>>;
+		using MimeToDesktopAssociationsIndex = std::unordered_map<std::string, std::vector<DesktopAssociation>>;
+		using VisitedInodeSet = std::set<std::pair<dev_t, ino_t>>;
+
+		struct OpState
+		{
+			std::vector<std::string> locale_suffixes;
+			std::vector<std::string> current_desktop_names;  // from $XDG_CURRENT_DESKTOP
+			bool xdg_mime_exists = false;
+			bool file_tool_enabled_and_exists = false;
+			bool magika_tool_enabled_and_exists = false;
+			std::vector<std::string> desktop_file_dirpaths;
+			std::vector<std::string> mimeapps_list_filepaths;
+			std::vector<std::string> mime_database_dirpaths;
+			std::unordered_map<std::string, std::string> desktop_id_to_path_index;
+			std::vector<GlobRule> glob_rules_cache; // from 'globs2'
+			std::unordered_map<std::string, std::string> alias_to_canonical_cache;  // from 'aliases'
+			std::unordered_map<std::string, std::vector<std::string>> canonical_to_aliases_cache;  // from 'aliases'
+			std::unordered_map<std::string, std::string> subclass_to_parent_cache;  // from 'subclasses'
+			MimeappsListsConfig mimeapps_lists_cache;  // from 'mimeapps.list'
+			std::unordered_map<std::string, std::string> mime_to_default_desktop_id_cache;  // from 'xdg-mime query default'
+			MimeToDesktopAssociationsIndex mime_to_desktop_associations_index; 	// from 'mimeinfo.cache'
+			MimeToDesktopEntryIndex mime_to_desktop_entry_index;  // from full .desktop scan
+		};
+
 
 		struct OperationContext
 		{
@@ -331,20 +354,11 @@ namespace openwith
 
 
 		// ******************************************************************************
-		// ALIASES
-		// ******************************************************************************
-
-		using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKey::Hash>;
-		using MimeToDesktopEntryIndex = std::unordered_map<std::string, std::vector<const DesktopEntry*>>;
-		using MimeToDesktopAssociationsIndex = std::unordered_map<std::string, std::vector<DesktopAssociation>>;
-		using VisitedInodeSet = std::set<std::pair<dev_t, ino_t>>;
-
-
-		// ******************************************************************************
 		// METHODS
 		// ******************************************************************************
 
 		// --- Candidate search and ranking ---
+		void ClearLastQueryCaches();
 		CandidateMap DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes);
 		std::string QuerySystemDefaultApplication(const std::string& mime);
 		void AppendCandidatesFromMimeappsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
@@ -356,19 +370,19 @@ namespace openwith
 		bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id, const MimeappsListsConfig& mimeapps_lists) const;
 		std::vector<RankedCandidate> BuildSortedCandidates(const CandidateMap& candidate_map);
 		std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
-		std::wstring_view GetPackageTag(PackageType type);
+		static std::wstring_view GetPackageTag(PackageType type);
 		static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 		std::wstring FormatFactForUI(const AssociationFact& fact) const;
 
 		// --- File MIME type detection and expansion ---
 		RawMimeProfile GetRawMimeProfile(const std::string& filepath);
 		std::vector<std::string> ExpandAndPrioritizeMimeTypes(const RawMimeProfile& profile);
-		std::string DetectMimeTypeWithXdgMimeTool(const std::string& filepath_escaped);
-		std::string DetectMimeTypeWithFileTool(const std::string& filepath_escaped);
-		std::string DetectMimeTypeWithMagikaTool(const std::string& filepath_escaped);
+		static std::string DetectMimeTypeWithXdgMimeTool(const std::string& filepath_quoted);
+		static std::string DetectMimeTypeWithFileTool(const std::string& filepath_quoted);
+		static std::string DetectMimeTypeWithMagikaTool(const std::string& filepath_quoted);
 		std::string DetectMimeTypeViaGlobRules(const std::string& filepath);
 		static bool GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive);
-		std::string_view DetectMimeTypeByExtension(const std::string& filepath);
+		static std::string_view DetectMimeTypeByExtension(const std::string& filepath);
 		static const std::unordered_map<std::string_view, std::string_view>& GetExtMimeMap();
 
 		// --- XDG database parsing and caching ---
@@ -389,7 +403,7 @@ namespace openwith
 		std::unordered_map<std::string, std::string> LoadMimeSubclasses();
 		std::vector<GlobRule> LoadGlobRules();
 		void ParseGlobs2File(const std::string& filepath, std::vector<GlobRule>& rules, int source_rank);
-		bool IsLiteralPattern(const std::string& pattern);
+		static bool IsLiteralPattern(const std::string& pattern);
 		static std::vector<std::string> GetDesktopFileDirpaths();
 		std::vector<std::string> GetMimeappsListFilepaths();
 		static std::vector<std::string> GetMimeDbDirpaths();
@@ -408,7 +422,7 @@ namespace openwith
 		static bool IsExecutableAvailable(const std::string& command, std::string* out_resolved_path = nullptr);
 		static std::string RunCommandAndCaptureOutput(const std::string& cmd);
 		static std::string GetEnv(const char* var, const char* default_val = "");
-		static std::string EscapeArgForShell(const std::string& arg);
+		static std::string QuoteArgForShell(const std::string& arg);
 		static std::string GetBaseName(const std::string& filepath);
 		static std::string_view TrimToStrV(std::string_view sv) noexcept;
 		static std::string TrimToStr(std::string_view sv);
@@ -422,9 +436,6 @@ namespace openwith
 		// DATA MEMBERS
 		// ******************************************************************************
 
-		// CRITICAL: Must use std::map (not std::unordered_map) to guarantee pointer stability!
-		// RankedCandidate holds non-owning pointers to DesktopEntry objects stored here,
-		// which would be invalidated by unordered_map rehashing.
 		std::map<std::string, std::optional<DesktopEntry>> _desktop_id_to_desktop_entry_cache;
 
 		// Maps a candidate's ID to its source info, i.e. where the association came from (e.g., 'mimeapps.list').
@@ -463,31 +474,16 @@ namespace openwith
 		// Maps internal setting keys to required command-line tools.
 		// Used to disable settings in the UI if the required tool is missing.
 		inline static const std::map<std::string, std::string> s_tool_key_map = {
-			{ "UseXdgMimeTool", "xdg-mime" },
-			{ "UseFileTool", "file" },
-			{ "UseMagikaTool", "magika" },
+			{ "UseXdgMimeTool",      "xdg-mime" },
+			{ "UseFileTool",         "file" },
+			{ "UseMagikaTool",       "magika" },
 			{ "QueryXdgMimeDefault", "xdg-mime" }
 		};
 
 		// --- Operation-Scoped State ---
-		// Fields managed by OperationContext. Valid only during a GetAppCandidates() call.
-		std::vector<std::string> _op_locale_suffixes;
-		std::vector<std::string> _op_current_desktop_names;  // from $XDG_CURRENT_DESKTOP
-		bool _op_xdg_mime_exists = false;
-		bool _op_file_tool_enabled_and_exists = false;
-		bool _op_magika_tool_enabled_and_exists = false;
-		std::vector<std::string> _op_desktop_file_dirpaths;
-		std::vector<std::string> _op_mimeapps_list_filepaths;
-		std::vector<std::string> _op_mime_database_dirpaths;
-		std::unordered_map<std::string, std::string> _op_desktop_id_to_path_index;
-		std::vector<GlobRule> _op_glob_rules_cache; // from 'globs2'
-		std::unordered_map<std::string, std::string> _op_alias_to_canonical_cache;  // from 'aliases'
-		std::unordered_map<std::string, std::vector<std::string>> _op_canonical_to_aliases_cache;  // from 'aliases'
-		std::unordered_map<std::string, std::string> _op_subclass_to_parent_cache;  // from 'subclasses'
-		MimeappsListsConfig _op_mimeapps_lists_cache;  // from 'mimeapps.list'
-		std::unordered_map<std::string, std::string> _op_mime_to_default_desktop_id_cache;  // from 'xdg-mime query default'
-		MimeToDesktopAssociationsIndex _op_mime_to_desktop_associations_index; 	// from 'mimeinfo.cache'
-		MimeToDesktopEntryIndex _op_mime_to_desktop_entry_index;  // from full .desktop scan
+		// Valid only during a GetAppCandidates call. Populated by OperationContext.
+		std::optional<OpState> _op_state;
+
 	};
 
 } // namespace openwith

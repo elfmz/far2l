@@ -1,6 +1,7 @@
 void CommandData::OutTitle()
 {
-  if (BareOutput || DisableCopyright)
+  // If -idc is present in configuration, -iver shall override it.
+  if (BareOutput || DisableCopyright && !PrintVersion)
     return;
 #ifdef SFX_MODULE
   mprintf(St(MCopyrightS));
@@ -27,7 +28,7 @@ void CommandData::OutTitle()
 #endif
   if (PrintVersion)
   {
-    mprintf(L"%s",Version);
+    mprintf(L"%s\n",Version);
     exit(0);
   }
   mprintf(St(MUCopyright),Version,RARVER_YEAR);

@@ -75,6 +75,9 @@ static int CalcAllowedDepth(const std::wstring &Name)
   for (size_t I=0;I<Name.size();I++)
     if (IsPathDiv(Name[I]))
     {
+      if (IsPathDiv(Name[I+1]))
+        return 0;
+
       bool Dot=Name[I+1]=='.' && (IsPathDiv(Name[I+2]) || Name[I+2]==0);
       bool Dot2=Name[I+1]=='.' && Name[I+2]=='.' && (IsPathDiv(Name[I+3]) || Name[I+3]==0);
       if (!Dot && !Dot2)

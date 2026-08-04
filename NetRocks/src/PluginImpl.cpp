@@ -2,6 +2,8 @@
 #include <mutex>
 #include <wchar.h>
 #include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 #include "Globals.h"
 #include <utils.h>
 #include "SitesConfig.h"
@@ -75,7 +77,7 @@ public:
 
 PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config, int OpMode)
 {
-	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
+	_cur_dir[0] = _panel_title[0] = _format[0] = _cur_URL[0] = _cur_path[0] = 0;
 
 	_local = std::make_shared<HostLocal>();
 	if (path_is_standalone_config) {
@@ -118,32 +120,90 @@ PluginImpl::~PluginImpl()
 	g_all_netrocks.Remove(this);
 }
 
+// formats the URL pasted on Ctrl-Alt-F according to protocol and optional
+// paste-format presets (env vars now, config later). real_path is the bare
+// absolute remote path (always leading '/').
+static std::string FormatPasteURL(const IHost::Identity &identity, const std::string &real_path)
+{
+	const std::string &proto = identity.protocol;
+
+	// ssh family: NETROCKS_SSH_PASTE = url (default) | scp | rsync
+	if (proto == "sftp" || proto == "scp" || proto == "shell") {
+		const char *preset = getenv("NETROCKS_SSH_PASTE");
+		if (preset && (strcmp(preset, "scp") == 0 || strcmp(preset, "rsync") == 0)) {
+			// user@host:/path (scp/rsync remote spec; non-default port not expressible here)
+			std::string out;
+			if (!identity.username.empty()) {
+				out+= identity.username;
+				out+= '@';
+			}
+			out+= identity.host;
+			out+= ':';
+			out+= real_path;
+			return out;
+		}
+	}
+
+	// smb: NETROCKS_SMB_PASTE = url (default) | unc
+	if (proto == "smb") {
+		const char *preset = getenv("NETROCKS_SMB_PASTE");
+		if (preset && strcmp(preset, "unc") == 0) {
+			// //host/share/path
+			std::string out = "//";
+			out+= identity.host;
+			out+= real_path; // starts with '/'
+			return out;
+		}
+	}
+
+	// default: proto://[user@]host[:port]/path
+	std::string out = proto;
+	out+= "://";
+	if (!identity.username.empty()) {
+		out+= identity.username;
+		out+= '@';
+	}
+	out+= identity.host;
+	const auto *pi = ProtocolInfoLookup(proto.c_str());
+	if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+		out+= StrPrintf(":%u", identity.port);
+	}
+	out+= real_path; // starts with '/'
+	return out;
+}
+
 void PluginImpl::UpdatePathInfo()
 {
 	std::wstring tmp;
 	if (_remote) {
 		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
-		// make up URL string start
 		IHost::Identity identity;
 		_remote->GetIdentity(identity);
-		tmp = StrMB2Wide(StrPrintf("%s://", identity.protocol.c_str()));
-		if (!identity.username.empty()) {
-			tmp += StrMB2Wide(StrPrintf("%s@", identity.username.c_str()));
+
+		// resolve real absolute path on the server (home dir was resolved once at connect)
+		std::string real_path;
+		try {
+			real_path = _remote->RealPath(_location.ToString(false));
+		} catch (std::exception &e) {
+			NR_ERR("RealPath: %s", e.what());
+			real_path = _location.ToString(false);
 		}
-		tmp += StrMB2Wide(identity.host);
-		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
-		if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
-			tmp += StrMB2Wide(StrPrintf(":%u", identity.port));
+		if (real_path.empty() || real_path[0] != '/') {
+			real_path.insert(0, "/");
 		}
-		tmp += L"/" + StrMB2Wide(_location.ToString(false));
-		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
-		// make up URL string end
+
+		// _cur_path: bare absolute path (Ctrl-F); _cur_URL: portable form (Ctrl-Alt-F)
+		wcsncpy(_cur_path, StrMB2Wide(real_path).c_str(), ARRAYSIZE(_cur_path) - 1 );
+		wcsncpy(_cur_URL, StrMB2Wide(FormatPasteURL(identity, real_path)).c_str(), ARRAYSIZE(_cur_URL) - 1 );
+
 		tmp = _cur_dir;
 
 	} else {
+		_cur_URL[0] = _cur_path[0] = 0;
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
 		wcsncpy(_cur_dir, tmp.c_str(), ARRAYSIZE(_cur_dir) - 1);
+		_cur_URL[0] = 0;
 		if (!_standalone_config.empty()) {
 			tmp = ExtractFileName(_standalone_config);
 
@@ -458,6 +518,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	Info->Format = _format;
 	Info->PanelTitle = _panel_title;
 	Info->CurURL = _cur_URL;
+	Info->CurPath = _cur_path;
 }
 
 
@@ -707,6 +768,10 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return TRUE;
 	}
 
+	if (Key == 'S' && ControlState == PKF_CONTROL && _remote) {
+		return ByKey_CopySSHCommand() ? TRUE : FALSE;
+	}
+
 	if (Key == 'R' && ControlState == PKF_CONTROL && !_remote && g_conn_pool) {
 		g_conn_pool->PurgeAll();
 	}
@@ -881,6 +946,85 @@ void PluginImpl::ByKey_EditAttributesSelected()
 	} catch (std::exception &ex) {
 		NR_ERR("%s", ex.what());
 	}
+}
+
+// wraps s in single quotes for a POSIX shell, escaping embedded single quotes
+static std::string ShSingleQuote(const std::string &s)
+{
+	std::string out = "'";
+	for (size_t i = 0; i < s.size(); ++i) {
+		if (s[i] == '\'') {
+			out+= "'\\''";
+		} else {
+			out+= s[i];
+		}
+	}
+	out+= "'";
+	return out;
+}
+
+// copies to clipboard an ssh command that opens an interactive terminal in the
+// current remote directory (kept open via 'exec $SHELL')
+bool PluginImpl::ByKey_CopySSHCommand()
+{
+	if (!_remote) {
+		return false;
+	}
+
+	IHost::Identity identity;
+	_remote->GetIdentity(identity);
+	if (identity.protocol != "sftp" && identity.protocol != "scp" && identity.protocol != "shell") {
+		return false;
+	}
+
+	// item under the cursor (the ".." parent entry is treated as "no item")
+	GetFocusedItem gfi(this);
+	std::string name;
+	bool is_dir = false;
+	if (gfi.IsValid() && gfi->FindData.lpwszFileName) {
+		name = Wide2MB(gfi->FindData.lpwszFileName);
+		is_dir = (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	}
+	if (name == "..") {
+		name.clear();
+	}
+
+	const std::string &dir = Wide2MB(_cur_path);
+	std::string remote_cmd;
+	if (is_dir && !name.empty()) {
+		// enter the directory under the cursor
+		std::string sub = dir;
+		if (sub.empty() || sub[sub.size() - 1] != '/') {
+			sub+= '/';
+		}
+		sub+= name;
+		remote_cmd = "cd " + ShSingleQuote(sub) + "; exec $SHELL -l";
+	} else {
+		// stay in the current dir; list the file under the cursor if any
+		remote_cmd = "cd " + ShSingleQuote(dir) + ";";
+		if (!name.empty()) {
+			remote_cmd+= " ls -la " + ShSingleQuote(name) + ";";
+		}
+		remote_cmd+= " exec $SHELL -l";
+	}
+
+	std::string cmd = "ssh -t ";
+	const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
+	if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+		cmd+= StrPrintf("-p %u ", identity.port);
+	}
+	if (!identity.username.empty()) {
+		cmd+= identity.username;
+		cmd+= '@';
+	}
+	cmd+= identity.host;
+	cmd+= ' ';
+	cmd+= ShSingleQuote(remote_cmd);
+
+	if (G.info.FSF && G.info.FSF->CopyToClipboard) {
+		G.info.FSF->CopyToClipboard(StrMB2Wide(cmd).c_str());
+	}
+	return true;
 }
 
 

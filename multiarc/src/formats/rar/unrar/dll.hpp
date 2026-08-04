@@ -32,7 +32,7 @@
 #define RAR_VOL_ASK           0
 #define RAR_VOL_NOTIFY        1
 
-#define RAR_DLL_VERSION       9
+#define RAR_DLL_VERSION      10
 
 #define RAR_HASH_NONE         0
 #define RAR_HASH_CRC32        1
@@ -140,7 +140,8 @@ typedef int (CALLBACK *UNRARCALLBACK)(UINT msg,LPARAM UserData,LPARAM P1,LPARAM 
 #define ROADF_ENCHEADERS   0x0080
 #define ROADF_FIRSTVOLUME  0x0100
 
-#define ROADOF_KEEPBROKEN  0x0001
+#define ROADOF_KEEPBROKEN  0x0001 // Preserve extracted files with checksum errors.
+#define ROADOF_SHARED      0x0002 // Open an archive in shared mode.
 
 struct RAROpenArchiveDataEx
 {

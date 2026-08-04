@@ -206,7 +206,7 @@ int wxKeyCode2WinKeyCode(int code)
 	case L'.': return VK_OEM_PERIOD;
 	case L',': return VK_OEM_COMMA;
 	case L'_': case L'-': return VK_OEM_MINUS;
-	case L'+': return VK_OEM_PLUS;
+	case L'=': case L'+': return VK_OEM_PLUS;
 	case L';': case L':': return VK_OEM_1;
 	case L'/': case L'?': return VK_OEM_2;
 	case L'~': case L'`': return VK_OEM_3;
@@ -310,6 +310,10 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		_right_control = true;
 	}
+	if ((event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) &&
+		(event.GetRawKeyCode() == RAW_ALTGR || event.GetRawKeyCode() == RAW_CONTEXT)) {
+		_right_alt = true;
+	}
 #endif
 }
 
@@ -332,6 +336,9 @@ bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if (event.GetKeyCode() == WXK_CONTROL) {
 		_right_control = false;
+	}
+	if (event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) {
+		_right_alt = false;
 	}
 #endif
 
@@ -419,6 +426,7 @@ void KeyTracker::ForceAllUp()
 	_pressed_keys.clear();
 #ifndef __WXMAC__
 	_right_control = false;
+	_right_alt = false;
 #endif
 	_composing = false;
 }
@@ -461,6 +469,20 @@ bool KeyTracker::RightControl() const
 #else
 	return _right_control;
 #endif
+}
+
+bool KeyTracker::RightAlt() const
+{
+#ifdef __WXMAC__
+	return false;
+#else
+	return _right_alt;
+#endif
+}
+
+bool KeyTracker::LeftAlt() const
+{
+	return Alt() && !RightAlt();
 }
 
 //////////////////////
@@ -603,9 +625,10 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 #endif
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
-	if (!event.GetKeyCode() && event.GetRawKeyCode() == RAW_CONTEXT) {
+	if ((!event.GetKeyCode() || event.GetKeyCode() == WXK_ALT) &&
+		(event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR)) {
 		if (KeyDown) {
-			Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED;
+			Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
 		}
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		Event.KeyEvent.wVirtualKeyCode = VK_MENU;
@@ -628,8 +651,12 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	// so if event.ControlDown() and event.AltDown() are together then don't believe them and
 	// use only state maintained key_tracker. Unless under broadway, that may miss separate control
 	// keys events.
-	if (key_tracker.Alt() || (event.AltDown() && (!event.ControlDown() || g_broadway))) {
+	if (key_tracker.LeftAlt() || (event.AltDown() && !key_tracker.RightAlt() && (!event.ControlDown() || g_broadway))) {
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+	}
+
+	if (key_tracker.RightAlt()) {
+		Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
 	}
 
 	if (key_tracker.Shift() || event.ShiftDown()) {

@@ -250,6 +250,8 @@ $ # Особенности FAR2L - начало работы#
 
   Оригинальный PuTTY не корректно пересылает в far2l некоторые клавиатурные комбинации.
 Под Windows используйте специальные форки putty с поддержкой far2l TTY extensions support:
+    - #Putty-Zeroes-Mod# (Windows ssh-client): ~https://github.com/Zeroes1/Putty-Zeroes-Mod~@https://github.com/Zeroes1/Putty-Zeroes-Mod@
+(_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     - #putty4far2l# (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
     - cyd01's #KiTTY# (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
@@ -260,6 +262,7 @@ $ # Особенности FAR2L - начало работы#
 но оригинальный PuTTY не может передавать буфер обмена.
 
 
+@??ConfigDirs
  #Расположение персональных настроек FAR2L и истории#
     - по умолчанию FAR2L работает с настройками, хранящимися в #~~/.config/far2l/# или в #$XDG_CONFIG_HOME/far2l/#
     - при запуске ключ #-u# (или ~переменная окружения~@FAREnv@ #$FARSETTINGS#) позволяет указать путь к произвольному расположению настроек:
@@ -5311,7 +5314,7 @@ $ #Способы запуска программ без блокировки fa
   При запуске программ во внутренней ~Командной строке~@CmdLineCmd@, ~Ассоциациях файлов~@FileAssoc@, ~Меню пользователя~@UserMenu@ и действии ~Применить команду~@ApplyCmd@ far2l может блокироваться. Ниже описываются способы запуска без блокировки far2l:
 
   Запуск программ во ~внешнем терминале~@ExternalTerminal@ из командной строки far2l:
-  - #program#: для запуска во внешнем терминале по #Shift-Enter# (для запуска используется ~$FARHOME~@FAREnv@/open.sh); 
+  - #program#: для запуска во внешнем терминале по #Shift-Enter# (для запуска используется ~$FARHOME~@FAREnv@/open.sh);
   - #$FARHOME/open.sh exec program#: для запуска во внешнем терминале по #Enter# - обязательно exec как первый параметр для open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: в этом случае выполнится команда ls во внешнем терминале, но терминал не закроется;
 

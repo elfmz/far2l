@@ -2083,6 +2083,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		//_SVS(SysLog(L"InsertBinaryString ==> this->Str='%ls'",this->Str));
 	} else {
 		const int MaxLength = GetMaxLength();
+		this->Str.Expand(CurPos);
 		if (!this->Str.Insert(CurPos, Str, Length)) {
 			fprintf(stderr, "Edit::InsertBinaryString: failed to insert %d chars\n", Length);
 			return;

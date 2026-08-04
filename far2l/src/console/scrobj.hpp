@@ -55,9 +55,6 @@ class ScreenObject
 protected:
 	ScreenObject *pOwner;
 
-public:
-	static ScreenObject *CaptureMouseObject;
-
 protected:
 	BitFlags Flags;
 	int X1, Y1, X2, Y2;
@@ -96,8 +93,6 @@ public:
 	void Redraw();
 	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
 	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
-
-	static void SetCapture(ScreenObject *Obj);
 };
 
 class ComplexScreenObject : public ScreenObject

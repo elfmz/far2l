@@ -37,8 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "savescr.hpp"
 #include "interf.hpp"
 
-ScreenObject *ScreenObject::CaptureMouseObject = nullptr;
-
 ScreenObject::ScreenObject()
 	:
 	pOwner(nullptr),
@@ -148,11 +146,6 @@ void ScreenObject::Redraw()
 	//  _tran(SysLog(L"[%p] ScreenObject::Redraw()",this));
 	if (Flags.Check(FSCROBJ_VISIBLE))
 		Show();
-}
-
-void ScreenObject::SetCapture(ScreenObject *Obj)
-{
-	ScreenObject::CaptureMouseObject = Obj;
 }
 
 ///

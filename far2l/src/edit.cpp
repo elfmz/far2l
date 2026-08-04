@@ -2906,6 +2906,11 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
+static struct DummyEditListener : IEditListener
+{
+	virtual void OnEditChanged(Edit *edit) {}
+} sDummyListener;
+
 EditControl::EditControl(ScreenObject *pOwner, History *iHistory, FarList *iList, DWORD iFlags)
 	:
 	Edit(pOwner),
@@ -2918,6 +2923,7 @@ EditControl::EditControl(ScreenObject *pOwner, History *iHistory, FarList *iList
 	ECFlags(iFlags)
 {
 	ACState = ECFlags.Check(EC_ENABLEAUTOCOMPLETE) != FALSE;
+	SetListener(&sDummyListener);
 }
 
 void EditControl::ShowArrows()

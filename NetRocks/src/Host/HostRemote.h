@@ -87,6 +87,7 @@ public:
 	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target);
 	virtual void SymlinkQuery(const std::string &link_path, std::string &link_target);
 
+	virtual std::string RealPath(const std::string &path);
 
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0);

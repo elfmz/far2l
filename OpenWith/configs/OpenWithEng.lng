@@ -1,14 +1,14 @@
 .Language=English,English
 
 "OpenWith"
-"OpenWith: Choose application"
+"OpenWith: choose application"
 "OpenWith for "
 " file(s)"
 
 "OpenWith Error"
 "Selected item must be a file accessible locally via a real path."
 "Failed to save modified settings; the changes will apply to the current session only."
-"No applications found. Detected MIME type:"
+"No applications found. Detected file types:"
 "The application cannot be executed."
 "OpenWith plugin is not available on this platform."
 
@@ -37,15 +37,19 @@
 "Use &mimeinfo.cache"
 "Filter by Only&ShowIn/NotShowIn"
 "Validate &TryExec"
-"Disable ranking and sort al&phabetically"
 "Pass pla&in paths instead of file:// URIs"
 "Show package &qualifiers"
+
+"Show UTI &instead of MIME types"
+"Respect system &ranking"
+
+"Disable ranking and sort al&phabetically"
 
 "OpenWith: Details"
 
 "F&iles selected: "
 "&Filepaths: "
-"&MIME profiles: "
+"File t&ypes: "
 "L&aunch command: "
 "&Close"
 "&Launch"
@@ -59,11 +63,25 @@
 "GoTo &TryExec"
 "GoTo s&ource"
 
-"Name: "
 "Location: "
-"Executable: "
-"Version: "
-"Build Version: "
+"Bundle display name: "
+"Bundle name: "
+"Bundle short version: "
+"Bundle version: "  
+"Bundle executable: "
+"Bundle identifier: "
+"&GoTo bundle location"
+
+"OpenWith: working"
+"Please, wait..."
+"Processing file %zu of %zu..."
+
+"OpenWith: identifying MIME types"
+"OpenWith: discovering applications"
+"Matching, filtering and ranking..."
+
+"OpenWith: identifying UTIs and discovering applications"
+"OpenWith: filtering and sorting results"
 
 "OpenWith: confirm launch"
 "Are you sure you want to open %zu files with application '%ls'?"

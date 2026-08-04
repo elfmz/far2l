@@ -29,6 +29,7 @@ enum IPCCommand
 	IPC_FILE_GET,
 	IPC_FILE_PUT,
 	IPC_EXECUTE_COMMAND,
+	IPC_GET_REAL_PATH,
 };
 
 typedef PipeIPCEndpoint<IPCCommand> IPCEndpoint;

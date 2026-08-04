@@ -77,6 +77,7 @@ class ProtocolSHELL : public IProtocol
 	std::string _way_name;
 	std::unique_ptr<ExecCmd> _exec_cmd;
 	std::string _single_line_info;
+	std::string _home; // absolute home dir, resolved once at connect
 
 	void SubstituteCreds(std::string &str);
 	void OpenWay();
@@ -112,6 +113,8 @@ public:
 
 	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target);
 	virtual void SymlinkQuery(const std::string &link_path, std::string &link_target);
+
+	virtual std::string RealPath(const std::string &path);
 
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path);
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0);

@@ -87,6 +87,13 @@ struct IProtocol
 	virtual void SymlinkCreate(const std::string &link_path, const std::string &link_target) = 0;
 	virtual void SymlinkQuery(const std::string &link_path, std::string &link_target) = 0;
 
+	/* resolves path to its canonical absolute form on the server; default returns
+	path unchanged. Protocols that can resolve home-relative paths should override. */
+	virtual std::string RealPath(const std::string &path)
+	{
+		return path;
+	}
+
 	virtual std::shared_ptr<IDirectoryEnumer> DirectoryEnum(const std::string &path) = 0;
 	virtual std::shared_ptr<IFileReader> FileGet(const std::string &path, unsigned long long resume_pos = 0) = 0;
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos = 0) = 0;
@@ -110,4 +117,25 @@ struct ProtocolInfo
 
 const ProtocolInfo *ProtocolInfoHead();
 const ProtocolInfo *ProtocolInfoLookup(const char *name);
+
+// composes an absolute path from a per-connection home dir (resolved once at
+// connect) and a possibly home-relative path, without any server round-trip
+inline std::string RealPathFromHome(const std::string &home, const std::string &path)
+{
+	std::string out;
+	if (!path.empty() && path[0] == '/') {
+		out = path;
+	} else {
+		out = home;
+		if (!out.empty() && out[out.size() - 1] != '/') {
+			out+= '/';
+		}
+		out+= path;
+	}
+	// drop trailing slash except for root
+	while (out.size() > 1 && out[out.size() - 1] == '/') {
+		out.resize(out.size() - 1);
+	}
+	return out;
+}
 

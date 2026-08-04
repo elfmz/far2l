@@ -50,27 +50,23 @@ enum
 	FSCROBJ_ISREDRAWING         = 0x00000008,		// идет процесс Show?
 };
 
-class ScreenObject
+class ThinScreenObject
 {
 protected:
+	ThinScreenObject *pOwner;
+
+protected:
 	BitFlags Flags;
-	SaveScreen *ShadowSaveScr;
 	int X1, Y1, X2, Y2;
 	int ObjWidth, ObjHeight;
 
 	int nLockCount;
-	ScreenObject *pOwner;
 
-public:
-	SaveScreen *SaveScr;
-	static ScreenObject *CaptureMouseObject;
-
-private:
 	virtual void DisplayObject(){};
 
 public:
-	ScreenObject();
-	virtual ~ScreenObject();
+	ThinScreenObject();
+	virtual ~ThinScreenObject();
 
 public:
 	virtual int ProcessKey(FarKey Key) { return 0; };
@@ -91,15 +87,29 @@ public:
 	void Unlock();
 	bool Locked();
 
-	void SetOwner(ScreenObject *pOwner);
-	ScreenObject *GetOwner();
+	void SetOwner(ThinScreenObject *pOwner);
+	ThinScreenObject *GetOwner();
 
-	void SavePrevScreen();
 	void Redraw();
 	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
 	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
+};
+
+class ScreenObject : public ThinScreenObject
+{
+protected:
+	SaveScreen *ShadowSaveScr = nullptr;
+
+public:
+	SaveScreen *SaveScr = nullptr;
+
+	virtual ~ScreenObject();
+
+	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
+	virtual void Hide();
+	virtual void Show();
+
 	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
 	void Shadow(bool Full = false);
-
-	static void SetCapture(ScreenObject *Obj);
 };
+

@@ -113,8 +113,6 @@ DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 			}
 			break;
 		case DLGEDIT_SINGLELINE: {
-			Edit::Callback callback = {true, EditChange, this};
-
 			iHistory = 0;
 			FarList *iList = 0;
 			DWORD iFlags = 0;
@@ -137,7 +135,8 @@ DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 					iFlags|= EditControl::EC_ENABLEFNCOMPLETE;
 				}
 			}
-			lineEdit = new EditControl(pOwner, &callback, true, iHistory, iList, iFlags);
+			lineEdit = new EditControl(pOwner, iHistory, iList, iFlags);
+			lineEdit->SetListener(this);
 		} break;
 	}
 }
@@ -168,6 +167,8 @@ int DlgEdit::ProcessKey(FarKey Key)
 
 	if (Type == DLGEDIT_MULTILINE) {
 		DialogEditorPluginScope scope(multiEdit);
+		if (CtrlObject->Plugins.ProcessEditorInput(FrameManager->GetLastInputRecord()))
+			return TRUE;
 		return multiEdit->ProcessKey(Key);
 	} else
 		return lineEdit->ProcessKey(Key);
@@ -388,7 +389,7 @@ void DlgEdit::GetString(wchar_t *Str, int MaxSize, int Row)
 		} else {
 			wchar_t *buf = nullptr;
 			int size = 0;
-			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+			if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 				*Str = 0;
 				return;
 			}
@@ -419,7 +420,7 @@ void DlgEdit::GetString(FARString &strStr, int Row)
 		} else {
 			wchar_t *buf = nullptr;
 			int size = 0;
-			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+			if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 				strStr.Clear();
 				return;
 			}
@@ -599,7 +600,7 @@ int DlgEdit::GetLength()
 			return 0;
 		wchar_t *buf = nullptr;
 		int size = 0;
-		if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+		if (!multiEdit->GetRawData(&buf, size, 0) || !buf) {
 			fprintf(stderr, "DlgEdit::GetLength multiline getraw failed\n");
 			return 0;
 		}
@@ -642,7 +643,7 @@ int DlgEdit::GetStrSize(int Row)
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->
 	else
-		return lineEdit->StrSize;
+		return lineEdit->Str.Size();
 }
 
 void DlgEdit::SetCursorType(bool Visible, DWORD Size)
@@ -768,12 +769,7 @@ int64_t DlgEdit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 		return lineEdit->VMProcess(OpCode, vParam, iParam);
 }
 
-void DlgEdit::EditChange(void *aParam)
-{
-	static_cast<DlgEdit *>(aParam)->DoEditChange();
-}
-
-void DlgEdit::DoEditChange()
+void DlgEdit::OnEditChanged(Edit *edit)
 {
 	if (m_Dialog->IsInited()) {
 		SendDlgMessage((HANDLE)m_Dialog, DN_EDITCHANGE, m_Index, 0);

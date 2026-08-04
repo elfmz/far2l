@@ -15,7 +15,7 @@
 #include <farkeys.h>
 #include <farcolor.h>
 
-#define CALC_PREFIX L"calc:"
+#define CALC_PREFIX L"calc"
 
 struct CalcCoord
 {

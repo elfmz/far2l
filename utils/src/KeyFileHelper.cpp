@@ -784,6 +784,10 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 			throw std::runtime_error("write file failed");
 		}
 
+		if (os_call_int(fsync, (int)fd) == -1) {
+			throw std::runtime_error("sync file failed");
+		}
+
 	} catch (std::exception &e) {
 		fprintf(stderr,
 			"KeyFileHelper::Save: exception '%s' errno=%u while saving '%s'\n",

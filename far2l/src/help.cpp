@@ -55,7 +55,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filestr.hpp"
 #include "stddlg.hpp"
 #include "farversion.h"
+#include <algorithm>
 #include <map>
+#include <utility>
 
 // Стек возврата
 class CallBackStack
@@ -109,6 +111,20 @@ static const wchar_t *FoundContents = L"__FoundContents__";
 static const wchar_t *PluginContents = L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic = L":Help";
 static const wchar_t *HelpContents = L"Contents";
+static constexpr int HelpWindowSideMargin = 4;
+static constexpr int MinimumHelpTextWidth = 20;
+static constexpr size_t MaximumHelpRecords = 16384;
+static constexpr size_t MaximumHelpParsePasses = MaximumHelpRecords * 8;
+
+static bool HasWindowedHelpSpace()
+{
+	return !Opt.FullScreenHelp && ScrX - 2 * HelpWindowSideMargin - 1 >= MinimumHelpTextWidth;
+}
+
+static bool CanReformatHelp()
+{
+	return Opt.FullScreenHelp ? ScrX - 1 >= MinimumHelpTextWidth : HasWindowedHelpSpace();
+}
 
 void SubstituteRuntimePlaceholders(FARString& line)
 {
@@ -147,10 +163,10 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 	TopScreen = new SaveScreen;
 	StackData.strHelpTopic = Topic;
 
-	if (Opt.FullScreenHelp)
+	if (Opt.FullScreenHelp || !HasWindowedHelpSpace())
 		SetPosition(0, 0, ScrX, ScrY);
 	else
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
 
 	if (!ReadHelp(StackData.strHelpMask) && (Flags & FHELP_USECONTENTS)) {
 		StackData.strHelpTopic = Topic;
@@ -176,7 +192,7 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 		ReadHelp(StackData.strHelpMask);
 	}
 
-	if (HelpList.getSize()) {
+	if (!HelpList.empty()) {
 		ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
 		InitKeyBar();
 		MacroMode = MACRO_HELP;
@@ -300,7 +316,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	if (!GetLangParam(HelpFile, L"PluginContents", &strCurPluginContents, nullptr, nCodePage))
 		strCurPluginContents.Clear();
 
-	HelpList.Free();
+	HelpList.clear();
 
 	if (!StrCmp(StackData.strHelpTopic, FoundContents)) {
 		StackData.strHelpAnchor.Clear(); // anchors not supported for search results
@@ -326,8 +342,14 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 	OldGetFileString GetStr(HelpFile);
 	int nStrLength, GetCode;
+	size_t ParsePasses = 0;
 
 	for (;;) {
+		// A malformed help file or an invalid wrap state must not let an input
+		// event create an unbounded number of records.
+		if (++ParsePasses > MaximumHelpParsePasses || HelpList.size() >= MaximumHelpRecords)
+			break;
+
 		if (StartPos != (DWORD)-1)
 			RealMaxLength = MaxLength - StartPos;
 		else
@@ -631,10 +653,7 @@ void Help::AddLine(const wchar_t *Line)
 	strLine+= Line;
 	SubstituteRuntimePlaceholders(strLine);
 
-	{
-		HelpRecord AddRecord(strLine);
-		HelpList.addItem(AddRecord);
-	}
+	HelpList.emplace_back(std::move(strLine));
 
 	StrCount++;
 }
@@ -654,13 +673,13 @@ void Help::AddTitle(const wchar_t *Title)
 
 void Help::HighlightsCorrection(FARString &strStr)
 {
-	int I, Count;
+	size_t Count = 0;
 
-	for (I = 0, Count = 0; strStr.At(I); I++)
+	for (size_t I = 0, Length = strStr.GetLength(); I < Length; ++I)
 		if (strStr.At(I) == L'#')
-			Count++;
+			++Count;
 
-	if ((Count & 1) && strStr.At(0) != L'$')
+	if ((Count & 1) && !strStr.IsEmpty() && strStr.At(0) != L'$')
 		strStr.Insert(0, L'#');
 }
 
@@ -735,8 +754,8 @@ void Help::FastShow()
 		}
 
 		if (StrPos < StrCount) {
-			const HelpRecord *rec = GetHelpItem(StrPos);
-			const wchar_t *OutStr = rec ? rec->HelpStr : nullptr;
+			const FARString *rec = GetHelpItem(StrPos);
+			const wchar_t *OutStr = rec ? rec->CPtr() : nullptr;
 
 			if (!OutStr)
 				OutStr = L"";
@@ -1059,7 +1078,10 @@ int Help::ProcessKey(FarKey Key)
 
 	switch (Key) {
 		case KEY_NONE:
+			break;
 		case KEY_IDLE: {
+			if (ReformatPending)
+				Reformat();
 			break;
 		}
 		case KEY_F5: {
@@ -1452,7 +1474,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
 
-	if (!HelpList.getSize()) {
+	if (HelpList.empty()) {
 		ErrorHelp = TRUE;
 
 		if (!(StackData.Flags & FHELP_NOSHOWERROR)) {
@@ -1598,15 +1620,15 @@ int Help::IsReferencePresent()
 		return FALSE;
 	}
 
-	const HelpRecord *rec = GetHelpItem(StrPos);
-	wchar_t *OutStr = rec ? rec->HelpStr : nullptr;
+	const FARString *rec = GetHelpItem(StrPos);
+	const wchar_t *OutStr = rec ? rec->CPtr() : nullptr;
 	return (OutStr && wcschr(OutStr, L'@') && wcschr(OutStr, L'~'));
 }
 
-const HelpRecord *Help::GetHelpItem(int Pos)
+const FARString *Help::GetHelpItem(int Pos)
 {
-	if ((unsigned int)Pos < HelpList.getSize())
-		return HelpList.getItem(Pos);
+	if (Pos >= 0 && static_cast<size_t>(Pos) < HelpList.size())
+		return &HelpList[Pos];
 	return nullptr;
 }
 
@@ -1674,20 +1696,6 @@ void Help::MoveToReference(int Forward, int CurScreen)
 	}
 
 	FastShow();
-}
-
-static int __cdecl CmpItems(const HelpRecord **el1, const HelpRecord **el2)
-{
-	if (el1 == el2)
-		return 0;
-
-	int result = StrCmpI((**el1).HelpStr, (**el2).HelpStr);
-	if (!result)
-		return 0;
-	else if (result < 0)
-		return -1;
-	else
-		return 1;
 }
 
 void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
@@ -1834,7 +1842,7 @@ FARString Help::SanitizeHelpString(const FARString& input) const
 
 void Help::ReadDocumentsHelp(int TypeIndex)
 {
-	HelpList.Free();
+	HelpList.clear();
 
 	strCurPluginContents.Clear();
 	StrCount = 0;
@@ -1894,7 +1902,9 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 	}
 
 	// сортируем по алфавиту
-	HelpList.Sort(reinterpret_cast<TARRAYCMPFUNC>(CmpItems), OldStrCount);
+	std::sort(HelpList.begin() + OldStrCount, HelpList.end(), [](const FARString &lhs, const FARString &rhs) {
+		return StrCmpI(lhs.CPtr(), rhs.CPtr()) < 0;
+	});
 
 	// $ 26.06.2000 IS - Устранение глюка с хелпом по f1, shift+f2, end (решение предложил IG)
 	AddLine(L"");
@@ -1964,11 +1974,11 @@ FARString &Help::MkTopic(INT_PTR PluginNumber, const wchar_t *HelpTopic, FARStri
 
 void Help::SetScreenPosition()
 {
-	if (Opt.FullScreenHelp) {
+	if (Opt.FullScreenHelp || !HasWindowedHelpSpace()) {
 		HelpKeyBar.Hide();
 		SetPosition(0, 0, ScrX, ScrY);
 	} else {
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
 	}
 
 	Show();
@@ -1999,29 +2009,43 @@ void Help::OnChangeFocus(int Focus)
 	}
 }
 
-void Help::ResizeConsole()
+void Help::Reformat()
 {
+	if (!CanReformatHelp()) {
+		ReformatPending = false;
+		return;
+	}
+
 	int OldIsNewTopic = IsNewTopic;
 	BOOL ErrCannotOpenHelp = ScreenObject::Flags.Check(FHELPOBJ_ERRCANNOTOPENHELP);
 	ScreenObject::Flags.Set(FHELPOBJ_ERRCANNOTOPENHELP);
 	IsNewTopic = FALSE;
-	delete TopScreen;
-	TopScreen = nullptr;
-	Hide();
-
-	if (Opt.FullScreenHelp) {
-		HelpKeyBar.Hide();
-		SetPosition(0, 0, ScrX, ScrY);
-	} else
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
-
 	ReadHelp(StackData.strHelpMask);
 	ErrorHelp = FALSE;
-	// StackData.CurY--; // ЭТО ЕСМЬ КОСТЫЛЬ (пусть пока будет так!)
 	StackData.CurX--;
 	MoveToReference(1, 1);
 	IsNewTopic = OldIsNewTopic;
 	ScreenObject::Flags.Change(FHELPOBJ_ERRCANNOTOPENHELP, ErrCannotOpenHelp);
+	ReformatPending = false;
+}
+
+void Help::ResizeConsole()
+{
+	delete TopScreen;
+	TopScreen = nullptr;
+	Hide();
+
+	const bool Reformat = CanReformatHelp();
+	if (Opt.FullScreenHelp || !Reformat) {
+		HelpKeyBar.Hide();
+		SetPosition(0, 0, ScrX, ScrY);
+	} else
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
+
+	// Reflow after resize events settle; do not parse help synchronously in
+	// the console-resize input handler.
+	ReformatPending = Reformat;
+	CorrectPosition();
 	FrameManager->ImmediateHide();
 	FrameManager->RefreshFrame();
 }

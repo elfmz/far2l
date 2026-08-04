@@ -102,3 +102,9 @@ inline uint64_t FarColorToReal(unsigned int FarColor)
 extern uint8_t BlackColorsIndex16[SIZE_ARRAY_FARCOLORS];
 extern uint8_t DefaultColorsIndex16[SIZE_ARRAY_FARCOLORS];
 
+#include "Colorspace.h"
+
+void extractColorComponents(int color, int& r, int& g, int& b);
+void extractColor(uint64_t color, RGB& fg, RGB& bg);
+int assembleColorComponents(int r, int g, int b);
+uint64_t assembleColor(RGB& fg, RGB& bg);

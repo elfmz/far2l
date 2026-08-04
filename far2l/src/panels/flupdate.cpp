@@ -102,6 +102,14 @@ void FileList::UpdateIfRequired()
 	}
 }
 
+void FileList::RetryFailedRead()
+{
+	if (strFailedReadDir == strCurDir && !strFailedReadDir.IsEmpty()
+			&& TestCurrentDirectory(strCurDir)) {
+		Update(0);
+	}
+}
+
 void ReadFileNamesMsg(const wchar_t *Msg)
 {
 	Message(0, 0, Msg::ReadingTitleFiles, Msg);
@@ -148,12 +156,36 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	FARString strSaveDir;
 	apiGetCurrentDirectory(strSaveDir);
 	{
+		FARString strReadDir = strCurDir;
 		if (!SetCurPath()) {
-			if (!WinPortTesting())
-				FlushInputBuffer();		// Очистим буффер ввода, т.к. мы уже можем быть в другом месте...
+			if (strCurDir == strReadDir)
+				strFailedReadDir = strReadDir;
+			else
+				strFailedReadDir.Clear();
+
+			// Do not leave a list read from another directory visible when the
+			// panel's current directory cannot be entered.
+			ListData.Clear();
+			SymlinksCache.clear();
+			CurFile = CurTopFile = 0;
+			LastCurFile = -1;
+			SelFileCount = 0;
+			SelFileSize = 0;
+			TotalFileCount = 0;
+			TotalFileSize = TotalFilePhysSize = LargestFilSize = LargestFilSizeL = LargestFilPhysSize = 0;
+			FreeDiskSize = 0;
+			CacheSelIndex = -1;
+			CacheSelClearIndex = -1;
+			MarkLM = 0;
+			if (!IsLocalRootPath(strCurDir) && !IsLocalPrefixRootPath(strCurDir)
+					&& !IsLocalVolumeRootPath(strCurDir)) {
+				ListData.AddParentPoint();
+			}
+
 			return;
 		}
 	}
+	strFailedReadDir.Clear();
 	SortGroupsRead = FALSE;
 
 	if (GetFocus())

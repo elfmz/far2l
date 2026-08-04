@@ -151,6 +151,10 @@ class PluginManager:
             ffic.OPEN_FILEPANEL: "FILEPANEL",
         }
         name = id2name[OpenFrom]
+        if OpenFrom == ffic.OPEN_FINDLIST:
+            # this type of opening is allowed only once per plugin,
+            # python is multi-plugin - so we don't use any python plugin :(
+            return None
         if OpenFrom == ffic.OPEN_DIALOG:
             ptr = self.ffi.cast("struct OpenDlgPluginData *", Item)
             hDLG = ptr.hDlg

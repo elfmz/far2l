@@ -425,7 +425,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	///	if ((CD[Offset] && CD[Offset+1]==L':' && !CD[Offset+2]) || IsLocalVolumeRootPath(CD))
 	// AddEndSlash(strDir);
 
-	if (strDir == strCurrentDirectory())
+	if (strDir == strCurrentDirectory() && !Validate)
 		return TRUE;
 
 	if (Validate) {
@@ -440,12 +440,10 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 		}
 	}
 
-	strCurrentDirectory() = strDir;
-
 	// try to synchronize far cur dir with process cur dir
 	// WTF??? if(CtrlObject && CtrlObject->Plugins.GetOemPluginsCount())
 	{
-		if (!WINPORT(SetCurrentDirectory)(strCurrentDirectory())) {
+		if (!WINPORT(SetCurrentDirectory)(strDir)) {
 			fprintf(stderr, "apiSetCurrentDirectory: set curdir error %u for %ls\n", WINPORT(GetLastError()),
 					lpPathName);
 			if (Validate) {
@@ -453,6 +451,8 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 			}
 		}
 	}
+
+	strCurrentDirectory() = strDir;
 
 	return TRUE;
 }

@@ -1,35 +1,44 @@
 project(OpenWith)
 
 set(SOURCES
-src/OpenWith.cpp
-src/AppProvider.cpp
-src/XDGBasedAppProvider.cpp
-src/ExtensionMimeMap.cpp
+    src/OpenWith.cpp
+    src/AppProvider.cpp
 )
 
 if(APPLE)
-    list(APPEND SOURCES src/MacOSAppProvider.mm)
+    list(APPEND SOURCES
+        src/LaunchServicesBridge.mm
+        src/MacOSAppProvider.cpp
+    )
+else()
+    list(APPEND SOURCES
+        src/XDGBasedAppProvider.cpp
+        src/ExtensionMimeMap.cpp
+    )
 endif()
 
 add_library (${PROJECT_NAME} MODULE ${SOURCES})
-target_link_libraries(${PROJECT_NAME} utils far2l)
+target_link_libraries(${PROJECT_NAME} PRIVATE utils far2l)
 
 # Frameworks for macOS
 if(APPLE)
-    target_link_libraries(${PROJECT_NAME}
+    target_link_libraries(${PROJECT_NAME} PRIVATE
         "-framework Cocoa"
         "-framework CoreServices"
     )
-    # macOS 11
-    if(${CMAKE_SYSTEM_VERSION} VERSION_GREATER_EQUAL 20.1.0)
-        target_link_libraries(${PROJECT_NAME} "-framework UniformTypeIdentifiers")
+
+    find_library(UTI_FRAMEWORK UniformTypeIdentifiers)
+    if(UTI_FRAMEWORK)
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-weak_framework UniformTypeIdentifiers")
     endif()
-    if(${CMAKE_CXX_COMPILER} MATCHES "Clang")
-        target_compile_options(${PROJECT_NAME} PRIVATE "-fobjc-arc")
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set_source_files_properties(src/LaunchServicesBridge.mm
+            PROPERTIES COMPILE_FLAGS "-fobjc-arc")
     endif()
 endif()
 
-target_compile_definitions(OpenWith PRIVATE)
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DFAR_DONT_USE_INTERNALS)
 
 target_include_directories(${PROJECT_NAME} PRIVATE .)
 target_include_directories(${PROJECT_NAME} PRIVATE ../far2l/far2sdk)
@@ -37,12 +46,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE ../WinPort)
 target_include_directories(${PROJECT_NAME} PRIVATE ../utils/include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
-	PREFIX ""
-	SUFFIX ".far-plug-wide")
+    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
+    PREFIX ""
+    SUFFIX ".far-plug-wide")
 
 set(CURRENT_TARGET "OpenWith")
-
 
 file(GLOB_RECURSE RESOURCE_FILES
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs

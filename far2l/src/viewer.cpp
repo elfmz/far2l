@@ -1166,7 +1166,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				break;
 		}	// TODO: ???
 
-		OutPtr = vread(piece, len);
+		OutPtr = vread(piece, len, true);
 		piece[OutPtr] = 0;
 		rString.SetChars(0, piece, (size_t)(OutPtr + 1));
 	} else {

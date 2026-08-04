@@ -1414,7 +1414,7 @@ void ClearSearchStringCache()
 	s_RegexCache.flags = 0;
 }
 
-size_t WrapStaticText(const wchar_t *text, int width, FARString *lines, size_t lines_count)
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count)
 {
 	if (!lines || !lines_count)
 		return 0;

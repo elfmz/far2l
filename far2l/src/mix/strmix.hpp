@@ -150,4 +150,7 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
 
-size_t WrapStaticText(const wchar_t *text, int width, FARString *lines, size_t lines_count);
+// Wraps text to width cells and stores up to lines_count resulting lines in lines.
+// Empty text is displayed as "(no description)". Returns the total number of
+// wrapped lines, which may exceed lines_count.
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count);

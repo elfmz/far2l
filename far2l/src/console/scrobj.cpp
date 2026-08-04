@@ -134,9 +134,7 @@ void ThinScreenObject::Show()
 	//	if (Flags.Check(FSCROBJ_ISREDRAWING))
 	//		return;
 	//	Flags.Set(FSCROBJ_ISREDRAWING);
-	if (Flags.Check(FSCROBJ_SETPOSITIONDONE)) {
-		Flags.Set(FSCROBJ_VISIBLE);
-	}
+	Flags.Set(FSCROBJ_VISIBLE);
 	DisplayObject();
 	//	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
@@ -211,7 +209,7 @@ void ScreenObject::Show()
 	//	if (Flags.Check(FSCROBJ_ISREDRAWING))
 	//		return;
 	//	Flags.Set(FSCROBJ_ISREDRAWING);
-	if (Flags.Check(FSCROBJ_SETPOSITIONDONE) && !Flags.Check(FSCROBJ_VISIBLE)) {
+	if (!Flags.Check(FSCROBJ_VISIBLE)) {
 		Flags.Set(FSCROBJ_VISIBLE);
 		if (Flags.Check(FSCROBJ_ENABLERESTORESCREEN) && !SaveScr)
 			SaveScr = new SaveScreen(X1, Y1, X2, Y2);

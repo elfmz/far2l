@@ -54,10 +54,6 @@ bool EcoString::MakeLength(int32_t len)
 bool EcoString::Truncate(int32_t len)
 {
 	if (len >= _len) {
-		if (len > _len) {
-			fprintf(stderr, "EcoString::Truncate: len{%u} > _len{%u}\n", len, _len);
-			return false;
-		}
 		return true;
 	}
 	EcoString new_str;
@@ -71,10 +67,6 @@ bool EcoString::Truncate(int32_t len)
 bool EcoString::Expand(int32_t len, wchar_t ch)
 {
 	if (len <= _len) {
-		if (len < _len) {
-			fprintf(stderr, "EcoString::Expand: len{%u} < _len{%u}\n", len, _len);
-			return false;
-		}
 		return true;
 	}
 	EcoString new_str;
@@ -118,7 +110,7 @@ bool EcoString::Replace(int32_t pos, int32_t rcnt, const wchar_t *data, int32_t 
 		cnt = wcslen(data);
 	}
 	if (pos + rcnt > _len) {
-		fprintf(stderr, "EcoString::InsertP: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
+		fprintf(stderr, "EcoString::Replace: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
 		return false;
 	}
 	EcoString new_str;

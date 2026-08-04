@@ -58,8 +58,68 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
 #include <cwctype>
+#include <unordered_map>
 
 static int Recurse = 0;
+
+struct LocalSettings
+{
+	struct MaskDeleter
+	{
+		void operator()(wchar_t *p) const { free(p); }
+	};
+	std::unique_ptr<wchar_t, MaskDeleter> Mask;
+	IEditListener *Listener{nullptr};
+	uint64_t Color{F_LIGHTGRAY | B_BLACK};
+	uint64_t SelColor{F_WHITE | B_BLACK};
+	uint64_t ColorUnChanged{FarColorToReal(COL_DIALOGEDITUNCHANGED)};
+	int TabSize{Opt.EdOpt.TabSize};
+	int TabExpandMode{EXPAND_NOTABS};
+	int MaxLength{-1};
+	int CursorSize{-1};
+	UINT codepage{0};
+};
+
+static class Edit2Settings
+{
+	std::unordered_map<const Edit *, LocalSettings> _m;
+
+public:
+	void Dismiss(const Edit *edit)
+	{
+		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS)) {
+			if (!_m.erase(edit)) {
+				fprintf(stderr, "Could not dismiss local edit settings\n");
+			}
+		}
+	}
+
+	const LocalSettings *Get(const Edit *edit) const
+	{
+		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS)) {
+			if (auto it = _m.find(edit); it != _m.end()) {
+				return &it->second;
+			}
+		}
+		return nullptr;
+	}
+
+	LocalSettings *Get(Edit *edit, bool ensure = false)
+	{
+		if (edit->Flags.Check(FEDITLINE_MY_SETTINGS) || ensure) {
+			auto ir = _m.emplace(edit, LocalSettings());
+			if (ir.second) {
+				edit->Flags.Set(FEDITLINE_MY_SETTINGS);
+				if (_m.size() < 0x10 || _m.size() == 0x80 || _m.size() == 0x100 || (_m.size() & 0xffff) == 0x1000) {
+					fprintf(stderr, "Local edit settings count %lu\n", (unsigned long)_m.size());
+				}
+			}
+			return &ir.first->second;
+		}
+		return nullptr;
+	}
+
+} s_e2s;
 
 static std::vector<wchar_t> s_render_buffer;
 
@@ -131,16 +191,22 @@ Edit::Edit(ScreenObject *pOwner)
 
 Edit::~Edit()
 {
+	s_e2s.Dismiss(this);
 }
 
 void Edit::SetListener(IEditListener *Listener)
 {
-	GetLocalSettings().Listener = Listener;
+	if (auto *s = s_e2s.Get(this, Listener != nullptr)) {
+		s->Listener = Listener;
+	}
 }
 
 IEditListener *Edit::GetListener()
 {
-	return m_LocalSettings ? m_LocalSettings->Listener : nullptr;
+	if (auto *s = s_e2s.Get(this)) {
+		return s->Listener;
+	}
+	return nullptr;
 }
 
 
@@ -152,30 +218,12 @@ Editor *Edit::GetEditorOwner()
 	return static_cast<Editor *>(GetOwner());
 }
 
-Edit::LocalSettings &Edit::GetLocalSettings()
-{
-	if (!m_LocalSettings) {
-		m_LocalSettings = std::make_unique<LocalSettings>();
-		m_LocalSettings->TabSize = Opt.EdOpt.TabSize;
-		m_LocalSettings->TabExpandMode = EXPAND_NOTABS;
-		m_LocalSettings->codepage = 0;
-		m_LocalSettings->Color = F_LIGHTGRAY | B_BLACK;
-		m_LocalSettings->SelColor = F_WHITE | B_BLACK;
-		m_LocalSettings->ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
-		m_LocalSettings->Listener = nullptr;
-		m_LocalSettings->MaxLength = -1;
-		m_LocalSettings->CursorSize = -1;
-	}
-
-	return *m_LocalSettings;
-}
-
 void Edit::SetTabSize(int NewSize)
 {
 	if (auto *editor = GetEditorOwner())
 		editor->SetTabSize(NewSize);
-	else
-		GetLocalSettings().TabSize = NewSize;
+	else if (auto *s = s_e2s.Get(this, true))
+		s->TabSize = NewSize;
 }
 
 int Edit::GetTabSize()
@@ -183,26 +231,32 @@ int Edit::GetTabSize()
 	if (auto *editor = GetEditorOwner())
 		return editor->GetTabSize();
 
-	return m_LocalSettings ? m_LocalSettings->TabSize : Opt.EdOpt.TabSize;
+	if (auto *s = s_e2s.Get(this))
+		return s->TabSize;
+
+	return Opt.EdOpt.TabSize;
 }
 
 void Edit::SetMaxLength(int Length)
 {
-	if (Length != -1 || m_LocalSettings)
-		GetLocalSettings().MaxLength = Length;
+	if (auto *s = s_e2s.Get(this, Length != -1))
+		s->MaxLength = Length;
 }
 
 int Edit::GetMaxLength() const
 {
-	return m_LocalSettings ? m_LocalSettings->MaxLength : -1;
+	if (auto *s = s_e2s.Get(this))
+		return s->MaxLength;
+
+	return -1;
 }
 
 void Edit::SetConvertTabs(int Mode)
 {
 	if (auto *editor = GetEditorOwner())
 		editor->SetConvertTabs(Mode);
-	else
-		GetLocalSettings().TabExpandMode = Mode;
+	else if (auto *s = s_e2s.Get(this, true))
+		s->TabExpandMode = Mode;
 }
 
 int Edit::GetConvertTabs()
@@ -210,7 +264,10 @@ int Edit::GetConvertTabs()
 	if (auto *editor = GetEditorOwner())
 		return editor->GetConvertTabs();
 
-	return m_LocalSettings ? m_LocalSettings->TabExpandMode : EXPAND_NOTABS;
+	if (auto *s = s_e2s.Get(this))
+		return s->TabExpandMode;
+
+	return EXPAND_NOTABS;
 }
 
 const wchar_t *Edit::WordDiv()
@@ -230,10 +287,10 @@ void Edit::GetObjectColors(uint64_t &Color, uint64_t &SelColor, uint64_t &ColorU
 		return;
 	}
 
-	if (m_LocalSettings) {
-		Color = m_LocalSettings->Color;
-		SelColor = m_LocalSettings->SelColor;
-		ColorUnChanged = m_LocalSettings->ColorUnChanged;
+	if (auto *s = s_e2s.Get(this)) {
+		Color = s->Color;
+		SelColor = s->SelColor;
+		ColorUnChanged = s->ColorUnChanged;
 		return;
 	}
 
@@ -249,8 +306,11 @@ DWORD Edit::SetCodePage(UINT codepage)
 
 	const UINT oldCodepage = GetCodePage();
 	const DWORD result = TranscodeCodePage(oldCodepage, codepage);
-	if (!(result & SETCP_OTHERERROR))
-		GetLocalSettings().codepage = codepage;
+	if (!(result & SETCP_OTHERERROR)) {
+		if (auto *s = s_e2s.Get(this, true)) {
+			s->codepage = codepage;
+		}
+	}
 
 	return result;
 }
@@ -275,7 +335,10 @@ UINT Edit::GetCodePage()
 	if (auto *editor = GetEditorOwner())
 		return editor->GetCodePage();
 
-	return m_LocalSettings ? m_LocalSettings->codepage : 0;
+	if (auto *s = s_e2s.Get(this))
+		return s->codepage;
+
+	return 0;
 }
 
 void Edit::DisplayObject()
@@ -301,15 +364,16 @@ void Edit::DisplayObject()
 		if (Flags.Check(FEDITLINE_DROPDOWNBOX))
 			::SetCursorType(0, 10);
 		else {
-			if (Flags.Check(FEDITLINE_OVERTYPE)) {
-				int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-				const int CursorSize = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
-				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
-			} else {
-				int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
-				const int CursorSize = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
-				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			int CursorSize = -1;
+			if (auto *s = s_e2s.Get(this))
+				CursorSize = s->CursorSize;
+
+			if (CursorSize == -1) {
+				CursorSize = Flags.Check(FEDITLINE_OVERTYPE)
+					? (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99)
+					: (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
 			}
+			::SetCursorType(1, CursorSize);
 		}
 
 		MoveCursor(X1 + CursorPos - LeftPos, Y1);
@@ -319,14 +383,18 @@ void Edit::DisplayObject()
 void Edit::SetCursorType(bool Visible, DWORD Size)
 {
 	Flags.Change(FEDITLINE_CURSORVISIBLE, Visible);
-	GetLocalSettings().CursorSize = Size;
+	if (auto *s = s_e2s.Get(this, true))
+		s->CursorSize = Size;
 	::SetCursorType(Visible, Size);
 }
 
 void Edit::GetCursorType(bool &Visible, DWORD &Size)
 {
 	Visible = Flags.Check(FEDITLINE_CURSORVISIBLE) != FALSE;
-	Size = m_LocalSettings ? m_LocalSettings->CursorSize : -1;
+	if (auto *s = s_e2s.Get(this))
+		Size = s->CursorSize;
+	else
+		Size = -1;
 }
 
 // Вычисление нового положения курсора в строке с учётом Mask.
@@ -1657,37 +1725,37 @@ int Edit::InsertKey(FarKey Key)
 
 int Edit::GetVisualLineCount() const
 {
-	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty())
+	if (!GetWordWrap() || m_WrapBreaks.empty())
 		return 1;
-	return m_WrapBreaks->size();
+	return m_WrapBreaks.size();
 }
 
 int Edit::FindVisualLine(int Pos) const
 {
-	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty())
+	if (!GetWordWrap() || m_WrapBreaks.empty())
 		return 0;
 
 	if (Pos <= 0)
 		return 0;
 
-	const auto it = std::upper_bound(m_WrapBreaks->begin(), m_WrapBreaks->end(), Pos);
-	return std::max(0, static_cast<int>(it - m_WrapBreaks->begin()) - 1);
+	const auto it = std::upper_bound(m_WrapBreaks.begin(), m_WrapBreaks.end(), Pos);
+	return std::max(0, static_cast<int>(it - m_WrapBreaks.begin()) - 1);
 }
 
 void Edit::GetVisualLine(int line, int& start, int& end) const
 {
-	if (!GetWordWrap() || !m_WrapBreaks || m_WrapBreaks->empty() || line < 0)
+	if (!GetWordWrap() || m_WrapBreaks.empty() || line < 0)
 	{
 		start = 0;
 		end = Str.Size();
 		return;
 	}
 
-	if (static_cast<size_t>(line) < m_WrapBreaks->size())
+	if (static_cast<size_t>(line) < m_WrapBreaks.size())
 	{
-		start = (*m_WrapBreaks)[line];
-		if (static_cast<size_t>(line + 1) < m_WrapBreaks->size())
-			end = (*m_WrapBreaks)[line + 1];
+		start = m_WrapBreaks[line];
+		if (static_cast<size_t>(line + 1) < m_WrapBreaks.size())
+			end = m_WrapBreaks[line + 1];
 		else
 			end = Str.Size();
 	}
@@ -1703,7 +1771,7 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 
 	if (!GetWordWrap() || Width <= 1)
 	{
-		m_WrapBreaks.reset();
+		m_WrapBreaks.clear();
 		return;
 	}
 
@@ -1749,20 +1817,17 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
 
 		if (!HasWrap) {
-			if (!m_WrapBreaks)
-				m_WrapBreaks = std::make_unique<std::vector<int>>();
-
-			m_WrapBreaks->clear();
-			m_WrapBreaks->push_back(0);
+			m_WrapBreaks.clear();
+			m_WrapBreaks.emplace_back(0);
 			HasWrap = true;
 		}
 
-		m_WrapBreaks->push_back(NextStart);
+		m_WrapBreaks.emplace_back(NextStart);
 		CurrentStart = NextStart;
 	}
 
 	if (!HasWrap)
-		m_WrapBreaks.reset();
+		m_WrapBreaks.clear();
 }
 
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
@@ -1772,10 +1837,11 @@ void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnCha
 		return;
 	}
 
-	auto &settings = GetLocalSettings();
-	settings.Color = Color;
-	settings.SelColor = SelColor;
-	settings.ColorUnChanged = ColorUnChanged;
+	if (auto *s = s_e2s.Get(this, true)) {
+		s->Color = Color;
+		s->SelColor = SelColor;
+		s->ColorUnChanged = ColorUnChanged;
+	}
 }
 
 long Edit::GetObjectColor()
@@ -2122,19 +2188,25 @@ int Edit::GetLength()
 void Edit::SetInputMask(const wchar_t *InputMask)
 {
 	if (!InputMask || !*InputMask) {
-		if (m_LocalSettings) {
-			m_LocalSettings->Mask.reset();
-		}
+		if (auto *s = s_e2s.Get(this))
+			s->Mask.reset();
 		return;
 	}
 
-	auto &settings = GetLocalSettings();
-	settings.Mask.reset(wcsdup(InputMask));
+	if (auto *s = s_e2s.Get(this, true)) {
+		s->Mask.reset(wcsdup(InputMask));
+		if (s->Mask) {
+			RefreshStrByMask(TRUE);
+		}
+	}
+}
 
-	if (!settings.Mask)
-		return;
-
-	RefreshStrByMask(TRUE);
+const wchar_t *Edit::GetInputMask() const
+{
+	if (const auto *s = s_e2s.Get(this)) {
+		return s->Mask.get();
+	}
+	return nullptr;
 }
 
 // Функция обновления состояния строки ввода по содержимому Mask
@@ -2528,47 +2600,41 @@ void Edit::DeleteBlock()
 
 void Edit::AddColor(const ColorItem *col)
 {
-	if (!ColorList)
-		ColorList = std::make_unique<std::vector<ColorItem>>();
-
-	ColorList->emplace_back(*col);
+	ColorList.emplace_back(*col);
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	if (!ColorList)
+	if (ColorList.empty())
 		return 0;
 
 	size_t Dest, Src;
 
-	for (Src = Dest = 0; Src < ColorList->size(); ++Src)
-		if (ColorPos != -1 && (*ColorList)[Src].StartPos != ColorPos) {
+	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
+		if (ColorPos != -1 && ColorList[Src].StartPos != ColorPos) {
 			if (Dest != Src)
-				(*ColorList)[Dest] = (*ColorList)[Src];
+				ColorList[Dest] = ColorList[Src];
 
 			++Dest;
 		}
 
-	const size_t DelCount = ColorList->size() - Dest;
-	ColorList->resize(Dest);
-	if (ColorList->empty())
-		ColorList.reset();
-
+	const size_t DelCount = ColorList.size() - Dest;
+	ColorList.resize(Dest);
 	return DelCount;
 }
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	if (!ColorList || Item >= (int)ColorList->size())
+	if (Item >= (int)ColorList.size())
 		return false;
 
-	*col = (*ColorList)[Item];
+	*col = ColorList[Item];
 	return true;
 }
 
 void Edit::ApplyColor()
 {
-	if (!ColorList)
+	if (ColorList.empty())
 		return;
 
 	uint64_t Color, SelColor, ColorUnChanged;
@@ -2578,7 +2644,7 @@ void Edit::ApplyColor()
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
 	// Обрабатываем элементы ракраски
-	for (auto &CurItem : *ColorList) {
+	for (auto &CurItem : ColorList) {
 
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
@@ -2816,8 +2882,8 @@ void Edit::SetDialogParent(DWORD Sets)
 
 void Edit::Changed(bool DelBlock)
 {
-	if (m_LocalSettings && m_LocalSettings->Listener) {
-		m_LocalSettings->Listener->OnEditChanged(this);
+	if (auto *s = s_e2s.Get(this); s && s->Listener) {
+		s->Listener->OnEditChanged(this);
 	}
 }
 
@@ -2911,6 +2977,29 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
+Edit::DisableListener::DisableListener(Edit &edit) : _edit(edit), _saved_listener(nullptr)
+{
+	if (auto *s = s_e2s.Get(&edit)) {
+		_saved_listener = s->Listener;
+		s->Listener = nullptr;
+	}
+}
+
+Edit::DisableListener::~DisableListener()
+{
+	Restore();
+}
+
+void Edit::DisableListener::Restore()
+{
+	if (_saved_listener) {
+		if (auto *s = s_e2s.Get(&_edit); s && !s->Listener) {
+			s->Listener = _saved_listener;
+		}
+	}
+}
+
+////
 static struct DummyEditListener : IEditListener
 {
 	virtual void OnEditChanged(Edit *edit) {}

@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bitflags.hpp"
 #include "FilesSuggestor.hpp"
 #include "EcoString.hpp"
+#include "EcoVector.hpp"
 #include <memory>
 #include <vector>
 #include <vector>
@@ -63,6 +64,7 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_PARENT_SINGLELINE = 0x00100000,		// обычная строка ввода в диалоге
 	FEDITLINE_PARENT_MULTILINE  = 0x00200000,		// для будущего Memo-Edit (DI_EDITOR или DIF_MULTILINE)
 	FEDITLINE_PARENT_EDITOR     = 0x00400000,		// "вверху" обычный редактор
+	FEDITLINE_MY_SETTINGS       = 0x00800000,		// has own instance of settings
 	FEDITLINE_HASSPECIALWIDTHCHARS = 0x01000000,
 	FEDITLINE_WORDWRAP          = 0x02000000,
 	FEDITLINE_EOLTYPE_MASK      = 0x1c000000,
@@ -133,32 +135,15 @@ class Edit : public ThinScreenObject
 	friend class CommandLine;
 	friend class EditControl;
 	friend class DisableListener;
+	friend class Edit2Settings;
 
 public:
 	Edit *m_next;
 	Edit *m_prev;
 
 private:
-	struct LocalSettings
-	{
-		struct MaskDeleter
-		{
-			void operator()(wchar_t *p) const { free(p); }
-		};
-		std::unique_ptr<wchar_t, MaskDeleter> Mask;
-		int TabSize;
-		int TabExpandMode;
-		UINT codepage;
-		uint64_t Color;
-		uint64_t SelColor;
-		uint64_t ColorUnChanged;
-		IEditListener *Listener;
-		int MaxLength;
-		int CursorSize;
-	};
-	std::unique_ptr<std::vector<ColorItem>> ColorList;
-	std::unique_ptr<LocalSettings> m_LocalSettings;
-	std::unique_ptr<std::vector<int>> m_WrapBreaks;
+	EcoVector<ColorItem> ColorList;
+	EcoVector<int> m_WrapBreaks;
 	EcoString Str;
 
 	int LeftPos;
@@ -175,23 +160,9 @@ private:
 		IEditListener *_saved_listener;
 
 	public:
-		DisableListener(Edit &edit) : _edit(edit), _saved_listener(nullptr)
-		{
-			if (edit.m_LocalSettings) {
-				_saved_listener = edit.m_LocalSettings->Listener;
-				edit.m_LocalSettings->Listener = nullptr;
-			}
-		}
-		void Restore()
-		{
-			if (_saved_listener && _edit.m_LocalSettings && !_edit.m_LocalSettings->Listener) {
-				_edit.m_LocalSettings->Listener = _saved_listener;
-			}
-		}
-		~DisableListener()
-		{
-			Restore();
-		}
+		DisableListener(Edit &edit);
+		~DisableListener();
+		void Restore();
 	};
 
 private:
@@ -215,7 +186,6 @@ private:
 	int RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos);
 	void SanitizeSelectionRange();
 	Editor *GetEditorOwner();
-	LocalSettings &GetLocalSettings();
 	DWORD TranscodeCodePage(UINT oldCodepage, UINT codepage);
 	const wchar_t *WordDiv();
 	void GetObjectColors(uint64_t &Color, uint64_t &SelColor, uint64_t &ColorUnChanged);
@@ -312,7 +282,7 @@ public:
 	int GetMaxLength() const;
 
 	void SetInputMask(const wchar_t *InputMask);
-	const wchar_t *GetInputMask() const { return m_LocalSettings ? m_LocalSettings->Mask.get() : nullptr; }
+	const wchar_t *GetInputMask() const;
 
 	void SetOvertypeMode(int Mode) { Flags.Change(FEDITLINE_OVERTYPE, Mode); };
 	int GetOvertypeMode() { return Flags.Check(FEDITLINE_OVERTYPE); };

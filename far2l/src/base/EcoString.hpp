@@ -81,10 +81,8 @@ public:
 
 	const wchar_t &operator[](int i) const
 	{
-		if (UNLIKELY(i < 0 || i > _len)) { // allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
-			fprintf(stderr, "EcoString[] const: bad %d while _len=%d\n", i, _len);
-			abort();
-		}
+		// allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
+		ASSERT_MSG(i >= 0 && i <= _len,  "EcoString[] const: bad %d while _len=%d\n", i, _len);
 
 		if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
 			return _data.ptr[i];
@@ -95,10 +93,8 @@ public:
 
 	wchar_t &operator[](int i)
 	{
-		if (UNLIKELY(i < 0 || i > _len)) { // allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
-			fprintf(stderr, "EcoString[]: bad %d while _len=%d\n", i, _len);
-			abort();
-		}
+		// allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
+		ASSERT_MSG(i >= 0 && i <= _len,  "EcoString[]: bad %d while _len=%d\n", i, _len);
 
 		if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
 			return _data.ptr[i];

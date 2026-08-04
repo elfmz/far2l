@@ -1414,13 +1414,24 @@ void ClearSearchStringCache()
 	s_RegexCache.flags = 0;
 }
 
-size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count)
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count,
+		const wchar_t *empty_text_stub)
 {
 	if (!lines || !lines_count)
 		return 0;
 
+	for (size_t i = 0; i < lines_count; ++i)
+		lines[i].Clear();
+
+	if (!text || !*text) {
+		if (!empty_text_stub)
+			return 0;
+
+		text = empty_text_stub;
+	}
+
 	FARString wrapped;
-	FarFormatText((text && *text) ? text : L"(no description)", width, wrapped, L"\n", 0);
+	FarFormatText(text, width, wrapped, L"\n", 0);
 
 	size_t wrapped_lines_count = 1;
 	for (size_t i = 0; i < wrapped.GetLength(); ++i) {
@@ -1430,8 +1441,6 @@ size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t 
 
 	size_t start = 0;
 	for (size_t i = 0; i < lines_count; ++i) {
-		lines[i].Clear();
-
 		if (start >= wrapped.GetLength())
 			continue;
 

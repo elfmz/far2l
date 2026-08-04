@@ -151,6 +151,7 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 void ClearSearchStringCache();
 
 // Wraps text to width cells and stores up to lines_count resulting lines in lines.
-// Empty text is displayed as "(no description)". Returns the total number of
-// wrapped lines, which may exceed lines_count.
-size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count);
+// Uses empty_text_stub for empty text; without a stub, clears lines and returns 0.
+// The returned number of wrapped lines may exceed lines_count.
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count,
+		const wchar_t *empty_text_stub = nullptr);

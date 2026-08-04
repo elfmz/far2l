@@ -477,7 +477,8 @@ public:
 			std::min(MAX_DESCRIPTION_LINES, static_cast<size_t>(std::max(1, ScrY - 24)));
 		FARString description_lines[MAX_DESCRIPTION_LINES];
 		const size_t wrapped_description_lines_count =
-			WrapTextToLines(_opt.description, DESCRIPTION_WIDTH, description_lines, ARRAYSIZE(description_lines));
+			WrapTextToLines(_opt.description, DESCRIPTION_WIDTH, description_lines, ARRAYSIZE(description_lines),
+					L"(no description)");
 		const size_t description_lines_count = std::min(
 			std::max(MIN_DESCRIPTION_LINES, wrapped_description_lines_count),
 			max_description_lines);

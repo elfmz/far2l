@@ -2379,6 +2379,10 @@ void Edit::SanitizeSelectionRange()
 {
 	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS) && SelEnd >= SelStart && SelStart >= 0) {
 		bool joining = false;
+		if (SelStart >= Str.Size()) {
+			fprintf(stderr, "%s: SelStart{%d} >= StrSize{%d} - FIXME!!!\n", __FUNCTION__, SelStart, Str.Size());
+			SelStart = std::max(Str.Size() - 1, 0);
+		}
 		for ( ; SelStart > 0; SelStart--) {
 			if (Str[SelStart] == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;

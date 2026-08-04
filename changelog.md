@@ -8,21 +8,31 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)
 * _New:_ Added a new option "Auto save panels state" (in "System settings") and details choice in manual config saving (via **Shift+F9**)
 * _New:_ Added a new option "Show startup banner in built-in terminal"
-* Themes: added "Hercules Night", fixes to "Gold on Blue", fixes to "DOS Navigator"
+* Themes:
+added "CRT Classic", "Catpuccin Macchiato", "Fallout Red",  "Hercules Classic", "Hercules Night", "MDA Classic", "Ogres and Goblins",
+fixes to "Gold on Blue" and "DOS Navigator"
 * **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
+* _New:_ Automatic color contrast correction (toggled in **F9**->Options->Interface settings->Auto-adjust colors contrast)
+* _New:_ Colored diff of two files from file panels, editable, mergeable (from file panels **Ctrl+D** or **F9**->Commands->File diff)
+* _New:_ Manual config saving (via **Shift+F9**) now shows details choice of categories for save
+* Macro Browser (**F9**->Commands->Macro Browser): for Macros now support operations Add, Edit, Delete, Enable/Disable and Show List of Global Constants, Global Variables and MacroFunctions
 * _New_: `--nodetect=e` command line parameter to prevent emoji VS16 suffix detection
 * _New_: Restore initial terminal cursor shape on exit
 * Editor/Viewer: search/replace dialog: don't start search if search string is empty or regular expression is invalid
 * Viewer: Hex Mode now supports multibyte UTF-8, UTF-16 etc.
 * Viewer: Printing support from viewer (via **Alt+F5**)
 * Fix cmdline autocomplete when commands deduplicated by text
+* Fix AltGr producing uppercase letters in WX backend
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
 * _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system; see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
 * _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** to open the nearest hunk at or below the current editor line
-* _Transformer plugin_: New generic Unix-filter dispatcher for transforming editor selections, complete editor buffers, and selected panel files with configurable external commands
+* _MTP plugin_: New panel plugin to browse and manage files on USB-connected MTP/PTP devices (Android, cameras, iOS Camera Roll, media players); see [mtp/README.md](https://github.com/elfmz/far2l/blob/master/mtp/README.md))
+* _multiarc plugin_: Update bundled unrar sources to 7.23
+* _NetRocks plugin_: AWS support with biuld-in custom S3 implementation based on neon (not need aws-sdk-cpp anymore)
 * _OpenWith plugin_: Update to v1.3. **General**: Added a progress dialog allowing cancellation of application discovery; allow plugin invocation on `..` (treated as the current directory); new option "Display filename in the menu title"; bugfixes and help updates. **Linux/BSD**: new options "Show package qualifiers", "Ignore [Removed Associations] section", "Query system defaults via xdg-mime"; new buttons "GoTo .desktop", "GoTo TryExec", and "GoTo source" in the "Details" dialog. **macOS**: more comprehensive information in the "Details" dialog; new "GoTo bundle location" button in the "Details" dialog; new options "Show UTI instead of MIME types", "Respect system ranking", "Disable ranking and sort alphabetically".
 * _python plugin_: plugin manager (upluginmanager.py), fixes and new subplugins uhashes.py uimgimage.py, uimgpdf.py, ustealer.py (see: [#3346](https://github.com/elfmz/far2l/issues/3346) and [#3439](https://github.com/elfmz/far2l/pull/3439))
+* _Transformer plugin_: New plugin in panel and editor (**F11**->Transform) to generic Unix-filter dispatcher for transforming editor selections, complete editor buffers, and selected panel files with configurable external commands
 * Several bugfixes and improvements
 
 ## 2.8.0 beta (2026-03-23)

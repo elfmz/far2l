@@ -53,13 +53,15 @@ $ #Преобразователь#
     #Plugins/transformer/plug/formats/*.ini#
 
     Пользовательские файлы можно разместить в активном каталоге конфигурации
-far2l (обычно #~~/.config/far2l/#):
+far2l (обычно #~~/.config/far2l/#,
+корневой каталог профиля в ~far2l переопределяется~@:Far2lGettingStarted??ConfigDirs@
+параметром командной строки #far2l -u#
+или переменными окружения #FARSETTINGS# и #XDG_CONFIG_HOME#):
 
     #plugins/transformer/transformer.ini#
     #plugins/transformer/formats/*.ini#
 
-    Корневой каталог профиля определяется параметрами #FARSETTINGS# и
-#XDG_CONFIG_HOME#, используемыми far2l. Файлы форматов содержат упорядоченные
+    Файлы форматов содержат упорядоченные
 повторяемые последовательности ключей. #Item# задаёт подпись пункта меню, а
 следующий за ним #Command# — команду оболочки:
 

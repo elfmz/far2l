@@ -16,6 +16,7 @@ class PluginImpl
 
 	wchar_t _panel_title[64], _cur_dir[MAX_PATH], _mk_dir[MAX_PATH], _format[256];
 	wchar_t _cur_URL[MAX_PATH];
+	wchar_t _cur_path[MAX_PATH]; // bare absolute remote path (for Ctrl-F paste)
 
 	Location _location;
 	bool _allow_remember_location_dir = false;
@@ -48,6 +49,7 @@ class PluginImpl
 	bool ByKey_TryExecuteSelected();
 	bool ByKey_TryEnterSelectedSite();
 	void ByKey_EditAttributesSelected();
+	bool ByKey_CopySSHCommand();
 
 	BackgroundTaskStatus StartXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		std::shared_ptr<IHost> &dst_host, const std::string &dst_dir, struct PluginPanelItem *items,

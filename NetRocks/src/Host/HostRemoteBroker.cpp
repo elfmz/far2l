@@ -300,6 +300,14 @@ class HostRemoteBroker : protected IPCEndpoint
 		SendCommand(IPC_EXECUTE_COMMAND);
 	}
 
+	void OnRealPath()
+	{
+		RecvString(_args.str1);
+		_args.str2 = _protocol->RealPath(_args.str1);
+		SendCommand(IPC_GET_REAL_PATH);
+		SendString(_args.str2);
+	}
+
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
@@ -319,6 +327,7 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_FILE_GET: OnFileGet(); break;
 			case IPC_FILE_PUT: OnFilePut(); break;
 			case IPC_EXECUTE_COMMAND: OnExecuteCommand(); break;
+			case IPC_GET_REAL_PATH: OnRealPath(); break;
 
 			default:
 				throw PipeIPCError("HostRemoteBroker: bad command", (unsigned int)c);

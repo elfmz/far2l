@@ -405,7 +405,7 @@ public:
 	virtual long GetFileCount() { return ListData.Count(); }
 
 	FARString &CreateFullPathName(const wchar_t *Name, FARString &strDest, bool RealName);
-	FARString &PluginGetURL(const wchar_t *Name, FARString &strDest);
+	FARString &PluginGetURL(const wchar_t *Name, FARString &strDest, bool as_url);
 
 	virtual const void *GetItem(int Index);
 	virtual BOOL UpdateKeyBar();

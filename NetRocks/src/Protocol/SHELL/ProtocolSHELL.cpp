@@ -182,7 +182,10 @@ void ProtocolSHELL::Initialize()
 			auto &feats_line = wr.stdout_lines[i];
 			if (StrStartsFrom(feats_line, "FEATS ") && StrEndsBy(feats_line, " SHELL.FAR2L\n")) {
 				ParseFeatsLine(feats_line);
-				break;
+			} else if (StrStartsFrom(feats_line, "HOME ")) {
+				// absolute home dir, resolved once at connect
+				_home = feats_line.substr(5);
+				StrTrim(_home, "\r\n");
 			}
 		}
 	}
@@ -426,6 +429,11 @@ void ProtocolSHELL::SymlinkQuery(const std::string &link_path, std::string &link
 {
 	GetSingleFileInfo("rdsym ", link_path);
 	link_target.swap(_single_line_info);
+}
+
+std::string ProtocolSHELL::RealPath(const std::string &path)
+{
+	return RealPathFromHome(_home, path);
 }
 
 class SHELLDirectoryEnumer : public IDirectoryEnumer {

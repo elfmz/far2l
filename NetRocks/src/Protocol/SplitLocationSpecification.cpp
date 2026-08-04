@@ -61,7 +61,9 @@ bool SplitLocationSpecification(const char *specification, std::string &protocol
 	host = at;
 	size_t spd_div = host.find('/');
 	if (spd_div != std::string::npos) {
-		directory = host.substr(spd_div + 1);
+		// keep the delimiter slash: a slash right after the authority is the
+		// leading slash of an absolute path (home-relative uses the '~' marker)
+		directory = host.substr(spd_div);
 		host.resize(spd_div);
 	}
 

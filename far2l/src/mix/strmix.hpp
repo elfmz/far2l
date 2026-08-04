@@ -150,8 +150,7 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
 
-// Wraps text to width cells and stores up to lines_count resulting lines in lines.
-// Uses empty_text_stub for empty text; without a stub, clears lines and returns 0.
+// Wraps text into lines no wider than width display cells and stores up to lines_count of them in lines.
+// Empty text or a non-positive width clears lines and returns 0. Long words are split rather than truncated.
 // The returned number of wrapped lines may exceed lines_count.
-size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count,
-		const wchar_t *empty_text_stub = nullptr);
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count);

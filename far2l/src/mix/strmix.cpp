@@ -1414,8 +1414,7 @@ void ClearSearchStringCache()
 	s_RegexCache.flags = 0;
 }
 
-size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count,
-		const wchar_t *empty_text_stub)
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count)
 {
 	if (!lines || !lines_count)
 		return 0;
@@ -1423,35 +1422,37 @@ size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t 
 	for (size_t i = 0; i < lines_count; ++i)
 		lines[i].Clear();
 
-	if (!text || !*text) {
-		if (!empty_text_stub)
-			return 0;
-
-		text = empty_text_stub;
-	}
+	if (!text || !*text || width <= 0)
+		return 0;
 
 	FARString wrapped;
 	FarFormatText(text, width, wrapped, L"\n", 0);
 
-	size_t wrapped_lines_count = 1;
-	for (size_t i = 0; i < wrapped.GetLength(); ++i) {
-		if (wrapped.At(i) == L'\n')
-			++wrapped_lines_count;
-	}
-
+	size_t wrapped_lines_count = 0;
 	size_t start = 0;
-	for (size_t i = 0; i < lines_count; ++i) {
-		if (start >= wrapped.GetLength())
-			continue;
-
-		size_t end = start;
+	size_t end;
+	do {
+		end = start;
 		while (end < wrapped.GetLength() && wrapped.At(end) != L'\n')
 			++end;
 
-		lines[i] = wrapped.SubStr(start, end - start);
-		lines[i].TruncateByCells(width);
+		do {
+			size_t chunk_length = end - start;
+			if (chunk_length) {
+				size_t cells = width;
+				chunk_length = StrSizeOfCells(wrapped.CPtr() + start, chunk_length, cells, false);
+				if (!chunk_length)
+					chunk_length = StrSizeOfCell(wrapped.CPtr() + start, end - start);
+			}
+
+			if (wrapped_lines_count < lines_count)
+				lines[wrapped_lines_count] = wrapped.SubStr(start, chunk_length);
+			++wrapped_lines_count;
+			start += chunk_length;
+		} while (start < end);
+
 		start = end + 1;
-	}
+	} while (end < wrapped.GetLength());
 
 	return wrapped_lines_count;
 }

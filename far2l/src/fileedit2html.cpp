@@ -147,11 +147,11 @@ static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len
 	if (len <= 0) len = line->GetLength() - start;
 	int end = start + len;
 
-	const wchar_t *CurStr = 0, *EndSeq = 0;
-	int Length;
+	const wchar_t *EndSeq = 0;
+	int Length = 0;
 	ColorItem ci;
 
-	line->GetBinaryString(&CurStr, &EndSeq, Length);
+	const wchar_t *CurStr = line->GetStringAddr(Length, &EndSeq);
 
 	if (!CurStr) return false;
 
@@ -239,7 +239,7 @@ BOOL FileEditor::SendToPrinter()
 
 			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
 				int Len2 = 0;
-				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
+				CurStr = Ptr->GetStringAddr(Len2, &EndSeq);
 				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
 				tb+= '\n';
 			}
@@ -252,7 +252,7 @@ BOOL FileEditor::SendToPrinter()
     		int TBlockX = CurPtr->CellPosToReal(m_editor->VBlockX);
     		int TBlockSizeX = CurPtr->CellPosToReal(m_editor->VBlockX + m_editor->VBlockSizeX) - TBlockX;
 
-    		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+    		CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
     		if (Length > TBlockX) {
     			int CopySize = Length - TBlockX;
@@ -297,9 +297,8 @@ BOOL FileEditor::SendToPrinter()
 		std::string _tmpstr;
 
 		for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
-			const wchar_t *SaveStr, *EndSeq;
-
-			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+			const wchar_t *EndSeq;
+			const wchar_t *SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
 			std::string tb;
 			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {

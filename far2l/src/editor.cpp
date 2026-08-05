@@ -144,9 +144,9 @@ static bool DeleteRealRange(Edit *line, int start, int end, int cursor_pos)
 		return false;
 	}
 
-	const wchar_t *cur_str = nullptr, *end_seq = nullptr;
+	const wchar_t *end_seq = nullptr;
 	int length = 0;
-	line->GetBinaryString(&cur_str, &end_seq, length);
+	const wchar_t *cur_str = line->GetStringAddr(length, &end_seq);
 
 	if (start < 0) {
 		start = 0;
@@ -284,8 +284,12 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 Editor::~Editor()
 {
 	//_SVS(SysLog(L"[%p] Editor::~Editor()",this));
+	auto t = GetProcessUptimeMSec();
+	EcoString::sDebugPrintStats("~Editor start");
 	FreeAllocatedData();
 	KeepInitParameters();
+	EcoString::sDebugPrintStats("~Editor finish");
+	fprintf(stderr, "* ~Editor took %lu msec\n", (unsigned long)(GetProcessUptimeMSec() - t));
 	_KEYMACRO(SysLog(-1));
 	_KEYMACRO(SysLog(L"Editor::~Editor()"));
 }
@@ -486,11 +490,13 @@ void Editor::DrawGutterMark(int logical_line, int y, int line_num_x1)
 
 void Editor::FreeAllocatedData(bool FreeUndo)
 {
-	while (EndList) {
-		Edit *Prev = EndList->m_prev;
-		delete EndList;
-		EndList = Prev;
+	for (Edit *e = TopList; e;) {
+		auto *d = e;
+		e = e->m_next;
+		d->~Edit();
 	}
+	TopList = EndList = TopScreen = nullptr;
+	EPool.Purge();
 
 	UndoData.Clear();
 	UndoSavePos = nullptr;
@@ -500,7 +506,6 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	m_VisualScrollbarDirty = true;
 	m_LineCountDirty = true;  // Invalidate line number cache
 	ClearStackBookmarks();
-	TopList = EndList = CurLine = nullptr;
 	NumLastLine = 0;
 	NumLine = 0;
 }
@@ -629,7 +634,7 @@ int Editor::GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat)
 	DWORD AllLength = 0;
 
 	while (CurPtr) {
-		CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+		SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
 		AllLength+= Length + StrLength(!TextFormat ? EndSeq : GlobalEOL) + 1;
 		CurPtr = CurPtr->m_next;
 	}
@@ -646,7 +651,7 @@ int Editor::GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat)
 		AllLength = 0;
 
 		while (CurPtr) {
-			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+			SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
 			wmemcpy(PDest, SaveStr, Length);
 			PDest+= Length;
 
@@ -1789,9 +1794,8 @@ int Editor::ProcessKey(FarKey Key)
 					int CurPos;
 
 					for (;;) {
-						const wchar_t *Str;
 						int Length;
-						CurLine->GetBinaryString(&Str, nullptr, Length);
+						const wchar_t *Str = CurLine->GetStringAddr(Length);
 						CurPos = CurLine->GetCurPos();
 
 						if (CurPos > Length) {
@@ -1854,9 +1858,8 @@ int Editor::ProcessKey(FarKey Key)
 					int CurPos;
 
 					for (;;) {
-						const wchar_t *Str;
 						int Length;
-						CurLine->GetBinaryString(&Str, nullptr, Length);
+						const wchar_t *Str = CurLine->GetStringAddr(Length);
 						CurPos = CurLine->GetCurPos();
 
 						if (CurPos >= Length)
@@ -2331,9 +2334,8 @@ int Editor::ProcessKey(FarKey Key)
 							int Length = CurLine->GetLength();
 							CurLine->GetSelection(SelStart, SelEnd);
 							CurLine->m_next->GetSelection(NextSelStart, NextSelEnd);
-							const wchar_t *Str;
 							int NextLength;
-							CurLine->m_next->GetBinaryString(&Str, nullptr, NextLength);
+							const wchar_t *Str = CurLine->m_next->GetStringAddr(NextLength);
 							CurLine->InsertBinaryString(Str, NextLength);
 							CurLine->SetEOL(CurLine->m_next->GetEOL());
 							CurLine->SetCurPos(CurPos);
@@ -2940,9 +2942,8 @@ case KEY_CTRLNUMPAD3: {
 				Lock();
 
 				for (;;) {
-					const wchar_t *Str;
 					int Length;
-					CurLine->GetBinaryString(&Str, nullptr, Length);
+					const wchar_t *Str = CurLine->GetStringAddr(Length);
 					int CurPos = CurLine->GetCurPos();
 
 					if (CurPos > Length) {
@@ -2979,9 +2980,8 @@ case KEY_CTRLNUMPAD3: {
 				Lock();
 
 				for (;;) {
-					const wchar_t *Str;
 					int Length;
-					CurLine->GetBinaryString(&Str, nullptr, Length);
+					const wchar_t *Str = CurLine->GetStringAddr(Length);
 					int CurPos = CurLine->GetCurPos();
 
 					if (CurPos >= Length)
@@ -3402,14 +3402,13 @@ case KEY_CTRLNUMPAD3: {
 				int Length, CurPos;
 
 				if (!SkipCheckUndo) {
-					CurLine->GetBinaryString(&Str, nullptr, Length);
+					Str = CurLine->GetStringAddr(Length);
 					//CurPos = CurLine->GetCurPos();
 					CmpStr = new wchar_t[Length + 1];
 					wmemcpy(CmpStr, Str, Length);
 					CmpStr[Length] = 0;
 				}
-
-				CurLine->GetBinaryString(&Str, nullptr, Length);
+				Str = CurLine->GetStringAddr(Length);
 
 				CurPos = CurLine->GetCurPos();
 
@@ -3420,9 +3419,8 @@ case KEY_CTRLNUMPAD3: {
 					bool SpaceAligned = false;
 					while (PrevLine) {
 						if (PrevLine->GetLength()) {
-							const wchar_t *PrevStr = L"\x00";
 							int TmpLength;
-							PrevLine->GetBinaryString(&PrevStr, nullptr, TmpLength);
+							const wchar_t *PrevStr = PrevLine->GetStringAddr(TmpLength);
 							if (PrevStr[0] == ' ') {
 								SpaceAligned = true;
 								break;
@@ -3517,9 +3515,8 @@ case KEY_CTRLNUMPAD3: {
 					}
 
 					if (!SkipCheckUndo) {
-						const wchar_t *NewCmpStr;
 						int NewLength;
-						CurLine->GetBinaryString(&NewCmpStr, nullptr, NewLength);
+						const wchar_t *NewCmpStr = CurLine->GetStringAddr(NewLength);
 
 						if (NewLength != Length || memcmp(CmpStr, NewCmpStr, Length * sizeof(wchar_t))) {
 							// EOL? - CurLine->GetEOL() GlobalEOL ""
@@ -4532,7 +4529,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 	if (UndoLine != -1)
 		AddUndoData(UNDO_DELSTR, DelPtr->GetStringAddr(), DelPtr->GetEOL(), UndoLine, 0, DelPtr->GetLength());
 
-	delete DelPtr;
+	EPool.Destruct(DelPtr);
 }
 
 void Editor::InsertString()
@@ -4560,9 +4557,8 @@ void Editor::InsertString()
 
 	// NewString->SetTables(UseDecodeTable ? &TableSet:nullptr); // ??
 	int Length;
-	const wchar_t *CurLineStr;
 	const wchar_t *EndSeq;
-	CurLine->GetBinaryString(&CurLineStr, &EndSeq, Length);
+	const wchar_t *CurLineStr = CurLine->GetStringAddr(Length, &EndSeq);
 
 	/*
 		$ 13.01.2002 IS
@@ -4601,9 +4597,8 @@ void Editor::InsertString()
 		Edit *PrevLine = CurLine;
 
 		while (PrevLine) {
-			const wchar_t *Str;
 			int Length, Found = FALSE;
-			PrevLine->GetBinaryString(&Str, nullptr, Length);
+			const wchar_t *Str = PrevLine->GetStringAddr(Length);
 
 			for (int I = 0; I < Length; I++)
 				if (!IsSpace(Str[I])) {
@@ -4714,7 +4709,7 @@ void Editor::InsertString()
 	if (IndentPos > 0) {
 		int OrgIndentPos = IndentPos;
 		ShowEditor(FALSE);
-		CurLine->GetBinaryString(&CurLineStr, nullptr, Length);
+		CurLineStr = CurLine->GetStringAddr(Length);
 
 		if (SpaceOnly) {
 			int Decrement = 0;
@@ -4743,7 +4738,7 @@ void Editor::InsertString()
 				int PrevLength = 0;
 
 				if (SrcIndent) {
-					SrcIndent->GetBinaryString(&PrevStr, nullptr, PrevLength);
+					PrevStr = SrcIndent->GetStringAddr(PrevLength);
 				}
 
 				for (int I = 0; CurLine->GetCellCurPos() < IndentPos; I++) {
@@ -4763,7 +4758,7 @@ void Editor::InsertString()
 			CurLine->SetCellCurPos(IndentPos);
 		}
 
-		CurLine->GetBinaryString(&CurLineStr, nullptr, Length);
+		CurLineStr = CurLine->GetStringAddr(Length);
 		CurPos = CurLine->GetCurPos();
 
 		if (SpaceOnly) {
@@ -5044,16 +5039,18 @@ BOOL Editor::Search(int Next)
 			CurPos++;
 
 		NewNumLine = NumLine;
-		CurPtr = CurLine;
-		DWORD StartTime = WINPORT(GetTickCount)();
+
+		EcoString::sDebugPrintStats("search started");
+		const DWORD StartTime = WINPORT(GetTickCount)();
 		int StartLine = NumLine;
 		wakeful W;
 
-		while (CurPtr) {
+		DWORD LastRedraw = 0;
+		for (CurPtr = CurLine; CurPtr;) {
 			DWORD CurTime = WINPORT(GetTickCount)();
 
-			if (CurTime - StartTime > RedrawTimeout) {
-				StartTime = CurTime;
+			if (CurTime - LastRedraw > RedrawTimeout) {
+				LastRedraw = CurTime;
 
 				strMsgStr = strSearchStr;
 				InsertQuote(strMsgStr);
@@ -5260,7 +5257,7 @@ BOOL Editor::Search(int Next)
 							const wchar_t *Str, *Eol;
 							int StrLen, NewStrLen;
 							int SStrLen = SearchLength, RStrLen = (int)strReplaceStrCurrent.GetLength();
-							CurLine->GetBinaryString(&Str, &Eol, StrLen);
+							Str = CurLine->GetStringAddr(StrLen, &Eol);
 							int EolLen = StrLength(Eol);
 							NewStrLen = StrLen;
 							NewStrLen-= SStrLen;
@@ -5310,6 +5307,7 @@ BOOL Editor::Search(int Next)
 					if (!ReverseSearch)
 						CurPos++;
 			} else {
+				CurPtr->Compact();
 				if (ReverseSearch) {
 					CurPtr = CurPtr->m_prev;
 
@@ -5325,6 +5323,8 @@ BOOL Editor::Search(int Next)
 				}
 			}
 		}
+		fprintf(stderr, "* Edit search complete in %u msec\n", WINPORT(GetTickCount)() - StartTime);
+		EcoString::sDebugPrintStats("search finished");
 	}
 	Show();
 
@@ -5421,9 +5421,8 @@ void Editor::Paste(const wchar_t *Src)
 					Pos++;
 
 				if (Pos > I) {
-					const wchar_t *Str;
 					int Length, CurPos;
-					CurLine->GetBinaryString(&Str, nullptr, Length);
+					const wchar_t *Str = CurLine->GetStringAddr(Length);
 					CurPos = CurLine->GetCurPos();
 					// EOL? - CurLine->GetEOL() GlobalEOL ""
 					AddUndoData(UNDO_EDIT, Str, CurLine->GetEOL(), NumLine, CurPos, Length);
@@ -5610,9 +5609,9 @@ void Editor::DeleteBlock()
 			CurPtr->InsertBinaryString(L"", 0);
 		}
 
-		const wchar_t *CurStr, *EndSeq;
+		const wchar_t *EndSeq;
 
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
 		// дальше будет realloc, поэтому тут malloc.
 		wchar_t *TmpStr = (wchar_t *)malloc((Length + 3) * sizeof(wchar_t));
@@ -5654,7 +5653,7 @@ void Editor::DeleteBlock()
 			if (NextEndSel == -1)
 				EndSel = -1;
 			else {
-				CurPtr->m_next->GetBinaryString(&NextStr, &EndSeq, NextLength);
+				NextStr = CurPtr->m_next->GetStringAddr(NextLength, &EndSeq);
 				NextLength-= NextEndSel;
 
 				if (NextLength > 0) {
@@ -6200,9 +6199,8 @@ long Editor::GetCurPos()
 	long TotalSize = 0;
 
 	while (CurPtr != TopScreen) {
-		const wchar_t *SaveStr, *EndSeq;
-		int Length;
-		CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+		const wchar_t *EndSeq;
+		int Length = CurPtr->GetStringLength(&EndSeq);
 		TotalSize+= Length + StrLength(EndSeq);
 		CurPtr = CurPtr->m_next;
 	}
@@ -6263,8 +6261,8 @@ void Editor::BlockLeft()
 
 		int Length = CurPtr->GetLength();
 		wchar_t *TmpStr = new wchar_t[Length + EdOpt.TabSize + 5];
-		const wchar_t *CurStr, *EndSeq;
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *EndSeq;
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 		Length--;
 
 		if (*CurStr == L' ')
@@ -6342,8 +6340,8 @@ void Editor::BlockRight()
 
 		int Length = CurPtr->GetLength();
 		wchar_t *TmpStr = new wchar_t[Length + 5];
-		const wchar_t *CurStr, *EndSeq;
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *EndSeq;
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 		*TmpStr = L' ';
 		wmemcpy(TmpStr + 1, CurStr, Length);
 		Length++;
@@ -6410,9 +6408,9 @@ void Editor::DeleteVBlock()
 		TextChanged(1);
 		int TBlockX = CurPtr->CellPosToReal(VBlockX);
 		int TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - CurPtr->CellPosToReal(VBlockX);
-		const wchar_t *CurStr, *EndSeq;
+		const wchar_t *EndSeq;
 		int Length;
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
 		if (TBlockX >= Length)
 			continue;
@@ -6505,9 +6503,9 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	for (int Line = 0; CurPtr && Line < VBlockSizeY; Line++, CurPtr = CurPtr->m_next) {
 		int TBlockX = CurPtr->CellPosToReal(VBlockX);
 		int TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - TBlockX;
-		const wchar_t *CurStr, *EndSeq;
+		const wchar_t *EndSeq;
 		int Length;
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
 		if (Length > TBlockX) {
 			int CopySize = Length - TBlockX;
@@ -6627,9 +6625,9 @@ void Editor::VBlockShift(int Left)
 		TextChanged(1);
 		int TBlockX = CurPtr->CellPosToReal(VBlockX);
 		int TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - CurPtr->CellPosToReal(VBlockX);
-		const wchar_t *CurStr, *EndSeq;
+		const wchar_t *EndSeq;
 		int Length;
-		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
 		if (TBlockX > Length)
 			continue;
@@ -6637,7 +6635,7 @@ void Editor::VBlockShift(int Left)
 		if ((Left && CurStr[TBlockX - 1] == L'\t')
 				|| (!Left && TBlockX + TBlockSizeX < Length && CurStr[TBlockX + TBlockSizeX] == L'\t')) {
 			CurPtr->ExpandTabs();
-			CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+			CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 			TBlockX = CurPtr->CellPosToReal(VBlockX);
 			TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - CurPtr->CellPosToReal(VBlockX);
 		}
@@ -6698,8 +6696,8 @@ int Editor::EditorControl(int Command, void *Param)
 					return FALSE;
 				}
 
-				CurPtr->GetBinaryString(const_cast<const wchar_t **>(&GetString->StringText),
-						const_cast<const wchar_t **>(&GetString->StringEOL), GetString->StringLength);
+				GetString->StringText = const_cast<wchar_t *>(CurPtr->GetStringAddr(
+						GetString->StringLength, const_cast<const wchar_t **>(&GetString->StringEOL)));
 				GetString->SelStart = -1;
 				GetString->SelEnd = 0;
 				int DestLine = GetString->StringNumber;
@@ -7918,9 +7916,8 @@ void Editor::Xlat()
 		for (Line = 0; CurPtr && Line < VBlockSizeY; Line++, CurPtr = CurPtr->m_next) {
 			int TBlockX = CurPtr->CellPosToReal(VBlockX);
 			int TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - CurPtr->CellPosToReal(VBlockX);
-			const wchar_t *CurStr, *EndSeq;
-			int Length;
-			CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+			const wchar_t *EndSeq;
+			int Length = CurPtr->GetStringLength(&EndSeq);
 			int CopySize = Length - TBlockX;
 
 			if (CopySize > TBlockSizeX)
@@ -8270,27 +8267,28 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	Edit *pEdit = new (std::nothrow) Edit(this);
-
-	if (pEdit) {
-		pEdit->SetEditorMode(TRUE);
-		pEdit->SetEditorParent(TRUE);
-		pEdit->SetPosition(X1, Y1, X2, Y2);
-		pEdit->SetWordWrap(m_bWordWrap);
-		pEdit->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
-
-		pEdit->m_next = nullptr;
-		pEdit->m_prev = nullptr;
-		pEdit->SetPersistentBlocks(EdOpt.PersistentBlocks);
-
-		if (lpwszStr) {
-			pEdit->SetBinaryString(lpwszStr, nLength);
-		}
-
-		pEdit->SetCurPos(0);
-
-		pEdit->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
+	Edit *pEdit = EPool.Construct(this);
+	if (!pEdit) {
+		fprintf(stderr, "Editor::CreateString: failed to allocate Edit\n");
+		return nullptr;
 	}
+	pEdit->SetEditorMode(TRUE);
+	pEdit->SetEditorParent(TRUE);
+	pEdit->SetPosition(X1, Y1, X2, Y2);
+	pEdit->SetWordWrap(m_bWordWrap);
+	pEdit->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
+
+	pEdit->m_next = nullptr;
+	pEdit->m_prev = nullptr;
+	pEdit->SetPersistentBlocks(EdOpt.PersistentBlocks);
+
+	if (lpwszStr) {
+		pEdit->SetBinaryString(lpwszStr, nLength);
+	}
+
+	pEdit->SetCurPos(0);
+
+	pEdit->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 
 	return pEdit;
 }
@@ -8380,9 +8378,8 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 		long TotalSize = 0;
 
 		while (CurPtr && CurPtr->m_next) {
-			const wchar_t *SaveStr, *EndSeq;
-			int Length;
-			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+			const wchar_t *EndSeq;
+			int Length = CurPtr->GetStringLength(&EndSeq);
 			TotalSize+= Length + StrLength(EndSeq);
 
 			if (TotalSize > StartChar)
@@ -8611,4 +8608,18 @@ void Editor::DrawScrollbar()
 		// Ensure XX2 is set even if scrollbar is off, especially for word wrap calculations
 		XX2 = X2;
 	}
+}
+
+void Editor::BeginBulkLoad()
+{
+	m_BulkLoadMode = true;
+	m_BulkLoadStartTime = GetProcessUptimeMSec();
+}
+
+void Editor::EndBulkLoad()
+{
+	m_BulkLoadMode = false;
+	m_LineCountDirty = true;
+	fprintf(stderr, "* Editor: load took %lu msec\n", (unsigned long)(GetProcessUptimeMSec() - m_BulkLoadStartTime));
+	EcoString::sDebugPrintStats("loaded");
 }

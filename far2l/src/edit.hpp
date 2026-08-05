@@ -201,6 +201,8 @@ public:
 	void SetListener(IEditListener *Listener = nullptr);
 	IEditListener *GetListener();
 
+	void Compact();
+
 	DWORD SetCodePage(UINT codepage);	// BUGBUG
 	UINT GetCodePage();					// BUGBUG
 
@@ -227,16 +229,22 @@ public:
 	void SetShowWhiteSpace(int Mode) { Flags.Change(FEDITLINE_SHOWWHITESPACE, Mode); }
 
 	void GetString(wchar_t *Data, int MaxSize);
-	void GetString(FARString &strStr);
+	void GetString(FARString &dst, const wchar_t **EOL = nullptr);
+	void GetString(std::wstring &dst, const wchar_t **EOL = nullptr);
+	std::wstring GetString();
 
+	int GetStringLength(const wchar_t **EOL = nullptr);
+
+	// NB: GetStringAddr functions have implicit memory overhead due to they forcing uncompacting of underlying string
+	// so prefer use GetString()/GetStringLength() if need to massive-query multiple lines, or use Compact() afterwards
+	// to avoid memory usage surge
+	const wchar_t *GetStringAddr(int &Length, const wchar_t **EOL = nullptr);
 	const wchar_t *GetStringAddr();
 
 	void SetHiString(const wchar_t *Str);
 	void SetString(const wchar_t *Str, int Length = -1);
 
 	void SetBinaryString(const wchar_t *Str, int Length);
-
-	void GetBinaryString(const wchar_t **Data, const wchar_t **EOL, int &Length);
 
 	void SetEOL(const wchar_t *EOL);
 	const wchar_t *GetEOL();

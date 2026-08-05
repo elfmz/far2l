@@ -222,6 +222,11 @@ Edit::~Edit()
 	s_e2s.Dismiss(this);
 }
 
+void Edit::Compact()
+{
+	Str.Compact();
+}
+
 void Edit::SetListener(IEditListener *Listener)
 {
 	if (auto *s = s_e2s.Get(this, Listener != nullptr)) {
@@ -1886,31 +1891,6 @@ int Edit::GetObjectColorUnChanged()
 	return ColorUnChanged;
 }
 
-void Edit::GetString(wchar_t *Data, int MaxSize)
-{
-	// far_wcsncpy(Str, this->Str,MaxSize);
-	if (LIKELY(MaxSize > 0)) {
-		const auto l = Min(Str.Size(), MaxSize - 1);
-		if (l > 0) {
-			wmemcpy(Data, Str.CPtr(), l);
-			Data[l] = 0;
-		}
-		Data[MaxSize - 1] = 0;
-	} else {
-		fprintf(stderr, "Edit::GetString: bad MaxSize=%d\n", MaxSize);
-	}
-}
-
-void Edit::GetString(FARString &strStr)
-{
-	strStr = Str.CPtr();
-}
-
-const wchar_t *Edit::GetStringAddr()
-{
-	return Str.CPtr();
-}
-
 void Edit::SetHiString(const wchar_t *Str)
 {
 	if (Flags.Check(FEDITLINE_READONLY))
@@ -1957,15 +1937,16 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 {
 	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS)) return;
 
+	bool AndTabs = true;
 	if (!CheckStr) {
 		CheckStr = Str.CPtr();
 		Length = Str.Size();
+	} else if (GetConvertTabs() == EXPAND_ALLTABS) {
+		AndTabs = false; // this is a string to be inserted and its tabs gonna be expanded to spaces, so ignore them
 	}
-
 	for (int i = 0; i < Length; ++i) {
-		auto wc = CheckStr[i];
-		if (wc == L'\t' || CharClasses::IsFullWidth(wc)
-						|| CharClasses::IsXxxfix(wc) ) {
+		const auto wc = CheckStr[i];
+		if ( (wc == L'\t' && AndTabs) || CharClasses::IsFullWidth(wc) || CharClasses::IsXxxfix(wc) ) {
 			Flags.Set(FEDITLINE_HASSPECIALWIDTHCHARS);
 			return;
 		}
@@ -2048,11 +2029,10 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		*/
 		RefreshStrByMask(!*Str);
 	} else {
-		if (!this->Str.Assign(Str, Length)) {
+		if (!this->Str.Assign(Str, Length, true)) {
 			fprintf(stderr, "Edit::SetBinaryString: failed to assign to length of %d\n", Length);
 			return;
 		}
-
 		if (GetConvertTabs() == EXPAND_ALLTABS)
 			ExpandTabs();
 
@@ -2060,7 +2040,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		CurPos = this->Str.Size();
 
 		Flags.Clear(FEDITLINE_HASSPECIALWIDTHCHARS);
-		CheckForSpecialWidthChars();
+		CheckForSpecialWidthChars(Str, Length);
 	}
 
 	if (GetWordWrap()) {
@@ -2077,14 +2057,67 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	Changed();
 }
 
-void Edit::GetBinaryString(const wchar_t **Data, const wchar_t **EOL, int &Length)
+void Edit::GetString(wchar_t *Data, int MaxSize)
 {
-	*Data = Str.CPtr();
-	Length = Str.Size();	//???
+	if (LIKELY(MaxSize > 0)) {
+		const auto l = std::min(Str.Size(), MaxSize - 1);
+		Str.CopyTo(Data, 0, l);
+		Data[l] = 0;
+	}
+}
 
+void Edit::GetString(FARString &dst, const wchar_t **EOL)
+{
 	if (EOL)
 		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	Str.CopyTo(dst);
 }
+
+void Edit::GetString(std::wstring &dst, const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	Str.CopyTo(dst);
+}
+
+std::wstring Edit::GetString()
+{
+	std::wstring out;
+	Str.CopyTo(out);
+	return out;
+}
+
+int Edit::GetStringLength(const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	return Str.Size();
+}
+
+const wchar_t *Edit::GetStringAddr()
+{
+	const wchar_t *out = Str.CPtr();
+	return LIKELY(out) ? out : L"";
+}
+
+const wchar_t *Edit::GetStringAddr(int &Length, const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	const wchar_t *out = Str.CPtr();
+	if (LIKELY(out)) {
+		Length = Str.Size();	//???
+		return out;
+	}
+
+	Length = 0;
+	return L"";
+}
+
 
 int Edit::GetSelString(wchar_t *Data, int MaxSize)
 {

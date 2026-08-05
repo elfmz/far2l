@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
+#include "EcoPool.hpp"
+#include "edit.hpp"
 
 class FileEditor;
 class KeyBar;
@@ -148,8 +150,6 @@ enum FLAGS_CLASS_EDITOR
 	FEDITOR_DIALOGMEMOEDIT   = 0x80000000,		// Editor используется в диалоге в качестве DI_MEMOEDIT
 };
 
-class Edit;
-
 class Editor : public ScreenObject
 {
 	friend class Edit;
@@ -181,6 +181,7 @@ private:
 		}
 	};
 
+	EcoPool<Edit> EPool;
 	DList<EditorUndoData> UndoData;
 	EditorUndoData *UndoPos;
 	EditorUndoData *UndoSavePos;
@@ -265,6 +266,7 @@ private:
 	bool m_LineCountDirty;
 	bool m_BulkLoadMode;  // Skip expensive operations during file loading
 	bool m_showCursor;
+	clock_t m_BulkLoadStartTime;
 	FARString m_virtualFileName;
 
 private:
@@ -476,8 +478,8 @@ public:
 	int GetReadOnly() { return Flags.Check(FEDITOR_LOCKMODE); };
 
 	// Bulk load mode - skips expensive per-line operations during file loading
-	void BeginBulkLoad() { m_BulkLoadMode = true; }
-	void EndBulkLoad() { m_BulkLoadMode = false; m_LineCountDirty = true; };
+	void BeginBulkLoad();
+	void EndBulkLoad();
 	void SetOvertypeMode(int Mode);
 	int GetOvertypeMode();
 	void SetEditBeyondEnd(int Mode);

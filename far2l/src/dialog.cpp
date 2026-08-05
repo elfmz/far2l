@@ -3239,7 +3239,7 @@ int Dialog::ProcessKey(FarKey Key)
 					edt->Xlat();
 
 					// иначе неправильно работает ctrl-end
-					edt->strLastStr = edt->GetStringAddr();
+					edt->GetString(edt->strLastStr);
 					edt->LastPartLength = static_cast<int>(edt->strLastStr.GetLength());
 
 					Redraw();	// Перерисовка должна идти после DN_EDITCHANGE (imho)
@@ -3262,14 +3262,14 @@ int Dialog::ProcessKey(FarKey Key)
 						if ((Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1)
 								&& edt->GetCurPos() == edt->GetLength()) {
 							if (edt->LastPartLength == -1)
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 
 							strStr = edt->strLastStr;
 							int CurCmdPartLength = static_cast<int>(strStr.GetLength());
 							edt->HistoryGetSimilar(strStr, edt->LastPartLength);
 
 							if (edt->LastPartLength == -1) {
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 								edt->LastPartLength = CurCmdPartLength;
 							}
 							edt->DisableAC();

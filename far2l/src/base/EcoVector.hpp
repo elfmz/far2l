@@ -1,10 +1,10 @@
 #pragma once
 
-// memory-economic vector, used primarily for Edit.hpp/Edit.cpp
-// reasons:
-// 	sizeof(std::vector) == 3 * sizeof(void *)
-// 	sizeof(EcoVector) == sizeof(void *)
-// 	has strict shrink_to_fit() and guaranteed no allocation whenever its empty
+// Memory-economic vector, used primarily for Edit.hpp/Edit.cpp
+// Reasons:
+// - sizeof(std::vector) == 3 * sizeof(void *)
+// - sizeof(EcoVector) == sizeof(void *)
+// - Strict shrink_to_fit() and guaranteed no allocation whenever its empty
 
 template <class T, size_t FIRST_ENLARGE = 1>
 	class EcoVector
@@ -74,7 +74,7 @@ public:
 	{
 		if (_content) {
 			resize(0);
-			assert(!_content);
+			ASSERT(!_content);
 		}
 	}
 
@@ -104,7 +104,7 @@ public:
 
 	const T &at(size_t index) const
 	{
-		ASSERT_MSG(index < size(),  "EcoVector[] const: bad %ld while size=%ld\n", (long)index, size());
+		ASSERT_MSG(index < size(),  "EcoVector[]: bad %ld while size=%ld\n", (long)index, size());
 		return _content->data[index];
 	}
 

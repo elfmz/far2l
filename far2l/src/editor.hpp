@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
+#include "EcoPool.hpp"
+#include "edit.hpp"
 
 class FileEditor;
 class KeyBar;
@@ -148,8 +150,6 @@ enum FLAGS_CLASS_EDITOR
 	FEDITOR_DIALOGMEMOEDIT   = 0x80000000,		// Editor используется в диалоге в качестве DI_MEMOEDIT
 };
 
-class Edit;
-
 class Editor : public ScreenObject
 {
 	friend class Edit;
@@ -181,6 +181,7 @@ private:
 		}
 	};
 
+	EcoPool<Edit> EPool;
 	DList<EditorUndoData> UndoData;
 	EditorUndoData *UndoPos;
 	EditorUndoData *UndoSavePos;

@@ -490,11 +490,13 @@ void Editor::DrawGutterMark(int logical_line, int y, int line_num_x1)
 
 void Editor::FreeAllocatedData(bool FreeUndo)
 {
-	while (EndList) {
-		Edit *Prev = EndList->m_prev;
-		delete EndList;
-		EndList = Prev;
+	for (Edit *e = TopList; e;) {
+		auto *d = e;
+		e = e->m_next;
+		d->~Edit();
 	}
+	TopList = EndList = TopScreen = nullptr;
+	EPool.Purge();
 
 	UndoData.Clear();
 	UndoSavePos = nullptr;
@@ -504,7 +506,6 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	m_VisualScrollbarDirty = true;
 	m_LineCountDirty = true;  // Invalidate line number cache
 	ClearStackBookmarks();
-	TopList = EndList = CurLine = nullptr;
 	NumLastLine = 0;
 	NumLine = 0;
 }
@@ -4528,7 +4529,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 	if (UndoLine != -1)
 		AddUndoData(UNDO_DELSTR, DelPtr->GetStringAddr(), DelPtr->GetEOL(), UndoLine, 0, DelPtr->GetLength());
 
-	delete DelPtr;
+	EPool.Destruct(DelPtr);
 }
 
 void Editor::InsertString()
@@ -5038,16 +5039,18 @@ BOOL Editor::Search(int Next)
 			CurPos++;
 
 		NewNumLine = NumLine;
-		CurPtr = CurLine;
-		DWORD StartTime = WINPORT(GetTickCount)();
+
+		EcoString::sDebugPrintStats("search started");
+		const DWORD StartTime = WINPORT(GetTickCount)();
 		int StartLine = NumLine;
 		wakeful W;
 
-		while (CurPtr) {
+		DWORD LastRedraw = 0;
+		for (CurPtr = CurLine; CurPtr;) {
 			DWORD CurTime = WINPORT(GetTickCount)();
 
-			if (CurTime - StartTime > RedrawTimeout) {
-				StartTime = CurTime;
+			if (CurTime - LastRedraw > RedrawTimeout) {
+				LastRedraw = CurTime;
 
 				strMsgStr = strSearchStr;
 				InsertQuote(strMsgStr);
@@ -5304,6 +5307,7 @@ BOOL Editor::Search(int Next)
 					if (!ReverseSearch)
 						CurPos++;
 			} else {
+				CurPtr->Compact();
 				if (ReverseSearch) {
 					CurPtr = CurPtr->m_prev;
 
@@ -5319,6 +5323,8 @@ BOOL Editor::Search(int Next)
 				}
 			}
 		}
+		fprintf(stderr, "* Edit search complete in %u msec\n", WINPORT(GetTickCount)() - StartTime);
+		EcoString::sDebugPrintStats("search finished");
 	}
 	Show();
 
@@ -8261,27 +8267,28 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	Edit *pEdit = new (std::nothrow) Edit(this);
-
-	if (pEdit) {
-		pEdit->SetEditorMode(TRUE);
-		pEdit->SetEditorParent(TRUE);
-		pEdit->SetPosition(X1, Y1, X2, Y2);
-		pEdit->SetWordWrap(m_bWordWrap);
-		pEdit->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
-
-		pEdit->m_next = nullptr;
-		pEdit->m_prev = nullptr;
-		pEdit->SetPersistentBlocks(EdOpt.PersistentBlocks);
-
-		if (lpwszStr) {
-			pEdit->SetBinaryString(lpwszStr, nLength);
-		}
-
-		pEdit->SetCurPos(0);
-
-		pEdit->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
+	Edit *pEdit = EPool.Construct(this);
+	if (!pEdit) {
+		fprintf(stderr, "Editor::CreateString: failed to allocate Edit\n");
+		return nullptr;
 	}
+	pEdit->SetEditorMode(TRUE);
+	pEdit->SetEditorParent(TRUE);
+	pEdit->SetPosition(X1, Y1, X2, Y2);
+	pEdit->SetWordWrap(m_bWordWrap);
+	pEdit->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
+
+	pEdit->m_next = nullptr;
+	pEdit->m_prev = nullptr;
+	pEdit->SetPersistentBlocks(EdOpt.PersistentBlocks);
+
+	if (lpwszStr) {
+		pEdit->SetBinaryString(lpwszStr, nLength);
+	}
+
+	pEdit->SetCurPos(0);
+
+	pEdit->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 
 	return pEdit;
 }

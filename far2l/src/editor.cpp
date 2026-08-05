@@ -8565,12 +8565,11 @@ int Editor::GetCurCol()
 
 void Editor::SetCurPos(int NewCol, int NewRow)
 {
-	Lock();
+	LockObject l(*this);
 	GoToLine(NewRow);
 	CurLine->SetCellCurPos(NewCol);
 	RememberWordWrapPreferredCellPos();
 	// CurLine->SetLeftPos(LeftPos); ???
-	Unlock();
 }
 
 void Editor::SetCursorType(bool Visible, DWORD Size)

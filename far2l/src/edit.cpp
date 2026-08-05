@@ -1131,18 +1131,16 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTHOME:
 		case KEY_SHIFTNUMPAD7: {
-			Lock();
-
+			LockThinObject l(*this);
 			while (CurPos > 0)
 				RecurseProcessKey(KEY_SHIFTLEFT);
-
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
 		case KEY_SHIFTEND:
 		case KEY_SHIFTNUMPAD1: {
-			Lock();
+			LockThinObject l(*this);
 			int Len = (Mask && *Mask) ? CalcRTrimmedStrSize() : Str.Size();
 
 			int LastCurPos = CurPos;
@@ -1156,7 +1154,7 @@ int Edit::ProcessKey(FarKey Key)
 				LastCurPos = CurPos;
 			}
 
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
@@ -1198,8 +1196,7 @@ int Edit::ProcessKey(FarKey Key)
 				CurPos = Str.Size();
 			}
 
-			Lock();
-
+			LockThinObject l(*this);
 			PauseEditListener pel(*this);
 
 			// BUGBUG
@@ -1218,21 +1215,21 @@ int Edit::ProcessKey(FarKey Key)
 					break;
 			}
 
-			Unlock();
+			l.Unlock();
 			pel.Resume();
 			Changed(true);
 			Show();
 			return TRUE;
 		}
 		case KEY_CTRLQ: {
-			Lock();
+			LockThinObject l(*this);
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)
 					&& (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG)))
 				RecurseProcessKey(KEY_DEL);
 
 			ProcessCtrlQ();
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
@@ -1288,7 +1285,7 @@ int Edit::ProcessKey(FarKey Key)
 			if (CurPos >= Str.Size())
 				return FALSE;
 
-			Lock();
+			LockThinObject l(*this);
 			PauseEditListener pel(*this);
 			if (Mask && *Mask) {
 				int MaskLen = StrLength(Mask);
@@ -1322,7 +1319,7 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
-			Unlock();
+			l.Unlock();
 			pel.Resume();
 			Changed(true);
 			Show();

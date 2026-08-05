@@ -375,7 +375,6 @@ void DlgEdit::InsertString(const wchar_t *Str)
 
 void DlgEdit::GetString(wchar_t *Str, int MaxSize, int Row)
 {
-
 	if (Type == DLGEDIT_MULTILINE) {
 		if (!multiEdit || !Str || MaxSize <= 0)
 			return;

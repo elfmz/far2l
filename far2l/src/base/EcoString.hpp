@@ -17,7 +17,13 @@ enum SetCPFlags
 	SETCP_OTHERERROR = 0x10000000,
 };
 
-// memory-economic string, used primarily for Edit.hpp/Edit.cpp
+// Memory-economic string, used primarily for Edit.hpp/Edit.cpp
+// Reasons:
+// - sizeof(EcoString) == sizeof(void *) + sizeof(int)
+// - When assigned with compact=true and if data contains only ASCII-representable wchars
+//   then data is kept in compact ASCII form without NUL termination character, however
+//   later automatically converted to wchars on any later modification or CPtr()/Ptr() use
+//   Use sDebugPrintStats to see current per-kind allocations statistics
 class EcoString
 {
 	mutable union U
@@ -41,21 +47,24 @@ class EcoString
 	bool MakeWideLength(int len);
 
 	bool EnsureWide() const;
-
-	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
+	bool TryAssignCompact(const wchar_t *data, int len);
 
 public:
+	static void sDebugPrintStats(const char *info);
+
 	EcoString() = default;
 	~EcoString();
 
-	static void sDebugPrintStats(const char *info);
-
 	inline int Size() const
 	{
-		return (_len < 0) ? -_len : _len;
+		return __builtin_abs(_len);// (_len < 0) ? -_len : _len;
 	}
 
 	bool Assign(const wchar_t *data, int len, bool compact = false);
+	void Compact(); // makes string compact if possible
+	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
+	void CopyTo(std::wstring &dst) const;
+	void CopyTo(FARString &dst) const;
 
 	void Swap(EcoString &another);
 

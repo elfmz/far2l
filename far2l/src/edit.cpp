@@ -222,6 +222,11 @@ Edit::~Edit()
 	s_e2s.Dismiss(this);
 }
 
+void Edit::Compact()
+{
+	Str.Compact();
+}
+
 void Edit::SetListener(IEditListener *Listener)
 {
 	if (auto *s = s_e2s.Get(this, Listener != nullptr)) {
@@ -1886,31 +1891,6 @@ int Edit::GetObjectColorUnChanged()
 	return ColorUnChanged;
 }
 
-void Edit::GetString(wchar_t *Data, int MaxSize)
-{
-	// far_wcsncpy(Str, this->Str,MaxSize);
-	if (LIKELY(MaxSize > 0)) {
-		const auto l = Min(Str.Size(), MaxSize - 1);
-		if (l > 0) {
-			wmemcpy(Data, Str.CPtr(), l);
-			Data[l] = 0;
-		}
-		Data[MaxSize - 1] = 0;
-	} else {
-		fprintf(stderr, "Edit::GetString: bad MaxSize=%d\n", MaxSize);
-	}
-}
-
-void Edit::GetString(FARString &strStr)
-{
-	strStr = Str.CPtr();
-}
-
-const wchar_t *Edit::GetStringAddr()
-{
-	return Str.CPtr();
-}
-
 void Edit::SetHiString(const wchar_t *Str)
 {
 	if (Flags.Check(FEDITLINE_READONLY))
@@ -2077,14 +2057,67 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	Changed();
 }
 
-void Edit::GetBinaryString(const wchar_t **Data, const wchar_t **EOL, int &Length)
+void Edit::GetString(wchar_t *Data, int MaxSize)
 {
-	*Data = Str.CPtr();
-	Length = Str.Size();	//???
+	if (LIKELY(MaxSize > 0)) {
+		const auto l = std::min(Str.Size(), MaxSize - 1);
+		Str.CopyTo(Data, 0, l);
+		Data[l] = 0;
+	}
+}
 
+void Edit::GetString(FARString &dst, const wchar_t **EOL)
+{
 	if (EOL)
 		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	Str.CopyTo(dst);
 }
+
+void Edit::GetString(std::wstring &dst, const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	Str.CopyTo(dst);
+}
+
+std::wstring Edit::GetString()
+{
+	std::wstring out;
+	Str.CopyTo(out);
+	return out;
+}
+
+int Edit::GetStringLength(const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	return Str.Size();
+}
+
+const wchar_t *Edit::GetStringAddr()
+{
+	const wchar_t *out = Str.CPtr();
+	return LIKELY(out) ? out : L"";
+}
+
+const wchar_t *Edit::GetStringAddr(int &Length, const wchar_t **EOL)
+{
+	if (EOL)
+		*EOL = EOL_TYPE_CHARS[GetEndType()];
+
+	const wchar_t *out = Str.CPtr();
+	if (LIKELY(out)) {
+		Length = Str.Size();	//???
+		return out;
+	}
+
+	Length = 0;
+	return L"";
+}
+
 
 int Edit::GetSelString(wchar_t *Data, int MaxSize)
 {

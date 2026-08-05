@@ -5,8 +5,8 @@
 
 static struct Stats
 {
-	unsigned long mbyte_local{};
-	unsigned long mbyte_heap{};
+	unsigned long char_local{};
+	unsigned long char_heap{};
 	unsigned long wide_local{};
 	unsigned long wide_heap{};
 	unsigned long failed_allocs{};
@@ -15,11 +15,11 @@ static struct Stats
 void EcoString::sDebugPrintStats(const char *info)
 {
 	if (s_stats.failed_allocs != 0) {
-		fprintf(stderr, "! EcoString: mbyte_local:%lu mbyte_heap:%lu wide_local:%lu wide_heap:%lu failed_allocs:%lu (%s)\n",
-			s_stats.mbyte_local, s_stats.mbyte_heap, s_stats.wide_local, s_stats.wide_heap, s_stats.failed_allocs, info);
+		fprintf(stderr, "! EcoString: char_local:%lu char_heap:%lu wide_local:%lu wide_heap:%lu failed_allocs:%lu (%s)\n",
+			s_stats.char_local, s_stats.char_heap, s_stats.wide_local, s_stats.wide_heap, s_stats.failed_allocs, info);
 	} else {
-		fprintf(stderr, "* EcoString: mbyte_local:%lu mbyte_heap:%lu wide_local:%lu wide_heap:%lu (%s)\n",
-			s_stats.mbyte_local, s_stats.mbyte_heap, s_stats.wide_local, s_stats.wide_heap, info);
+		fprintf(stderr, "EcoString: char_local:%lu char_heap:%lu wide_local:%lu wide_heap:%lu (%s)\n",
+			s_stats.char_local, s_stats.char_heap, s_stats.wide_local, s_stats.wide_heap, info);
 	}
 }
 
@@ -44,7 +44,7 @@ int EcoString::Find(wchar_t ch, int pos) const
 			}
 		}
 	} else if (unsigned(ch) <= 0xff) {
-		int len = -_len;
+		const int len = -_len;
 		const unsigned char *cptr = (size_t(len) > sizeof(_data)) ? _data.pmb : _data.lmb;
 		for (;pos < len; ++pos) {
 			if (cptr[pos] == unsigned(ch)) {
@@ -61,9 +61,9 @@ void EcoString::MakeEmpty()
 	if (_len < 0) {
 		if (size_t(-_len) > sizeof(_data)) {
 			free(_data.pmb);
-			s_stats.mbyte_heap--;
+			s_stats.char_heap--;
 		} else {
-			s_stats.mbyte_local--;
+			s_stats.char_local--;
 		}
 	} else if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
 		free(_data.pws);
@@ -75,51 +75,62 @@ void EcoString::MakeEmpty()
 	_data.raw = nullptr;
 }
 
+bool EcoString::TryAssignCompact(const wchar_t *data, int len)
+{
+	if ((len + 1) * sizeof(wchar_t) <= sizeof(_data)) {
+		return false; // use wide form if it can fit into local data
+	}
+
+	// check that data contains only chars with values representable in byte range: 0 .. 0xff
+	for (auto i = 0; i < len; ++i) {
+		if (unsigned(data[i]) > 0xff) {
+			return false;
+		}
+	}
+
+	if (len > int(sizeof(_data))) {
+		unsigned char *pmb = (unsigned char *)malloc(len);
+		if (!pmb) {
+			fprintf(stderr, "EcoString::TryAssignCompact: malloc failed len=%d\n", len);
+			s_stats.failed_allocs++;
+			return false;
+		}
+		for (auto i = 0; i < len; ++i) {
+			pmb[i] = unsigned(data[i]);
+		}
+		MakeEmpty();
+		_data.pmb = pmb;
+		s_stats.char_heap++;
+	} else {
+		MakeEmpty();
+		for (auto i = 0; i < len; ++i) {
+			_data.lmb[i] = unsigned(data[i]);
+		}
+		s_stats.char_local++;
+	}
+	_len = -len;
+	return true;
+}
+
 bool EcoString::Assign(const wchar_t *data, int len, bool compact)
 {
-	if (compact && (len + 1) * sizeof(wchar_t) > sizeof(_data)) {
-		for (auto i = 0; i < len; ++i) {
-			if (unsigned(data[i]) > 0xff) {
-				compact = false;
-				break;
-			}
+	if (!compact || !TryAssignCompact(data, len)) {
+		if (!MakeWideLength(len)) {
+			return false;
 		}
-
-		if (compact) {
-			if (len > int(sizeof(_data))) {
-				unsigned char *pmb = (unsigned char *)malloc(len);
-				if (pmb) {
-					for (auto i = 0; i < len; ++i) {
-						pmb[i] = unsigned(data[i]);
-					}
-					MakeEmpty();
-					_data.pmb = pmb;
-					s_stats.mbyte_heap++;
-				} else {
-					fprintf(stderr, "EcoString::Assign: compact malloc failed len=%d\n", len);
-					s_stats.failed_allocs++;
-					compact = false;
-				}
-			} else {
-				MakeEmpty();
-				for (auto i = 0; i < len; ++i) {
-					_data.lmb[i] = unsigned(data[i]);
-				}
-				s_stats.mbyte_local++;
-			}
-			if (compact) {
-				_len = -len;
-				return true;
-			}
-			_len = 0;
-		}
+		wmemcpy(Ptr(), data, len);
 	}
-
-	if (!MakeWideLength(len)) {
-		return false;
-	}
-	wmemcpy(Ptr(), data, len);
 	return true;
+}
+
+void EcoString::Compact()
+{
+	if (_len > 0) {
+		EcoString tmp;
+		if (tmp.TryAssignCompact(CPtr(), _len)) {
+			Swap(tmp);
+		}
+	}
 }
 
 bool EcoString::EnsureWide() const
@@ -141,12 +152,12 @@ bool EcoString::EnsureWide() const
 			pws[i] = (wchar_t)(unsigned int)_data.pmb[i];
 		}
 		free(_data.pmb);
-		s_stats.mbyte_heap--;
+		s_stats.char_heap--;
 	} else {
 		for (auto i = -_len; i-- > 0;) {
 			pws[i] = (wchar_t)(unsigned int)_data.lmb[i];
 		}
-		s_stats.mbyte_local--;
+		s_stats.char_local--;
 	}
 	_data.pws = pws;
 	_len = -_len;
@@ -172,6 +183,26 @@ void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 	}
 }
 
+void EcoString::CopyTo(std::wstring &dst) const
+{
+	dst.resize(Size());
+	if (!dst.empty()) {
+		CopyTo(dst.data(), 0, dst.size());
+	}
+}
+
+void EcoString::CopyTo(FARString &dst) const
+{
+	if (const auto sz = Size()) {
+		wchar_t *buf = dst.GetBuffer(sz);
+		if (buf) {
+			CopyTo(buf, 0, sz);
+			dst.ReleaseBuffer(sz);
+			return;
+		}
+	}
+	dst.Clear();
+}
 
 bool EcoString::MakeWideLength(int len)
 {

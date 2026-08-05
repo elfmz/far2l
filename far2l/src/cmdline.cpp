@@ -619,14 +619,14 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 		case KEY_CTRLEND: case KEY_CTRLNUMPAD1:
 			if (CmdStr.GetCurPos() == CmdStr.GetLength()) {
 				if (LastCmdPartLength == -1)
-					strLastCmdStr = CmdStr.GetStringAddr();
+					CmdStr.GetString(strLastCmdStr);
 
 				FARString strStr = strLastCmdStr;
 				int CurCmdPartLength = (int)strStr.GetLength();
 				CtrlObject->CmdHistory->GetSimilar(strStr, LastCmdPartLength);
 
 				if (LastCmdPartLength == -1) {
-					strLastCmdStr = CmdStr.GetStringAddr();
+					CmdStr.GetString(strLastCmdStr);
 					LastCmdPartLength = CurCmdPartLength;
 				}
 				CmdStr.DisableAC();
@@ -712,7 +712,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 			CmdStr.Xlat(Opt.XLat.Flags & XLAT_CONVERTALLCMDLINE ? TRUE : FALSE);
 
 			// иначе неправильно работает ctrl-end
-			strLastCmdStr = CmdStr.GetStringAddr();
+			CmdStr.GetString(strLastCmdStr);
 			LastCmdPartLength = (int)strLastCmdStr.GetLength();
 
 			return TRUE;

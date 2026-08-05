@@ -1986,9 +1986,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CW = LenText;
 
 				if (X1 + X + LenText > X2) {
-					int tmpCW = ObjWidth;
+					int tmpCW = ObjWidth();
 
-					if (CW < ObjWidth)
+					if (CW < tmpCW)
 						tmpCW = CW + 1;
 
 					strStr.TruncateByCells(tmpCW - 1);
@@ -2084,9 +2084,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CH = LenStrItem(I, strStr);
 
 				if (Y1 + Y + LenText > Y2) {
-					int tmpCH = ObjHeight;
+					int tmpCH = ObjHeight();
 
-					if (CH < ObjHeight)
+					if (CH < tmpCH)
 						tmpCH = CH + 1;
 
 					strStr.TruncateByCells(tmpCH - 1);
@@ -2198,7 +2198,7 @@ void Dialog::ShowDialog(unsigned ID)
 				LenText = LenStrItem(I, strStr);
 
 				if (X1 + CX1 + LenText > X2)
-					strStr.TruncateByCells(ObjWidth - 1);
+					strStr.TruncateByCells(ObjWidth() - 1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
 					Text(strStr);

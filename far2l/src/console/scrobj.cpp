@@ -38,15 +38,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 
 ThinScreenObject::ThinScreenObject()
-	:
-	pOwner(nullptr),
-	X1(0),
-	Y1(0),
-	X2(0),
-	Y2(0),
-	ObjWidth(0),
-	ObjHeight(0),
-	nLockCount(0)
 {
 	//  _OT(SysLog(L"[%p] ThinScreenObject::ThinScreenObject()", this));
 }
@@ -55,22 +46,25 @@ ThinScreenObject::~ThinScreenObject()
 {
 }
 
+
 void ThinScreenObject::Lock()
 {
-	nLockCount++;
+	++nLockCount;
 }
 
 void ThinScreenObject::Unlock()
 {
-	if (nLockCount > 0)
-		nLockCount--;
-	else
+	if (LIKELY(nLockCount > 0)) {
+		--nLockCount;
+	} else {
+		fprintf(stderr, "ScreenObject::Unlock: unexpected nLockCount=%d\n", nLockCount);
 		nLockCount = 0;
+	}
 }
 
 bool ThinScreenObject::Locked()
 {
-	return (nLockCount > 0) || (pOwner ? pOwner->Locked() : false);
+	return (nLockCount > 0) || (pOwner && pOwner->Locked());
 }
 
 void ThinScreenObject::SetOwner(ThinScreenObject *pOwner)
@@ -89,8 +83,6 @@ void ThinScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
 	ThinScreenObject::Y1 = Y1;
 	ThinScreenObject::X2 = X2;
 	ThinScreenObject::Y2 = Y2;
-	ObjWidth = X2 - X1 + 1;
-	ObjHeight = Y2 - Y1 + 1;
 	Flags.Set(FSCROBJ_SETPOSITIONDONE);
 }
 
@@ -237,4 +229,3 @@ void ScreenObject::Shadow(bool Full)
 		}
 	}
 }
-

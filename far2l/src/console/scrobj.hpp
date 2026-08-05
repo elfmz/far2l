@@ -53,16 +53,17 @@ enum
 class ThinScreenObject
 {
 protected:
-	ThinScreenObject *pOwner;
+	ThinScreenObject *pOwner{nullptr};
 
 protected:
 	BitFlags Flags;
-	int X1, Y1, X2, Y2;
-	int ObjWidth, ObjHeight;
-
-	int nLockCount;
+	int X1{0}, Y1{0}, X2{0}, Y2{0};
+	int nLockCount{0};
 
 	virtual void DisplayObject(){};
+
+	inline int ObjWidth() const { return X2 >= X1 ? X2 + 1 - X1 : 0; }
+	inline int ObjHeight() const { return Y2 >= Y1 ? Y2 + 1 - Y1 : 0; }
 
 public:
 	ThinScreenObject();
@@ -112,4 +113,3 @@ public:
 	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
 	void Shadow(bool Full = false);
 };
-

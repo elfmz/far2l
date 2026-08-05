@@ -1534,7 +1534,7 @@ public:
 private:
 	size_t VisibleRows() const
 	{
-		return ObjHeight > 2 ? static_cast<size_t>(ObjHeight - 2) : 0;
+		return ObjHeight() > 2 ? static_cast<size_t>(ObjHeight() - 2) : 0;
 	}
 
 	size_t MaxTop() const
@@ -2494,7 +2494,7 @@ private:
 
 	void RebuildScreenRows()
 	{
-		const int TotalWidth = std::max(1, ObjWidth);
+		const int TotalWidth = std::max(1, ObjWidth());
 		m_gutterWidth = TotalWidth >= 5 ? PreferredGutterWidth : TotalWidth >= 3 ? 1 : 0;
 		const int PanesWidth = std::max(1, TotalWidth - m_gutterWidth);
 		m_leftWidth = std::max(1, PanesWidth / 2);

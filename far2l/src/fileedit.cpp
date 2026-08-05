@@ -2378,7 +2378,7 @@ void FileEditor::ShowStatus()
 			<< fmt::LeftAlign() << fmt::Expand(4) << m_editor->CurLine->GetCellCurPos() + 1 << L' '
 			<< AttrStr << (AttrStr.IsEmpty() ? L"" : L" ")
 			<< fmt::Expand(CharCodeWidth) << strCharCode;
-	int StatusWidth = ObjWidth - (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 6 : 0);
+	int StatusWidth = ObjWidth() - (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 6 : 0);
 
 	if (StatusWidth < 0)
 		StatusWidth = 0;

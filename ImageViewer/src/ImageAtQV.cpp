@@ -1,9 +1,9 @@
 #include "Common.h"
 #include "ImageView.h"
-#include <optional>
-#include <mutex>
-#include <condition_variable>
 #include <Threaded.h>
+#include <condition_variable>
+#include <mutex>
+#include <optional>
 
 // quick view processing happens in background thread, that keeps UI fluent,
 // even if decoding of some file takes long time - it happens in background
@@ -47,7 +47,7 @@ class ImageAtQV : public Threaded
 			iv.reset();
 			std::vector<std::pair<std::string, bool> > all_files{{file, false}};
 			iv.emplace(0, all_files);
-			if (!iv->Setup(area, &_changing)) {
+			if (iv->Setup(area, &_changing) != ImageOpResult::OK) {
 				iv.reset();
 			}
 		}

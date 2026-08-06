@@ -1,7 +1,11 @@
-#include "Common.h"
 #include "ImageView.h"
+#include "Common.h"
+#include "lng.h"
 #include "Settings.h"
 #include "ToolExec.h"
+#include <iomanip>
+#include <locale>
+#include <sstream>
 
 // following constants used for incremental image display moderation
 #define SETIMG_INITALLY_ASSUMED_SPEED    8192 // 8kb per ms = 8MB/second
@@ -23,7 +27,7 @@ bool ImageView::IterateFile(bool forward)
 	return true;
 }
 
-bool ImageView::PrepareImage()
+ImageOpResult ImageView::PrepareImage()
 {
 	_render_file = CurFile();
 	_orig_image.Resize();
@@ -31,7 +35,7 @@ bool ImageView::PrepareImage()
 	struct stat st {};
 	if (stat(_render_file.c_str(), &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0) {
 		_all_files[_cur_file].second = false; // silently unselect non-loadable files
-		return false;
+		return ImageOpResult::FAILED;
 	}
 
 	StrWide2MB(FileSizeString(st.st_size), _file_size_str);
@@ -47,7 +51,7 @@ bool ImageView::PrepareImage()
 		"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _render_file);
 
 	if (!ffprobe.Run(_render_file, _file_size_str, "ffmpeg", "Obtaining video frames count...")) {
-		return false;
+		return ImageOpResult::CANCELLED;
 	}
 	const auto &frames_count = ffprobe.FetchStdout();
 
@@ -72,20 +76,20 @@ bool ImageView::PrepareImage()
 		"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
 	if (!ffmpeg.Run(_render_file, _file_size_str, "ffmpeg",
 			"Obtaining 6 video frames of %d for preview...", frames_count_i)) {
-		return false;
+		return ImageOpResult::CANCELLED;
 	}
 
 	if (stat(_tmp_file.c_str(), &st) == -1 || st.st_size == 0) {
 		unlink(_tmp_file.c_str());
 		_all_files[_cur_file].second = false; // silently unselect non-loadable files
-		return false;
+		return ImageOpResult::FAILED;
 	}
 
 	_render_file = _tmp_file;
 	return ReadImage();
 }
 
-bool ImageView::ReadImage()
+ImageOpResult ImageView::ReadImage()
 {
 	const bool use_orientation = g_settings.UseOrientation();
 
@@ -98,7 +102,7 @@ bool ImageView::ReadImage()
 		"rgb:-");
 
 	if (!convert.Run(CurFile(), _file_size_str, "imagemagick", "Converting picture...")) {
-		return false;
+		return ImageOpResult::CANCELLED;
 	}
 	std::vector<char> stdout_data;
 	convert.FetchStdout(stdout_data);
@@ -110,7 +114,7 @@ bool ImageView::ReadImage()
 	if (print_end == stdout_data.size()) {
 		fprintf(stderr, "%s: no colon in convert output\n", __FUNCTION__);
 		_err_str = "ImageMagick 'convert' failed";
-		return false;
+		return ImageOpResult::FAILED;
 	}
 	stdout_data[print_end] = 0;
 	int width = -1, height = -1, orientation = -1;
@@ -118,7 +122,7 @@ bool ImageView::ReadImage()
 	if (scanned_args < 2 || width < 0 || height < 0) {
 		fprintf(stderr, "%s: bad convert dimensions - '%s'\n", __FUNCTION__, stdout_data.data());
 		_err_str = "ImageMagick 'convert' failed";
-		return false;
+		return ImageOpResult::FAILED;
 	}
 	const unsigned char bytes_per_pixel = 3; // only 24 bit RGB for now
 	const size_t expected_stdout_size = size_t(width) * height * bytes_per_pixel + print_end + 1;
@@ -126,7 +130,7 @@ bool ImageView::ReadImage()
 		fprintf(stderr, "%s: truncated output data - %lu < %lu\n", __FUNCTION__,
 			(unsigned long)stdout_data.size(), (unsigned long)expected_stdout_size);
 		_err_str = "ImageMagick 'convert' failed";
-		return false;
+		return ImageOpResult::FAILED;
 	}
 	if (stdout_data.size() > expected_stdout_size) {
 		fprintf(stderr, "%s: excessive output data - %lu > %lu\n", __FUNCTION__,
@@ -146,7 +150,7 @@ bool ImageView::ReadImage()
 	msec = GetProcessUptimeMSec() - msec;
 	fprintf(stderr, "%s: loaded image of %d x %d orientation=%d in %u msec\n",
 		__FUNCTION__, width, height, orientation, (unsigned int)msec);
-	return true;
+	return ImageOpResult::OK;
 }
 
 void ImageView::ApplyEXIFOrientation(int orientation)
@@ -285,7 +289,7 @@ uint16_t ImageView::EnsureTransformed()
 	return out;
 }
 
-bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
+ImageOpResult ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 {
 	// using WP_IMG_ATTACH_BOTTOM if WP_IMGCAP_ATTACH available for
 	// incremental image display and quick cancellation on slow connections
@@ -306,8 +310,7 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 	for (int sent_h = 0; sent_h < img.Height(); ) {
 		if ((_cancel && *_cancel) || (!_cancel && CheckForEscAndPurgeAccumulatedInputEvents())) {
 			fprintf(stderr, "%s: cancelled at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)img.Height());
-			_err_str = "manually cancelled";
-			return false;
+			return ImageOpResult::CANCELLED;
 		}
 		auto set_h = img.Height() - sent_h;
 		if (set_h > chunk_h + chunk_h / 4) {
@@ -318,7 +321,7 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 				area, img.Width(), set_h, img.Ptr(0, sent_h))) {
 			fprintf(stderr, "%s: error at %d of %d\n", __FUNCTION__, sent_h, img.Height());
 			_err_str = "failed to send image to terminal";
-			return false;
+			return ImageOpResult::FAILED;
 		}
 //		usleep(set_h * viewport_w * 8); // uncomment to simulate some slowness
 		sent_h+= set_h;
@@ -337,10 +340,10 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 			s_avg_speed = speed;
 		}
 	}
-	return true;
+	return ImageOpResult::OK;
 }
 
-bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h)
+ImageOpResult ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h)
 {
 	fprintf(stderr, "ImageView: sending viewport at [%d %d %d %d]\n",
 		src_left, src_top, src_left + viewport_w, src_top + viewport_h);
@@ -408,7 +411,7 @@ static int ShiftPercentsToPixels(int &percents, int width, int limit)
 }
 
 
-bool ImageView::RenderImage()
+ImageOpResult ImageView::RenderImage()
 {
 	fprintf(stderr, "%s: pos=%dx%d size=%dx%d dx=%d dy=%d scale=%f rotate=%d mirror=%c%c '%s'\n",
 		__FUNCTION__, _pos.X, _pos.Y, _size.X, _size.Y, _dx, _dy, _scale, _rotate,
@@ -417,17 +420,17 @@ bool ImageView::RenderImage()
 	if (_render_file.empty()) {
 		_err_str = "bad file";
 		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-		return false;
+		return ImageOpResult::FAILED;
 	}
 
 	if (_pos.X < 0 || _pos.Y < 0 || _size.X <= 0 || _size.Y <= 0) {
 		_err_str = "bad grid";
 		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-		return false;
+		return ImageOpResult::FAILED;
 	}
 
 	if (!RefreshWGI()) {
-		return false;
+		return ImageOpResult::FAILED;
 	}
 
 	int canvas_w = int(_size.X) * _wgi.PixPerCell.X;
@@ -467,7 +470,7 @@ bool ImageView::RenderImage()
 		src_top+= ShiftPercentsToPixels(_dy, _ready_image.Height(), (_ready_image.Height() - viewport_h) / 2);
 	}
 
-	bool out = true;
+	ImageOpResult out = ImageOpResult::OK;
 	if (!scaled && _prev_left == src_left && _prev_top == src_top          // if image wasnt rescaled and
 			&& _dx == 0 && _dy == 0 && tformed != 0                        // centered but was mirrored or
 			&& ((tformed & WP_IMGTF_MASK_ROTATE) == WP_IMGTF_ROTATE0 ||    // rotated and if rotated it
@@ -476,7 +479,7 @@ bool ImageView::RenderImage()
 			&& (_wgi.Caps & WP_IMGCAP_ROTMIR) != 0) {                      // and backend supports transforms:
 		// transform image remotely without any bitmap transfer
 		fprintf(stderr, "ImageView: transform remote image (0x%x)\n", tformed);
-		out = WINPORT(TransformConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, tformed) != FALSE;
+		out = WINPORT(TransformConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, tformed) != FALSE ? ImageOpResult::OK : ImageOpResult::FAILED;
 
 	} else if (!scaled && tformed == 0                 // if image only shifted
 			&& abs(_prev_left - src_left) < viewport_w // and shifted-in area is
@@ -484,23 +487,25 @@ bool ImageView::RenderImage()
 			&& (_wgi.Caps & WP_IMGCAP_ATTACH) != 0     // and if backend supports
 			&& (_wgi.Caps & WP_IMGCAP_SCROLL) != 0) {  // remote scrolling:
 		if (_prev_left != src_left) { // scroll horizontally with sending only added left/right part
-			out = SendScrollAttachH(&area, src_left, _prev_top, viewport_w, viewport_h, _prev_left - src_left);
+			if (!SendScrollAttachH(&area, src_left, _prev_top, viewport_w, viewport_h, _prev_left - src_left))
+				out = ImageOpResult::FAILED;
 		}
 		if (_prev_top != src_top) {   // scroll vertically with sending only added top/bottom part
-			out = SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top);
+			if (!SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top))
+				out = ImageOpResult::FAILED;
 		}
 
 	} else if (scaled || tformed != 0 || _prev_left != src_left || _prev_top != src_top) {
 		// otherwise send all visible image area, if it was changed anyhow
 		out = SendWholeViewport(&area, src_left, src_top, viewport_w, viewport_h);
 	}
-	if (!out) {
+	if (out != ImageOpResult::OK) {
 		fprintf(stderr, "ImageView: request failed\n");
-		return false;
+		return out;
 	}
 	_prev_left = src_left;
 	_prev_top = src_top;
-	return true;
+	return ImageOpResult::OK;
 }
 
 void ImageView::DenoteState(const char *stage)
@@ -594,7 +599,7 @@ std::unordered_set<std::string> ImageView::GetSelection() const
 	return out;
 }
 
-bool ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
+ImageOpResult ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
 {
 	_cancel = cancel;
 	_pos.X = rc.Left;
@@ -608,19 +613,22 @@ bool ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
 	JustReset();
 
 	_err_str.clear();
-	if (!PrepareImage() || !RenderImage()) {
-		return false;
+
+	if (auto result = PrepareImage(); result != ImageOpResult::OK) {
+		return result;
+	}
+	if (auto result = RenderImage(); result != ImageOpResult::OK) {
+		return result;
 	}
 	DenoteState();
-
-	return true;
+	return ImageOpResult::OK;
 }
 
 void ImageView::Home()
 {
 	_cur_file = _initial_file;
 	JustReset();
-	if (PrepareImage() && RenderImage()) {
+	if (PrepareImage() == ImageOpResult::OK && RenderImage() == ImageOpResult::OK) {
 		DenoteState();
 	}
 }
@@ -633,7 +641,7 @@ bool ImageView::Iterate(bool forward)
 			return false; // bail out on logic error or infinite loop
 		}
 		JustReset();
-		if (PrepareImage() && RenderImage()) {
+		if (PrepareImage() == ImageOpResult::OK && RenderImage() == ImageOpResult::OK) {
 			DenoteState();
 			return true;
 		}
@@ -678,7 +686,7 @@ void ImageView::Scale(int change)
 	fprintf(stderr, "Scale: %f -> %f\n", _scale, new_scale);
 	if (_scale != new_scale) {
 		_scale = new_scale;
-		RenderImage();
+		(void)RenderImage();
 		DenoteState();
 	}
 }
@@ -686,7 +694,7 @@ void ImageView::Scale(int change)
 void ImageView::Rotate(int change)
 {
 	_rotate+= (change > 0) ? 1 : -1;
-	RenderImage();
+	(void)RenderImage();
 	DenoteState();
 }
 
@@ -703,7 +711,7 @@ void ImageView::Shift(int horizontal, int vertical)
 		if (_dy < -100) _dy = -100;
 	}
 	if (horizontal != 0 || vertical != 0) {
-		RenderImage();
+		(void)RenderImage();
 		DenoteState();
 	}
 }
@@ -723,21 +731,21 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 void ImageView::MirrorH()
 {
 	_mirror_h = !_mirror_h;
-	RenderImage();
+	(void)RenderImage();
 	DenoteState();
 }
 
 void ImageView::MirrorV()
 {
 	_mirror_v = !_mirror_v;
-	RenderImage();
+	(void)RenderImage();
 	DenoteState();
 }
 
 void ImageView::Reset(bool keep_rotmir)
 {
 	JustReset(keep_rotmir);
-	RenderImage();
+	(void)RenderImage();
 	DenoteState();
 }
 
@@ -797,20 +805,228 @@ void ImageView::RunProcessingCommand()
 		memcpy(image_data.data(), _orig_image.Ptr(0, 0), image_data.size());
 		cmd_exec.Stdin(image_data);
 		if (cmd_exec.Run(_render_file, _file_size_str, "", "Running custom command")) {
-			image_data.clear();
-			cmd_exec.FetchStdout(image_data);
-			if (_orig_image.Size() == image_data.size()) {
-				fprintf(stderr, "%s: image data looks OK\n", __FUNCTION__);
-				memcpy(_orig_image.Ptr(0, 0), image_data.data(), image_data.size());
+			if (cmd_exec.ExitCode() != 0) {
+				ShowError({g_settings.Msg(M_CMD_FAILED)});
 			} else {
-				fprintf(stderr, "%s: image data size changed - %lu -> %lu\n",
-					__FUNCTION__, (unsigned long)_orig_image.Size(), (unsigned long)image_data.size());
-				// TODO: msgbox
+				image_data.clear();
+				cmd_exec.FetchStdout(image_data);
+				if (_orig_image.Size() == image_data.size()) {
+					fprintf(stderr, "%s: image data looks OK\n", __FUNCTION__);
+					memcpy(_orig_image.Ptr(0, 0), image_data.data(), image_data.size());
+				} else {
+					fprintf(stderr, "%s: image data size changed - %lu -> %lu\n",
+						__FUNCTION__, (unsigned long)_orig_image.Size(), (unsigned long)image_data.size());
+					ShowError({
+						g_settings.Msg(M_CMD_OUTPUT_SIZE_MISMATCH),
+						std::to_wstring(_orig_image.Size()) + g_settings.Msg(M_BYTES_EXPECTED_GOT)
+							+ std::to_wstring(image_data.size())
+					});
+				}
 			}
-		} else {
-			fprintf(stderr, "%s: command failed\n", __FUNCTION__);
-			// TODO: msgbox
-		}
+		} // else: user cancelled - do nothing
 	}
 	ForceShow();
+}
+
+namespace
+{
+	struct AutoShowGuard
+	{
+		ImageView* viewer;
+		explicit AutoShowGuard(ImageView* v) : viewer(v) {}
+		AutoShowGuard(const AutoShowGuard&) = delete;
+		AutoShowGuard& operator=(const AutoShowGuard&) = delete;
+		~AutoShowGuard()
+		{
+			if (viewer) {
+				viewer->ForceShow();
+			}
+		}
+		void dismiss() {
+			viewer = nullptr;
+		}
+	};
+
+	enum ExifDlgItem
+	{
+		EXIF_DOUBLEBOX_IDX,
+		EXIF_MEMO_IDX,
+	};
+
+	void SetExifDlgItemPositions(HANDLE hDlg, int dlg_width, int dlg_height)
+	{
+		SMALL_RECT doublebox_rect  = {0, 0, (SHORT)(dlg_width - 1), (SHORT)(dlg_height - 1)};
+		SMALL_RECT memo_rect       = {1, 1, (SHORT)(dlg_width - 2), (SHORT)(dlg_height - 2)};
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_DOUBLEBOX_IDX, reinterpret_cast<LONG_PTR>(&doublebox_rect));
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_MEMO_IDX,      reinterpret_cast<LONG_PTR>(&memo_rect));
+	}
+
+	LONG_PTR WINAPI ExifDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+	{
+		switch (Msg) {
+			case DN_INITDIALOG: {
+				SMALL_RECT dlg_rect{};
+				if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, reinterpret_cast<LONG_PTR>(&dlg_rect))) {
+					SetExifDlgItemPositions(hDlg, dlg_rect.Right - dlg_rect.Left + 1, dlg_rect.Bottom - dlg_rect.Top + 1);
+				}
+				return TRUE;
+			}
+			case DN_DRAGGED: {
+				return FALSE;
+			}
+			case DN_RESIZECONSOLE: {
+				const COORD *console_size = reinterpret_cast<const COORD *>(Param2);
+				g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, reinterpret_cast<LONG_PTR>(console_size));
+				SetExifDlgItemPositions(hDlg, console_size->X, console_size->Y);
+				if (bool *resized = reinterpret_cast<bool *>(g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0))) {
+					*resized = true;
+				}
+				return TRUE;
+			}
+			default: {
+				return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
+			}
+		}
+	}
+}
+
+bool ImageView::ShowExifInfo()
+{
+	AutoShowGuard guard(this);
+	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+	ToolExec exiftool(_cancel);
+	exiftool.AddArguments("exiftool", "-charset", "UTF8", "-g", "--", CurFile());
+	if (!exiftool.Run(CurFile(), _file_size_str, "exiftool", "Reading EXIF metadata...")) {
+		return false;
+	}
+	if (exiftool.ExecError() != 0) {
+		return false;
+	}
+
+	const std::wstring exiftool_output = StrMB2Wide(exiftool.FetchStdout());
+	if (exiftool_output.empty()) {
+		ShowError({g_settings.Msg(M_NO_EXIF_OR_UNSUPPORTED_FORMAT)});
+		return false;
+	}
+
+	SMALL_RECT far_rect{};
+	if (!g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &far_rect, 0)) {
+		return false;
+	}
+
+	std::wstring dlg_title = g_settings.Msg(M_TITLE);
+	dlg_title += g_settings.Msg(M_MEDIA_METADATA);
+
+	FarDialogItem items[2]{};
+	items[EXIF_DOUBLEBOX_IDX].Type    = DI_DOUBLEBOX;
+	items[EXIF_DOUBLEBOX_IDX].PtrData = dlg_title.c_str();
+	items[EXIF_MEMO_IDX].Type         = DI_MEMOEDIT;
+	items[EXIF_MEMO_IDX].Flags        = DIF_READONLY | DIF_FOCUS;
+	items[EXIF_MEMO_IDX].PtrData      = exiftool_output.c_str();
+
+	bool resized = false;
+	HANDLE hdlg = g_far.DialogInit(g_far.ModuleNumber, far_rect.Left, far_rect.Top, far_rect.Right, far_rect.Bottom, nullptr, items, ARRAYSIZE(items), 0, 0, ExifDlgProc, reinterpret_cast<LONG_PTR>(&resized));
+	if (hdlg != INVALID_HANDLE_VALUE) {
+		g_far.DialogRun(hdlg);
+		g_far.DialogFree(hdlg);
+	}
+	if (resized) {
+		guard.dismiss();
+	}
+	return resized;
+}
+
+void ImageView::ShowGpsInfo()
+{
+	AutoShowGuard guard(this);
+
+	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+	ToolExec exiftool(_cancel);
+	exiftool.AddArguments("exiftool", "-n", "-T", "-GPSLatitude", "-GPSLongitude", "--", CurFile());
+
+	if (!exiftool.Run(CurFile(), _file_size_str, "exiftool", "Reading GPS metadata...")) {
+		return;
+	}
+	if (exiftool.ExecError() != 0) {
+		return;
+	}
+
+	double latitude = 0.0, longitude = 0.0;
+	std::istringstream stream(exiftool.FetchStdout());
+	stream.imbue(std::locale::classic());
+
+	if (!(stream >> latitude >> longitude)) {
+		ShowError({g_settings.Msg(M_NO_GPS_METADATA_FOUND)});
+		return;
+	}
+
+	auto format_coords = [](double val) {
+		std::ostringstream oss;
+		oss.imbue(std::locale::classic());
+		oss << std::fixed << std::setprecision(6) << val;
+		return oss.str();
+	};
+
+	const std::string lat     = format_coords(latitude);
+	const std::string lon     = format_coords(longitude);
+	const std::string abs_lat = format_coords(std::abs(latitude));
+	const std::string abs_lon = format_coords(std::abs(longitude));
+	const std::string lat_dir = (latitude >= 0) ? "N" : "S";
+	const std::string lon_dir = (longitude >= 0) ? "E" : "W";
+
+	struct MapProvider
+	{
+		std::wstring name;
+		std::string url_template;
+	};
+
+	static const std::vector<MapProvider> providers = {
+		{ L"2gis",          "https://2gis.ru/geo/{lon},{lat}" },
+		{ L"Apple Maps",    "https://maps.apple.com/?q=loc:{lat},{lon}"},
+		{ L"Bing Maps",     "https://www.bing.com/maps?where1={lat},{lon}&lvl=15" },
+		{ L"GeoHack",       "https://geohack.toolforge.org/geohack.php?params={abs_lat}_{lat_dir}_{abs_lon}_{lon_dir}_" },
+		{ L"Google Maps",   "https://www.google.com/maps/search/?api=1&query={lat},{lon}"},
+		{ L"OpenStreetMap", "https://www.openstreetmap.org/?mlat={lat}&mlon={lon}"},
+		{ L"Organic Maps",  "https://omaps.app/{lat},{lon}"},
+		{ L"Wikimapia",     "https://wikimapia.org/#lat={lat}&lon={lon}&z=11&m=w"},
+		{ L"Yandex Maps",   "https://yandex.com/maps?whatshere%5Bpoint%5D={lon},{lat}"},
+	};
+
+	std::vector<FarMenuItem> menu_items(providers.size());
+	for (size_t i = 0; i < providers.size(); ++i) {
+		menu_items[i].Text = providers[i].name.c_str();
+	}
+	static int s_last_provider = 0;
+	menu_items[s_last_provider].Selected = 1;
+
+	const std::wstring ws_coords = StrMB2Wide(abs_lat) + L"\u00B0" + StrMB2Wide(lat_dir) + L", "
+			+ StrMB2Wide(abs_lon) + L"\u00B0" + StrMB2Wide(lon_dir);
+	wchar_t title_buf[256];
+	swprintf(title_buf, ARRAYSIZE(title_buf), g_settings.Msg(M_OPEN_GPS_COORDINATES_IN), ws_coords.c_str());
+
+	const int choice = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, title_buf,
+								  nullptr, nullptr, nullptr, nullptr, menu_items.data(), menu_items.size());
+
+	if (choice >= 0 && choice < static_cast<int>(providers.size())) {
+		s_last_provider = choice;
+		std::string url = providers[choice].url_template;
+
+		const std::pair<const char*, const std::string&> replacements[] = {
+					{"{lat}", lat},
+					{"{lon}", lon},
+					{"{abs_lat}", abs_lat},
+					{"{abs_lon}", abs_lon},
+					{"{lat_dir}", lat_dir},
+					{"{lon_dir}", lon_dir}
+		};
+
+		for (const auto& [gps_tag, gps_val] : replacements) {
+			while (CmdFindAndReplace(url, gps_tag, gps_val)) {}
+		}
+
+		const std::wstring ws_url = L"'" + StrMB2Wide(url) + L"'";
+		g_fsf.Execute(ws_url.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
+	}
 }

@@ -1,8 +1,9 @@
 #pragma once
+#include "utils.h"
+#include "WinCompat.h"
+#include "ExecAsync.h"
 #include <atomic>
 #include <string>
-#include "utils.h"
-#include "ExecAsync.h"
 
 class ToolExec : public ExecAsync
 {
@@ -15,7 +16,7 @@ public:
 	ToolExec(volatile bool *cancel);
 	void ErrorDialog(const char *pkg, int err);
 	void InfoDialog(const char *pkg);
-	void ProgressDialog(const std::string &file, const std::string &size_str, const char *pkg, const std::string &info);
+	bool ProgressDialog(const std::string &file, const std::string &size_str, const char *pkg, const std::string &info);
 	static VOID sCallback(VOID *Context);
 	bool FN_PRINTF_ARGS(5) Run(const std::string &file, const std::string &size_str, const char *pkg, const char *info_fmt, ...);
 	virtual void *ThreadProc();

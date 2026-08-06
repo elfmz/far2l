@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "ImageView.h"
+#include "lng.h"
 #include "Settings.h"
 
 class ImageViewAtFull : public ImageView
@@ -66,13 +67,14 @@ public:
 	bool may_select{false};
 	bool full_size{false};
 	bool _first_draw{true};
+	using ImageView::CurFile;
 
 	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 		: ImageView(initial_file, all_files)
 	{
 	}
 
-	bool Setup(SMALL_RECT &rc, HANDLE dlg)
+	ImageOpResult Setup(SMALL_RECT &rc, HANDLE dlg)
 	{
 		_dlg = dlg;
 		_first_draw = true;
@@ -152,10 +154,12 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			if (!iv->full_size) {
 				RectReduce(rc);
 			}
-			if (iv->Setup(rc, hDlg)) {
+			const auto result = iv->Setup(rc, hDlg);
+			if (result == ImageOpResult::OK) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
-				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
+				const auto exit_code = (result == ImageOpResult::CANCELLED) ? EXITED_DUE_CANCELLED : EXITED_DUE_ERROR;
+				g_far.SendDlgMessage(hDlg, DM_CLOSE, exit_code, 0);
 			}
 		}
 		return TRUE;
@@ -231,6 +235,17 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				case KEY_F4:
 					iv->RunProcessingCommand();
 					break;
+				case 'i': case 'I': case KEY_F3:
+					if (iv->ShowExifInfo()) {
+						g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
+					}
+					break;
+				case 'g': case 'G': case KEY_ALTF8:
+					iv->ShowGpsInfo();
+					break;
+				case 't': case 'T': case KEY_CTRLF10:
+					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_GOTO_CURFILE, 0);
+					break;
 			}
 		}
 		return TRUE;
@@ -248,7 +263,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			// over the now-definitely-drawn background, and it remains visible.
 			//
 			// See #3201 and #3209 for details.
-			
+
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			if (iv && iv->_first_draw) {
 				iv->_first_draw = false;
@@ -268,7 +283,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error)
+static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error, std::string *goto_file = nullptr)
 {
 	ImageViewAtFull iv(initial_file, all_files);
 	if (selection) {
@@ -316,31 +331,31 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 		if (exit_code != EXITED_DUE_RESIZE) {
 			if (exit_code == EXITED_DUE_ENTER) {
 				if (selection) {
-					*selection = std::move(iv.GetSelection());
+					*selection = iv.GetSelection();
+				}
+			} else if (exit_code == EXITED_DUE_GOTO_CURFILE) {
+				if (goto_file) {
+					*goto_file = iv.CurFile();
 				}
 			} else if (exit_code == EXITED_DUE_ERROR && !silent_exit_on_error) {
 				std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
 				std::wstring werr_str = StrMB2Wide(iv.ErrorString());
-				const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE),
-					L"Failed to load image file:",
-					ws_cur_file.c_str(),
-					werr_str.c_str(),
-					L"Ok"
-				};
-				g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+				ShowError({g_settings.Msg(M_FAILED_TO_LOAD_IMAGE), ws_cur_file, werr_str});
+			} else if (exit_code == EXITED_DUE_CANCELLED) {
+				// user cancelled loading - do nothing
 			}
 			return exit_code;
 		}
 	}
 }
 
-EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error)
+EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file)
 {
-	return ShowImageAtFullInternal(initial_file, all_files, &selection, silent_exit_on_error);
+	return ShowImageAtFullInternal(initial_file, all_files, &selection, silent_exit_on_error, goto_file);
 }
 
-EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error)
+EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error, std::string *goto_file)
 {
-	std::vector<std::pair<std::string, bool> > all_files{{file, false}};
-	return ShowImageAtFullInternal(0, all_files, nullptr, silent_exit_on_error);
+	std::vector<std::pair<std::string, bool>> all_files{{file, false}};
+	return ShowImageAtFullInternal(0, all_files, nullptr, silent_exit_on_error, goto_file);
 }

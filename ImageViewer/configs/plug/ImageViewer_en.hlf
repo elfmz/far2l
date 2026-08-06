@@ -3,7 +3,7 @@
 
 @Contents
 $^#ImageViewer Plugin#
-$^#Copyright (C) 2025 Far People#
+$^#Copyright (C) 2025-2026 Far People#
 $^#Using the Plugin#
 
   ~Using the Plugin~@Contents@
@@ -20,6 +20,7 @@ $^#Using the Plugin#
   Required external packages:
    - #ImageMagick# (#convert# command) - for image processing and conversion;
    - #ffmpeg# (#ffmpeg# and #ffprobe# commands) - for creating video frame previews;
+   - #exiftool# - for metadata and GPS queries;
    - any other utilities used in your ~custom commands~@ExtraCommands@.
 
 
@@ -44,6 +45,8 @@ the following shortcuts are available.
    Exit and save selection
      changes to the file panel                #Enter#
    Exit without changing selection            #Esc# or #F10#
+   Exit and move the panel cursor             #Ctrl+F10# or #T#
+     to the currently viewed file
 
   #File Selection Management#
    (selected files are marked with an asterisk #*# in the window title)
@@ -87,6 +90,10 @@ the following shortcuts are available.
    Toggle Windowed / Fullscreen               #F5# or #F#
     (switching also performs #=#)
    ~Plugin Configuration~@settings@                       #F9#
+   Show media metadata (exiftool)             #F3# or #I#
+   Choose a map service and open              #Alt+F8# or #G#
+    the GPS location from the file’s
+    EXIF metadata in a browser
 
 
  #HEADER INFORMATION#
@@ -111,7 +118,7 @@ the following shortcuts are available.
 
 @settings
 $^#ImageViewer Plugin#
-$^#Copyright (C) 2025 Far People#
+$^#Copyright (C) 2025-2026 Far People#
 $^#Plugin Configuration#
 
   ~Plugin Configuration~@settings@
@@ -122,14 +129,14 @@ $^#Plugin Configuration#
 
   Here you can define file masks for content treated as media by the plugin, enable image auto-rotation based on camera metadata,
 and set the plugin as the default handler for standard shortcuts: #Enter#, #Ctrl+PgDn#, #F3# (replacing the ~internal viewer~@:Viewer@),
-and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel). 
+and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel).
   The ~Extra commands~@ExtraCommands@ button opens the processing scripts editor (also accessible via #F4# in viewer mode).
 
   Configuration is stored in: #~~/.config/far2l/plugins/ImageViewer/config.ini#
 
 @ExtraCommands
 $^#ImageViewer Plugin#
-$^#Copyright (C) 2025 Far People#
+$^#Copyright (C) 2025-2026 Far People#
 $^#Extra Commands#
 
   ~Extra Commands~@ExtraCommands@
@@ -148,6 +155,7 @@ $^#Extra Commands#
    Edit existing command                      #F4#
    Add new command                            #Ins#
    Delete command                             #Del#
+   Move command up/down                       #Ctrl+Up/Down#
 
   When editing a command, provide the following:
    1. #Command Name# - the label displayed in the menu;

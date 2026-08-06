@@ -58,6 +58,7 @@ enum
 #endif
 class ThinScreenObject
 {
+	friend class LockThinObject;
 protected:
 	ThinScreenObject *pOwner{nullptr};
 
@@ -116,7 +117,7 @@ class LockThinObject
 public:
 	LockThinObject(ThinScreenObject &obj) : _obj(obj)
 	{
-		if (!_obj.Locked()) {
+		if (!_obj.Flags.Check(FSCROBJ_LOCKED)) {
 			_obj.Lock();
 			_locked = true;
 		}

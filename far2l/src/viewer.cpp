@@ -677,7 +677,7 @@ void Viewer::ShowHex()
 	int X, Y, TextPos;
 	int SelStart, SelEnd;
 	bool bSelStartFound = false, bSelEndFound = false;
-	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth) ? Max(80 - ObjWidth, 0) : LeftPos);
+	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth()) ? Max(80 - ObjWidth(), 0) : LeftPos);
 
 	for (EndFile = 0, Y = Y1; Y <= Y2; Y++) {
 		bSelStartFound = false;
@@ -687,7 +687,7 @@ void Viewer::ShowHex()
 		GotoXY(X1, Y);
 
 		if (EndFile) {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 			continue;
 		}
 
@@ -858,10 +858,10 @@ void Viewer::ShowHex()
 #endif
 
 		if (StrLength(OutStr) > HexLeftPos) {
-			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth)
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth())
 				<< OutStr + static_cast<size_t>(HexLeftPos);
 		} else {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 		}
 
 		if (bSelStartFound && bSelEndFound) {
@@ -2275,7 +2275,7 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseY == (Y1 - 1) && (HostFileViewer && HostFileViewer->IsTitleBarVisible()))		// Status line
 	{
 		int XCodePage, XPos, NameLength;
-		NameLength = ObjWidth - 40;
+		NameLength = ObjWidth() - 40;
 
 		if (Opt.ViewerEditorClock && HostFileViewer && HostFileViewer->IsFullScreen())
 			NameLength-= 6;
@@ -2817,8 +2817,8 @@ void Viewer::Search(int Next, int FirstChar)
 		SetCursorType(FALSE, 0);
 		strMsgStr = strSearchStr;
 
-		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth))
-			TruncStrFromEnd(strMsgStr, ObjWidth - 18);
+		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth()))
+			TruncStrFromEnd(strMsgStr, ObjWidth() - 18);
 
 		InsertQuote(strMsgStr);
 
@@ -3731,8 +3731,8 @@ int Viewer::ViewerControl(int Command, void *Param)
 				memset(&Info->ViewerID, 0, Info->StructSize - sizeof(Info->StructSize));
 				Info->ViewerID = ViewerID;
 				Info->FileName = strFullFileName;
-				Info->WindowSizeX = ObjWidth;
-				Info->WindowSizeY = Y2 - Y1 + 1;
+				Info->WindowSizeX = ObjWidth();
+				Info->WindowSizeY = ObjHeight();
 				Info->FilePos = FilePos;
 				Info->FileSize = FileSize;
 				Info->CurMode = VM;

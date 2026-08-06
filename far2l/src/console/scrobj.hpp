@@ -48,19 +48,25 @@ enum
 	FSCROBJ_ENABLERESTORESCREEN = 0x00000002,
 	FSCROBJ_SETPOSITIONDONE     = 0x00000004,
 	FSCROBJ_ISREDRAWING         = 0x00000008,		// идет процесс Show?
+	FSCROBJ_LOCKED              = 0x00000010,
 };
 
+# if defined(__LP64__) || defined(_LP64)
+#pragma pack(push,16)
+#else
+# pragma pack(push,8)
+#endif
 class ThinScreenObject
 {
 protected:
-	ThinScreenObject *pOwner;
+	ThinScreenObject *pOwner{nullptr};
 
 protected:
 	BitFlags Flags;
-	int X1, Y1, X2, Y2;
-	int ObjWidth, ObjHeight;
-
-	int nLockCount;
+	// this 24 bits per coordinate allows to work in terminals up to 8388607 x 8388607 cells
+	// until such terminals become avaiable, let save some bytes on sizeof(ThinScreenObject)
+	// more exactly 8 bytes saved: sizeof(ThinScreenObject)=32 and if remove :24 its =40
+	int X1:24, Y1:24, X2:24, Y2:24;
 
 	virtual void DisplayObject(){};
 
@@ -73,19 +79,23 @@ public:
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent) { return 0; };
 
 	virtual void Hide();
-	virtual void Hide0();	// 15.07.2000 tran - dirty hack :(
+	virtual void Hide0();	// 15.07.2000 tran - dirty hack :(  // 0 mean - Don't purge saved screen
 	virtual void Show();
 	virtual void ShowConsoleTitle(){};
-	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
-	virtual void GetPosition(int &X1, int &Y1, int &X2, int &Y2);
+
+	virtual void SetPosition(int newX1, int newY1, int newX2, int newY2);
+	virtual void GetPosition(int &outX1, int &outY1, int &outX2, int &outY2) const;
+	virtual int ObjWidth() const;
+	virtual int ObjHeight() const;
+
 	virtual void SetScreenPosition();
 	virtual void ResizeConsole(){};
 
 	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0) { return 0; };
 
-	void Lock();
-	void Unlock();
-	bool Locked();
+	bool Locked() const;
+	virtual void Lock();
+	virtual void Unlock();
 
 	void SetOwner(ThinScreenObject *pOwner);
 	ThinScreenObject *GetOwner();
@@ -94,11 +104,39 @@ public:
 	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
 	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
 };
+#pragma pack(pop) 
+
+/// temporary locks given thin object if it wasnt locked
+/// intended for ThinScreenObject-s as they dont have lock counter, but only one bit
+class LockThinObject
+{
+	ThinScreenObject &_obj;
+	bool _locked{false};
+
+public:
+	LockThinObject(ThinScreenObject &obj) : _obj(obj)
+	{
+		if (!_obj.Locked()) {
+			_obj.Lock();
+			_locked = true;
+		}
+	}
+	~LockThinObject() { Unlock(); }
+
+	void Unlock()
+	{
+		if (_locked) {
+			_obj.Unlock();
+			_locked = false;
+		}
+	}
+};
 
 class ScreenObject : public ThinScreenObject
 {
 protected:
 	SaveScreen *ShadowSaveScr = nullptr;
+	int nLockCount{0};
 
 public:
 	SaveScreen *SaveScr = nullptr;
@@ -108,8 +146,32 @@ public:
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 	virtual void Hide();
 	virtual void Show();
+	void Lock();
+	void Unlock();
 
 	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
 	void Shadow(bool Full = false);
 };
 
+/// temporary locks given object that have lock counter
+class LockObject
+{
+	ScreenObject &_obj;
+	bool _locked;
+
+public:
+	LockObject(ScreenObject &obj) : _obj(obj), _locked(true)
+	{
+		_obj.Lock();
+	}
+
+	~LockObject() { Unlock(); }
+
+	void Unlock()
+	{
+		if (_locked) {
+			_obj.Unlock();
+			_locked = false;
+		}
+	}
+};

@@ -477,7 +477,7 @@ void Edit::FastShow()
 	const wchar_t *Mask = GetInputMask();
 	uint64_t Color, SelColor, ColorUnChanged;
 	GetObjectColors(Color, SelColor, ColorUnChanged);
-	int EditLength = ObjWidth;
+	int EditLength = ObjWidth();
 
 	if (!Flags.Check(FEDITLINE_EDITBEYONDEND) && CurPos > Str.Size() && Str.Size() >= 0)
 		CurPos = Str.Size();
@@ -1131,18 +1131,16 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTHOME:
 		case KEY_SHIFTNUMPAD7: {
-			Lock();
-
+			LockThinObject l(*this);
 			while (CurPos > 0)
 				RecurseProcessKey(KEY_SHIFTLEFT);
-
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
 		case KEY_SHIFTEND:
 		case KEY_SHIFTNUMPAD1: {
-			Lock();
+			LockThinObject l(*this);
 			int Len = (Mask && *Mask) ? CalcRTrimmedStrSize() : Str.Size();
 
 			int LastCurPos = CurPos;
@@ -1156,7 +1154,7 @@ int Edit::ProcessKey(FarKey Key)
 				LastCurPos = CurPos;
 			}
 
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
@@ -1198,8 +1196,7 @@ int Edit::ProcessKey(FarKey Key)
 				CurPos = Str.Size();
 			}
 
-			Lock();
-
+			LockThinObject l(*this);
 			PauseEditListener pel(*this);
 
 			// BUGBUG
@@ -1218,21 +1215,21 @@ int Edit::ProcessKey(FarKey Key)
 					break;
 			}
 
-			Unlock();
+			l.Unlock();
 			pel.Resume();
 			Changed(true);
 			Show();
 			return TRUE;
 		}
 		case KEY_CTRLQ: {
-			Lock();
+			LockThinObject l(*this);
 
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)
 					&& (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG)))
 				RecurseProcessKey(KEY_DEL);
 
 			ProcessCtrlQ();
-			Unlock();
+			l.Unlock();
 			Show();
 			return TRUE;
 		}
@@ -1288,7 +1285,7 @@ int Edit::ProcessKey(FarKey Key)
 			if (CurPos >= Str.Size())
 				return FALSE;
 
-			Lock();
+			LockThinObject l(*this);
 			PauseEditListener pel(*this);
 			if (Mask && *Mask) {
 				int MaskLen = StrLength(Mask);
@@ -1322,7 +1319,7 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
-			Unlock();
+			l.Unlock();
 			pel.Resume();
 			Changed(true);
 			Show();
@@ -1441,7 +1438,7 @@ int Edit::ProcessKey(FarKey Key)
 
 			if (GetWordWrap())
 			{
-				RecalculateWordWrap(ObjWidth, GetTabSize());
+				RecalculateWordWrap(ObjWidth(), GetTabSize());
 			}
 			Changed(true);
 			Show();
@@ -2044,7 +2041,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	}
 
 	if (GetWordWrap()) {
-		int Width = ObjWidth;
+		int Width = ObjWidth();
 		if (Flags.Check(FEDITLINE_EDITORMODE)) { // Corresponds to editor.cpp's EdOpt.ShowScrollBar
 			// This logic is a bit of a guess, assuming FEDITLINE_EDITORMODE is a good proxy.
 			// In editor.cpp, XX2 is calculated based on NumLastLine > Y2-Y1+1. We don't have that here.
@@ -2230,7 +2227,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		}
 
 		if (GetWordWrap()) {
-			RecalculateWordWrap(ObjWidth, GetTabSize());
+			RecalculateWordWrap(ObjWidth(), GetTabSize());
 		}
 
 		CheckForSpecialWidthChars(Str, Length);
@@ -2753,7 +2750,7 @@ void Edit::ApplyColor()
 		TabEditorPos = Start;
 
 		// Пропускаем элементы раскраски у которых начальная позиция за экраном
-		if (Start > ObjWidth - 1)
+		if (Start > ObjWidth() - 1)
 			continue;
 
 		// Корректировка относительно табов (отключается, если присутвует флаг ECF_TAB1)
@@ -2815,8 +2812,8 @@ void Edit::ApplyColor()
 		if (Start < 0)
 			Start = 0;
 
-		if (End > ObjWidth - 1)
-			End = ObjWidth - 1;
+		if (End > ObjWidth() - 1)
+			End = ObjWidth() - 1;
 
 		// Устанавливаем длину раскрашиваемого элемента
 		Length = End - Start + 1;

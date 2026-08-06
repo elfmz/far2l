@@ -624,7 +624,7 @@ int Editor::GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat)
 	wchar_t *PDest = nullptr;
 	SizeDestBuf = 0;	// общий размер = 0
 
-	const wchar_t *SaveStr, *EndSeq;
+	const wchar_t *EndSeq;
 
 	int Length;
 
@@ -634,7 +634,7 @@ int Editor::GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat)
 	DWORD AllLength = 0;
 
 	while (CurPtr) {
-		SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
+		Length = CurPtr->GetStringLength(&EndSeq);
 		AllLength+= Length + StrLength(!TextFormat ? EndSeq : GlobalEOL) + 1;
 		CurPtr = CurPtr->m_next;
 	}
@@ -651,8 +651,8 @@ int Editor::GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat)
 		AllLength = 0;
 
 		while (CurPtr) {
-			SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
-			wmemcpy(PDest, SaveStr, Length);
+			Length = CurPtr->GetStringLength(&EndSeq);
+			CurPtr->GetString(PDest, Length + 1);
 			PDest+= Length;
 
 			size_t LenEndSeq;
@@ -3419,13 +3419,12 @@ case KEY_CTRLNUMPAD3: {
 					bool SpaceAligned = false;
 					while (PrevLine) {
 						if (PrevLine->GetLength()) {
-							int TmpLength;
-							const wchar_t *PrevStr = PrevLine->GetStringAddr(TmpLength);
-							if (PrevStr[0] == ' ') {
+							const wchar_t FirstChar = static_cast<const EcoString &>(PrevLine->Str)[0];
+							if (FirstChar == ' ') {
 								SpaceAligned = true;
 								break;
 							}
-							if (PrevStr[0] == '\t') {
+							if (FirstChar == '\t') {
 								break;
 							}
 						}

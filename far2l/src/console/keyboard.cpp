@@ -74,6 +74,12 @@ int ReturnAltValue = 0;
 bool BracketedPasteMode = false;
 FARString GPastedText;
 
+static void StripPastedBOM()
+{
+	if (!GPastedText.IsEmpty() && GPastedText.At(0) == L'\xFEFF')
+		GPastedText.LShift(1);
+}
+
 /* end Глобальные переменные */
 
 // static SHORT KeyToVKey[MAX_VKEY_CODE];
@@ -652,6 +658,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 					else if (rec->Event.KeyEvent.wVirtualKeyCode == VK_TAB)
 						GPastedText += L'\t';
 				}
+				StripPastedBOM();
 				if (!GPastedText.IsEmpty()) {
 					memset(rec, 0, sizeof(*rec));
 					rec->EventType = NOOP_EVENT; // Fake key event
@@ -847,6 +854,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				}
 			}
 
+			StripPastedBOM();
 			if (!GPastedText.IsEmpty()) {
 				memset(rec, 0, sizeof(*rec));
 				rec->EventType = NOOP_EVENT; // Fake key event

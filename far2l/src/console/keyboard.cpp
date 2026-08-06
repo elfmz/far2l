@@ -847,6 +847,11 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				}
 			}
 
+			// If the paste-end event was never received (timeout/no input),
+			// reset BracketedPasteMode so subsequent key events aren't swallowed.
+			if (BracketedPasteMode)
+				BracketedPasteMode = false;
+
 			if (!GPastedText.IsEmpty()) {
 				memset(rec, 0, sizeof(*rec));
 				rec->EventType = NOOP_EVENT; // Fake key event

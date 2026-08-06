@@ -691,6 +691,20 @@ int FilePanels::ProcessKey(FarKey Key)
 
 			break;
 		}
+		case KEY_ALTDOT: {
+			// bash-like yank-last-arg, but only when command line is not
+			// empty; with empty command line Alt+. keeps its old behavior -
+			// panel fast-find for names starting with dot
+			if (CtrlObject->CmdLine->IsVisible() && CtrlObject->CmdLine->IsNotEmpty()) {
+				CtrlObject->CmdLine->ProcessKey(Key);
+				return TRUE;
+			}
+
+			if (!ActivePanel->ProcessKey(Key))
+				CtrlObject->CmdLine->ProcessKey(Key);
+
+			break;
+		}
 		case KEY_CTRLUP:
 		case KEY_CTRLNUMPAD8: {
 			bool Set = false;

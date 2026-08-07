@@ -38,11 +38,12 @@ std::wstring get_msg(int id)
 unsigned get_optimal_msg_width()
 {
 	SMALL_RECT console_rect;
-	if (adv_control(ACTL_GETFARRECT, 0, &console_rect)) {
+	if (adv_control(ACTL_GETFARRECT, &console_rect, 0)) {
 		unsigned con_width = console_rect.Right - console_rect.Left + 1;
 		if (con_width >= 80)
 			return con_width - 20;
 	}
+
 	return 60;
 }
 
@@ -324,6 +325,7 @@ static PanelItem get_panel_item(HANDLE h_panel, FILE_CONTROL_COMMANDS command, s
 	pi.creation_time = panel_item->FindData.ftCreationTime;
 	pi.last_access_time = panel_item->FindData.ftLastAccessTime;
 	pi.last_write_time = panel_item->FindData.ftLastWriteTime;
+	pi.change_time = panel_item->FindData.ftChangeTime;
 	pi.file_size = panel_item->FindData.nFileSize;
 	pi.pack_size = panel_item->FindData.nPhysicalSize;
 	pi.file_name = panel_item->FindData.lpwszFileName;
@@ -971,6 +973,11 @@ INT_PTR control(HANDLE h_panel, FILE_CONTROL_COMMANDS command, int param1, void 
 INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2)
 {
 	return g_far.AdvControl(g_far.ModuleNumber, command, (void *)(size_t)param1, param2);
+}
+
+INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, void *param1, void *param2)
+{
+	return g_far.AdvControl(g_far.ModuleNumber, command, param1, param2);
 }
 
 //INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2)

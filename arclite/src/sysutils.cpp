@@ -633,6 +633,7 @@ bool File::attributes_ex(const std::wstring &file_path, WIN32_FILE_ATTRIBUTE_DAT
 		ex_attrs->ftCreationTime = ff.ftCreationTime;
 		ex_attrs->ftLastWriteTime = ff.ftLastWriteTime;
 		ex_attrs->ftLastAccessTime = ff.ftLastAccessTime;
+		ex_attrs->ftChangeTime = ff.ftChangeTime;
 		ex_attrs->nFileSize = ff.nFileSize;
 		return true;
 	}

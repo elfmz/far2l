@@ -3457,6 +3457,50 @@ upd:"Always"
 "Завжди"
 "Заўсёды"
 
+ConfigCmdlineAltDotYank
+"Alt+. вставляет аргумент последней команды:"
+"Alt+. inserts last argument of previous command:"
+upd:"Alt+. inserts last argument of previous command:"
+upd:"Alt+. inserts last argument of previous command:"
+upd:"Alt+. inserts last argument of previous command:"
+upd:"Alt+. inserts last argument of previous command:"
+upd:"Alt+. inserts last argument of previous command:"
+"Alt+. вставляє аргумент останньої команди:"
+"Alt+. устаўляе аргумент апошняй каманды:"
+
+ConfigCmdlineAltDotYank_PanelsOff
+"Только при скрытых панелях"
+"Only when panels are hidden"
+upd:"Only when panels are hidden"
+upd:"Only when panels are hidden"
+upd:"Only when panels are hidden"
+upd:"Only when panels are hidden"
+upd:"Only when panels are hidden"
+"Тільки при прихованих панелях"
+"Толькі пры схаваных панэлях"
+
+ConfigCmdlineAltDotYank_NonEmpty
+"При скрытых панелях или непустой строке"
+"When panels are hidden or line is not empty"
+upd:"When panels are hidden or line is not empty"
+upd:"When panels are hidden or line is not empty"
+upd:"When panels are hidden or line is not empty"
+upd:"When panels are hidden or line is not empty"
+upd:"When panels are hidden or line is not empty"
+"При прихованих панелях або непорожньому рядку"
+"Пры схаваных панэлях або непустым радку"
+
+ConfigCmdlineAltDotYank_Always
+"Всегда"
+"Always"
+upd:"Always"
+upd:"Always"
+upd:"Always"
+upd:"Always"
+upd:"Always"
+"Завжди"
+"Заўсёды"
+
 ConfigCmdlineUseShell
 "Использовать &шелл"
 "Use &shell"

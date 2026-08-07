@@ -692,10 +692,23 @@ int FilePanels::ProcessKey(FarKey Key)
 			break;
 		}
 		case KEY_ALTDOT: {
-			// bash-like yank-last-arg, but only when command line is not
-			// empty; with empty command line Alt+. keeps its old behavior -
-			// panel fast-find for names starting with dot
-			if (CtrlObject->CmdLine->IsVisible() && CtrlObject->CmdLine->IsNotEmpty()) {
+			// bash-like yank-last-arg vs panel fast-find for names starting
+			// with dot: the choice is configurable, see
+			// Options -> Command line settings -> Alt+. inserts last argument
+			bool YankLastArg;
+			switch (Opt.CmdLine.AltDotYankLastArg) {
+				case 2:		// always
+					YankLastArg = true;
+					break;
+				case 1:		// panels are hidden or command line is not empty
+					YankLastArg = (!LeftPanel->IsVisible() && !RightPanel->IsVisible())
+							|| (CtrlObject->CmdLine->IsVisible() && CtrlObject->CmdLine->IsNotEmpty());
+					break;
+				default:	// only when panels are hidden
+					YankLastArg = !LeftPanel->IsVisible() && !RightPanel->IsVisible();
+			}
+
+			if (YankLastArg) {
 				CtrlObject->CmdLine->ProcessKey(Key);
 				return TRUE;
 			}

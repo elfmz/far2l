@@ -297,6 +297,7 @@ struct CommandLineOptions
 	int UsePromptFormat;
 	int UseShell;
 	int WaitKeypress;
+	int AltDotYankLastArg;
 	int VTLogLimit;
 	FARString strPromptFormat;
 	FARString strShell;

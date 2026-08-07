@@ -2625,7 +2625,8 @@ case KEY_CTRLNUMPAD3: {
 
 				Flags.Set(FEDITOR_NEWUNDO);
 				InsertString();
-				CurLine->FastShow();
+				if (!Locked())
+					CurLine->FastShow();
 				Show();
 			}
 

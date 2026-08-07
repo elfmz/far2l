@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <mutex>
+#include <condition_variable>
 #include <chrono>
 
 enum XferKind
@@ -78,6 +79,7 @@ struct IAbortableOperationsHost
 struct ProgressState
 {
 	std::mutex mtx;
+	std::condition_variable cond;
 	ProgressStateStats stats;
 	std::string path;
 	bool paused = false, aborting = false, finished = false;

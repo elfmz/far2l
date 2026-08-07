@@ -263,6 +263,8 @@ void PanelSettings()
 		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
 		BOOL TreeScanDepthEnabled = (Opt.Tree.ScanDepthEnabled);
 
+		Builder.AddCheckbox(Msg::AllowSelectionPlacement, (BOOL*)&Opt.CmdLine.AllowSelectionPlacement);
+
 		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 
 		auto CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);

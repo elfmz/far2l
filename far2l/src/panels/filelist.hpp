@@ -248,6 +248,7 @@ private:
 	// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
 	BOOL ChangeDir(const wchar_t *NewDir, BOOL IsUpdated = TRUE);
 	void CountDirSize(DWORD PluginFlags);
+	void Process_PlaceOnCmdLine(FileListItem* item, FarKey Key);
 	/*
 		$ 19.03.2002 DJ
 		IgnoreVisible - обновить, даже если панель невидима

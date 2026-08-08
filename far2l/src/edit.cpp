@@ -905,13 +905,13 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 int Edit::CalcPosFwd(int LimitPos) const
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return CalcPosFwdTo(my->CurPos, LimitPos);
 }
 
 int Edit::CalcPosBwd() const
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return CalcPosBwdTo(my->CurPos);
 }
 
@@ -1760,19 +1760,20 @@ int Edit::InsertKey(FarKey Key)
 
 int Edit::GetVisualLineCount() const
 {
-	MyEcoLazy::Use my(fields);
-	if (!GetWordWrap() || my->WrapBreaks.empty())
+	if (!GetWordWrap())
 		return 1;
-	return my->WrapBreaks.size();
+
+	MyEcoLazy::See my(fields);
+	return my->WrapBreaks.empty() ? 1 : my->WrapBreaks.size();
 }
 
 int Edit::FindVisualLine(int Pos) const
 {
-	MyEcoLazy::Use my(fields);
-	if (!GetWordWrap() || my->WrapBreaks.empty())
+	if (Pos <= 0 || !GetWordWrap())
 		return 0;
 
-	if (Pos <= 0)
+	MyEcoLazy::See my(fields);
+	if (my->WrapBreaks.empty())
 		return 0;
 
 	const auto it = std::upper_bound(my->WrapBreaks.begin(), my->WrapBreaks.end(), Pos);
@@ -1781,24 +1782,22 @@ int Edit::FindVisualLine(int Pos) const
 
 void Edit::GetVisualLine(int line, int& start, int& end) const
 {
-	MyEcoLazy::Use my(fields);
-	if (!GetWordWrap() || my->WrapBreaks.empty() || line < 0)
-	{
-		start = 0;
-		end = Str.Size();
+	start = 0;
+	end = Str.Size();
+	if (line < 0 || !GetWordWrap())
 		return;
-	}
 
-	if (static_cast<size_t>(line) < my->WrapBreaks.size())
-	{
+	MyEcoLazy::See my(fields);
+	if (my->WrapBreaks.empty())
+		return;
+
+	if (static_cast<size_t>(line) < my->WrapBreaks.size()) {
 		start = my->WrapBreaks[line];
 		if (static_cast<size_t>(line + 1) < my->WrapBreaks.size())
 			end = my->WrapBreaks[line + 1];
 		else
 			end = Str.Size();
-	}
-	else
-	{
+	} else {
 		start = end = Str.Size();
 	}
 }
@@ -2625,7 +2624,7 @@ void Edit::AddSelect(int Start, int End)
 
 bool Edit::IsSelection()
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return my->SelStart != -1 || my->SelEnd != 0;
 }
 
@@ -2643,7 +2642,7 @@ void Edit::GetSelection(int &Start, int &End)
 		SelStart=Str.Size()+1;
 	*/
 	/* SKV $ */
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	Start = my->SelStart;
 	End = my->SelEnd;
 
@@ -2656,7 +2655,7 @@ void Edit::GetSelection(int &Start, int &End)
 
 void Edit::GetRealSelection(int &Start, int &End)
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	Start = my->SelStart;
 	End = my->SelEnd;
 }
@@ -2955,7 +2954,7 @@ void Edit::Xlat(bool All)
 */
 int Edit::KeyMatchedMask(FarKey Key)
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	const wchar_t *Mask = GetInputMask();
 	switch (Mask[my->CurPos]) {
 		case EDMASK_DSS:

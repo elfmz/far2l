@@ -33,6 +33,13 @@ Synopsys:
 			my->i = 0;
 			my->s = "";
 		}
+
+
+		void See()
+		{
+			EcoLazy<Fields>::Read my(fields);
+			printf("See: %d %s\n", my->i, my->s.c_str();
+		}
 	};
 
 Description:
@@ -68,58 +75,80 @@ public:
 		}
 	}
 
-	class Use
+	class See // provides unsynchronized with other writers in same scope (if any) read-only access, somewhat faster than Use
+	{
+		const FieldsT *_fields;
+		static const FieldsT &DefaultFields()
+		{
+			static const FieldsT s_out;
+			return s_out;
+		}
+
+	public:
+		See(const EcoLazy &el) : _fields(el._container)
+		{
+			if (!_fields) {
+				_fields = &DefaultFields();
+			}
+		}
+		const FieldsT *operator ->()
+		{
+			return _fields;
+		}
+	};
+
+	class Use // provides full direct access
 	{
 		char _placement[sizeof(Container)];
-		const EcoLazy &_fields;
+		const EcoLazy &_el;
 
 		Use() = delete;
 		Use(const Use&) = delete;
 		Use &operator =(const Use&) = delete;
 
 	public:
-		Use(const EcoLazy &fields) : _fields(fields)
+		Use(const EcoLazy &el) : _el(el)
 		{
-			if (!_fields._container) {
-				_fields._container = new (&_placement[0]) Container(&_placement[0]);
-			} else if (!_fields._container->root_use) {
-				_fields._container->root_use = &_placement[0];
+			if (!_el._container) {
+				_el._container = new (&_placement[0]) Container(&_placement[0]);
+			} else if (!_el._container->root_use) {
+				_el._container->root_use = &_placement[0];
 			}
 		}
 
 		~Use()
 		{
-			if ((char *)_fields._container == &_placement[0]) {
+			if ((char *)_el._container == &_placement[0]) {
 				// was allocated on stack by *this - check if content is matched to default
 				// and if so - forget it, otherwise - allocate and keep heap-backed copy
-				if (_fields._container->IsDefault()) { // forget this ephemeral stack instance
-					_fields._container->~Container();
-					_fields._container = nullptr;
+				if (_el._container->IsDefault()) { // forget this ephemeral stack instance
+					_el._container->~Container();
+					_el._container = nullptr;
 				} else { // allocate copy on heap and remember pointer to it for following uses
-					auto *hc = new (std::nothrow) Container(std::move(*_fields._container));
-					_fields._container->~Container();
-					_fields._container = hc;
+					auto *hc = new (std::nothrow) Container(std::move(*_el._container));
+					_el._container->~Container();
+					_el._container = hc;
 					if (LIKELY(hc)) {
 						hc->root_use = nullptr;
 					} else {
 						fprintf(stderr, "EcoLazy: no memory - state lost\n");
 					}
 				}
-			} else if (_fields._container->root_use == &_placement[0]) {
+			} else if (_el._container->root_use == &_placement[0]) {
 				// was allocated on heap, however *this is last user on backtrace - so again check
 				// if content is matched to default and if so - release this heap-backed copy
-				if (_fields._container->IsDefault()) {
-					delete _fields._container;
-					_fields._container = nullptr;
+				if (_el._container->IsDefault()) {
+					delete _el._container;
+					_el._container = nullptr;
 				} else {
-					_fields._container->root_use = nullptr;
+					_el._container->root_use = nullptr;
 				}
 			}
 		}
 
 		FieldsT *operator ->()
 		{
-			return _fields._container;
+			return _el._container;
 		}
 	};
 };

@@ -228,6 +228,10 @@ const ConfigOpt g_cfg_opts[] {
 		L"InterfSettings", L"Set the local clipboard using OSC52 escape sequences (TTY-backend only)" },
 	{OST_COMMON, NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1,
 		L"InterfSettings", L"Override the terminal palette (TTY-backend only)" },
+	{OST_COMMON, NSecInterface, "TTYCursorShapeInsert", &Opt.TTYCursorShapeInsert, CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE,
+		L"InterfSettings", L"Cursor shape in TTY insert mode: 0=bar, 1=block, 2=underline" },
+	{OST_COMMON, NSecInterface, "TTYCursorShapeOvertype", &Opt.TTYCursorShapeOvertype, CONSOLE_TTY_CURSOR_SHAPE_BLOCK,
+		L"InterfSettings", L"Cursor shape in TTY overtype mode: 0=bar, 1=block, 2=underline" },
 
 	{OST_COMMON,  NSecInterface, "EnforceColorCorrection", &Opt.Dialogs.EnforceColorCorrection, 1,
 		L"InterfSettings", L"Update RGB colors to make it more contrast in interface and dialogs" },

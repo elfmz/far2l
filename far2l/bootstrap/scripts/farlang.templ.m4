@@ -2915,6 +2915,61 @@ upd:"Override base colors &palette"
 upd:"Override base colors &palette"
 "Ужываць сваю &палітру колераў"
 
+ConfigTTYCursorShapeInsert
+"Курсор режима вставки"
+"Insert-mode cursor"
+upd:"Insert-mode cursor"
+upd:"Insert-mode cursor"
+upd:"Insert-mode cursor"
+upd:"Insert-mode cursor"
+upd:"Insert-mode cursor"
+"Курсор режиму вставки"
+"Курсор рэжыму ўстаўкі"
+
+ConfigTTYCursorShapeOvertype
+"Курсор режима замены (Ins)"
+"Overtype-mode cursor (Ins)"
+upd:"Overtype-mode cursor (Ins)"
+upd:"Overtype-mode cursor (Ins)"
+upd:"Overtype-mode cursor (Ins)"
+upd:"Overtype-mode cursor (Ins)"
+upd:"Overtype-mode cursor (Ins)"
+"Курсор режиму заміни (Ins)"
+"Курсор рэжыму замены (Ins)"
+
+ConfigCursorShapeBar
+"Черта"
+"Bar"
+upd:"Bar"
+upd:"Bar"
+upd:"Bar"
+upd:"Bar"
+upd:"Bar"
+"Смуга"
+"Палоска"
+
+ConfigCursorShapeBlock
+"Блок"
+"Block"
+upd:"Block"
+upd:"Block"
+upd:"Block"
+upd:"Block"
+upd:"Block"
+"Блок"
+"Блок"
+
+ConfigCursorShapeUnderline
+"Подчеркивание"
+"Underline"
+upd:"Underline"
+upd:"Underline"
+upd:"Underline"
+upd:"Underline"
+upd:"Underline"
+"Підкреслення"
+"Падкрэсліванне"
+
 ConfigExclusiveKeys
 "&Эксклюзивная обработка нажатий, включающих:"
 "&Exclusively handle hotkeys that include:"

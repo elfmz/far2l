@@ -526,6 +526,8 @@ struct Options
 			ExclusiveWinLeft, ExclusiveWinRight;
 	int OSC52ClipSet;
 	int TTYPaletteOverride;
+	int TTYCursorShapeInsert;
+	int TTYCursorShapeOvertype;
 
 	Confirmation Confirm;
 	PluginConfirmation PluginConfirm;

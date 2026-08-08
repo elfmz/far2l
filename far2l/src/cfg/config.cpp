@@ -97,6 +97,12 @@ static DWORD ApplyConsoleTweaks()
 		tweaks|= CONSOLE_OSC52CLIP_SET;
 	if (Opt.TTYPaletteOverride)
 		tweaks|= CONSOLE_TTY_PALETTE_OVERRIDE;
+	Opt.TTYCursorShapeInsert = std::clamp(Opt.TTYCursorShapeInsert,
+			CONSOLE_TTY_CURSOR_SHAPE_BAR, CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE);
+	Opt.TTYCursorShapeOvertype = std::clamp(Opt.TTYCursorShapeOvertype,
+			CONSOLE_TTY_CURSOR_SHAPE_BAR, CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE);
+	tweaks|= CONSOLE_TTY_CURSOR_SHAPE_INSERT(Opt.TTYCursorShapeInsert);
+	tweaks|= CONSOLE_TTY_CURSOR_SHAPE_OVERTYPE(Opt.TTYCursorShapeOvertype);
 	return WINPORT(SetConsoleTweaks)(tweaks);
 }
 
@@ -716,6 +722,17 @@ void InterfaceSettings()
 
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_TTY_PALETTE) {
 			Builder.AddCheckbox(Msg::ConfigTTYPaletteOverride, &Opt.TTYPaletteOverride);
+		}
+
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_TTY_CURSOR_SHAPE) {
+			static FarLangMsg CursorShapeOptions[] = {Msg::ConfigCursorShapeBar,
+					Msg::ConfigCursorShapeBlock, Msg::ConfigCursorShapeUnderline};
+			Builder.AddText(Msg::ConfigTTYCursorShapeInsert);
+			Builder.AddRadioButtonsHorz(&Opt.TTYCursorShapeInsert,
+					ARRAYSIZE(CursorShapeOptions), CursorShapeOptions);
+			Builder.AddText(Msg::ConfigTTYCursorShapeOvertype);
+			Builder.AddRadioButtonsHorz(&Opt.TTYCursorShapeOvertype,
+					ARRAYSIZE(CursorShapeOptions), CursorShapeOptions);
 		}
 
 		Builder.AddCheckbox(Msg::EnforceColorCorrection, (BOOL *)&Opt.Dialogs.EnforceColorCorrection);

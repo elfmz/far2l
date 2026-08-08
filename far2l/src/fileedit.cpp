@@ -381,7 +381,7 @@ FileEditor::~FileEditor()
 	if (EditMenuBar) delete EditMenuBar;
 	EditMenuBar = nullptr;
 
-#ifdef __linux__
+#ifdef __GLIBC__
 	malloc_trim(0); // trim heap to release memory used if huge file was edited
 #endif
 }

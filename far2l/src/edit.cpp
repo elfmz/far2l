@@ -593,7 +593,7 @@ void Edit::FastShow()
 		} else {
 			if (wc == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;
-			} else if (CharClasses::IsFullWidth(&Str[i])) {
+			} else if (Str.IsFullWidth(i)) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
@@ -855,7 +855,7 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 			for ( ; Pos < LimitPos && Pos < Str.Size(); ++Pos) {
 				if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
 					joining = true;
-				} else if (CharClasses::IsXxxfix(Str[Pos])) {
+				} else if (Str.IsXxxfix(Pos)) {
 					continue;
 				} else if (joining) {
 					joining = false;
@@ -869,7 +869,7 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 		for ( ; Pos < Str.Size(); ++Pos) {
 			if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;
-			} else if (CharClasses::IsXxxfix(Str[Pos])) {
+			} else if (Str.IsXxxfix(Pos)) {
 				continue;
 			} else if (joining) {
 				joining = false;
@@ -891,7 +891,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 	for ( ; Pos > 0 && Pos < Str.Size(); --Pos) {
 		if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
 			continue;
-		} else if (CharClasses::IsXxxfix(Str[Pos])) {
+		} else if (Str.IsXxxfix(Pos)) {
 			continue;
 		} else if (Str[Pos - 1] == CharClasses::ZERO_WIDTH_JOINER) {
 			continue;
@@ -1829,7 +1829,7 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 			int CharWidth = 1;
 			if (Str[CurrentPos] == L'\t') {
 				CharWidth = TabSize - (CurrentX % TabSize);
-			} else if (CharClasses::IsFullWidth(&Str[CurrentPos])) {
+			} else if (Str.IsFullWidth(CurrentPos)) {
 				CharWidth = 2;
 			}
 
@@ -1951,8 +1951,7 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 		AndTabs = false; // this is a string to be inserted and its tabs gonna be expanded to spaces, so ignore them
 	}
 	for (int i = 0; i < Length; ++i) {
-		const auto wc = CheckStr[i];
-		if ( (wc == L'\t' && AndTabs) || CharClasses::IsFullWidth(wc) || CharClasses::IsXxxfix(wc) ) {
+		if ( (AndTabs && CheckStr[i] == L'\t') || Str.IsFullWidth(i) || Str.IsXxxfix(i) ) {
 			Flags.Set(FEDITLINE_HASSPECIALWIDTHCHARS);
 			return;
 		}
@@ -2487,7 +2486,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 					joining = true;
 					continue;
 				}
-				if (CharClasses::IsXxxfix(Str[Index]))
+				if (Str.IsXxxfix(Index))
 					continue;
 				if (joining)
 				{
@@ -2495,7 +2494,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 					continue;
 				}
 
-				TabPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
+				TabPos += Str.IsFullWidth(Index) ? 2 : 1;
 			}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
@@ -2532,14 +2531,14 @@ int Edit::CellPosToReal(int Pos)
 				continue;
 			}
 
-			if (CharClasses::IsXxxfix(Str[Index]))
+			if (Str.IsXxxfix(Index))
 				continue;
 
 			if (!joining)
-				CellPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
+				CellPos += Str.IsFullWidth(Index) ? 2 : 1;
 
 			joining = false;
-			while (Index + 1 < Str.Size() && CharClasses::IsXxxfix(Str[Index + 1])) {
+			while (Index + 1 < Str.Size() && Str.IsXxxfix(Index + 1)) {
 				if (Str[Index + 1] == CharClasses::ZERO_WIDTH_JOINER)
 					joining = true;
 				Index++;
@@ -2561,7 +2560,7 @@ void Edit::SanitizeSelectionRange()
 		for ( ; my->SelStart > 0; my->SelStart--) {
 			if (Str[my->SelStart] == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;
-			} else if (CharClasses::IsXxxfix(Str[my->SelStart])) {
+			} else if (Str.IsXxxfix(my->SelStart)) {
 				continue;
 			} else if (joining) {
 				joining = false;
@@ -2574,7 +2573,7 @@ void Edit::SanitizeSelectionRange()
 		for ( ; my->SelEnd < Str.Size(); my->SelEnd++) {
 			if (Str[my->SelEnd] == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;
-			} else if (CharClasses::IsXxxfix(Str[my->SelEnd])) {
+			} else if (Str.IsXxxfix(my->SelEnd)) {
 				continue;
 			} else if (joining) {
 				joining = false;

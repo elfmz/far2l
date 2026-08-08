@@ -389,13 +389,13 @@ const wchar_t *EcoString::CPtr() const
 	return ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) ? _data.pws : _data.lws;
 }
 
-const wchar_t EcoString::operator[](int i) const
+wchar_t EcoString::At(int i) const
 {
 	const size_t sz = Size();
 	if (size_t(i) == sz) {
 		return 0; // allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
 	}
-	ASSERT_MSG(i >= 0 && size_t(i) < sz,  "EcoString[]: bad %d while _len=%d\n", i, _len);
+	ASSERT_MSG(i >= 0 && size_t(i) < sz,  "EcoString::At: bad %d while _len=%d\n", i, _len);
 
 	if (_len < 0) {
 		return (wchar_t)(unsigned char)((sz > sizeof(_data)) ? _data.pmb[i] : _data.lmb[i]);
@@ -404,20 +404,20 @@ const wchar_t EcoString::operator[](int i) const
 	return ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) ? _data.pws[i] : _data.lws[i];
 }
 
-static wchar_t s_dummy;
-
-wchar_t &EcoString::operator[](int i)
+void EcoString::Set(int i, wchar_t wc) const
 {
-	if (!EnsureWide()) {
-		s_dummy = 0;
-		return s_dummy;
+	ASSERT_MSG(i >= 0 && i <= Size(),  "EcoString::Set: bad %d while _len=%d\n", i, _len);
+	if (unsigned(wc) <= 0xff && _len < 0) {
+		if (size_t(-_len) > sizeof(_data)) {
+			_data.pmb[i] = unsigned(wc);
+		} else {
+			_data.lmb[i] = unsigned(wc);
+		}
+	} else if (EnsureWide()) {
+		if (((_len + 1) * sizeof(wchar_t) > sizeof(_data))) {
+			_data.pws[i] = wc;
+		} else {
+			_data.lws[i] = wc;
+		}
 	}
-	// allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
-	ASSERT_MSG(i >= 0 && i <= Size(),  "EcoString[]: bad %d while _len=%d\n", i, _len);
-
-	if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
-		return _data.pws[i];
-	}
-
-	return _data.lws[i];
 }

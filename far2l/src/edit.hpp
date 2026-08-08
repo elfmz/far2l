@@ -143,7 +143,7 @@ public:
 
 
 private:
-	struct Fields // lazily instantiated and accessed by MyEcoFields
+	struct Fields // lazily instantiated and accessed by EcoFields
 	{
 		EcoVector<ColorItem> ColorList;
 		EcoVector<int> WrapBreaks;

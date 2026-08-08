@@ -93,6 +93,33 @@ public:
 
 	wchar_t *Ptr();
 	const wchar_t *CPtr() const;
-	const wchar_t operator[](int i) const;
-	wchar_t &operator[](int i);
+
+	wchar_t At(int i) const;
+	void Set(int i, wchar_t wc) const;
+
+	bool IsXxxfix(int i) const
+	{
+		// ASCII chars cant be prefix/suffix, right?
+		return _len > 0 && CharClasses::IsXxxfix(At(i));
+	}
+
+	bool IsFullWidth(int i) const
+	{
+		// ASCII chars cant be fullwidth, right?
+		return _len > 0 && CharClasses::IsFullWidth(CPtr() + i);
+	}
+
+	class Access
+	{
+		EcoString &_es;
+		const int _i;
+	public:
+		Access(EcoString &es, int i) : _es(es), _i(i) {}
+		operator wchar_t() const { return _es.At(_i); }
+		Access &operator =(wchar_t c) { _es.Set(_i, c); return *this; }
+		Access &operator =(const Access &a) { _es.Set(_i, a); return *this; }
+	};
+
+	inline wchar_t operator[](int i) const { return At(i); }
+	inline Access operator[](int i) { return Access(*this, i); }
 };

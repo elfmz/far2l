@@ -6,7 +6,7 @@
 Lazy-allocated gready-freed data fields helper.
 
 Synopsys:
-	class YourClass : EcoFields<YourClass>
+	struct YourClass : EcoFields<YourClass>
 	{
 		struct Fields
 		{
@@ -49,21 +49,13 @@ template <class OwnerT>
 	class FieldsContainer : public OwnerT::Fields
 	{
 		friend class EcoFields<OwnerT>::MyEcoFields;
-		unsigned short _refs{0};
-		bool _heap{false};
-		
-	public:
-		bool IsOnHeap() const { return _heap; }
+		unsigned int _refs{0};
 	} mutable *_my_ecofields{nullptr};
-
 
 public:
 	virtual ~EcoFields()
 	{
-		if (_my_ecofields) {
-			assert(_my_ecofields->IsOnHeap());
-			delete _my_ecofields;
-		}
+		delete _my_ecofields;
 	}
 
 	class MyEcoFields
@@ -78,40 +70,33 @@ public:
 				owner->_my_ecofields = new (&_placement[0]) FieldsContainer;
 			}
 			owner->_my_ecofields->_refs++;
+			assert(_owner->_my_ecofields->_refs != 0); // if trapped - likely there is infinite recursion
 		}
 
 		~MyEcoFields()
 		{
 			_owner->_my_ecofields->_refs--;
 			if (_owner->_my_ecofields->_refs == 0) {
-				if (_owner->_my_ecofields->_heap) {
+				if ((char *)_owner->_my_ecofields != &_placement[0]) { // allocated on heap - release memory
 					if (_owner->_my_ecofields->IsDefault()) {
 						delete _owner->_my_ecofields;
 						_owner->_my_ecofields = nullptr;
 					}
 				} else if (_owner->_my_ecofields->IsDefault()) {
+					_owner->_my_ecofields->~FieldsContainer();
 					_owner->_my_ecofields = nullptr;
 				} else {
-					auto *my_on_heap = new (std::nothrow) FieldsContainer;
-					if (my_on_heap) {
-						std::swap(*my_on_heap, *_owner->_my_ecofields);
-						my_on_heap->_heap = true;
-						_owner->_my_ecofields->~FieldsContainer();
-						_owner->_my_ecofields = my_on_heap;
-					} else {
-						_owner->_my_ecofields = nullptr;
+					auto *my_on_heap = new (std::nothrow) FieldsContainer(std::move(*_owner->_my_ecofields));
+					_owner->_my_ecofields->~FieldsContainer();
+					_owner->_my_ecofields = my_on_heap;
+					if (UNLIKELY(!my_on_heap)) {
+						fprintf(stderr, "EcoFields: no memory - state lost\n");
 					}
 				}
-			} else {
-				assert(_owner->_my_ecofields->_refs > 0);
 			}
 		}
 
 		typename OwnerT::Fields *operator ->()
-		{
-			return _owner->_my_ecofields;
-		}
-		const typename OwnerT::Fields *operator ->() const
 		{
 			return _owner->_my_ecofields;
 		}

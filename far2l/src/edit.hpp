@@ -138,6 +138,13 @@ class Edit : public ThinScreenObject, private EcoFields<Edit>
 	friend class Edit2Settings;
 	friend class EcoFields<Edit>;
 
+public:
+	Edit *m_next;
+	Edit *m_prev;
+
+
+private:
+	EcoString Str;
 	struct Fields // lazily instantiated and accessed by EcoFields<Edit>::MyEcoFields
 	{
 		EcoVector<ColorItem> ColorList;
@@ -159,14 +166,6 @@ class Edit : public ThinScreenObject, private EcoFields<Edit>
 		}
 
 	};
-
-public:
-	Edit *m_next;
-	Edit *m_prev;
-
-
-private:
-	EcoString Str;
 
 private:
 	virtual void DisplayObject();

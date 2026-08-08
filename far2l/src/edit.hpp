@@ -197,6 +197,10 @@ private:
 	void SetEndType(int Type) { Flags.Flags = (Flags.Flags & ~FEDITLINE_EOLTYPE_MASK) | (static_cast<DWORD>(Type) << FEDITLINE_EOLTYPE_SHIFT); }
 	void CheckForSpecialWidthChars(const wchar_t *CheckStr = nullptr, int Length = 0);
 
+	void ProcessPasteEventFromPrimary();
+	BOOL DoPaste(wchar_t* ClipText);
+	void AutoGrabToClipboard();
+
 protected:
 	int CalcRTrimmedStrSize() const;
 

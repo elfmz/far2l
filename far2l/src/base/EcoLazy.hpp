@@ -16,11 +16,11 @@ Synopsys:
 			bool IsDefault() const {return i == 0 && s.emtpy();}
 		};
 
-		EcoFields<Fields> fields;
+		EcoLazy<Fields> fields;
 
 		void Foo()
 		{
-			EcoFields<Fields>::Use my(fields);
+			EcoLazy<Fields>::Use my(fields);
 			printf("Before Foo: %d %s\n", my->i, my->s.c_str();
 			my->i = 123;
 			my->s = "hello";
@@ -28,7 +28,7 @@ Synopsys:
 
 		void Bar()
 		{
-			EcoFields<Fields>::Use my(fields);
+			EcoLazy<Fields>::Use my(fields);
 			printf("Before Bar: %d %s\n", my->i, my->s.c_str();
 			my->i = 0;
 			my->s = "";
@@ -44,7 +44,7 @@ Description:
 
 
 template <class FieldsT>
-	class EcoFields
+	class EcoLazy
 {
 	struct Container : FieldsT
 	{
@@ -60,7 +60,7 @@ template <class FieldsT>
 	} mutable *_container{nullptr};
 
 public:
-	~EcoFields()
+	~EcoLazy()
 	{
 		if (_container) {
 			assert(!_container->root_use); // should not be in use
@@ -71,14 +71,14 @@ public:
 	class Use
 	{
 		char _placement[sizeof(Container)];
-		const EcoFields &_fields;
+		const EcoLazy &_fields;
 
 		Use() = delete;
 		Use(const Use&) = delete;
 		Use &operator =(const Use&) = delete;
 
 	public:
-		Use(const EcoFields &fields) : _fields(fields)
+		Use(const EcoLazy &fields) : _fields(fields)
 		{
 			if (!_fields._container) {
 				_fields._container = new (&_placement[0]) Container(&_placement[0]);
@@ -102,7 +102,7 @@ public:
 					if (LIKELY(hc)) {
 						hc->root_use = nullptr;
 					} else {
-						fprintf(stderr, "EcoFields: no memory - state lost\n");
+						fprintf(stderr, "EcoLazy: no memory - state lost\n");
 					}
 				}
 			} else if (_fields._container->root_use == &_placement[0]) {

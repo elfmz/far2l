@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FilesSuggestor.hpp"
 #include "EcoString.hpp"
 #include "EcoVector.hpp"
-#include "EcoFields.hpp"
+#include "EcoLazy.hpp"
 #include <memory>
 #include <vector>
 #include <vector>
@@ -143,7 +143,7 @@ public:
 
 
 private:
-	struct Fields // lazily instantiated and accessed by EcoFields
+	struct Fields // lazily instantiated and accessed by EcoLazy
 	{
 		EcoVector<ColorItem> ColorList;
 		EcoVector<int> WrapBreaks;
@@ -163,7 +163,7 @@ private:
 				&& WrapBreaks.empty() && ColorList.empty();
 		}
 	};
-	struct MyEcoFields : EcoFields<Fields> {} fields;
+	struct MyEcoLazy : EcoLazy<Fields> {} fields;
 	EcoString Str;
 
 private:

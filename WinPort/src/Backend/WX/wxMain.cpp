@@ -819,8 +819,16 @@ void WinPortPanel::CheckForUnfreeze(bool force)
 	}
 }
 
+#include "easteregg.h"
+
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
+	if (IsEasterEggActive()) {
+		fire.Update();
+		//terrain.Update();
+		//potato.Update();
+	}
+
 	if (_extra_refresh) {
 		// see comment on WinPortPanel::OnTitleChangedSync
 		if (WINPORT(GetTickCount)() - _last_title_ticks > TIMER_EXTRA_REFRESH) {
@@ -849,6 +857,8 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 			&& _text2clip.empty()) {
 		_periodic_timer->Stop();
 	}
+
+	if(IsEasterEggActive()) Refresh(false);
 }
 
 void WinPortPanel::ResetTimerIdling()

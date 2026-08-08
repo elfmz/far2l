@@ -330,6 +330,8 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 		dc.SetFont(_fonts[index]);
 }
 
+#include "easteregg.h"
+
 void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 {
 	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
@@ -458,6 +460,51 @@ void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 	if (UNLIKELY(_stage == STG_REFRESHED)) {
 		_stage = STG_PAINTED;
 		fprintf(stderr, "FIRST_PAINT: %lu msec\n", (unsigned long)GetProcessUptimeMSec());
+	}
+
+	if (IsEasterEggActive()) {
+		wxRect winbox = _window->GetSize();
+
+	    fire.Update();
+	    //terrain.Update();
+	    //potato.Update();
+
+	    wxImage fireImg = fire.Render();
+	    wxImage scaledFire = fireImg.Scale(winbox.GetWidth(), winbox.GetHeight() / 4, wxIMAGE_QUALITY_HIGH);
+	    wxBitmap bmpFire(scaledFire);
+
+	    /*
+	    //wxImage marsImg = terrain.Render();
+	    wxImage marsImg = potato.Render();
+	    wxImage scaledMars = marsImg.Scale(winbox.GetWidth(), 40, wxIMAGE_QUALITY_HIGH);
+	    wxBitmap bmpMars(scaledMars);
+
+	    dc.DrawBitmap(bmpMars, 0, 0, true);
+	    */
+
+	    static bool readyToRender = false;
+	    static const char* svgData = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500' width='100%' height='100%'><defs><clipPath id='left-half'><rect x='0' y='0' width='250' height='500' /></clipPath><clipPath id='right-half'><rect x='250' y='0' width='250' height='500' /></clipPath></defs><g id='outer-cog'><g clip-path='url(#left-half)'><circle cx='250' cy='250' r='180' fill='none' stroke='#E0E0E0' stroke-width='40' /><path d='M 230,25 L 270,25 L 265,70 L 235,70 Z M 230,430 L 270,430 L 265,475 L 235,475 Z M 80,80 L 110,55 L 140,90 L 115,115 Z M 25,230 L 25,270 L 70,265 L 70,235 Z M 55,110 L 80,80 L 115,115 L 90,140 Z M 55,390 L 80,420 L 115,385 L 90,360 Z M 80,420 L 110,445 L 140,410 L 115,385 Z' fill='#E0E0E0' /></g><g clip-path='url(#right-half)'><circle cx='250' cy='250' r='180' fill='none' stroke='#222222' stroke-width='40' /><path d='M 230,25 L 270,25 L 265,70 L 235,70 Z M 230,430 L 270,430 L 265,475 L 235,475 Z M 420,80 L 390,55 L 360,90 L 385,115 Z M 475,230 L 475,270 L 430,265 L 430,235 Z M 445,110 L 420,80 L 385,115 L 410,140 Z M 445,390 L 420,420 L 385,385 L 410,360 Z M 420,420 L 390,445 L 360,410 L 385,385 Z' fill='#222222' /></g></g><circle cx='250' cy='250' r='140' fill='none' stroke='#90A4AE' stroke-width='12' /><g fill='#90A4AE'><rect x='242' y='95' width='16' height='20' /><rect x='242' y='385' width='16' height='20' /><rect x='95' y='242' width='20' height='16' /> <rect x='385' y='242' width='20' height='16' /><rect x='140' y='140' width='18' height='18' transform='rotate(45 149 149)' /><rect x='342' y='140' width='18' height='18' transform='rotate(45 351 149)' /><rect x='140' y='342' width='18' height='18' transform='rotate(45 149 351)' /><rect x='342' y='342' width='18' height='18' transform='rotate(45 351 351)' /></g><circle cx='250' cy='250' r='125' fill='none' stroke='#111111' stroke-width='3' /><g id='cyborg-half' fill='#546E7A'><path d='M 245,150 C 180,150 150,190 150,250 C 150,290 170,320 180,340 L 245,340 Z' /><circle cx='200' cy='240' r='22' fill='#263238' stroke='#90A4AE' stroke-width='4' /><circle cx='200' cy='240' r='10' fill='#FF1744' /><rect x='165' y='275' width='30' height='5' rx='2' fill='#111' /><rect x='165' y='285' width='35' height='5' rx='2' fill='#111' /><rect x='165' y='295' width='30' height='5' rx='2' fill='#111' /><path d='M 170,210 Q 140,220 135,260' fill='none' stroke='#212121' stroke-width='6' /><path d='M 160,200 Q 130,210 125,270' fill='none' stroke='#37474F' stroke-width='5' /></g><g id='bone-half' fill='#E8E2CE'><path d='M 255,150 C 320,150 350,190 350,250 C 350,285 335,310 325,325 L 320,355 L 290,355 L 285,340 L 255,340 Z' /><path d='M 265,225 C 265,210 300,210 300,235 C 300,255 275,255 265,225 Z' fill='#212121' /><path d='M 255,260 L 268,275 L 255,280 Z' fill='#212121' /><path d='M 255,320 L 260,320 L 260,335 L 255,335 Z' fill='#212121' /><path d='M 265,320 L 273,320 L 273,338 L 265,338 Z' fill='#212121' /><path d='M 278,320 L 286,320 L 284,338 L 278,338 Z' fill='#212121' /><path d='M 291,320 L 298,320 L 295,335 L 291,335 Z' fill='#212121' /></g><line x1='250' y1='70' x2='250' y2='430' stroke='#111111' stroke-width='4' /></svg>";
+	    static wxBitmapBundle bundle;
+	    static wxBitmap bmpSvg;
+
+	    if (!readyToRender) {
+		    bundle = wxBitmapBundle::FromSVG(svgData, wxSize(500, 500));
+			bmpSvg = bundle.GetBitmap(wxSize(500, 500));
+
+			wxImage img = bmpSvg.ConvertToImage();
+			if (!img.HasAlpha()) img.InitAlpha();
+			int w = img.GetWidth();
+			int h = img.GetHeight();
+
+			// unsigned char* data  = img.GetData();
+			unsigned char* alpha = img.GetAlpha();
+
+			for (int i = 0; i < w * h; ++i) if (alpha[i] > 50) alpha[i] = 50;
+			bmpSvg = wxBitmap(img);
+	    }
+
+	    dc.DrawBitmap(bmpSvg, 0 + winbox.GetRight() - bmpSvg.GetWidth(), winbox.GetBottom() - bmpSvg.GetHeight(), true);
+	    dc.DrawBitmap(bmpFire, 0, winbox.GetBottom() - scaledFire.GetHeight(), true);
 	}
 }
 

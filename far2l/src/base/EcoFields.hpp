@@ -6,7 +6,7 @@
 Lazy-allocated gready-freed data fields helper.
 
 Synopsys:
-	struct YourClass : EcoFields<YourClass>
+	struct YourClass
 	{
 		struct Fields
 		{
@@ -16,9 +16,11 @@ Synopsys:
 			bool IsDefault() const {return i == 0 && s.emtpy();}
 		};
 
+		EcoFields<Fields> fields;
+
 		void Foo()
 		{
-			MyEcoFields my(this);
+			EcoFields<Fields>::Use my(fields);
 			printf("Before Foo: %d %s\n", my->i, my->s.c_str();
 			my->i = 123;
 			my->s = "hello";
@@ -26,7 +28,7 @@ Synopsys:
 
 		void Bar()
 		{
-			MyEcoFields my(this);
+			EcoFields<Fields>::Use my(fields);
 			printf("Before Bar: %d %s\n", my->i, my->s.c_str();
 			my->i = 0;
 			my->s = "";
@@ -34,61 +36,61 @@ Synopsys:
 	};
 
 Description:
-	Each time MyEcoFields used in a function which has no Fields yet - instance of Fields created on stack,
-	it associated with object instance for potential recursive calls and when last MyEcoFields goes out of scope:
+	Each time Use used in a function which has no Fields yet - instance of Fields created on stack,
+	it associated with object instance for potential recursive calls and when last Use goes out of scope:
 	if Fields::IsDefault() evaluated to true - then fields copied into on-heap instance and persisted til next use,
 	if Fields::IsDefault() evaluated to false - then no memory used as its epeheral stack instance just eliminated.
 */
 
 
-template <class OwnerT>
+template <class FieldsT>
 	class EcoFields
 {
-	friend class MyEcoFields;
+	friend class Use;
 
-	class FieldsContainer : public OwnerT::Fields
+	class Container : public FieldsT
 	{
-		friend class EcoFields<OwnerT>::MyEcoFields;
+		friend class EcoFields<FieldsT>::Use;
 		unsigned int _refs{0};
-	} mutable *_my_ecofields{nullptr};
+	} mutable *_container{nullptr};
 
 public:
-	virtual ~EcoFields()
+	~EcoFields()
 	{
-		delete _my_ecofields;
+		delete _container;
 	}
 
-	class MyEcoFields
+	class Use
 	{
-		char _placement[sizeof(FieldsContainer)];
-		const OwnerT *_owner;
+		char _placement[sizeof(Container)];
+		const EcoFields &_fields;
 
 	public:
-		MyEcoFields(const OwnerT *owner) : _owner(owner)
+		Use(const EcoFields &fields) : _fields(fields)
 		{
-			if (!owner->_my_ecofields) {
-				owner->_my_ecofields = new (&_placement[0]) FieldsContainer;
+			if (!fields._container) {
+				fields._container = new (&_placement[0]) Container;
 			}
-			owner->_my_ecofields->_refs++;
-			assert(_owner->_my_ecofields->_refs != 0); // if trapped - likely there is infinite recursion
+			fields._container->_refs++;
+			assert(fields._container->_refs != 0); // if trapped - likely there is infinite recursion
 		}
 
-		~MyEcoFields()
+		~Use()
 		{
-			_owner->_my_ecofields->_refs--;
-			if (_owner->_my_ecofields->_refs == 0) {
-				if ((char *)_owner->_my_ecofields != &_placement[0]) { // allocated on heap - release memory
-					if (_owner->_my_ecofields->IsDefault()) {
-						delete _owner->_my_ecofields;
-						_owner->_my_ecofields = nullptr;
+			_fields._container->_refs--;
+			if (_fields._container->_refs == 0) {
+				if ((char *)_fields._container != &_placement[0]) { // allocated on heap - release memory
+					if (_fields._container->IsDefault()) {
+						delete _fields._container;
+						_fields._container = nullptr;
 					}
-				} else if (_owner->_my_ecofields->IsDefault()) {
-					_owner->_my_ecofields->~FieldsContainer();
-					_owner->_my_ecofields = nullptr;
+				} else if (_fields._container->IsDefault()) {
+					_fields._container->~Container();
+					_fields._container = nullptr;
 				} else {
-					auto *my_on_heap = new (std::nothrow) FieldsContainer(std::move(*_owner->_my_ecofields));
-					_owner->_my_ecofields->~FieldsContainer();
-					_owner->_my_ecofields = my_on_heap;
+					auto *my_on_heap = new (std::nothrow) Container(std::move(*_fields._container));
+					_fields._container->~Container();
+					_fields._container = my_on_heap;
 					if (UNLIKELY(!my_on_heap)) {
 						fprintf(stderr, "EcoFields: no memory - state lost\n");
 					}
@@ -96,9 +98,9 @@ public:
 			}
 		}
 
-		typename OwnerT::Fields *operator ->()
+		FieldsT *operator ->()
 		{
-			return _owner->_my_ecofields;
+			return _fields._container;
 		}
 	};
 };

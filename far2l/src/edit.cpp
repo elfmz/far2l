@@ -368,7 +368,7 @@ UINT Edit::GetCodePage()
 
 void Edit::DisplayObject()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (Flags.Check(FEDITLINE_DROPDOWNBOX)) {
 		Flags.Clear(FEDITLINE_CLEARFLAG);	// при дроп-даун нам не нужно никакого unchanged text
 		my->SelStart = 0;
@@ -466,7 +466,7 @@ int Edit::GetNextCursorPos(int Position, int Where)
 
 void Edit::FastShow()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	auto &OutStr = s_render_buffer;
 	const wchar_t *Mask = GetInputMask();
 	uint64_t Color, SelColor, ColorUnChanged;
@@ -704,7 +704,7 @@ int Edit::RecurseProcessKey(FarKey Key)
 // Функция вставки всякой хреновени - от шорткатов до имен файлов
 int Edit::ProcessInsPath(FarKey Key, int PrevSelStart, int PrevSelEnd)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	int RetCode = FALSE;
 	FARString strPathName;
 
@@ -743,7 +743,7 @@ int Edit::ProcessInsPath(FarKey Key, int PrevSelStart, int PrevSelEnd)
 
 int64_t Edit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	switch (OpCode) {
 		case MCODE_C_EMPTY:
 			return (int64_t)!GetLength();
@@ -905,19 +905,19 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 int Edit::CalcPosFwd(int LimitPos) const
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return CalcPosFwdTo(my->CurPos, LimitPos);
 }
 
 int Edit::CalcPosBwd() const
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return CalcPosBwdTo(my->CurPos);
 }
 
 int Edit::ProcessKey(FarKey Key)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	const wchar_t *Mask = GetInputMask();
 	TranslateInsertKey(Key);
 
@@ -1655,7 +1655,7 @@ int Edit::InsertKey(FarKey Key)
 	if (Flags.Check(FEDITLINE_READONLY | FEDITLINE_DROPDOWNBOX))
 		return (TRUE);
 
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 
 	if (Key == KEY_TAB && Flags.Check(FEDITLINE_OVERTYPE)) {
 		my->PrevCurPos = my->CurPos;
@@ -1760,7 +1760,7 @@ int Edit::InsertKey(FarKey Key)
 
 int Edit::GetVisualLineCount() const
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (!GetWordWrap() || my->WrapBreaks.empty())
 		return 1;
 	return my->WrapBreaks.size();
@@ -1768,7 +1768,7 @@ int Edit::GetVisualLineCount() const
 
 int Edit::FindVisualLine(int Pos) const
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (!GetWordWrap() || my->WrapBreaks.empty())
 		return 0;
 
@@ -1781,7 +1781,7 @@ int Edit::FindVisualLine(int Pos) const
 
 void Edit::GetVisualLine(int line, int& start, int& end) const
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (!GetWordWrap() || my->WrapBreaks.empty() || line < 0)
 	{
 		start = 0;
@@ -1805,7 +1805,7 @@ void Edit::GetVisualLine(int line, int& start, int& end) const
 
 void Edit::RecalculateWordWrap(int Width, int TabSize)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
     Width--; // save last column for cursor
 
 	if (!GetWordWrap() || Width <= 1)
@@ -1972,7 +1972,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
 
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 
 	const int MaxLength = GetMaxLength();
 	// коррекция вставляемого размера, если определен MaxLength
@@ -2129,7 +2129,7 @@ const wchar_t *Edit::GetStringAddr(int &Length, const wchar_t **EOL)
 
 int Edit::GetSelString(wchar_t *Data, int MaxSize)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (my->SelStart == -1 || (my->SelEnd != -1 && my->SelEnd <= my->SelStart) || my->SelStart >= Str.Size()) {
 		*Data = 0;
 		return FALSE;
@@ -2148,7 +2148,7 @@ int Edit::GetSelString(wchar_t *Data, int MaxSize)
 
 int Edit::GetSelString(FARString &strStr)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (my->SelStart == -1 || (my->SelEnd != -1 && my->SelEnd <= my->SelStart) || my->SelStart >= Str.Size()) {
 		strStr.Clear();
 		return FALSE;
@@ -2176,7 +2176,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		return;
 
 	Flags.Clear(FEDITLINE_CLEARFLAG);
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 
 	if (Mask && *Mask) {
 		int Pos = my->CurPos;
@@ -2310,7 +2310,7 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseEvent->dwMousePosition.X < X1 || MouseEvent->dwMousePosition.X > X2 || MouseEvent->dwMousePosition.Y != Y1)
 		return FALSE;
 
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	// SetClearFlag(0); // пусть едитор сам заботится о снятии клеар-текста?
 	SetCellCurPos(MouseEvent->dwMousePosition.X - X1 + my->LeftPos);
 
@@ -2353,7 +2353,7 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 int Edit::Search(const FARString &What, FARString &ReplaceStr, int Position, int Case, int WholeWords,
 		int Reverse, int Regexp, int *SearchLength)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return SearchString(Str.CPtr(), Str.Size(), What.CPtr(), ReplaceStr, my->CurPos, Position, Case, WholeWords,
 			Reverse, Regexp, SearchLength, WordDiv());
 }
@@ -2365,7 +2365,7 @@ void Edit::ExpandTabs()
 
 	bool changed = false;
 
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	for (int Pos = Str.Find(L'\t'); Pos != -1; Pos = Str.Find(L'\t', Pos + 1)) {
 		auto S = GetTabSize() - (Pos % GetTabSize());
 
@@ -2397,38 +2397,38 @@ void Edit::ExpandTabs()
 
 void Edit::SetCurPos(int NewPos)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	my->CurPos = NewPos;
 	my->PrevCurPos = NewPos;
 }
 
 int Edit::GetLeftPos()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return (my->LeftPos);
 }
 
 void Edit::SetLeftPos(int NewPos)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	my->LeftPos = NewPos;
 }
 
 int Edit::GetCurPos()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return (my->CurPos);
 }
 
 int Edit::GetCellCurPos()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return (RealPosToCell(my->CurPos));
 }
 
 void Edit::SetCellCurPos(int NewPos)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	const wchar_t *Mask = GetInputMask();
 	if (Mask && *Mask) {
 		int NewPosLimit = CalcRTrimmedStrSize();
@@ -2551,7 +2551,7 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (Flags.Check(FEDITLINE_HASSPECIALWIDTHCHARS) && my->SelEnd >= my->SelStart && my->SelStart >= 0) {
 		bool joining = false;
 		if (my->SelStart >= Str.Size()) {
@@ -2602,7 +2602,7 @@ void Edit::SanitizeSelectionRange()
 
 void Edit::Select(int Start, int End)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	my->SelStart = Start;
 	my->SelEnd = End;
 
@@ -2611,7 +2611,7 @@ void Edit::Select(int Start, int End)
 
 void Edit::AddSelect(int Start, int End)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (Start < my->SelStart || my->SelStart == -1)
 		my->SelStart = Start;
 
@@ -2626,7 +2626,7 @@ void Edit::AddSelect(int Start, int End)
 
 bool Edit::IsSelection()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	return my->SelStart != -1 || my->SelEnd != 0;
 }
 
@@ -2644,7 +2644,7 @@ void Edit::GetSelection(int &Start, int &End)
 		SelStart=Str.Size()+1;
 	*/
 	/* SKV $ */
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	Start = my->SelStart;
 	End = my->SelEnd;
 
@@ -2657,7 +2657,7 @@ void Edit::GetSelection(int &Start, int &End)
 
 void Edit::GetRealSelection(int &Start, int &End)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	Start = my->SelStart;
 	End = my->SelEnd;
 }
@@ -2668,7 +2668,7 @@ void Edit::DeleteBlock()
 	if (Flags.Check(FEDITLINE_READONLY | FEDITLINE_DROPDOWNBOX))
 		return;
 
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (my->SelStart == -1 || my->SelStart >= my->SelEnd)
 		return;
 
@@ -2713,13 +2713,13 @@ void Edit::DeleteBlock()
 
 void Edit::AddColor(const ColorItem *col)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	my->ColorList.emplace_back(*col);
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (my->ColorList.empty())
 		return 0;
 
@@ -2740,7 +2740,7 @@ size_t Edit::DeleteColor(int ColorPos)
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (Item >= (int)my->ColorList.size())
 		return false;
 
@@ -2750,7 +2750,7 @@ bool Edit::GetColor(ColorItem *col, int Item)
 
 void Edit::ApplyColor()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (my->ColorList.empty())
 		return;
 
@@ -2894,7 +2894,7 @@ void Edit::ApplyColor()
 */
 void Edit::Xlat(bool All)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	// Для CmdLine - если нет выделения, преобразуем всю строку
 	if (All && my->SelStart == -1 && !my->SelEnd) {
 		::Xlat(Str.Ptr(), 0, Str.Size(), Opt.XLat.Flags);
@@ -2956,7 +2956,7 @@ void Edit::Xlat(bool All)
 */
 int Edit::KeyMatchedMask(FarKey Key)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	const wchar_t *Mask = GetInputMask();
 	switch (Mask[my->CurPos]) {
 		case EDMASK_DSS:
@@ -3120,7 +3120,7 @@ EditControl::EditControl(ScreenObject *pOwner, History *iHistory, FarList *iList
 void EditControl::ShowArrows()
 {
 	if (OverflowArrowsColor > 0) {
-		MyEcoFields my(this);
+		MyEcoFields::Use my(fields);
 		if (RealPosToCell(Str.Size()) > my->LeftPos + X2 - X1 && RealPosToCell(my->CurPos) != my->LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
@@ -3147,7 +3147,7 @@ void EditControl::Show()
 
 void EditControl::FastShow()
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if ( OverflowArrowsColor > 0 &&  RealPosToCell(Str.Size()) > my->LeftPos + X2 - X1 ) {
 		//avoid right overflow arrow disappearance on dialog redraw resetting left position to 0
 		Edit::SetLeftPos(std::max(my->LeftPos, RealPosToCell(my->CurPos) - X2 + X1 + 1));
@@ -3220,7 +3220,7 @@ void EditControl::RemoveSelectedCompletionMenuItem(VMenu &ComplMenu)
 
 void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock, FarKey &BackKey)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	VMenu ComplMenu(nullptr, nullptr, 0, 0);
 	FARString strTemp = Str.CPtr();
 	PopulateCompletionMenu(ComplMenu, strTemp);
@@ -3449,7 +3449,7 @@ void EditControl::AutoComplete(bool Manual, bool DelBlock)
 
 int EditControl::ProcessKey(FarKey Key)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	int ret_code = Edit::ProcessKey(Key);
 	if ( ret_code && OverflowArrowsColor > 0 && !Recurse) {
 		if (RealPosToCell(Str.Size()) > my->LeftPos + X2 - X1 && RealPosToCell(my->CurPos) == my->LeftPos + X2 - X1) {
@@ -3466,7 +3466,7 @@ int EditControl::ProcessKey(FarKey Key)
 }
 int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
-	MyEcoFields my(this);
+	MyEcoFields::Use my(fields);
 	if (Edit::ProcessMouse(MouseEvent)) {
 		while (IsMouseButtonPressed() == FROM_LEFT_1ST_BUTTON_PRESSED) {
 			Flags.Clear(FEDITLINE_CLEARFLAG);

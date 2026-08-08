@@ -128,7 +128,7 @@ struct IEditListener
 	virtual void OnEditChanged(Edit *edit) = 0;
 };
 
-class Edit : public ThinScreenObject, private EcoFields<Edit>
+class Edit : public ThinScreenObject
 {
 	friend class DlgEdit;
 	friend class Editor;
@@ -136,7 +136,6 @@ class Edit : public ThinScreenObject, private EcoFields<Edit>
 	friend class EditControl;
 	friend class PauseEditListener;
 	friend class Edit2Settings;
-	friend class EcoFields<Edit>;
 
 public:
 	Edit *m_next;
@@ -144,8 +143,7 @@ public:
 
 
 private:
-	EcoString Str;
-	struct Fields // lazily instantiated and accessed by EcoFields<Edit>::MyEcoFields
+	struct Fields // lazily instantiated and accessed by MyEcoFields
 	{
 		EcoVector<ColorItem> ColorList;
 		EcoVector<int> WrapBreaks;
@@ -164,8 +162,9 @@ private:
 				&& MSelStart == -1 && SelStart == -1 && SelEnd == 0
 				&& WrapBreaks.empty() && ColorList.empty();
 		}
-
 	};
+	struct MyEcoFields : EcoFields<Fields> {} fields;
+	EcoString Str;
 
 private:
 	virtual void DisplayObject();

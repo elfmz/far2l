@@ -941,11 +941,21 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_ADD:
-			SelectFiles(SELECT_ADD);
-			return TRUE;
 		case KEY_SUBTRACT:
-			SelectFiles(SELECT_REMOVE);
+		case KEY_MULTIPLY: {
+			if (CmdIsNotEmpty)
+				return FALSE;
+
+			int Mode = SELECT_ADD;
+
+			if (Key == KEY_SUBTRACT)
+				Mode = SELECT_REMOVE;
+			else if (Key == KEY_MULTIPLY)
+				Mode = SELECT_INVERT;
+
+			SelectFiles(Mode);
 			return TRUE;
+		}
 		case KEY_CTRLADD:
 			SelectFiles(SELECT_ADDEXT);
 			return TRUE;
@@ -957,9 +967,6 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		case KEY_ALTSUBTRACT:
 			SelectFiles(SELECT_REMOVENAME);
-			return TRUE;
-		case KEY_MULTIPLY:
-			SelectFiles(SELECT_INVERT);
 			return TRUE;
 		case KEY_CTRLMULTIPLY:
 			SelectFiles(SELECT_INVERTALL);
@@ -2066,9 +2073,7 @@ int FileList::ProcessKey(FarKey Key)
 		default:
 
 			if ((Key == L'*') || (Key == L'+') || (Key == L'-')) {
-				FARString TmpStr;
-				CtrlObject->CmdLine->GetString(TmpStr);
-				if (TmpStr.IsEmpty()) {
+				if (!CmdIsNotEmpty) {
 					if (Key == L'*') {
 						SelectFiles(SELECT_INVERT);
 						return TRUE;

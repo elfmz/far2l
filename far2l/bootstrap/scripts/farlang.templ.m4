@@ -4920,14 +4920,14 @@ upd:"Auto-copy mouse selection to PRIMARY"
 
 PasteFromPrimarySelection
 "Вставлять по средней кнопке мыши из PRIMARY"
-"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button"
+"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
+upd:"Paste from PRIMARY by middle mouse button"
 
 EditShowKeyBar
 "Показывать &линейку клавиш"

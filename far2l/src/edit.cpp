@@ -1530,7 +1530,7 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTINS:
 		case KEY_SHIFTNUMPAD0: {
-			wchar_t *ClipText = PasteFromClipboardEx(MaxLength);
+			wchar_t *ClipText = PasteFromClipboardEx(GetMaxLength());
 			if(DoPaste(ClipText)) Show();
 			return TRUE;
 		}
@@ -2268,8 +2268,6 @@ void Edit::RefreshStrByMask(int InitMode)
 
 BOOL Edit::DoPaste(wchar_t* ClipText)
 {
-	wchar_t *ClipText = PasteFromClipboardEx(GetMaxLength());
-
 	if (!ClipText)
 		return TRUE;
 
@@ -2347,21 +2345,23 @@ void Edit::AutoGrabToClipboard()
 
 	if(clip.SetUseSelectionWhenPossible(1) > 0) {
 		if (clip.Open()) {
-
 			MyEcoLazy::Use my(fields);
+
 			if (!Flags.Check(FEDITLINE_PASSWORDMODE)) {
 				if (my->SelStart == -1 || my->SelStart >= my->SelEnd) {
+					const wchar_t *Mask = GetInputMask();
 					if (Mask && *Mask) {
-						std::wstring TrimmedStr(Str, CalcRTrimmedStrSize());
+						std::wstring TrimmedStr(Str.CPtr(), CalcRTrimmedStrSize());
 						clip.Copy(TrimmedStr.c_str());
 					} else {
-						clip.Copy(Str);
+						clip.Copy(Str.CPtr());
 					}
-				} else if (my->SelEnd <= my->StrSize)		// TODO: если в начало условия добавить "StrSize &&", то пропадет баг "Ctrl-Ins в пустой строке очищает клипборд"
+				} 
+				else if (my->SelEnd <= Str.Size())		// TODO: если в начало условия добавить "StrSize &&", то пропадет баг "Ctrl-Ins в пустой строке очищает клипборд"
 				{
 					int Ch = Str[my->SelEnd];
 					Str[my->SelEnd] = 0;
-					clip.Copy(Str + my->SelStart);
+					clip.Copy(Str.CPtr() + my->SelStart);
 					Str[my->SelEnd] = Ch;
 				}
 			}

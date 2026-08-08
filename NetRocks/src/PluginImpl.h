@@ -27,6 +27,16 @@ class PluginImpl
 	std::shared_ptr<IHost> _remote;
 	std::shared_ptr<IHost> _local;
 
+	struct EditedFileDestination
+	{
+		std::shared_ptr<IHost> remote;
+		std::string directory;
+	};
+
+	// Local temporary filename -> the remote directory it was downloaded from.
+	// The panel may be navigated elsewhere while the editor remains open.
+	std::map<std::string, EditedFileDestination> _edited_file_destinations;
+
 	struct StackedDir
 	{
 		std::shared_ptr<IHost> remote;

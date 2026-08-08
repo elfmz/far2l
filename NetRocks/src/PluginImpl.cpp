@@ -27,6 +27,23 @@
 
 static std::unique_ptr<ConnectionsPool> g_conn_pool;
 
+namespace
+{
+	std::string LocalFilePath(const wchar_t *directory, const wchar_t *name)
+	{
+		if (!directory || !*directory || !name || !*name) {
+			return {};
+		}
+
+		std::string path = Wide2MB(directory);
+		if (path.back() != '/' && path.back() != '\\') {
+			path += '/';
+		}
+		path += Wide2MB(name);
+		return path;
+	}
+}
+
 
 class AllNetRocks
 {
@@ -588,7 +605,9 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		return (OpMode == 0) ? SitesXfer(dst_dir.c_str(), PanelItem, ItemsNumber, Move != 0, false) : FALSE;
 	}
 
-	switch (StartXfer(OpMode, _remote, CurrentSiteDir(true), _local,
+	const std::shared_ptr<IHost> source_remote = _remote;
+	const std::string source_dir = CurrentSiteDir(true);
+	switch (StartXfer(OpMode, _remote, source_dir, _local,
 		dst_dir, PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XD_DOWNLOAD)) {
 
 		case BTS_ACTIVE: case BTS_PAUSED:
@@ -596,6 +615,15 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 			_local = _local->Clone();
 
 		case BTS_COMPLETE:
+			if ((OpMode & OPM_EDIT) && source_remote) {
+				for (int i = 0; i < ItemsNumber; ++i) {
+					const std::string local_path = LocalFilePath(DestPath,
+						PanelItem[i].FindData.lpwszFileName);
+					if (!local_path.empty()) {
+						_edited_file_destinations[local_path] = {source_remote, source_dir};
+					}
+				}
+			}
 			return TRUE;
 
 		case BTS_ABORTED:
@@ -607,35 +635,45 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
 {
-	const std::string &site_dir = CurrentSiteDir(true);
-	NR_DBG("_dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber, OpMode);
+	std::shared_ptr<IHost> target_remote = _remote;
+	std::string target_dir = CurrentSiteDir(true);
+	NR_DBG("_dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d", _cur_dir, SrcPath, target_dir.c_str(), ItemsNumber, OpMode);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
-//	std::string src_dir;
-//	if (SrcPath) {
-//		Wide2MB(SrcPath, src_dir);
-//	} else {
-	char dst_dir[PATH_MAX] = {};
-	sdc_getcwd(dst_dir, PATH_MAX-2);
-	size_t l = strlen(dst_dir);
-	if (l == 0) {
-		strcpy(dst_dir, "./");
-
-	} else if (dst_dir[l - 1] != '/') {
-		dst_dir[l] = '/';
-		dst_dir[l + 1] = 0;
+	std::string src_dir = SrcPath && *SrcPath ? Wide2MB(SrcPath) : std::string();
+	if (src_dir.empty()) {
+		char current_dir[PATH_MAX] = {};
+		sdc_getcwd(current_dir, PATH_MAX - 2);
+		src_dir = current_dir;
+	}
+	if (src_dir.empty()) {
+		src_dir = "./";
+	} else if (src_dir.back() != '/') {
+		src_dir += '/';
 	}
 
-	if (!_remote) {
-		return (OpMode == 0) ? SitesXfer(dst_dir, PanelItem, ItemsNumber, Move != 0, true) : FALSE;
+	if ((OpMode & OPM_EDIT) && ItemsNumber == 1) {
+		const std::string local_path = LocalFilePath(SrcPath, PanelItem[0].FindData.lpwszFileName);
+		auto it = _edited_file_destinations.find(local_path);
+		if (it != _edited_file_destinations.end()) {
+			target_remote = it->second.remote;
+			target_dir = it->second.directory;
+			NR_DBG("using remembered edit destination '%s'", target_dir.c_str());
+		}
 	}
 
-	switch (StartXfer(OpMode, _local, dst_dir, _remote, CurrentSiteDir(true),
+	if (!target_remote) {
+		return (OpMode == 0) ? SitesXfer(src_dir.c_str(), PanelItem, ItemsNumber, Move != 0, true) : FALSE;
+	}
+
+	switch (StartXfer(OpMode, _local, src_dir, target_remote, target_dir,
 		PanelItem, ItemsNumber, Move ? XK_MOVE : XK_COPY, XD_UPLOAD)) {
 
 		case BTS_ACTIVE: case BTS_PAUSED:
-			_remote = _remote->Clone();
+			if (_remote) {
+				_remote = _remote->Clone();
+			}
 			_local = _local->Clone();
 
 		case BTS_COMPLETE:

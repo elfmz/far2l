@@ -229,17 +229,18 @@ bool EcoString::MakeWideLength(int len)
 
 bool EcoString::Replace(int pos, int rcnt, wchar_t ch, int cnt)
 {
-	if (pos + rcnt > _len) {
-		fprintf(stderr, "EcoString::InsertC: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
+	const int prev_len = Size();
+	if (pos + rcnt > prev_len) {
+		fprintf(stderr, "EcoString::ReplaceC: pos{%d} + rcnt{%d} > abs(_len{%d})\n", pos, rcnt, _len);
 		return false;
 	}
 	EcoString new_str;
-	if (!new_str.MakeWideLength(_len - rcnt + cnt)) {
+	if (!new_str.MakeWideLength(prev_len - rcnt + cnt)) {
 		return false;
 	}
 	CopyTo(new_str.Ptr(), 0, pos);
 	wmemset(new_str.Ptr() + pos, ch, cnt);
-	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, _len - pos - rcnt);
+	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, prev_len - pos - rcnt);
 	Swap(new_str);
 	return true;
 }
@@ -249,17 +250,18 @@ bool EcoString::Replace(int pos, int rcnt, const wchar_t *data, int cnt)
 	if (cnt < 0) {
 		cnt = wcslen(data);
 	}
-	if (pos + rcnt > _len) {
-		fprintf(stderr, "EcoString::Replace: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
+	const int prev_len = Size();
+	if (pos + rcnt > prev_len) {
+		fprintf(stderr, "EcoString::Replace: pos{%d} + rcnt{%d} > abs(_len{%d})\n", pos, rcnt, _len);
 		return false;
 	}
 	EcoString new_str;
-	if (!new_str.MakeWideLength(_len - rcnt + cnt)) {
+	if (!new_str.MakeWideLength(prev_len - rcnt + cnt)) {
 		return false;
 	}
 	CopyTo(new_str.Ptr(), 0, pos);
 	wmemcpy(new_str.Ptr() + pos, data, cnt);
-	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, _len - pos - rcnt);
+	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, prev_len - pos - rcnt);
 	Swap(new_str);
 	return true;
 }

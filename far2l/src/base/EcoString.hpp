@@ -55,6 +55,18 @@ public:
 	EcoString() = default;
 	~EcoString();
 
+
+	EcoString(EcoString &&o) noexcept
+	{
+		Swap(o);
+	}
+
+	EcoString &operator=(EcoString &&o) noexcept
+	{
+		Swap(o);
+		return *this;
+	}
+
 	inline int Size() const
 	{
 		return __builtin_abs(_len);// (_len < 0) ? -_len : _len;

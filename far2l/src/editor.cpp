@@ -1692,7 +1692,9 @@ int Editor::ProcessKey(FarKey Key)
 				if (EdOpt.PersistentBlocks)
 					Show();
 				else {
-					CurLine->FastShow();
+					if (!Pasting) {
+						CurLine->FastShow();
+					}
 					ShowEditor(LeftPos == CurLine->GetLeftPos());
 				}
 			}
@@ -2446,8 +2448,10 @@ int Editor::ProcessKey(FarKey Key)
 
 					if (PrevMaxPos > CurLine->GetCellCurPos()) {
 						CurLine->SetCellCurPos(PrevMaxPos);
-						CurLine->FastShow();
-						CurLine->SetCellCurPos(PrevMaxPos);
+						if (!Pasting) {
+							CurLine->FastShow();
+							CurLine->SetCellCurPos(PrevMaxPos);
+						}
 						Show();
 					}
 				}
@@ -2473,8 +2477,10 @@ int Editor::ProcessKey(FarKey Key)
 						Show();
 					if (PrevMaxPos > CurLine->GetCellCurPos()) {
 						CurLine->SetCellCurPos(PrevMaxPos);
-						CurLine->FastShow();
-						CurLine->SetCellCurPos(PrevMaxPos);
+						if (!Pasting) {
+							CurLine->FastShow();
+							CurLine->SetCellCurPos(PrevMaxPos);
+						}
 						Show();
 					}
 				}
@@ -2610,7 +2616,9 @@ case KEY_CTRLNUMPAD3: {
 
 
 		if (Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) {
-			CurLine->FastShow();
+			if (!Pasting) {
+				CurLine->FastShow();
+			}
 		}
 
 		Show();
@@ -2625,8 +2633,10 @@ case KEY_CTRLNUMPAD3: {
 
 				Flags.Set(FEDITOR_NEWUNDO);
 				InsertString();
-				CurLine->FastShow();
-				Show();
+				if (!Pasting) {
+					CurLine->FastShow();
+					Show();
+				}
 			}
 
 			return TRUE;

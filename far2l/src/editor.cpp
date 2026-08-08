@@ -1008,7 +1008,7 @@ int Editor::BlockStart2NumLine(int *Pos)
 			if (VBlockStart)
 				*Pos = eBlock->RealPosToCell(eBlock->CellPosToReal(VBlockX));
 			else
-				*Pos = eBlock->RealPosToCell(eBlock->SelStart);
+				*Pos = eBlock->RealPosToCell(eBlock->GetSelection().first);
 		}
 
 		return CalcDistance(TopList, eBlock, -1);
@@ -1802,12 +1802,12 @@ int Editor::ProcessKey(FarKey Key)
 							int SelStartPos = CurPos;
 							CurLine->ProcessKey(KEY_END);
 							CurPos = CurLine->GetCurPos();
-
-							if (CurLine->SelStart >= 0) {
+							const auto &CurSel = CurLine->GetSelection();
+							if (CurSel.first >= 0) {
 								if (!SelAtBeginning)
-									CurLine->Select(CurLine->SelStart, CurPos);
+									CurLine->Select(CurSel.first, CurPos);
 								else
-									CurLine->Select(CurPos, CurLine->SelEnd);
+									CurLine->Select(CurPos, CurSel.second);
 							} else
 								CurLine->Select(CurPos, SelStartPos);
 						}

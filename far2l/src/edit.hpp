@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FilesSuggestor.hpp"
 #include "EcoString.hpp"
 #include "EcoVector.hpp"
+#include "EcoFields.hpp"
 #include <memory>
 #include <vector>
 #include <vector>
@@ -127,8 +128,7 @@ struct IEditListener
 	virtual void OnEditChanged(Edit *edit) = 0;
 };
 
-
-class Edit : public ThinScreenObject
+class Edit : public ThinScreenObject, private EcoFields<Edit>
 {
 	friend class DlgEdit;
 	friend class Editor;
@@ -136,23 +136,37 @@ class Edit : public ThinScreenObject
 	friend class EditControl;
 	friend class PauseEditListener;
 	friend class Edit2Settings;
+	friend class EcoFields<Edit>;
+
+	struct Fields // lazily instantiated and accessed by EcoFields<Edit>::MyEcoFields
+	{
+		EcoVector<ColorItem> ColorList;
+		EcoVector<int> WrapBreaks;
+
+		int LeftPos{0};
+		int CurPos{0};
+		int PrevCurPos{0};		// 12.08.2000 KM - предыдущее положение курсора
+		int CursorPos{0};
+		int MSelStart{-1};
+		int SelStart{-1};
+		int SelEnd{0};
+
+		bool IsDefault() const
+		{
+			return LeftPos == 0 && CurPos == 0 && PrevCurPos == 0 && CursorPos == 0
+				&& MSelStart == -1 && SelStart == -1 && SelEnd == 0
+				&& WrapBreaks.empty() && ColorList.empty();
+		}
+
+	};
 
 public:
 	Edit *m_next;
 	Edit *m_prev;
 
-private:
-	EcoVector<ColorItem> ColorList;
-	EcoVector<int> m_WrapBreaks;
-	EcoString Str;
 
-	int LeftPos;
-	int CurPos;
-	int PrevCurPos;		// 12.08.2000 KM - предыдущее положение курсора
-	int MSelStart;
-	int SelStart;
-	int SelEnd;
-	int CursorPos;
+private:
+	EcoString Str;
 
 private:
 	virtual void DisplayObject();
@@ -188,8 +202,8 @@ protected:
 	int CalcPosFwdTo(int Pos, int LimitPos = -1) const;
 	int CalcPosBwdTo(int Pos) const;
 
-	inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
-	inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
+	inline int CalcPosFwd(int LimitPos = -1) const;
+	inline int CalcPosBwd() const;
 
 	int FindVisualLine(int Pos) const;
 	int GetVisualLineCount() const;
@@ -262,16 +276,12 @@ public:
 
 	void SetClearFlag(int Flag) { Flags.Change(FEDITLINE_CLEARFLAG, Flag); }
 	int GetClearFlag() { return Flags.Check(FEDITLINE_CLEARFLAG); }
-	void SetCurPos(int NewPos)
-	{
-		CurPos = NewPos;
-		PrevCurPos = NewPos;
-	}
-	int GetCurPos() { return (CurPos); }
+	void SetCurPos(int NewPos);
+	int GetCurPos();
 	int GetCellCurPos();
 	void SetCellCurPos(int NewPos);
-	int GetLeftPos() { return (LeftPos); }
-	void SetLeftPos(int NewPos) { LeftPos = NewPos; }
+	int GetLeftPos();
+	void SetLeftPos(int NewPos);
 	void SetPasswordMode(int Mode) { Flags.Change(FEDITLINE_PASSWORDMODE, Mode); };
 	void SetMaxLength(int Length);
 
@@ -292,7 +302,13 @@ public:
 	void Select(int Start, int End);
 	void AddSelect(int Start, int End);
 	void GetSelection(int &Start, int &End);
-	BOOL IsSelection() { return SelStart == -1 && !SelEnd ? FALSE : TRUE; };
+	std::pair<int, int> GetSelection()
+	{
+		std::pair<int, int> out;
+		GetSelection(out.first, out.second);
+		return out;
+	}
+	bool IsSelection();
 	void GetRealSelection(int &Start, int &End);
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
 	void SetWordWrap(int Wrap) { Flags.Change(FEDITLINE_WORDWRAP, Wrap != 0); }

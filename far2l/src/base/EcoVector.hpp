@@ -70,12 +70,23 @@ public:
 
 	EcoVector() = default;
 
+	EcoVector(EcoVector &&o) noexcept : _content(o._content)
+	{
+		o._content = nullptr;
+	}
+
 	~EcoVector()
 	{
 		if (_content) {
 			resize(0);
 			ASSERT(!_content);
 		}
+	}
+
+	EcoVector &operator=(EcoVector &&o) noexcept
+	{
+		std::swap(_content, o._content);
+		return *this;
 	}
 
 	bool empty() const
@@ -167,6 +178,7 @@ public:
 		}
 	}
 
+	void swap(EcoVector<T, FIRST_ENLARGE> &another) { std::swap(_content, _content.another); }
     iterator begin() { return data(); }
     iterator end() { return data() + size(); }
     const_iterator begin() const { return data(); }

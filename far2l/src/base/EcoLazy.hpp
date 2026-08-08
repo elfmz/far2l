@@ -78,17 +78,11 @@ public:
 	class See // provides unsynchronized with other writers in same scope (if any) read-only access, somewhat faster than Use
 	{
 		const FieldsT *_fields;
-		static const FieldsT &DefaultFields()
-		{
-			static const FieldsT s_out;
-			return s_out;
-		}
-
 	public:
 		See(const EcoLazy &el) : _fields(el._container)
 		{
 			if (!_fields) {
-				_fields = &DefaultFields();
+				_fields = &FieldsT::Default;
 			}
 		}
 		const FieldsT *operator ->()

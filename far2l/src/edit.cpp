@@ -148,6 +148,8 @@ public:
 	}
 };
 
+Edit::Fields Edit::Fields::Default;
+
 static std::vector<wchar_t> s_render_buffer;
 
 enum
@@ -545,9 +547,8 @@ void Edit::FastShow()
 	size_t OutStrCells = 0;
 	bool joining = false;
 	for (int i = RealLeftPos; i < Str.Size() && int(OutStrCells) < EditLength; ++i) {
-		auto wc = Str[i];
-		auto showSymbols = (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE))
-				|| i >= iTrailingSpacesPos;
+		wchar_t wc = Str[i];
+		auto showSymbols = (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) || i >= iTrailingSpacesPos;
 		if (showSymbols) {
 			switch(wc) {
 				case 0x0020: //space
@@ -2402,7 +2403,7 @@ void Edit::SetCurPos(int NewPos)
 
 int Edit::GetLeftPos()
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return (my->LeftPos);
 }
 
@@ -2414,13 +2415,13 @@ void Edit::SetLeftPos(int NewPos)
 
 int Edit::GetCurPos()
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return (my->CurPos);
 }
 
 int Edit::GetCellCurPos()
 {
-	MyEcoLazy::Use my(fields);
+	MyEcoLazy::See my(fields);
 	return (RealPosToCell(my->CurPos));
 }
 
@@ -2738,8 +2739,8 @@ size_t Edit::DeleteColor(int ColorPos)
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	MyEcoLazy::Use my(fields);
-	if (Item >= (int)my->ColorList.size())
+	MyEcoLazy::See my(fields);
+	if ((size_t)Item >= my->ColorList.size())
 		return false;
 
 	*col = my->ColorList[Item];
@@ -3118,7 +3119,7 @@ EditControl::EditControl(ScreenObject *pOwner, History *iHistory, FarList *iList
 void EditControl::ShowArrows()
 {
 	if (OverflowArrowsColor > 0) {
-		MyEcoLazy::Use my(fields);
+		MyEcoLazy::See my(fields);
 		if (RealPosToCell(Str.Size()) > my->LeftPos + X2 - X1 && RealPosToCell(my->CurPos) != my->LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);

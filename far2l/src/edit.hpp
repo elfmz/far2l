@@ -156,6 +156,9 @@ private:
 		int SelStart{-1};
 		int SelEnd{0};
 
+		// things below needed for EcoLazy
+		static Fields Default;
+
 		bool IsDefault() const
 		{
 			return LeftPos == 0 && CurPos == 0 && PrevCurPos == 0 && CursorPos == 0

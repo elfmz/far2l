@@ -28,6 +28,41 @@ EcoString::~EcoString()
 	MakeEmpty();
 }
 
+EcoString &EcoString::operator =(const EcoString& src)
+{
+	if (this != &src) {
+		MakeEmpty();
+		_len = src._len;
+		_data = src._data;
+		if (_len < 0) {
+			if (size_t(-_len) > sizeof(_data)) {
+				_data.pmb = (unsigned char *)malloc(-_len);
+				if (LIKELY(_data.pws)) {
+					memcpy(_data.pmb, src._data.pmb, -_len);
+					++s_stats.char_heap;
+				} else {
+					fprintf(stderr, "EcoString::operator= strdup failed len=%d\n", _len);
+					_len = 0;
+				}
+			} else {
+				++s_stats.char_local;
+			}
+		} else if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
+			_data.pws = (wchar_t *)malloc((_len + 1) * sizeof(wchar_t));
+			if (LIKELY(_data.pws)) {
+				wmemcpy(_data.pws, src._data.pws, _len + 1);
+				++s_stats.wide_heap;
+			} else {
+				fprintf(stderr, "EcoString::operator= wcsdup failed len=%d\n", _len);
+				_len = 0;
+			}
+		} else if (_len != 0) {
+			++s_stats.wide_local;
+		}
+	}
+	return *this;
+}
+
 void EcoString::Swap(EcoString &another)
 {
 	std::swap(_data, another._data);
@@ -162,6 +197,35 @@ bool EcoString::EnsureWide() const
 	_data.pws = pws;
 	_len = -_len;
 	return true;
+}
+
+
+template <class CHAR_LEFT, class CHAR_RIGHT>
+	static bool TypeInvariantEqual(const CHAR_LEFT *left, const CHAR_RIGHT *right, int cnt)
+{
+	for (int i = 0; i < cnt; ++i) {
+		if ((unsigned int)left[i] != (unsigned int)right[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool EcoString::EqualTo(const wchar_t *data, int cnt) const
+{
+	if (cnt != Size())
+		return false;
+
+	if (_len < 0) {
+		if (size_t(cnt) > sizeof(_data)) {
+			return TypeInvariantEqual(_data.pmb, data, cnt);
+		}
+		return TypeInvariantEqual(_data.lmb, data, cnt);
+
+	} else if (((cnt + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		return TypeInvariantEqual(_data.pws, data, cnt);
+	}
+	return TypeInvariantEqual(_data.lws, data, cnt);
 }
 
 void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const

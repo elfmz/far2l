@@ -81,17 +81,19 @@ struct EditorCacheParams
 
 struct EditorUndoData
 {
-	int Type {0};
+	EcoString Str;
+	char EOL[4]{0};
 	int StrPos {0};
 	int StrNum {0};
-	wchar_t EOL[10]{0};
-	int Length {0};
-	wchar_t *Str {nullptr};
+	short Type {0};
+	bool HasStr{false};
+//	wchar_t EOL[10]{0};
+//	int Length {0};
+//	wchar_t *Str {nullptr};
 
 	EditorUndoData() = default;
 	~EditorUndoData()
 	{
-	    delete[] Str;
 	}
 	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
 	{
@@ -99,32 +101,47 @@ struct EditorUndoData
 	}
 	EditorUndoData& operator=(const EditorUndoData &src)
 	{
-		if (this != &src)
-		{
-			SetData(src.Type, src.Str, src.EOL, src.StrNum, src.StrPos, src.Length);
+		if (this != &src) {
+			Type = src.Type;
+			StrPos = src.StrPos;
+			StrNum = src.StrNum;
+			CharArrayCpyZ(EOL, src.EOL);
+			HasStr = src.HasStr;
+			Str = src.Str;
 		}
 		return *this;
 	}
-	void SetData(int Type, const wchar_t *Str, const wchar_t *Eol, int StrNum, int StrPos, int Length = -1)
-	{
-		if (Length == -1 && Str)
-			Length = (int)StrLength(Str);
 
+	void SetData(short Type, int StrNum, int StrPos, const wchar_t *Str, const wchar_t *Eol, int Length = -1)
+	{
 		this->Type = Type;
 		this->StrPos = StrPos;
 		this->StrNum = StrNum;
-		this->Length = Length;
-		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
-
-	    delete[] this->Str;
-
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
 		if (Str) {
-			this->Str = new (std::nothrow) wchar_t[Length + 1];
+			this->Str.Assign(Str, (Length < 0) ? StrLength(Str) : Length, true);
+			HasStr = true;
+		} else {
+			this->Str.Truncate();
+			HasStr = false;
+		}
+	}
+	void SetData(short Type, int StrNum, int StrPos, Edit *Line)
+	{
+		this->Type = Type;
+		this->StrPos = StrPos;
+		this->StrNum = StrNum;
+		const wchar_t *Eol = nullptr;
+		Line->GetString(this->Str, &Eol);
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
+		HasStr = true;
+	}
 
-			if (this->Str)
-				wmemmove(this->Str, Str, Length);
-		} else
-			this->Str = nullptr;
+	void ToEdit(Edit *Line)
+	{
+		Line->SetString(Str.CPtr(), Str.Size());
+		Line->SetEOL(EOL);	// необходимо дополнительно выставлять, т.к. SetString вызывает Edit::SetBinaryString и... дальше по тексту
+		Str.Compact();
 	}
 };
 
@@ -321,8 +338,8 @@ void GoToVisualLine(int VisualLine);
 
 	void ProcessPasteEvent();
 
-	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
-			int StrPos = 0, int Length = -1);
+	void AddUndoData(short Type, int StrNum = 0, int StrPos = 0, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int Length = -1);
+
 	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();

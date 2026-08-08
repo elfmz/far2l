@@ -40,9 +40,6 @@ class EcoString
 	// if _len >= 0 && _len * sizeof(wc) < sizeof(_data): using _data.lmb
 	mutable int _len = 0;
 
-	EcoString(const EcoString& src) = delete;
-	EcoString &operator =(const EcoString& src) = delete;
-
 	void MakeEmpty();
 	bool MakeWideLength(int len);
 
@@ -55,7 +52,6 @@ public:
 	EcoString() = default;
 	~EcoString();
 
-
 	EcoString(EcoString &&o) noexcept
 	{
 		Swap(o);
@@ -67,6 +63,14 @@ public:
 		return *this;
 	}
 
+
+	EcoString(const EcoString& src)
+	{
+		operator=(src);
+	}
+
+	EcoString &operator =(const EcoString& src);
+
 	inline int Size() const
 	{
 		return __builtin_abs(_len);// (_len < 0) ? -_len : _len;
@@ -77,6 +81,11 @@ public:
 	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
 	void CopyTo(std::wstring &dst) const;
 	void CopyTo(FARString &dst) const;
+	void CopyTo(EcoString &dst) const { dst = *this; }
+
+	bool EqualTo(const wchar_t *data, int cnt) const;
+	bool EqualTo(const std::wstring &to) const { return EqualTo(to.c_str(), to.size()); }
+	bool EqualTo(const FARString &to) const { return EqualTo(to.CPtr(), to.GetLength()); }
 
 	void Swap(EcoString &another);
 

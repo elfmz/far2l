@@ -475,26 +475,10 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 	Info->KeyBar           = nullptr;
 	Info->ShortcutData     = nullptr;
 
-	// Panel mode storage
-	static PanelMode connectedMode = {
-		.ColumnTypes        = L"N,C0",
-		.ColumnWidths       = L"0,0",
-		.ColumnTitles       = nullptr, // set later
-		.FullScreen         = 0,
-		.DetailedStatus     = 1,
-		.AlignExtensions    = 0,
-		.CaseConversion     = 0,
-		.StatusColumnTypes  = L"N,C0",
-		.StatusColumnWidths = L"0,0",
-		.Reserved           = {0, 0}
-	};
+	// No PanelMode is declared for the file panel on purpose - see the _isConnected branch below.
 
-	// Static storage so the pointer stored in `connectedMode.ColumnTitles` outlives this call;
-	// values refreshed on every invocation so language changes are picked up.
-	static const wchar_t* connectedTitles[2];
-	connectedTitles[0] = Lng(MColName);
-	connectedTitles[1] = Lng(MColSize);
-
+	// Static storage so the pointer stored in deviceMode.ColumnTitles outlives this call; values
+	// refreshed on every invocation so a language change is picked up.
 	static PanelMode deviceMode = {
 		.ColumnTypes        = L"N,C0,C1,C2",
 		.ColumnWidths       = L"0,30,0,8",
@@ -508,7 +492,6 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	// See note above on connectedTitles — same lifetime requirement.
 	static const wchar_t* deviceTitles[4];
 	deviceTitles[0] = Lng(MColSerial);
 	deviceTitles[1] = Lng(MColDeviceName);
@@ -516,8 +499,18 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 	deviceTitles[3] = Lng(MColPort);
 
 	if (_isConnected) {
-		connectedMode.ColumnTitles = connectedTitles;
-		Info->PanelModesArray      = &connectedMode;
+		// Deliberately no PanelModesArray for the file panel: which view modes exist, what columns
+		// they carry and how the user customises them are far2l's business, and everything they
+		// need is already in the items (real dwUnixMode, size, timestamps, Owner, Group). This
+		// mirrors NetRocks, which likewise supplies no modes while browsing a remote filesystem.
+		//
+		// Note far2l merges rather than replaces - flshow.cpp:630 starts from its own
+		// ViewSettingsArray[ViewMode] and overrides only when ViewMode < PanelModesNumber - so the
+		// previous single-entry array hijacked exactly view mode 0, pinning it to "N,C0" with a
+		// Size column that always rendered blank because GetFileData never fills CustomColumnData.
+		Info->PanelModesArray      = nullptr;
+		Info->PanelModesNumber     = 0;
+		Info->StartPanelMode       = 0; // keep whatever view mode the user last chose
 		Info->Flags                = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 		// Leave StartSortMode = 0; flplugin.cpp:904 re-applies it on every SetPluginMode and would wipe the user's sort choice.
 
@@ -532,16 +525,25 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		Info->CurDir  = _curDirW.c_str();
 		Info->Format  = _formatW.c_str();
 	} else {
+		// The selector is not a filesystem - its rows are devices, so size/date columns would be
+		// meaningless. It therefore does pin its own columns, and pins them for *every* view mode:
+		// far2l overrides only the modes below PanelModesNumber, so filling a single slot would
+		// leave Ctrl+2..9 drawing built-in file columns over device pseudo-items. Same reasoning
+		// and same shape as NetRocks' site-connections list.
 		deviceMode.ColumnTitles = deviceTitles;
-		Info->PanelModesArray   = &deviceMode;
+		static PanelMode deviceModes[10];
+		for (auto &m : deviceModes) {
+			m = deviceMode;
+		}
+		Info->PanelModesArray   = deviceModes;
+		Info->PanelModesNumber  = ARRAYSIZE(deviceModes);
+		Info->StartPanelMode    = 0;
 		Info->Flags             = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING | OPIF_SHOWNAMESONLY;
 
 		Info->CurDir = L"";
 		Info->Format = L"ADB";
 	}
 
-	Info->StartPanelMode = 0;
-	Info->PanelModesNumber  = 1;
 	Info->PanelTitle     = _PanelTitle;
 }
 

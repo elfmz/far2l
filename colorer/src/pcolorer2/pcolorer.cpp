@@ -133,6 +133,28 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
   return result;
 }
 
+static bool SynchroPending = false;
+
+void colorerRequestSynchro()
+{
+  if (!SynchroPending) {
+    SynchroPending = true;
+    Info.AdvControl(Info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+  }
+}
+
+SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void* Param)
+{
+  (void) Param;
+  if (Event == SE_COMMONSYNCHRO) {
+    SynchroPending = false;
+    if (editorSet) {
+      editorSet->onSynchroTick();
+    }
+  }
+  return 0;
+}
+
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
 {
   if (inEventProcess) {

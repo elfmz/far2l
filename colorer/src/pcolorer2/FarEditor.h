@@ -132,6 +132,7 @@ class FarEditor : public LineSource
   int editorEvent(int event, void* param);
   /** Dispatch editor input event */
   int editorInput(const INPUT_RECORD* ir);
+  bool backgroundParseTick(int msBudget);
 
   void cleanEditor();
 
@@ -160,7 +161,6 @@ class FarEditor : public LineSource
   int WindowSizeX = 0;
   int WindowSizeY = 0;
   bool inRedraw = false;
-  int idleCount = 0;
 
   int prevLinePosition = 0;
   int blockTopPosition = -1;

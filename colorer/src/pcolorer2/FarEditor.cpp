@@ -1,4 +1,5 @@
 #include "FarEditor.h"
+#include <chrono>
 #include <vector>
 
 const UnicodeString DShowCross("show-cross");
@@ -434,29 +435,46 @@ void FarEditor::updateHighlighting()
   baseEditor->validate(ei.TopScreenLine, true);
 }
 
+// Parses pending (invalid) lines for at most msBudget milliseconds and
+// triggers editor redraw once parsed area reaches the visible window.
+// Returns true if there is still work left after the budget is over.
+//
+// Rationale: a single idleJob() call parses at most ~500 lines, while
+// KEY_IDLE arrives roughly twice a second, capping background highlighting
+// at ~1000 lines/sec regardless of CPU speed. Parsing by time budget
+// keeps UI responsive but lets modern CPU parse tens of thousands lines
+// per second; and if work still remains, caller requests a synchro event
+// to continue almost immediately instead of waiting for the next KEY_IDLE.
+bool FarEditor::backgroundParseTick(int msBudget)
+{
+  if (!baseEditor->haveInvalidLine()) {
+    return false;
+  }
+
+  auto invalid_line1 = baseEditor->getInvalidLine();
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(msBudget);
+  do {
+    baseEditor->idleJob(100);
+  } while (baseEditor->haveInvalidLine() && std::chrono::steady_clock::now() < deadline);
+  auto invalid_line2 = baseEditor->getInvalidLine();
+
+  EditorInfo ei = getEditorInfo();
+  if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
+      (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
+       invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
+  {
+    info->EditorControl(ECTL_REDRAW, nullptr);
+  }
+
+  return baseEditor->haveInvalidLine();
+}
+
 int FarEditor::editorInput(const INPUT_RECORD* ir)
 {
   if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
-    if (baseEditor->haveInvalidLine()) {
-      auto invalid_line1 = baseEditor->getInvalidLine();
-      idleCount++;
-      if (idleCount > 10) {
-        idleCount = 10;
-      }
-      baseEditor->idleJob(idleCount * 10);
-      auto invalid_line2 = baseEditor->getInvalidLine();
-
-      EditorInfo ei = getEditorInfo();
-      if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
-          (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
-           invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
-      {
-        info->EditorControl(ECTL_REDRAW, nullptr);
-      }
+    if (backgroundParseTick(50)) {
+      colorerRequestSynchro();
     }
-  }
-  else if (ir->EventType == KEY_EVENT) {
-    idleCount = 0;
   }
 
   return 0;

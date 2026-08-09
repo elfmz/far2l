@@ -321,10 +321,11 @@ public:
 	void Select(int Start, int End);
 	void AddSelect(int Start, int End);
 	void GetSelection(int &Start, int &End);
-	std::pair<int, int> GetSelection()
+	struct Selection { int Start, End; };
+	Selection GetSelection()
 	{
-		std::pair<int, int> out;
-		GetSelection(out.first, out.second);
+		Selection out;
+		GetSelection(out.Start, out.End);
 		return out;
 	}
 	bool IsSelection();

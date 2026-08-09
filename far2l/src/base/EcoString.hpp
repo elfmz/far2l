@@ -76,7 +76,7 @@ public:
 		return __builtin_abs(_len);// (_len < 0) ? -_len : _len;
 	}
 
-	bool Assign(const wchar_t *data, int len, bool compact = false);
+	bool Assign(const wchar_t *data, int len, bool try_compact = true);
 	void Compact(); // makes string compact if possible
 	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
 	void CopyTo(std::wstring &dst) const;

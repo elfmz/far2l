@@ -2047,7 +2047,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		*/
 		RefreshStrByMask(!*Str);
 	} else {
-		if (!this->Str.Assign(Str, Length, true)) {
+		if (!this->Str.Assign(Str, Length)) {
 			fprintf(stderr, "Edit::SetBinaryString: failed to assign to length of %d\n", Length);
 			return;
 		}
@@ -2588,7 +2588,9 @@ void Edit::Select(int Start, int End)
 	my->SelStart = Start;
 	my->SelEnd = End;
 
-	SanitizeSelectionRange();
+	if (Start != -1 || End != 0) {
+		SanitizeSelectionRange();
+	}
 }
 
 void Edit::AddSelect(int Start, int End)

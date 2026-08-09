@@ -31,10 +31,10 @@ EcoString::~EcoString()
 EcoString &EcoString::operator =(const EcoString& src)
 {
 	if (this != &src) {
-		MakeEmpty();
-		_len = src._len;
-		_data = src._data;
-		if (_len < 0) {
+		if (src._len < 0) {
+			MakeEmpty();
+			_len = src._len;
+			_data = src._data;
 			if (size_t(-_len) > sizeof(_data)) {
 				_data.pmb = (unsigned char *)malloc(-_len);
 				if (LIKELY(_data.pws)) {
@@ -47,17 +47,8 @@ EcoString &EcoString::operator =(const EcoString& src)
 			} else {
 				++s_stats.char_local;
 			}
-		} else if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
-			_data.pws = (wchar_t *)malloc((_len + 1) * sizeof(wchar_t));
-			if (LIKELY(_data.pws)) {
-				wmemcpy(_data.pws, src._data.pws, _len + 1);
-				++s_stats.wide_heap;
-			} else {
-				fprintf(stderr, "EcoString::operator= wcsdup failed len=%d\n", _len);
-				_len = 0;
-			}
-		} else if (_len != 0) {
-			++s_stats.wide_local;
+		} else {
+			Assign(src.CPtr(), src.Size());
 		}
 	}
 	return *this;
@@ -147,9 +138,9 @@ bool EcoString::TryAssignCompact(const wchar_t *data, int len)
 	return true;
 }
 
-bool EcoString::Assign(const wchar_t *data, int len, bool compact)
+bool EcoString::Assign(const wchar_t *data, int len, bool try_compact)
 {
-	if (!compact || !TryAssignCompact(data, len)) {
+	if (!try_compact || !TryAssignCompact(data, len)) {
 		if (!MakeWideLength(len)) {
 			return false;
 		}
@@ -249,9 +240,16 @@ void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 
 void EcoString::CopyTo(std::wstring &dst) const
 {
-	dst.resize(Size());
-	if (!dst.empty()) {
-		CopyTo(dst.data(), 0, dst.size());
+	if (_len < 0) {
+		if (size_t(-_len) > sizeof(_data)) {
+			dst.assign(_data.pmb, _data.pmb + -_len);
+		} else {
+			dst.assign(&_data.lmb[0], &_data.lmb[0] + -_len);
+		}
+	} else if (((_len + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		dst.assign(&_data.pws[0], _len);
+	} else {
+		dst.assign(&_data.lws[0], _len);
 	}
 }
 

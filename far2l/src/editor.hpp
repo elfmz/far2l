@@ -87,9 +87,6 @@ struct EditorUndoData
 	int StrNum {0};
 	short Type {0};
 	bool HasStr{false};
-//	wchar_t EOL[10]{0};
-//	int Length {0};
-//	wchar_t *Str {nullptr};
 
 	EditorUndoData() = default;
 	~EditorUndoData()
@@ -111,32 +108,30 @@ struct EditorUndoData
 		}
 		return *this;
 	}
-
-	void SetData(short Type, int StrNum, int StrPos, const wchar_t *Str, const wchar_t *Eol, int Length = -1)
+	void SetAttributes(short SetType, int SetStrNum, int SetStrPos)
 	{
-		this->Type = Type;
-		this->StrPos = StrPos;
-		this->StrNum = StrNum;
+		Type = SetType;
+		StrNum = SetStrNum;
+		StrPos = SetStrPos;
+	}
+	void SetData(const wchar_t *SetStr, const wchar_t *Eol, int Length = -1)
+	{
 		CharArrayCpyZ(EOL, Eol ? Eol : L"");
-		if (Str) {
-			this->Str.Assign(Str, (Length < 0) ? StrLength(Str) : Length, true);
+		if (SetStr) {
+			Str.Assign(SetStr, (Length < 0) ? StrLength(SetStr) : Length);
 			HasStr = true;
 		} else {
-			this->Str.Truncate();
+			Str.Truncate();
 			HasStr = false;
 		}
 	}
-	void SetData(short Type, int StrNum, int StrPos, Edit *Line)
+	void SetData(Edit *Line)
 	{
-		this->Type = Type;
-		this->StrPos = StrPos;
-		this->StrNum = StrNum;
 		const wchar_t *Eol = nullptr;
 		Line->GetString(this->Str, &Eol);
 		CharArrayCpyZ(EOL, Eol ? Eol : L"");
 		HasStr = true;
 	}
-
 	void ToEdit(Edit *Line)
 	{
 		Line->SetString(Str.CPtr(), Str.Size());
@@ -234,6 +229,7 @@ private:
 
 	int XX2;	// scrollbar
 
+	std::wstring strTmp;
 	FARString strLastSearchStr;
 	/*
 		$ 30.07.2000 KM
@@ -320,7 +316,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
-void GoToVisualLine(int VisualLine);
+	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 
@@ -338,7 +334,9 @@ void GoToVisualLine(int VisualLine);
 
 	void ProcessPasteEvent();
 
+	void AddUndoData(short Type, int StrNum, int StrPos, Edit *Line);
 	void AddUndoData(short Type, int StrNum = 0, int StrPos = 0, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int Length = -1);
+	EditorUndoData *BeginAddingUndoData(short Type, int StrNum, int StrPos);
 
 	void AdjustScreenPosition();
 	void Undo(int redo);

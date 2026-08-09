@@ -39,6 +39,7 @@ $^(help file last translated for build 882)
    ~Parancs elözmények~@History@
    ~Mappakeresés~@FindFolder@
    ~Mappák összehasonlítása~@CompFolders@
+   ~Fájlok összehasonlítása~@FileDiff@
    ~Felhasználói menü~@UserMenu@
    ~Meghajtóváltás (Meghajtók menü)~@DriveDlg@
 
@@ -2487,6 +2488,42 @@ az aktuális meghajtó betűjelét és az elérési utat tartalmazza.
    2. ^<wrap>A #[$T$H$H$H]$S$P$G# formátumú promptban az aktuális idő
 (óó:pp) után a meghajtó betűjele és az elérési út áll.
 
+
+@FileDiff
+$ #Fájlok összehasonlítása#
+    A FileDiff az aktív és a passzív fájlpanelen kijelölt fájlokat hasonlítja
+össze. Az aktív panel fájlja bal oldalon, a passzív panel fájlja jobb oldalon
+jelenik meg. A módosult sorok és a sorokon belüli eltérések kiemelve láthatók.
+A középső elválasztón minden módosításblokkhoz egyesítési nyilak tartoznak.
+
+    Mindkét panel szerkeszthető. A sortörés, sorszámozás, szintaxiskiemelés,
+keresés, vágólapműveletek és a szerkesztő szokásos visszavonási és ismétlési
+parancsai használhatók.
+
+    #F1#                 E súgó megjelenítése
+    #F2#                 Az aktív fájl mentése
+    #F5#                 Az aktuális módosításblokk egyesítése
+    #Tab, Shift-Tab#     Fókuszváltás a bal panel, az elválasztó és a jobb panel között
+    #Bal, Jobb#          Az egyesítés irányának kiválasztása az elválasztón
+    #Enter#              A kiválasztott egyesítés alkalmazása
+    #Ctrl-Fel#           Ugrás az előző módosításblokkra
+    #Ctrl-Le#            Ugrás a következő módosításblokkra
+    #F7#                 Keresés az aktív panelen
+    #Shift-F7#           A keresés folytatása
+    #Ctrl-Z#             Visszavonás az aktív panelen
+    #Ctrl-Shift-Z#       Ismétlés az aktív panelen
+    #F11#                A szerkesztő bővítménymenüjének megnyitása
+    #Esc, F10#           A FileDiff bezárása
+
+    Ha egy szövegpanel aktív, az #F5# az aktuális módosításblokkot a másik
+fájlba másolja. Ha az elválasztó aktív, a #Bal# vagy #Jobb# billentyűvel válassza
+ki a nyilat, majd nyomja meg az #Enter# vagy #F5# billentyűt. Egy nyílra kattintva
+az egyesítés azonnal megtörténik. Minden egyesítés egyetlen visszavonható
+műveletként kerül a célpanel előzményeibe.
+
+    A módosított fájlokat #*# jelöli. Bezáráskor a FileDiff felajánlja a
+módosított fájlok mentését. Heurisztikusan felismert kódolás esetén az első
+mentés előtt megerősítést kér.
 
 @Viewer
 $ #Nézőke: vezérlőbillentyűk#

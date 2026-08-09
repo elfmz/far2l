@@ -40,6 +40,7 @@ $^#File and archive manager#
    ~History~@History@
    ~Find folder~@FindFolder@
    ~Compare folders~@CompFolders@
+   ~Compare files~@FileDiff@
    ~User menu~@UserMenu@
    ~Location menu~@DriveDlg@
 
@@ -2918,6 +2919,41 @@ display the current time in HH:MM format before the current path
    3. ^<wrap>Code "$+" displays the number of pluses (+) needed according to
 current ~PUSHD~@OSCommands@ directory stack depth, one character per each
 saved path.
+
+@FileDiff
+$ #Compare files#
+    FileDiff compares the files selected on the active and passive file
+panels. The active panel's file is shown on the left and the passive panel's
+file on the right. Changed lines and changed parts within a line are
+highlighted. The center gutter contains merge arrows for each change block.
+
+    Both panes are editable. Word wrap, line numbers, syntax highlighting,
+search, clipboard commands, and the usual editor undo/redo keys are available.
+
+    #F1#                 Show this help
+    #F2#                 Save the active file
+    #F5#                 Merge the current change block
+    #Tab, Shift-Tab#     Move focus between the left pane, gutter, and right pane
+    #Left, Right#        Select merge direction while the gutter has focus
+    #Enter#              Apply the selected merge while the gutter has focus
+    #Ctrl-Up#            Go to the previous change block
+    #Ctrl-Down#          Go to the next change block
+    #F7#                 Search in the active pane
+    #Shift-F7#           Continue the search
+    #Ctrl-Z#             Undo in the active pane
+    #Ctrl-Shift-Z#       Redo in the active pane
+    #F11#                Open the editor plugins menu
+    #Esc, F10#           Close FileDiff
+
+    When a text pane has focus, #F5# copies its current change block to the
+other file. When the gutter has focus, use #Left# or #Right# to choose the
+arrow and #Enter# or #F5# to apply it. Clicking a gutter arrow applies that
+merge directly. Each merge is recorded as one undo operation in the target
+pane.
+
+    Modified files are marked with #*#. Closing FileDiff asks whether changed
+files should be saved. If a file's encoding was detected heuristically,
+FileDiff asks for confirmation before the first save.
 
 @Viewer
 $ #Viewer: control keys#

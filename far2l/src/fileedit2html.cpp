@@ -296,9 +296,7 @@ BOOL FileEditor::SendToPrinter()
 		std::string _tmpstr;
 
 		for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
-			const wchar_t *EndSeq;
-			const wchar_t *SaveStr = CurPtr->GetStringAddr(Length, &EndSeq);
-
+			const wchar_t *SaveStr = CurPtr->GetStringAddr(Length);
 			std::string tb;
 			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {
 				fputs(tb.c_str(), fp);

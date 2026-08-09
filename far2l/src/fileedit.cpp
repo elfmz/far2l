@@ -909,6 +909,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 
 		switch (Key) {
 			case KEY_F1: {
+				EcoString::sDebugPrintStats("F1");
 				Help::Present(L"Editor");
 				return TRUE;
 			}
@@ -927,8 +928,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 						m_editor->DeleteBlock();
 					}
 
-					// AddUndoData(CurLine->EditLine.GetStringAddr(),NumLine,
-					// CurLine->EditLine.GetCurPos(),UNDO_EDIT);
+					// AddUndoData(UNDO_EDIT, NumLine, CurLine->EditLine.GetCurPos(), CurLine);
 					m_editor->Paste(strFullFileName);	//???
 					// if (!EdOpt.PersistentBlocks)
 					m_editor->UnmarkBlock();
@@ -2329,8 +2329,7 @@ void FileEditor::ShowStatus()
 	size_t CharCodeWidth = 5;
 	{
 		const bool UCP = IsUnicodeOrUtfCodePage(m_codepage);
-		int Length = 0;
-		const wchar_t *Str = m_editor->CurLine->GetStringAddr(Length);
+		int Length = m_editor->CurLine->GetLength();
 		int CurPos = m_editor->CurLine->GetCurPos();
 		const size_t CharCodeInfoIdx = (m_editor->EdOpt.CharCodeBase % ARRAYSIZE(s_CCFI));
 		CharCodeWidth = s_CCFI[CharCodeInfoIdx].wide_width;
@@ -2342,14 +2341,15 @@ void FileEditor::ShowStatus()
 				$ 27.02.2001 SVS
 				Показываем в зависимости от базы
 			*/
-			strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].wide_fmt, (unsigned int)Str[CurPos]);
+			const wchar_t CurCh = m_editor->CurLine->GetChar(CurPos);
+			strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].wide_fmt, (unsigned int)CurCh);
 			if (!UCP) {
 				char C = 0;
 				BOOL UsedDefaultChar = FALSE;
 				WINPORT(WideCharToMultiByte)
-					(m_codepage, WC_NO_BEST_FIT_CHARS, &Str[CurPos], 1, &C, 1, 0, &UsedDefaultChar);
+					(m_codepage, WC_NO_BEST_FIT_CHARS, &CurCh, 1, &C, 1, 0, &UsedDefaultChar);
 
-				if (C && !UsedDefaultChar && static_cast<wchar_t>(C) != Str[CurPos]) {
+				if (C && !UsedDefaultChar && static_cast<wchar_t>(C) != CurCh) {
 					strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].mb_fmt, (unsigned int)(unsigned char)C);
 				}
 			}

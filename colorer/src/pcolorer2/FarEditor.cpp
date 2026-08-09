@@ -445,7 +445,31 @@ void FarEditor::updateHighlighting()
 // keeps UI responsive but lets modern CPU parse tens of thousands lines
 // per second; and if work still remains, caller requests a synchro event
 // to continue almost immediately instead of waiting for the next KEY_IDLE.
-bool FarEditor::backgroundParseTick(int msBudget)
+static int backgroundBudget = 50;
+bool FarEditor::backgroundParseTick()
+{
+  if (backgroundBudget < 100)
+    backgroundBudget+= 10;
+  return progressParse(backgroundBudget);
+}
+
+int FarEditor::editorInput(const INPUT_RECORD* ir)
+{
+  if (ir->EventType == KEY_EVENT) {
+    if (ir->Event.KeyEvent.wVirtualKeyCode == 0) {
+      if (progressParse(50)) {
+       backgroundBudget = std::max(backgroundBudget, 20);
+       colorerRequestSynchro();
+      }
+    } else {
+       backgroundBudget = 10;
+    }
+  }
+
+  return 0;
+}
+
+bool FarEditor::progressParse(int msBudget)
 {
   if (!baseEditor->haveInvalidLine()) {
     return false;
@@ -469,16 +493,6 @@ bool FarEditor::backgroundParseTick(int msBudget)
   return baseEditor->haveInvalidLine();
 }
 
-int FarEditor::editorInput(const INPUT_RECORD* ir)
-{
-  if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
-    if (backgroundParseTick(50)) {
-      colorerRequestSynchro();
-    }
-  }
-
-  return 0;
-}
 
 int FarEditor::editorEvent(int event, void* param)
 {

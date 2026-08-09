@@ -139,7 +139,7 @@ void colorerRequestSynchro()
 {
   if (!SynchroPending) {
     SynchroPending = true;
-    Info.AdvControl(Info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+    Info.AdvControl(Info.ModuleNumber, ACTL_SYNCHRO, nullptr, (void *)(LONG_PTR)FCTL_SYNCHRO_IDLE);
   }
 }
 

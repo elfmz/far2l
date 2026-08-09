@@ -132,7 +132,7 @@ class FarEditor : public LineSource
   int editorEvent(int event, void* param);
   /** Dispatch editor input event */
   int editorInput(const INPUT_RECORD* ir);
-  bool backgroundParseTick(int msBudget);
+  bool backgroundParseTick();
 
   void cleanEditor();
 
@@ -176,6 +176,7 @@ class FarEditor : public LineSource
   std::unique_ptr<Outliner> structOutliner;
   std::unique_ptr<Outliner> errorOutliner;
 
+  bool progressParse(int msBudget);
   void reloadTypeSettings();
   EditorInfo getEditorInfo() const;
   color convert(const StyledRegion* rd) const;

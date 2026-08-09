@@ -698,7 +698,7 @@ void FarEditorSet::onSynchroTick()
     return;
   }
   FarEditor* editor = getCurrentEditor();
-  if (editor && editor->backgroundParseTick(50)) {
+  if (editor && editor->backgroundParseTick()) {
     colorerRequestSynchro();
   }
 }

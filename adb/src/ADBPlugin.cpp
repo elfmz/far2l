@@ -2523,17 +2523,65 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			? (is_upload ? Lng(MMoveToDevice) : Lng(MMoveFromDevice))
 			: (is_upload ? Lng(MCopyToDevice) : Lng(MCopyFromDevice));
 
-		auto overwriteMode = std::make_shared<int>(0);
+		int overwriteMode = 0;  // 0=ask, 1=overwrite_all, 2=skip_all
 		const bool isMultiple = itemsCount > 1;
 
 		std::vector<WorkUnit> units;
 		units.reserve(itemsCount);
+		bool collision_abort = false;
 		for (int i = 0; i < itemsCount; i++) {
 			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
 			std::string localPath = ADBUtils::JoinPath(localDir, fileName);
 			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
 			const bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 			const uint64_t itemSize = isDir ? 0 : items[i].FindData.nFileSize;
+			// Resolve destination collisions HERE, on the main thread, before RunBatch().
+			// RunBatch() runs each unit on a worker thread while the main thread is parked inside
+			// ProgressDialog::Show(). FAR's dialog/console/FrameManager state is not thread-safe and
+			// both modal loops would pull from the same console input queue, so asking from the worker
+			// was unsafe on the ordinary F5 path whenever a destination already existed. The sibling
+			// paths (GetFiles, CrossPanelCopyMoveSameDevice) already resolve collisions up front.
+			bool dst_exists;
+			if (is_upload) {
+				dst_exists = adb->FileExists(devicePath);
+			} else {
+				struct stat st;
+				dst_exists = (stat(localPath.c_str(), &st) == 0);
+			}
+			if (dst_exists) {
+				// is_upload=true -> src is host, dst is device; is_upload=false -> reverse. Only the
+				// DESTINATION is ever rewritten below, so the source path that the move-delete uses
+				// further down stays valid.
+				const std::string &src_path = is_upload ? localPath  : devicePath;
+				const std::string &dst_path = is_upload ? devicePath : localPath;
+				auto src_adb = is_upload ? std::shared_ptr<ADBDevice>() : adb;
+				auto dst_adb = is_upload ? adb : std::shared_ptr<ADBDevice>();
+				uint64_t src_size = 0, dst_size = 0;
+				int64_t src_mtime = 0, dst_mtime = 0;
+				FillFileMeta(src_adb, src_path, isDir, src_size, src_mtime);
+				FillFileMeta(dst_adb, dst_path, isDir, dst_size, dst_mtime);
+				ProgressState dummyState;
+				const int action = CheckOverwrite(
+					StrMB2Wide(dst_path),
+					isMultiple, isDir, overwriteMode, dummyState,
+					src_size, src_mtime, dst_size, dst_mtime,
+					MakeOverwriteViewer(src_adb, src_path, isDir),
+					MakeOverwriteViewer(dst_adb, dst_path, isDir));
+				if (action == CA_ABORT) { collision_abort = true; break; }
+				if (action == CA_SKIP) continue;
+				if (action == CA_RENAME) {
+					std::string fresh = is_upload ? FindFreeAdbName(*adb, devicePath)
+					                             : FindFreeLocalName(localPath);
+					if (fresh.empty()) continue;
+					if (is_upload) devicePath = fresh; else localPath = fresh;
+					dst_exists = false;  // new name is free
+				} else if (action == CA_NEWER) {
+					const time_t srcMt = is_upload ? GetLocalMtime(localPath) : GetAdbMtime(*adb, devicePath);
+					const time_t dstMt = is_upload ? GetAdbMtime(*adb, devicePath) : GetLocalMtime(localPath);
+					if (srcMt > 0 && dstMt > 0 && srcMt <= dstMt) continue;
+					// else: fall through as overwrite
+				}
+			}
 
 			std::string metaKey = is_upload ? localPath : devicePath;
 			auto ut = ComputeUnitTotals(metaKey, isDir, itemSize, dirMetas);
@@ -2545,51 +2593,14 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			u.total_bytes = ut.total_bytes;
 			u.total_files = ut.total_files;
 
-			u.execute = [adb, is_upload, isDir, isMultiple, move, overwriteMode,
-			             localPath = std::move(localPath), devicePath = std::move(devicePath),
+			u.execute = [adb, is_upload, isDir, move, dst_exists,
+			             localPath, devicePath,
 			             itemSize, idx = std::move(idx)](ProgressTracker& tr) -> int {
-				bool dst_exists = false;
-				if (is_upload) {
-					dst_exists = adb->FileExists(devicePath);
-				} else {
-					struct stat st;
-					if (stat(localPath.c_str(), &st) == 0) dst_exists = true;
-				}
 				DBG("RunTransfer unit: is_upload=%d isDir=%d dst_exists=%d local='%s' device='%s'\n",
 					is_upload, isDir, dst_exists, localPath.c_str(), devicePath.c_str());
-				// Mutable copies — RENAME may rewrite dst path, ONLY_NEWER may flip dst_exists.
-				std::string activeLocal = localPath;
-				std::string activeDevice = devicePath;
-				if (dst_exists) {
-					// is_upload=true → src is host, dst is device. is_upload=false → reverse.
-					const std::string& src_path = is_upload ? activeLocal  : activeDevice;
-					const std::string& dst_path = is_upload ? activeDevice : activeLocal;
-					auto src_adb = is_upload ? std::shared_ptr<ADBDevice>() : adb;
-					auto dst_adb = is_upload ? adb : std::shared_ptr<ADBDevice>();
-					uint64_t src_size = 0, dst_size = 0;
-					int64_t src_mtime = 0, dst_mtime = 0;
-					FillFileMeta(src_adb, src_path, isDir, src_size, src_mtime);
-					FillFileMeta(dst_adb, dst_path, isDir, dst_size, dst_mtime);
-					int action = CheckOverwrite(
-						StrMB2Wide(dst_path),
-						isMultiple, isDir, *overwriteMode, tr.StateRef(),
-						src_size, src_mtime, dst_size, dst_mtime,
-						MakeOverwriteViewer(src_adb, src_path, isDir),
-						MakeOverwriteViewer(dst_adb, dst_path, isDir));
-					if (action == CA_SKIP || action == CA_ABORT) { tr.MarkSkipped(); return 0; }
-					if (action == CA_RENAME) {
-						std::string fresh = is_upload ? FindFreeAdbName(*adb, activeDevice)
-						                              : FindFreeLocalName(activeLocal);
-						if (fresh.empty()) { tr.MarkSkipped(); return 0; }
-						if (is_upload) activeDevice = fresh; else activeLocal = fresh;
-						dst_exists = false;  // new name is free
-					} else if (action == CA_NEWER) {
-						time_t srcMt = is_upload ? GetLocalMtime(activeLocal) : GetAdbMtime(*adb, activeDevice);
-						time_t dstMt = is_upload ? GetAdbMtime(*adb, activeDevice) : GetLocalMtime(activeLocal);
-						if (srcMt > 0 && dstMt > 0 && srcMt <= dstMt) { tr.MarkSkipped(); return 0; }
-						// else: fall through as overwrite
-					}
-				}
+				// Collisions were resolved before RunBatch, so these paths are already final.
+				const std::string &activeLocal = localPath;
+				const std::string &activeDevice = devicePath;
 				if (tr.Aborted()) return ECANCELED;
 
 				auto cb = [&](int pct, const std::string& path) {
@@ -2641,6 +2652,9 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 				return rc;
 			};
 			units.push_back(std::move(u));
+		}
+		if (collision_abort) {
+			return FALSE;
 		}
 
 		auto src_label = is_upload ? StrMB2Wide(localDir) : StrMB2Wide(deviceDir);

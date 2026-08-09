@@ -4,7 +4,7 @@
 #include "FarEditorSet.h"
 
 FarEditorSet* editorSet = nullptr;
-bool inEventProcess = false;
+unsigned inEventProcess = 0;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString* PluginPath = nullptr;
@@ -55,7 +55,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo* fei)
   Info.FSF = &FSF;
 
   editorSet = nullptr;
-  inEventProcess = false;
+  inEventProcess = 0;
 }
 
 /**
@@ -117,11 +117,11 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 */
 SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 {
-  if (inEventProcess) {
+  if (inEventProcess & 2) {
     return 0;
   }
 
-  inEventProcess = true;
+  inEventProcess|= 2;
 
   if (!editorSet) {
     editorSet = new FarEditorSet();
@@ -129,7 +129,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 
   int result = editorSet->editorEvent(Event, Param);
 
-  inEventProcess = false;
+  inEventProcess&= ~2;
   return result;
 }
 
@@ -139,14 +139,14 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
     return 0;
   }
 
-  inEventProcess = true;
+  inEventProcess|= 1;
   if (!editorSet) {
     editorSet = new FarEditorSet();
   }
 
   int result = editorSet->editorInput(ir);
 
-  inEventProcess = false;
+  inEventProcess&= ~1;
   return result;
 }
 

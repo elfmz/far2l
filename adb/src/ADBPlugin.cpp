@@ -475,26 +475,10 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 	Info->KeyBar           = nullptr;
 	Info->ShortcutData     = nullptr;
 
-	// Panel mode storage
-	static PanelMode connectedMode = {
-		.ColumnTypes        = L"N,C0",
-		.ColumnWidths       = L"0,0",
-		.ColumnTitles       = nullptr, // set later
-		.FullScreen         = 0,
-		.DetailedStatus     = 1,
-		.AlignExtensions    = 0,
-		.CaseConversion     = 0,
-		.StatusColumnTypes  = L"N,C0",
-		.StatusColumnWidths = L"0,0",
-		.Reserved           = {0, 0}
-	};
+	// No PanelMode is declared for the file panel on purpose - see the _isConnected branch below.
 
-	// Static storage so the pointer stored in `connectedMode.ColumnTitles` outlives this call;
-	// values refreshed on every invocation so language changes are picked up.
-	static const wchar_t* connectedTitles[2];
-	connectedTitles[0] = Lng(MColName);
-	connectedTitles[1] = Lng(MColSize);
-
+	// Static storage so the pointer stored in deviceMode.ColumnTitles outlives this call; values
+	// refreshed on every invocation so a language change is picked up.
 	static PanelMode deviceMode = {
 		.ColumnTypes        = L"N,C0,C1,C2",
 		.ColumnWidths       = L"0,30,0,8",
@@ -508,7 +492,6 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	// See note above on connectedTitles — same lifetime requirement.
 	static const wchar_t* deviceTitles[4];
 	deviceTitles[0] = Lng(MColSerial);
 	deviceTitles[1] = Lng(MColDeviceName);
@@ -516,8 +499,18 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 	deviceTitles[3] = Lng(MColPort);
 
 	if (_isConnected) {
-		connectedMode.ColumnTitles = connectedTitles;
-		Info->PanelModesArray      = &connectedMode;
+		// Deliberately no PanelModesArray for the file panel: which view modes exist, what columns
+		// they carry and how the user customises them are far2l's business, and everything they
+		// need is already in the items (real dwUnixMode, size, timestamps, Owner, Group). This
+		// mirrors NetRocks, which likewise supplies no modes while browsing a remote filesystem.
+		//
+		// Note far2l merges rather than replaces - flshow.cpp:630 starts from its own
+		// ViewSettingsArray[ViewMode] and overrides only when ViewMode < PanelModesNumber - so the
+		// previous single-entry array hijacked exactly view mode 0, pinning it to "N,C0" with a
+		// Size column that always rendered blank because GetFileData never fills CustomColumnData.
+		Info->PanelModesArray      = nullptr;
+		Info->PanelModesNumber     = 0;
+		Info->StartPanelMode       = 0; // keep whatever view mode the user last chose
 		Info->Flags                = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 		// Leave StartSortMode = 0; flplugin.cpp:904 re-applies it on every SetPluginMode and would wipe the user's sort choice.
 
@@ -532,16 +525,25 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		Info->CurDir  = _curDirW.c_str();
 		Info->Format  = _formatW.c_str();
 	} else {
+		// The selector is not a filesystem - its rows are devices, so size/date columns would be
+		// meaningless. It therefore does pin its own columns, and pins them for *every* view mode:
+		// far2l overrides only the modes below PanelModesNumber, so filling a single slot would
+		// leave Ctrl+2..9 drawing built-in file columns over device pseudo-items. Same reasoning
+		// and same shape as NetRocks' site-connections list.
 		deviceMode.ColumnTitles = deviceTitles;
-		Info->PanelModesArray   = &deviceMode;
+		static PanelMode deviceModes[10];
+		for (auto &m : deviceModes) {
+			m = deviceMode;
+		}
+		Info->PanelModesArray   = deviceModes;
+		Info->PanelModesNumber  = ARRAYSIZE(deviceModes);
+		Info->StartPanelMode    = 0;
 		Info->Flags             = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING | OPIF_SHOWNAMESONLY;
 
 		Info->CurDir = L"";
 		Info->Format = L"ADB";
 	}
 
-	Info->StartPanelMode = 0;
-	Info->PanelModesNumber  = 1;
 	Info->PanelTitle     = _PanelTitle;
 }
 
@@ -2521,17 +2523,65 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			? (is_upload ? Lng(MMoveToDevice) : Lng(MMoveFromDevice))
 			: (is_upload ? Lng(MCopyToDevice) : Lng(MCopyFromDevice));
 
-		auto overwriteMode = std::make_shared<int>(0);
+		int overwriteMode = 0;  // 0=ask, 1=overwrite_all, 2=skip_all
 		const bool isMultiple = itemsCount > 1;
 
 		std::vector<WorkUnit> units;
 		units.reserve(itemsCount);
+		bool collision_abort = false;
 		for (int i = 0; i < itemsCount; i++) {
 			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
 			std::string localPath = ADBUtils::JoinPath(localDir, fileName);
 			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
 			const bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 			const uint64_t itemSize = isDir ? 0 : items[i].FindData.nFileSize;
+			// Resolve destination collisions HERE, on the main thread, before RunBatch().
+			// RunBatch() runs each unit on a worker thread while the main thread is parked inside
+			// ProgressDialog::Show(). FAR's dialog/console/FrameManager state is not thread-safe and
+			// both modal loops would pull from the same console input queue, so asking from the worker
+			// was unsafe on the ordinary F5 path whenever a destination already existed. The sibling
+			// paths (GetFiles, CrossPanelCopyMoveSameDevice) already resolve collisions up front.
+			bool dst_exists;
+			if (is_upload) {
+				dst_exists = adb->FileExists(devicePath);
+			} else {
+				struct stat st;
+				dst_exists = (stat(localPath.c_str(), &st) == 0);
+			}
+			if (dst_exists) {
+				// is_upload=true -> src is host, dst is device; is_upload=false -> reverse. Only the
+				// DESTINATION is ever rewritten below, so the source path that the move-delete uses
+				// further down stays valid.
+				const std::string &src_path = is_upload ? localPath  : devicePath;
+				const std::string &dst_path = is_upload ? devicePath : localPath;
+				auto src_adb = is_upload ? std::shared_ptr<ADBDevice>() : adb;
+				auto dst_adb = is_upload ? adb : std::shared_ptr<ADBDevice>();
+				uint64_t src_size = 0, dst_size = 0;
+				int64_t src_mtime = 0, dst_mtime = 0;
+				FillFileMeta(src_adb, src_path, isDir, src_size, src_mtime);
+				FillFileMeta(dst_adb, dst_path, isDir, dst_size, dst_mtime);
+				ProgressState dummyState;
+				const int action = CheckOverwrite(
+					StrMB2Wide(dst_path),
+					isMultiple, isDir, overwriteMode, dummyState,
+					src_size, src_mtime, dst_size, dst_mtime,
+					MakeOverwriteViewer(src_adb, src_path, isDir),
+					MakeOverwriteViewer(dst_adb, dst_path, isDir));
+				if (action == CA_ABORT) { collision_abort = true; break; }
+				if (action == CA_SKIP) continue;
+				if (action == CA_RENAME) {
+					std::string fresh = is_upload ? FindFreeAdbName(*adb, devicePath)
+					                             : FindFreeLocalName(localPath);
+					if (fresh.empty()) continue;
+					if (is_upload) devicePath = fresh; else localPath = fresh;
+					dst_exists = false;  // new name is free
+				} else if (action == CA_NEWER) {
+					const time_t srcMt = is_upload ? GetLocalMtime(localPath) : GetAdbMtime(*adb, devicePath);
+					const time_t dstMt = is_upload ? GetAdbMtime(*adb, devicePath) : GetLocalMtime(localPath);
+					if (srcMt > 0 && dstMt > 0 && srcMt <= dstMt) continue;
+					// else: fall through as overwrite
+				}
+			}
 
 			std::string metaKey = is_upload ? localPath : devicePath;
 			auto ut = ComputeUnitTotals(metaKey, isDir, itemSize, dirMetas);
@@ -2543,51 +2593,14 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			u.total_bytes = ut.total_bytes;
 			u.total_files = ut.total_files;
 
-			u.execute = [adb, is_upload, isDir, isMultiple, move, overwriteMode,
-			             localPath = std::move(localPath), devicePath = std::move(devicePath),
+			u.execute = [adb, is_upload, isDir, move, dst_exists,
+			             localPath, devicePath,
 			             itemSize, idx = std::move(idx)](ProgressTracker& tr) -> int {
-				bool dst_exists = false;
-				if (is_upload) {
-					dst_exists = adb->FileExists(devicePath);
-				} else {
-					struct stat st;
-					if (stat(localPath.c_str(), &st) == 0) dst_exists = true;
-				}
 				DBG("RunTransfer unit: is_upload=%d isDir=%d dst_exists=%d local='%s' device='%s'\n",
 					is_upload, isDir, dst_exists, localPath.c_str(), devicePath.c_str());
-				// Mutable copies — RENAME may rewrite dst path, ONLY_NEWER may flip dst_exists.
-				std::string activeLocal = localPath;
-				std::string activeDevice = devicePath;
-				if (dst_exists) {
-					// is_upload=true → src is host, dst is device. is_upload=false → reverse.
-					const std::string& src_path = is_upload ? activeLocal  : activeDevice;
-					const std::string& dst_path = is_upload ? activeDevice : activeLocal;
-					auto src_adb = is_upload ? std::shared_ptr<ADBDevice>() : adb;
-					auto dst_adb = is_upload ? adb : std::shared_ptr<ADBDevice>();
-					uint64_t src_size = 0, dst_size = 0;
-					int64_t src_mtime = 0, dst_mtime = 0;
-					FillFileMeta(src_adb, src_path, isDir, src_size, src_mtime);
-					FillFileMeta(dst_adb, dst_path, isDir, dst_size, dst_mtime);
-					int action = CheckOverwrite(
-						StrMB2Wide(dst_path),
-						isMultiple, isDir, *overwriteMode, tr.StateRef(),
-						src_size, src_mtime, dst_size, dst_mtime,
-						MakeOverwriteViewer(src_adb, src_path, isDir),
-						MakeOverwriteViewer(dst_adb, dst_path, isDir));
-					if (action == CA_SKIP || action == CA_ABORT) { tr.MarkSkipped(); return 0; }
-					if (action == CA_RENAME) {
-						std::string fresh = is_upload ? FindFreeAdbName(*adb, activeDevice)
-						                              : FindFreeLocalName(activeLocal);
-						if (fresh.empty()) { tr.MarkSkipped(); return 0; }
-						if (is_upload) activeDevice = fresh; else activeLocal = fresh;
-						dst_exists = false;  // new name is free
-					} else if (action == CA_NEWER) {
-						time_t srcMt = is_upload ? GetLocalMtime(activeLocal) : GetAdbMtime(*adb, activeDevice);
-						time_t dstMt = is_upload ? GetAdbMtime(*adb, activeDevice) : GetLocalMtime(activeLocal);
-						if (srcMt > 0 && dstMt > 0 && srcMt <= dstMt) { tr.MarkSkipped(); return 0; }
-						// else: fall through as overwrite
-					}
-				}
+				// Collisions were resolved before RunBatch, so these paths are already final.
+				const std::string &activeLocal = localPath;
+				const std::string &activeDevice = devicePath;
 				if (tr.Aborted()) return ECANCELED;
 
 				auto cb = [&](int pct, const std::string& path) {
@@ -2639,6 +2652,9 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 				return rc;
 			};
 			units.push_back(std::move(u));
+		}
+		if (collision_abort) {
+			return FALSE;
 		}
 
 		auto src_label = is_upload ? StrMB2Wide(localDir) : StrMB2Wide(deviceDir);

@@ -28,6 +28,7 @@ class ADBDevice {
 private:
     std::string _device_serial;
     std::string _current_path;
+    int _find_printf{-1};   // see HaveFindPrintf()
     std::unique_ptr<ADBShell> _adb_shell;
     bool _connected;
 
@@ -42,6 +43,7 @@ private:
 
     // Helper to check if result indicates success
     bool IsSuccessResult(const std::string& result, bool is_push = false) const;
+    bool TransferSucceeded(int pty_exit, const std::string& result, bool is_push) const;
 
     // Unified transfer helper (DRY)
     int TransferItem(const std::string& src, const std::string& dst, bool is_push, bool recursive,
@@ -50,10 +52,7 @@ private:
 
 public:
     // Public methods for command execution
-    std::string RunAdbCommand(const std::string &command);
-    std::string RunAdbCommand(const std::vector<std::string> &args);
-    std::string RunAdbCommand(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk);
-    std::string RunAdbCommandWithProgress(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk, const std::function<bool()> &abort_check = {});
+    std::string RunAdbCommandWithProgress(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk, const std::function<bool()> &abort_check = {}, int idle_timeout_ms = 0);
     std::string RunShellCommand(const std::string &command);
     // Exit code of the most recent RunShellCommand(); -1 if unavailable.
     int LastShellExitCode() const;
@@ -63,6 +62,9 @@ public:
 
     // File operations
     std::string DirectoryEnum(const std::string &path, std::vector<PluginPanelItem> &files);
+    // Does the device's `find` understand -printf? toybox gained it late, so probe once per
+    // session and cache: -1 unknown, 0 no, 1 yes.
+    bool HaveFindPrintf();
     bool SetDirectory(const std::string &path);
 
     // File transfer operations

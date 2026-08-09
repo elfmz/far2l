@@ -78,8 +78,6 @@ enum ADBLng
     // Panel titles + columns
     MADBSelectDevice,       // "ADB - Select Device"
     MNoDevicesPanelTitle,   // "ADB: No devices found"
-    MColName,               // "Name"
-    MColSize,               // "Size"
     MColSerial,             // "Serial Number"
     MColDeviceName,         // "Device Name"
     MColModel,              // "Model"

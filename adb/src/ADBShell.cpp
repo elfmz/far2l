@@ -58,7 +58,7 @@ ADBShell::~ADBShell() {
 }
 
 // Helper function to test if a path is a working ADB executable
-static bool tryAdbPath(const std::string& path) {
+static bool tryAdbPath(const std::string& path, int budget_ms) {
     if (path.empty()) return false;
     DBG("Trying ADB path: %s\n", path.c_str());
 
@@ -91,7 +91,26 @@ static bool tryAdbPath(const std::string& path) {
     close(pipefd[1]);
     std::string output;
     char buffer[1024];
+    // The search probes up to 8 candidate paths when the plugin opens, all on far2l's main
+    // thread, so one wedged binary must not stall startup: give each probe a deadline.
+    // ("adb version" prints the client version without spawning the server, so this is fast.)
+    const auto probe_deadline = std::chrono::steady_clock::now()
+        + std::chrono::milliseconds(std::min(budget_ms, 3000));
+    bool timed_out = false;
     while (true) {
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= probe_deadline) { timed_out = true; break; }
+        struct pollfd pfd{};
+        pfd.fd = pipefd[0];
+        pfd.events = POLLIN;
+        const int pr = poll(&pfd, 1,
+            (int)std::chrono::duration_cast<std::chrono::milliseconds>(probe_deadline - now).count());
+        if (pr == 0) { timed_out = true; break; }
+        if (pr < 0) {
+            if (errno == EINTR) continue;
+            timed_out = true;   // treat as dead: the child must still be reaped, see below
+            break;
+        }
         ssize_t n = read(pipefd[0], buffer, sizeof(buffer) - 1);
         if (n > 0) {
             buffer[n] = '\0';
@@ -102,8 +121,18 @@ static bool tryAdbPath(const std::string& path) {
     }
     close(pipefd[0]);
 
+    if (timed_out) {
+        DBG("tryAdbPath: %s did not answer in time, killing pid %d\n", path.c_str(), (int)pid);
+        kill(pid, SIGTERM);
+        usleep(100000);
+        kill(pid, SIGKILL);
+    }
+
     int status = 0;
     waitpid(pid, &status, 0);
+    if (timed_out) {
+        return false;
+    }
 
     DBG("Output from %s version: [%s]\n", path.c_str(), output.c_str());
     if (output.find("Android Debug Bridge") != std::string::npos ||
@@ -125,6 +154,18 @@ std::string ADBShell::findAdbExecutable() {
     // Search without holding the mutex: tryAdbPath() fork()s and holding a mutex across fork() is POSIX-unsafe.
     DBG("Starting ADB executable search...\n");
 
+    // One budget for the whole search rather than per candidate: there are eight of them and
+    // this runs on far2l's main thread when the plugin opens, so a per-probe ceiling would let
+    // startup stall for 8x that.
+    const auto search_deadline =
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(kAdbSearchBudgetMs);
+    const auto budget_ms_left = [&search_deadline]() {
+        const auto now = std::chrono::steady_clock::now();
+        if (now >= search_deadline) return 0;
+        return (int)std::chrono::duration_cast<std::chrono::milliseconds>(search_deadline - now).count();
+    };
+    const auto budget_left = [&budget_ms_left]() { return budget_ms_left() > 0; };
+
     std::string found;
 
     // Standard paths (includes macOS Homebrew + Linux system paths)
@@ -137,42 +178,43 @@ std::string ADBShell::findAdbExecutable() {
     };
 
     for (const char* path : adb_paths) {
-        if (path && path[0] && tryAdbPath(path)) {
+        if (!budget_left()) break;
+        if (path && path[0] && tryAdbPath(path, budget_ms_left())) {
             found = path;
             break;
         }
     }
 
-    if (found.empty()) {
+    if (found.empty() && budget_left()) {
         const char* android_home = getenv("ANDROID_HOME");
         DBG("ANDROID_HOME = %s\n", android_home ? android_home : "(not set)");
         if (android_home) {
             std::string sdk_path = std::string(android_home) + "/platform-tools/adb";
-            if (tryAdbPath(sdk_path)) found = sdk_path;
+            if (tryAdbPath(sdk_path, budget_ms_left())) found = sdk_path;
         }
     }
 
-    if (found.empty()) {
+    if (found.empty() && budget_left()) {
         const char* android_sdk_root = getenv("ANDROID_SDK_ROOT");
         DBG("ANDROID_SDK_ROOT = %s\n", android_sdk_root ? android_sdk_root : "(not set)");
         if (android_sdk_root) {
             std::string sdk_path = std::string(android_sdk_root) + "/platform-tools/adb";
-            if (tryAdbPath(sdk_path)) found = sdk_path;
+            if (tryAdbPath(sdk_path, budget_ms_left())) found = sdk_path;
         }
     }
 
-    if (found.empty()) {
+    if (found.empty() && budget_left()) {
         const char* home = getenv("HOME");
         DBG("HOME = %s\n", home ? home : "(not set)");
         if (home) {
             // macOS: ~/Library/Android/sdk/platform-tools/adb
             std::string mac_adb = std::string(home) + "/Library/Android/sdk/platform-tools/adb";
-            if (tryAdbPath(mac_adb)) {
+            if (tryAdbPath(mac_adb, budget_ms_left())) {
                 found = mac_adb;
             } else {
                 // Linux: ~/Android/sdk/platform-tools/adb
                 std::string linux_adb = std::string(home) + "/Android/sdk/platform-tools/adb";
-                if (tryAdbPath(linux_adb)) found = linux_adb;
+                if (tryAdbPath(linux_adb, budget_ms_left())) found = linux_adb;
             }
         }
     }
@@ -625,10 +667,6 @@ std::string ADBShell::adbExec(const std::vector<std::string>& args) {
     return runAdbProcess(args);
 }
 
-std::string ADBShell::adbExec(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk) {
-    return runAdbProcess(args, &on_chunk);
-}
-
 std::vector<std::string> ADBShell::splitCommandArgs(const std::string& command) {
     std::vector<std::string> args;
     std::string current;
@@ -672,7 +710,7 @@ std::vector<std::string> ADBShell::splitCommandArgs(const std::string& command) 
     return args;
 }
 
-std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const std::function<void(const std::string&)>* on_chunk) {
+std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, int timeout_ms) {
     std::string adbPath = findAdbExecutable();
     if (adbPath.empty()) {
         DBG("runAdbProcess: ADB path is empty, cannot execute\n");
@@ -710,13 +748,33 @@ std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const 
     close(pipefd[1]);
     std::string output;
     char buffer[4096];
+    // Bound the wait. adb can block indefinitely - wedged daemon, or a device dropping off
+    // USB mid-transfer without the socket closing - and note the forked adb server inherits
+    // this pipe, so read() can stay open even after our child exits. Every caller runs on
+    // far2l's main thread (plugin open enumerates devices; F3 pulls the file to view), so an
+    // unbounded read() here freezes the whole UI with no dialog and no key that helps.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+    bool timed_out = false;
     while (true) {
+        int wait_ms = -1;
+        if (timeout_ms > 0) {
+            const auto now = std::chrono::steady_clock::now();
+            if (now >= deadline) { timed_out = true; break; }
+            wait_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+        }
+        struct pollfd pfd{};
+        pfd.fd = pipefd[0];
+        pfd.events = POLLIN;
+        const int pr = poll(&pfd, 1, wait_ms);
+        if (pr == 0) { timed_out = true; break; }
+        if (pr < 0) {
+            if (errno == EINTR) continue;
+            timed_out = true;   // ditto: fall through to the kill so waitpid() cannot block
+            break;
+        }
         ssize_t n = read(pipefd[0], buffer, sizeof(buffer));
         if (n > 0) {
             output.append(buffer, static_cast<size_t>(n));
-            if (on_chunk) {
-                (*on_chunk)(std::string(buffer, static_cast<size_t>(n)));
-            }
             continue;
         }
         if (n == 0) break;
@@ -725,13 +783,20 @@ std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const 
     }
     close(pipefd[0]);
 
+    if (timed_out) {
+        DBG("runAdbProcess: exceeded %d ms wall clock, killing pid %d\n", timeout_ms, (int)pid);
+        kill(pid, SIGTERM);
+        usleep(100000);
+        kill(pid, SIGKILL);
+    }
+
     int status = 0;
     waitpid(pid, &status, 0);
     ADBUtils::TrimTrailingNewlines(output);
     return output;
 }
 
-std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check) {
+std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check, int idle_timeout_ms) {
     std::string adbPath = findAdbExecutable();
     if (adbPath.empty()) return "";
 
@@ -754,13 +819,28 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
     std::string output;
     char buffer[4096];
     bool aborted = false;
+    bool stalled = false;
 
     int flags = fcntl(master_fd, F_GETFL, 0);
     fcntl(master_fd, F_SETFL, flags | O_NONBLOCK);
 
+    // Opt-in liveness bound. Only meaningful for callers whose command is guaranteed to keep
+    // emitting - i.e. transfers, which always pass -p and print progress continuously under a
+    // pty. It must stay off for `adb shell` mutations: a large in-device `cp -a` is silent for
+    // its whole run and killing it after N ms of quiet would corrupt the copy.
+    auto last_output = std::chrono::steady_clock::now();
+
     while (true) {
         if (abort_check && abort_check()) {
             aborted = true;
+            break;
+        }
+
+        if (idle_timeout_ms > 0
+                && std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::steady_clock::now() - last_output).count() >= idle_timeout_ms) {
+            DBG("runAdbProcessWithPty: no output for %d ms, treating as dead\n", idle_timeout_ms);
+            stalled = true;
             break;
         }
 
@@ -778,6 +858,7 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
         if (pfd.revents & POLLIN) {
             ssize_t n = read(master_fd, buffer, sizeof(buffer));
             if (n > 0) {
+                last_output = std::chrono::steady_clock::now();
                 output.append(buffer, static_cast<size_t>(n));
                 on_chunk(std::string(buffer, static_cast<size_t>(n)));
             } else if (n == 0) {
@@ -792,7 +873,7 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
     }
 
     close(master_fd);
-    if (aborted) {
+    if (aborted || stalled) {
         kill(pid, SIGTERM);
         usleep(100000);
         kill(pid, SIGKILL);
@@ -800,15 +881,19 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
 
     int status = 0;
     waitpid(pid, &status, 0);
-    _last_pty_exit.store(WIFEXITED(status) ? WEXITSTATUS(status) : -1);
+    // kPtyExitKilled when we did the killing (abort or idle bound): that is a definite failure,
+    // whereas -1 ("died on a signal, cause unknown") is the only case with no evidence at all and
+    // is allowed to fall back to sniffing adb's output trailer.
+    _last_pty_exit.store(WIFEXITED(status) ? WEXITSTATUS(status)
+                                           : ((aborted || stalled) ? kPtyExitKilled : -1));
     ADBUtils::TrimTrailingNewlines(output);
     return output;
 }
 
 std::atomic<int> ADBShell::_last_pty_exit{-1};
 
-std::string ADBShell::adbExecWithProgress(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check) {
-    return runAdbProcessWithPty(args, on_chunk, abort_check);
+std::string ADBShell::adbExecWithProgress(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check, int idle_timeout_ms) {
+    return runAdbProcessWithPty(args, on_chunk, abort_check, idle_timeout_ms);
 }
 
 // Instance version for device-specific ADB commands with -s <device_serial>

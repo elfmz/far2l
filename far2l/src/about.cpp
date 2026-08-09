@@ -12,6 +12,10 @@
 
 #include <fstream>
 
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
+
 bool get_os_release_PrettyName(FARString &fsPrettyName)
 {
 	// see standard https://www.freedesktop.org/software/systemd/man/latest/os-release.html
@@ -73,6 +77,19 @@ void FarAbout(PluginManager &Plugins)
 	fs.AppendFormat(L"Intel C/C++, version %d (build date %d)", __INTEL_COMPILER, __INTEL_COMPILER_BUILD_DATE);
 #elif defined (__GNUC__)
 	fs.AppendFormat(L"GCC, version %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#else
+	fs.Append(L"Unknown");
+#endif
+	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
+	fs =      L"     Standard C library: ";
+#if defined (__UCLIBC__)
+	fs.AppendFormat(L"uClibc (build %d.%d.%d)", __UCLIBC_MAJOR__, __UCLIBC_MINOR__, __UCLIBC_SUBLEVEL__);
+#elif defined (__GLIBC__)
+	fs.AppendFormat(L"GNU C Library, glibc (build %d.%d, use %s %s)",
+		__GLIBC__, __GLIBC_MINOR__, gnu_get_libc_version(), gnu_get_libc_release());
+#elif defined (__MUSL__)
+	fs.AppendFormat(L"libc musl");
 #else
 	fs.Append(L"Unknown");
 #endif

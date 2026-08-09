@@ -6,10 +6,14 @@
 #include "lng.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cwchar>
+#include <mutex>
+#include <thread>
 #include <unistd.h>
 
 #include <string>
@@ -283,8 +287,13 @@ struct PendingPopup
 };
 static PendingPopup g_pending_popup;
 static bool g_popup_active = false;
-static bool g_pending_tick = false;
-static uint64_t g_next_tick_ms = 0;
+static std::atomic<bool> g_pending_tick{false};
+static std::mutex g_tick_mutex;
+static std::condition_variable g_tick_cv;
+static std::thread g_tick_thread;
+static bool g_tick_stopping = false;
+static uint64_t g_tick_generation = 0;
+static int g_tick_delay_ms = 0;
 
 enum PopupItemId
 {
@@ -380,18 +389,59 @@ static LONG_PTR WINAPI PopupDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_info.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
+static void TickThreadProc()
+{
+	std::unique_lock<std::mutex> Lock(g_tick_mutex);
+	uint64_t Generation = 0;
+	while (!g_tick_stopping) {
+		g_tick_cv.wait(Lock, [&] { return g_tick_stopping || Generation != g_tick_generation; });
+		if (g_tick_stopping)
+			break;
+		Generation = g_tick_generation;
+		if (g_tick_cv.wait_for(Lock, std::chrono::milliseconds(g_tick_delay_ms),
+				[&] { return g_tick_stopping || Generation != g_tick_generation; }))
+			continue;
+
+		Lock.unlock();
+		if (!g_pending_tick.exchange(true))
+			g_info.AdvControlAsync(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+		Lock.lock();
+	}
+}
+
+static void StartTickThread()
+{
+	std::lock_guard<std::mutex> Lock(g_tick_mutex);
+	g_tick_stopping = false;
+	g_tick_generation = 0;
+	if (!g_tick_thread.joinable())
+		g_tick_thread = std::thread(TickThreadProc);
+}
+
+static void StopTickThread()
+{
+	{
+		std::lock_guard<std::mutex> Lock(g_tick_mutex);
+		g_tick_stopping = true;
+	}
+	g_tick_cv.notify_all();
+	if (g_tick_thread.joinable())
+		g_tick_thread.join();
+	g_pending_tick = false;
+}
+
 static void MaybeScheduleTick()
 {
-	if (g_pending_tick || g_settings.interval_ms <= 0) {
+	if (g_settings.interval_ms <= 0)
 		return;
+	{
+		std::lock_guard<std::mutex> Lock(g_tick_mutex);
+		if (g_tick_stopping)
+			return;
+		g_tick_delay_ms = g_settings.interval_ms;
+		++g_tick_generation;
 	}
-	const uint64_t now = NowMs();
-	if (now < g_next_tick_ms) {
-		return;
-	}
-	g_next_tick_ms = now + static_cast<uint64_t>(g_settings.interval_ms);
-	g_pending_tick = true;
-	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+	g_tick_cv.notify_one();
 }
 
 static bool ApplyGutterRequest(EditorState &st)
@@ -607,6 +657,11 @@ static bool RevertHunkInEditor(const Hunk &h)
 	if (!VerifyHunkMatchesEditor(start_line, new_lines)) {
 		return false;
 	}
+	EditorUndoRedo undo{};
+	undo.Command = EUR_BEGIN;
+	if (!g_info.EditorControl(ECTL_UNDOREDO, &undo))
+		return false;
+
 	if (new_count == 1 && old_lines.size() == 1 && old_count == 1) {
 		EditorSetString ess{};
 		ess.StringNumber = start_line;
@@ -630,6 +685,8 @@ static bool RevertHunkInEditor(const Hunk &h)
 		}
 	}
 
+	undo.Command = EUR_END;
+	g_info.EditorControl(ECTL_UNDOREDO, &undo);
 	return true;
 }
 
@@ -1045,6 +1102,7 @@ static void UpdateEditorState(EditorState &st)
 				st.gutter_request = 0;
 			}
 		}
+		st.dirty = false;
 		return;
 	}
 
@@ -1432,6 +1490,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 	g_info.FSF = &g_fsf;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
+	StartTickThread();
 }
 
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
@@ -1869,6 +1928,7 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 {
 	(void)Param;
 	if (!IsPluginActive()) {
+		g_pending_tick = false;
 		return 0;
 	}
 	if (Event != SE_COMMONSYNCHRO)
@@ -1893,8 +1953,7 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	const bool dialog_current = GetCurrentWindowType() == WTYPE_DIALOG;
 	bool redraw_current_dialog = false;
 
-	if (g_pending_tick) {
-		g_pending_tick = false;
+	if (g_pending_tick.exchange(false)) {
 		EditorInfo ei{};
 		if (GetEditorInfo(ei)) {
 			EditorState &st = g_editors[ei.EditorID];
@@ -1902,6 +1961,8 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 			if (st.dirty) {
 				UpdateEditorState(st);
 				did_work = true;
+				if (st.dirty)
+					MaybeScheduleTick();
 			}
 			if (ApplyGutterRequest(st)) {
 				redraw_current_dialog = dialog_current;
@@ -1955,5 +2016,6 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 
 SHAREDSYMBOL void WINAPI ExitFARW()
 {
+	StopTickThread();
 	g_editors.clear();
 }

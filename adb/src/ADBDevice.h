@@ -52,7 +52,6 @@ public:
     // Public methods for command execution
     std::string RunAdbCommand(const std::string &command);
     std::string RunAdbCommand(const std::vector<std::string> &args);
-    std::string RunAdbCommand(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk);
     std::string RunAdbCommandWithProgress(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk, const std::function<bool()> &abort_check = {});
     std::string RunShellCommand(const std::string &command);
     // Exit code of the most recent RunShellCommand(); -1 if unavailable.

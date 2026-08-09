@@ -306,10 +306,6 @@ std::string ADBDevice::RunAdbCommand(const std::vector<std::string> &args) {
     return ADBShell::adbExec(BuildArgs(args));
 }
 
-std::string ADBDevice::RunAdbCommand(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk) {
-    return ADBShell::adbExec(BuildArgs(args), on_chunk);
-}
-
 std::string ADBDevice::RunAdbCommandWithProgress(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk, const std::function<bool()> &abort_check) {
     return ADBShell::adbExecWithProgress(BuildArgs(args), on_chunk, abort_check);
 }

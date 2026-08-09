@@ -75,7 +75,7 @@ public:
 		}
 	}
 
-	class See // provides unsynchronized with other writers in same scope (if any) read-only access, somewhat faster than Use
+	class See // provides unsynchronized with nested writers (if any) read-only access, somewhat faster than Use
 	{
 		const FieldsT *_fields;
 	public:

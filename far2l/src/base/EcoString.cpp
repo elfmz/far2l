@@ -28,6 +28,32 @@ EcoString::~EcoString()
 	MakeEmpty();
 }
 
+EcoString &EcoString::operator =(const EcoString& src)
+{
+	if (this != &src) {
+		if (src._len < 0) {
+			MakeEmpty();
+			_len = src._len;
+			_data = src._data;
+			if (size_t(-_len) > sizeof(_data)) {
+				_data.pmb = (unsigned char *)malloc(-_len);
+				if (LIKELY(_data.pws)) {
+					memcpy(_data.pmb, src._data.pmb, -_len);
+					++s_stats.char_heap;
+				} else {
+					fprintf(stderr, "EcoString::operator= strdup failed len=%d\n", _len);
+					_len = 0;
+				}
+			} else {
+				++s_stats.char_local;
+			}
+		} else {
+			Assign(src.CPtr(), src.Size());
+		}
+	}
+	return *this;
+}
+
 void EcoString::Swap(EcoString &another)
 {
 	std::swap(_data, another._data);
@@ -112,9 +138,9 @@ bool EcoString::TryAssignCompact(const wchar_t *data, int len)
 	return true;
 }
 
-bool EcoString::Assign(const wchar_t *data, int len, bool compact)
+bool EcoString::Assign(const wchar_t *data, int len, bool try_compact)
 {
-	if (!compact || !TryAssignCompact(data, len)) {
+	if (!try_compact || !TryAssignCompact(data, len)) {
 		if (!MakeWideLength(len)) {
 			return false;
 		}
@@ -164,6 +190,35 @@ bool EcoString::EnsureWide() const
 	return true;
 }
 
+
+template <class CHAR_LEFT, class CHAR_RIGHT>
+	static bool TypeInvariantEqual(const CHAR_LEFT *left, const CHAR_RIGHT *right, int cnt)
+{
+	for (int i = 0; i < cnt; ++i) {
+		if ((unsigned int)left[i] != (unsigned int)right[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool EcoString::EqualTo(const wchar_t *data, int cnt) const
+{
+	if (cnt != Size())
+		return false;
+
+	if (_len < 0) {
+		if (size_t(cnt) > sizeof(_data)) {
+			return TypeInvariantEqual(_data.pmb, data, cnt);
+		}
+		return TypeInvariantEqual(_data.lmb, data, cnt);
+
+	} else if (((cnt + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		return TypeInvariantEqual(_data.pws, data, cnt);
+	}
+	return TypeInvariantEqual(_data.lws, data, cnt);
+}
+
 void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 {
 	if (_len < 0) {
@@ -185,9 +240,16 @@ void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 
 void EcoString::CopyTo(std::wstring &dst) const
 {
-	dst.resize(Size());
-	if (!dst.empty()) {
-		CopyTo(dst.data(), 0, dst.size());
+	if (_len < 0) {
+		if (size_t(-_len) > sizeof(_data)) {
+			dst.assign(_data.pmb, _data.pmb + -_len);
+		} else {
+			dst.assign(&_data.lmb[0], &_data.lmb[0] + -_len);
+		}
+	} else if (((_len + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		dst.assign(&_data.pws[0], _len);
+	} else {
+		dst.assign(&_data.lws[0], _len);
 	}
 }
 

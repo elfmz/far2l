@@ -1917,21 +1917,32 @@ void Edit::SetString(const wchar_t *Str, int Length)
 	SetBinaryString(Str, Length == -1 ? (int)StrLength(Str) : Length);
 }
 
-void Edit::SetEOL(const wchar_t *EOL)
-{
-	SetEndType(EOL_NONE);
 
+template <class CHAR_T>
+	int TypeOfEOL(const CHAR_T *EOL)
+{
 	if (EOL && *EOL) {
 		if (EOL[0] == L'\r')
 			if (EOL[1] == L'\n')
-				SetEndType(EOL_CRLF);
+				return EOL_CRLF;
 			else if (EOL[1] == L'\r' && EOL[2] == L'\n')
-				SetEndType(EOL_CRCRLF);
+				return EOL_CRCRLF;
 			else
-				SetEndType(EOL_CR);
+				return EOL_CR;
 		else if (EOL[0] == L'\n')
-			SetEndType(EOL_LF);
+			return EOL_LF;
 	}
+	return EOL_NONE;
+}
+
+void Edit::SetEOL(const wchar_t *EOL)
+{
+	SetEndType(TypeOfEOL(EOL));
+}
+
+void Edit::SetEOL(const char *EOL)
+{
+	SetEndType(TypeOfEOL(EOL));
 }
 
 const wchar_t *Edit::GetEOL()
@@ -2036,7 +2047,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		*/
 		RefreshStrByMask(!*Str);
 	} else {
-		if (!this->Str.Assign(Str, Length, true)) {
+		if (!this->Str.Assign(Str, Length)) {
 			fprintf(stderr, "Edit::SetBinaryString: failed to assign to length of %d\n", Length);
 			return;
 		}
@@ -2073,30 +2084,7 @@ void Edit::GetString(wchar_t *Data, int MaxSize)
 	}
 }
 
-void Edit::GetString(FARString &dst, const wchar_t **EOL)
-{
-	if (EOL)
-		*EOL = EOL_TYPE_CHARS[GetEndType()];
-
-	Str.CopyTo(dst);
-}
-
-void Edit::GetString(std::wstring &dst, const wchar_t **EOL)
-{
-	if (EOL)
-		*EOL = EOL_TYPE_CHARS[GetEndType()];
-
-	Str.CopyTo(dst);
-}
-
-std::wstring Edit::GetString()
-{
-	std::wstring out;
-	Str.CopyTo(out);
-	return out;
-}
-
-int Edit::GetStringLength(const wchar_t **EOL)
+int Edit::GetLength(const wchar_t **EOL)
 {
 	if (EOL)
 		*EOL = EOL_TYPE_CHARS[GetEndType()];
@@ -2248,11 +2236,6 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		/*else
 			MessageBeep(MB_ICONHAND);*/
 	}
-}
-
-int Edit::GetLength()
-{
-	return Str.Size();
 }
 
 // Функция установки маски ввода в объект Edit
@@ -2605,7 +2588,9 @@ void Edit::Select(int Start, int End)
 	my->SelStart = Start;
 	my->SelEnd = End;
 
-	SanitizeSelectionRange();
+	if (Start != -1 || End != 0) {
+		SanitizeSelectionRange();
+	}
 }
 
 void Edit::AddSelect(int Start, int End)

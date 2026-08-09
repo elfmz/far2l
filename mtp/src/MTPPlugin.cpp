@@ -323,6 +323,12 @@ void MTPPlugin::FreeFindData(PluginPanelItem* panel_items, int items_number) {
     for (int i = 0; i < items_number; ++i) {
         free((void*)panel_items[i].FindData.lpwszFileName);
         free((void*)panel_items[i].Description);
+        if (panel_items[i].CustomColumnData) {
+            for (int c = 0; c < panel_items[i].CustomColumnNumber; ++c) {
+                free((void*)panel_items[i].CustomColumnData[c]);
+            }
+            free((void*)panel_items[i].CustomColumnData);
+        }
     }
     free(panel_items);
 }
@@ -392,8 +398,42 @@ void MTPPlugin::GetOpenPluginInfo(OpenPluginInfo* info) {
     filesTitles[1] = Lng(MColSize);
     filesMode.ColumnTitles = (wchar_t**)filesTitles;
 
-    info->PanelModesNumber = 1;
-    info->PanelModesArray = (_view_mode == ViewMode::Devices) ? &devicesMode : &filesMode;
+    // Devices and Storages are not filesystems - their rows are hardware and volumes, with no
+    // meaningful date and (for devices) no size - so keep file columns off them in every view
+    // mode, not just mode 0. far2l overrides only the modes below PanelModesNumber
+    // (flshow.cpp:630 starts from its own ViewSettingsArray[ViewMode]) and does not clamp
+    // ViewMode to it, so pinning one slot left Ctrl+1..9 drawing Size/Date/permissions over
+    // pseudo-items - and which mode the panel opens in is simply whichever far2l was last using.
+    //
+    // Same reasoning as NetRocks' site-connections list, though not the same table: NetRocks
+    // varies its ten between one and three name columns, whereas these panels carry only a
+    // handful of rows and their identifying columns are the whole point, so every mode keeps
+    // them. Filled once into per-view-state storage - one shared buffer rewritten per call would
+    // alias between two panels showing different view states, and this runs on every redraw.
+    //
+    // Objects really are files and carry real size/mtime/mode, so its single pinned mode 0 stays
+    // as-is and Ctrl+1..9 keep far2l's own layouts, as intended above.
+    if (_view_mode == ViewMode::Objects) {
+        info->PanelModesArray = &filesMode;
+        info->PanelModesNumber = 1;
+        return;
+    }
+
+    if (_view_mode == ViewMode::Devices) {
+        static PanelMode devicesModes[10];
+        for (auto &m : devicesModes) {
+            m = devicesMode;
+        }
+        info->PanelModesArray = devicesModes;
+        info->PanelModesNumber = ARRAYSIZE(devicesModes);
+    } else {
+        static PanelMode storagesModes[10];
+        for (auto &m : storagesModes) {
+            m = filesMode;
+        }
+        info->PanelModesArray = storagesModes;
+        info->PanelModesNumber = ARRAYSIZE(storagesModes);
+    }
 }
 
 void MTPPlugin::UpdateObjectsPanelTitle() {
@@ -1253,6 +1293,13 @@ PluginStartupInfo* MTPPlugin::GetInfo() {
     return &g_Info;
 }
 
+// PluginPanelItem owns malloc'd wide strings that FreeFindData releases. wcsdup is what the
+// other panel plugins use for these (see tmppanel); the UTF-8 -> wide step is the only extra.
+static wchar_t* DupWide(const std::string& s)
+{
+    return wcsdup(StrMB2Wide(s).c_str());
+}
+
 PluginPanelItem MTPPlugin::MakePanelItem(const std::string& name,
                                          bool is_dir,
                                          uint64_t size,
@@ -1266,11 +1313,7 @@ PluginPanelItem MTPPlugin::MakePanelItem(const std::string& name,
                                          uint32_t unix_mode) const {
     PluginPanelItem item = {{{0}}};
 
-    std::wstring wname = StrMB2Wide(name);
-    item.FindData.lpwszFileName = static_cast<wchar_t*>(calloc(wname.size() + 1, sizeof(wchar_t)));
-    if (item.FindData.lpwszFileName) {
-        wcscpy(const_cast<wchar_t*>(item.FindData.lpwszFileName), wname.c_str());
-    }
+    item.FindData.lpwszFileName = DupWide(name);
 
     if (file_attributes == 0) {
         file_attributes = is_dir ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
@@ -1296,11 +1339,7 @@ PluginPanelItem MTPPlugin::MakePanelItem(const std::string& name,
     item.UserData = static_cast<DWORD_PTR>(object_id);
 
     if (!description.empty()) {
-        std::wstring wd = StrMB2Wide(description);
-        item.Description = static_cast<wchar_t*>(calloc(wd.size() + 1, sizeof(wchar_t)));
-        if (item.Description) {
-            wcscpy(const_cast<wchar_t*>(item.Description), wd.c_str());
-        }
+        item.Description = DupWide(description);
     }
     item.Reserved[0] = static_cast<DWORD_PTR>(storage_id);
     item.Reserved[1] = static_cast<DWORD_PTR>(packed_device_id);
@@ -1489,7 +1528,19 @@ int MTPPlugin::ListDevices(PluginPanelItem** panel_items, int* items_number) {
             c.vendor_id,
             c.product_id,
             c.serial.c_str());
-        out.push_back(MakePanelItem(name, true, 0, 0, 0, 0, packedDev, desc));
+        PluginPanelItem dev_item = MakePanelItem(name, true, 0, 0, 0, 0, packedDev, desc);
+        // The Devices mode declares C0/C1/C2 (manufacturer, serial, VID:PID) but nothing was
+        // filling CustomColumnData, so all three always rendered blank. The data is right here.
+        // malloc/free like everything else this file hands to far2l, rather than new[]/delete[].
+        wchar_t** cols = static_cast<wchar_t**>(malloc(3 * sizeof(wchar_t*)));
+        if (cols) {
+            cols[0] = DupWide(c.manufacturer);
+            cols[1] = DupWide(c.serial);
+            cols[2] = DupWide(StrPrintf("%04x:%04x", c.vendor_id, c.product_id));
+            dev_item.CustomColumnData = cols;
+            dev_item.CustomColumnNumber = 3;
+        }
+        out.push_back(dev_item);
         auto em = _name_token_index.emplace(name, token);
         if (!em.second) {
             em.first->second.clear();

@@ -78,6 +78,7 @@ public:
 
 	bool Assign(const wchar_t *data, int len, bool try_compact = true);
 	void Compact(); // makes string compact if possible
+	bool IsCompact() const { return _len < 0; }
 	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
 	void CopyTo(std::wstring &dst) const;
 	void CopyTo(FARString &dst) const;

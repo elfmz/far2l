@@ -4720,6 +4720,7 @@ void Editor::Down()
 		if (cur_visual_line + 1 < CurLine->GetVisualLineCount()) {
 			target_visual_line = cur_visual_line + 1;
 		} else if (CurLine->m_next) {
+			CurLine->Compact();
 			CurLine = CurLine->m_next;
 			NumLine++;
 			target_visual_line = 0;
@@ -4751,6 +4752,7 @@ void Editor::Down()
 	for (Y = 0, CurPtr = TopScreen; CurPtr && CurPtr != CurLine; CurPtr = CurPtr->m_next)
 		Y++;
 
+	CurLine->Compact();
 	if (Y >= Y2 - Y1)
 		TopScreen = TopScreen->m_next;
 
@@ -4783,6 +4785,7 @@ void Editor::ScrollDown()
 		return;
 	}
 
+	CurLine->Compact();
 	TopScreen = TopScreen->m_next;
 	CurPos = CurLine->GetCellCurPos();
 	LeftPos = CurLine->GetLeftPos();
@@ -6556,8 +6559,15 @@ int Editor::EditorControl(int Command, void *Param)
 					return FALSE;
 				}
 
-				GetString->StringText = const_cast<wchar_t *>(CurPtr->GetStringAddr(
-						GetString->StringLength, const_cast<const wchar_t **>(&GetString->StringEOL)));
+				if (CurPtr->IsCompact()) {
+					CurPtr->GetString(strGet);
+					GetString->StringText = strGet.data();
+					GetString->StringLength = strGet.size();
+					GetString->StringEOL = const_cast<wchar_t *>(CurPtr->GetEOL());
+				} else {
+					GetString->StringText = const_cast<wchar_t *>(
+						CurPtr->GetStringAddr(GetString->StringLength, const_cast<const wchar_t **>(&GetString->StringEOL)));
+				}
 				GetString->SelStart = -1;
 				GetString->SelEnd = 0;
 				int DestLine = GetString->StringNumber;

@@ -216,11 +216,6 @@ Edit::~Edit()
 	s_e2s.Dismiss(this);
 }
 
-void Edit::Compact()
-{
-	Str.Compact();
-}
-
 void Edit::SetListener(IEditListener *Listener)
 {
 	if (auto *s = s_e2s.Get(this, Listener != nullptr)) {

@@ -229,7 +229,7 @@ private:
 
 	int XX2;	// scrollbar
 
-	std::wstring strTmp;
+	std::wstring strTmp, strGet;
 	FARString strLastSearchStr;
 	/*
 		$ 30.07.2000 KM

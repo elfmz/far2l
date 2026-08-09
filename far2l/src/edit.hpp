@@ -216,7 +216,8 @@ public:
 	void SetListener(IEditListener *Listener = nullptr);
 	IEditListener *GetListener();
 
-	void Compact();
+	void Compact() { Str.Compact(); }
+	bool IsCompact() const { return Str.IsCompact(); }
 
 	DWORD SetCodePage(UINT codepage);	// BUGBUG
 	UINT GetCodePage();					// BUGBUG

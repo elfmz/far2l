@@ -2494,7 +2494,9 @@ $ #Fájlok összehasonlítása#
     A FileDiff az aktív és a passzív fájlpanelen kijelölt fájlokat hasonlítja
 össze. Az aktív panel fájlja bal oldalon, a passzív panel fájlja jobb oldalon
 jelenik meg. A módosult sorok és a sorokon belüli eltérések kiemelve láthatók.
-A középső elválasztón minden módosításblokkhoz egyesítési nyilak tartoznak.
+A középső elválasztón minden módosításblokkhoz egyesítési műveletek tartoznak.
+A nyilak sorokat másolnak a másik panelre, a keresztek pedig törlik a felesleges
+sorokat.
 
     Mindkét panel szerkeszthető. A sortörés, sorszámozás, szintaxiskiemelés,
 keresés, vágólapműveletek és a szerkesztő szokásos visszavonási és ismétlési
@@ -2517,9 +2519,10 @@ parancsai használhatók.
 
     Ha egy szövegpanel aktív, az #F5# az aktuális módosításblokkot a másik
 fájlba másolja. Ha az elválasztó aktív, a #Bal# vagy #Jobb# billentyűvel válassza
-ki a nyilat, majd nyomja meg az #Enter# vagy #F5# billentyűt. Egy nyílra kattintva
-az egyesítés azonnal megtörténik. Minden egyesítés egyetlen visszavonható
-műveletként kerül a célpanel előzményeibe.
+ki a műveletet, majd nyomja meg az #Enter# vagy #F5# billentyűt. A nyílra kattintás
+átmásolja a blokkot, a keresztre kattintás pedig törli az adott oldali felesleges
+sorokat. Minden egyesítés egyetlen visszavonható műveletként kerül a célpanel
+előzményeibe.
 
     A módosított fájlokat #*# jelöli. Bezáráskor a FileDiff felajánlja a
 módosított fájlok mentését. Heurisztikusan felismert kódolás esetén az első

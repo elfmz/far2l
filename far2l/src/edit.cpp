@@ -2614,7 +2614,7 @@ bool Edit::IsSelection()
 	return my->SelStart != -1 || my->SelEnd != 0;
 }
 
-void Edit::GetSelection(int &Start, int &End)
+Edit::Selection Edit::GetSelection()
 {
 	/*
 		$ 17.09.2002 SKV
@@ -2628,22 +2628,21 @@ void Edit::GetSelection(int &Start, int &End)
 		SelStart=Str.Size()+1;
 	*/
 	/* SKV $ */
-	MyEcoLazy::See my(fields);
-	Start = my->SelStart;
-	End = my->SelEnd;
+	Selection Sel = GetRealSelection();
 
-	if (End > Str.Size())
-		End = -1;	// StrSize;
+	if (Sel.End > Str.Size())
+		Sel.End = -1;	// StrSize;
 
-	if (Start > Str.Size())
-		Start = Str.Size();
+	if (Sel.Start > Str.Size())
+		Sel.Start = Str.Size();
+
+	return Sel;
 }
 
-void Edit::GetRealSelection(int &Start, int &End)
+Edit::Selection Edit::GetRealSelection()
 {
 	MyEcoLazy::See my(fields);
-	Start = my->SelStart;
-	End = my->SelEnd;
+	return {my->SelStart, my->SelEnd};
 }
 
 void Edit::DeleteBlock()

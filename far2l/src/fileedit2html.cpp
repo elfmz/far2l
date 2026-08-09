@@ -220,27 +220,26 @@ BOOL FileEditor::SendToPrinter()
 	int tab = m_editor->EdOpt.TabSize;
 
 	const wchar_t *CurStr = 0, *EndSeq = 0;
-	int StartSel = -1, EndSel = -1;
 	int Length = 0;
 
 	// first, try to check against selection
 	if (m_editor->BlockStart) { // we have block selection active
-    	for (Edit *Ptr = m_editor->BlockStart; Ptr; Ptr = Ptr->m_next) {
-    		Ptr->GetSelection(StartSel, EndSel);
-    		if (StartSel == -1)	break;
+		for (Edit *Ptr = m_editor->BlockStart; Ptr; Ptr = Ptr->m_next) {
+			auto Sel = Ptr->GetSelection();
+			if (Sel.Start == -1)	break;
 
-			if (EndSel == -1)
-				Length = Ptr->GetLength() - StartSel;
+			if (Sel.End == -1)
+				Length = Ptr->GetLength() - Sel.Start;
 			else
-				Length = EndSel - StartSel;
+				Length = Sel.End - Sel.Start;
 
 			if (Length > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 				tb.append(HTML_PRE_HEADER);
 
-			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
+			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, Sel.Start, Length, tab)) {
 				int Len2 = 0;
 				CurStr = Ptr->GetStringAddr(Len2, &EndSeq);
-				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
+				escapeHtmlTags(tb, CurStr + Sel.Start, Length, printer.IsReducedHTMLSupported(), tab);
 				tb+= '\n';
 			}
     	}

@@ -320,16 +320,27 @@ public:
 	int CellPosToReal(int Pos);
 	void Select(int Start, int End);
 	void AddSelect(int Start, int End);
-	void GetSelection(int &Start, int &End);
-	struct Selection { int Start, End; };
-	Selection GetSelection()
-	{
-		Selection out;
-		GetSelection(out.Start, out.End);
-		return out;
-	}
+
 	bool IsSelection();
-	void GetRealSelection(int &Start, int &End);
+
+	struct Selection { int Start, End; };
+
+	Selection GetSelection();
+	void GetSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
+	Selection GetRealSelection();
+	void GetRealSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetRealSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
 	void SetWordWrap(int Wrap) { Flags.Change(FEDITLINE_WORDWRAP, Wrap != 0); }
 	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }

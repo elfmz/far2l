@@ -1024,7 +1024,6 @@ int Editor::BlockEnd2NumLine(int *Pos)
 	Edit *eBlock = VBlockStart ? VBlockStart : BlockStart;
 
 	if (eBlock) {
-		int StartSel, EndSel;
 		Edit *eLine = eBlock;
 		iLine = BlockStart2NumLine(nullptr);	// получили строку начала блока
 
@@ -1038,26 +1037,26 @@ int Editor::BlockEnd2NumLine(int *Pos)
 		} else {
 			while (eLine)		// поиск строки, содержащую конец блока
 			{
-				eLine->GetSelection(StartSel, EndSel);
+				auto Sel = eLine->GetSelection();
 
-				if (EndSel == -1)	// это значит, что конец блока "за строкой"
-					eLine->GetRealSelection(StartSel, EndSel);
+				if (Sel.End == -1)	// это значит, что конец блока "за строкой"
+					Sel = eLine->GetRealSelection();
 
-				if (StartSel == -1) {
+				if (Sel.Start == -1) {
 					// Если в текущей строки нет выделения, это еще не значит что мы в конце. Это может быть только начало :)
 					if (eLine->m_next) {
-						eLine->m_next->GetSelection(StartSel, EndSel);
+						Sel = eLine->m_next->GetSelection();
 
-						if (EndSel == -1)	// это значит, что конец блока "за строкой"
-							eLine->m_next->GetRealSelection(StartSel, EndSel);
+						if (Sel.End == -1)	// это значит, что конец блока "за строкой"
+							Sel = eLine->m_next->GetRealSelection();
 
-						if (StartSel == -1) {
+						if (Sel.Start == -1) {
 							break;
 						}
 					} else
 						break;
 				} else {
-					iPos = eLine->RealPosToCell(EndSel);
+					iPos = eLine->RealPosToCell(Sel.End);
 					iLine++;
 				}
 
@@ -1410,13 +1409,12 @@ int Editor::ProcessKey(FarKey Key)
 						break;
 					}
 			} else {
-				int StartSel, EndSel;
 				//				Edit *BStart=!BlockStart?VBlockStart:BlockStart;
 				//				BStart->GetRealSelection(StartSel,EndSel);
-				BlockStart->GetRealSelection(StartSel, EndSel);
-				_SVS(SysLog(L"[%d] PersistentBlocks! StartSel=%d, EndSel=%d", __LINE__, StartSel, EndSel));
+				auto Sel = BlockStart->GetRealSelection();
+				_SVS(SysLog(L"[%d] PersistentBlocks! StartSel=%d, EndSel=%d", __LINE__, Sel.Start, Sel.End));
 
-				if (StartSel == -1 || StartSel == EndSel) {
+				if (Sel.Start == -1 || Sel.Start == Sel.End) {
 					UnmarkBlockAndShowIt();
 				}
 			}
@@ -1436,9 +1434,10 @@ int Editor::ProcessKey(FarKey Key)
 	if (Key >= KEY_RCTRL0 && Key <= KEY_RCTRL9)
 		return SetBookmark(Key - KEY_RCTRL0);
 
-	int SelStart = 0, SelEnd = 0;
-	int SelFirst = FALSE;
-	int SelAtBeginning = FALSE;
+	//int SelStart = 0, SelEnd = 0;
+	bool SelFirst = false;
+	bool SelAtBeginning = false;
+	Edit::Selection Sel{0, 0};
 	EditorBlockGuard _bg(*this, &Editor::UnmarkEmptyBlock);
 	auto SelectRange = [](Edit* line, int start, int end)
 	{
@@ -1468,38 +1467,38 @@ int Editor::ProcessKey(FarKey Key)
 			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, SelStart, SelEnd));
 			UnmarkEmptyBlock();		// уберем выделение, если его размер равен 0
 			_bg.SetNeedCheckUnmark(true);
-			CurLine->GetRealSelection(SelStart, SelEnd);
+			Sel = CurLine->GetRealSelection();
 
 			if (Flags.Check(FEDITOR_CURPOSCHANGEDBYPLUGIN)) {
-				if (SelStart != -1
-						&& (CurPos < SelStart ||					// если курсор до выделения
-								(SelEnd != -1
-										&& (CurPos > SelEnd ||		// ... после выделения
-												(CurPos > SelStart && CurPos < SelEnd))))
+				if (Sel.Start != -1
+						&& (CurPos < Sel.Start ||					// если курсор до выделения
+								(Sel.End != -1
+										&& (CurPos > Sel.End ||		// ... после выделения
+												(CurPos > Sel.Start && CurPos < Sel.End))))
 						&& CurPos < CurLine->GetLength())			// ... внутри выдления
 					Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
 
 				Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
 			}
 
-			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, SelStart, SelEnd));
+			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, Sel.Start, Sel.End));
 
 			if (!Flags.Check(FEDITOR_MARKINGBLOCK)) {
 				UnmarkBlockAndShowIt();
 				Flags.Set(FEDITOR_MARKINGBLOCK);
 				BlockStart = CurLine;
 				BlockStartLine = NumLine;
-				SelFirst = TRUE;
-				SelStart = SelEnd = CurPos;
+				SelFirst = true;
+				Sel.Start = Sel.End = CurPos;
 			} else {
-				SelAtBeginning = CurLine == BlockStart && CurPos == SelStart;
+				SelAtBeginning = CurLine == BlockStart && CurPos == Sel.Start;
 
-				if (SelStart == -1) {
-					SelStart = SelEnd = CurPos;
+				if (Sel.Start == -1) {
+					Sel.Start = Sel.End = CurPos;
 				}
 			}
 
-			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, SelStart, SelEnd));
+			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, Sel.Start, Sel.End));
 		}
 	}
 
@@ -1626,12 +1625,12 @@ int Editor::ProcessKey(FarKey Key)
 			Lock();
 
 			if (SelAtBeginning) {
-				CurLine->Select(0, SelEnd);
+				CurLine->Select(0, Sel.End);
 			} else {
-				if (!SelStart) {
+				if (!Sel.Start) {
 					CurLine->Select(-1, 0);
 				} else {
-					CurLine->Select(0, SelStart);
+					CurLine->Select(0, Sel.Start);
 				}
 			}
 
@@ -1677,14 +1676,12 @@ int Editor::ProcessKey(FarKey Key)
 				Lock();
 				int CurLength = CurLine->GetLength();
 
-				if (!SelAtBeginning || SelFirst) {
-					CurLine->Select(SelStart, CurLength);
-				} else {
-					if (SelEnd != -1)
-						CurLine->Select(SelEnd, CurLength);
-					else
-						CurLine->Select(CurLength, -1);
-				}
+				if (!SelAtBeginning || SelFirst)
+					CurLine->Select(Sel.Start, CurLength);
+				else if (Sel.End != -1)
+					CurLine->Select(Sel.End, CurLength);
+				else
+					CurLine->Select(CurLength, -1);
 
 				ProcessKey(KEY_END);
 				Pasting--;
@@ -1717,15 +1714,13 @@ int Editor::ProcessKey(FarKey Key)
 				} else		// курсор в конце блока
 				{
 					CurLine->Select(-1, 0);
-					CurLine->m_prev->GetRealSelection(SelStart, SelEnd);
-					CurLine->m_prev->Select(SelStart, CurLine->m_prev->GetLength());
+					Sel = CurLine->m_prev->GetRealSelection();
+					CurLine->m_prev->Select(Sel.Start, CurLine->m_prev->GetLength());
 				}
+			} else if (SelAtBeginning || SelFirst) {
+				CurLine->Select(CurLine->CalcPosBwdTo(Sel.Start), Sel.End);
 			} else {
-				if (SelAtBeginning || SelFirst) {
-					CurLine->Select(CurLine->CalcPosBwdTo(SelStart), SelEnd);
-				} else {
-					CurLine->Select(SelStart, CurLine->CalcPosBwdTo(SelEnd));
-				}
+				CurLine->Select(Sel.Start, CurLine->CalcPosBwdTo(Sel.End));
 			}
 
 			int LeftPos = CurLine->GetLeftPos();
@@ -1751,9 +1746,9 @@ int Editor::ProcessKey(FarKey Key)
 			}
 
 			if (SelAtBeginning) {
-				CurLine->Select(CurLine->CalcPosFwdTo(SelStart), SelEnd);
+				CurLine->Select(CurLine->CalcPosFwdTo(Sel.Start), Sel.End);
 			} else {
-				CurLine->Select(SelStart, CurLine->CalcPosFwdTo(SelEnd));
+				CurLine->Select(Sel.Start, CurLine->CalcPosFwdTo(Sel.End));
 			}
 
 			Edit *OldCur = CurLine;
@@ -1768,7 +1763,7 @@ int Editor::ProcessKey(FarKey Key)
 					BlockStart = CurLine;
 					BlockStartLine = NumLine;
 				} else {
-					OldCur->Select(SelStart, -1);
+					OldCur->Select(Sel.Start, -1);
 				}
 			}
 
@@ -1789,7 +1784,7 @@ int Editor::ProcessKey(FarKey Key)
 				}
 
 				_SVS(CleverSysLog SL(L"case KEY_CTRLSHIFTLEFT"));
-				_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, SelEnd));
+				_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, Sel.End));
 				{
 					int SkipSpace = TRUE;
 					Pasting++;
@@ -1902,8 +1897,7 @@ int Editor::ProcessKey(FarKey Key)
 
 				const int OldPos = CurLine->GetCurPos();
 				Edit* OldLine = CurLine;
-				int OldSelStart, OldSelEnd;
-				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
+				auto OldSel = OldLine->GetRealSelection();
 
 				Down();
 				RestoreWordWrapPreferredCellPos();
@@ -1915,7 +1909,7 @@ int Editor::ProcessKey(FarKey Key)
 						BlockStartLine = NumLine;
 					}
 					SelectRange(CurLine, CurLine->GetCurPos(),
-							SelFirst ? OldPos : (SelAtBeginning ? OldSelEnd : OldSelStart));
+							SelFirst ? OldPos : (SelAtBeginning ? OldSel.End : OldSel.Start));
 				}
 				else
 				{
@@ -1925,20 +1919,19 @@ int Editor::ProcessKey(FarKey Key)
 						OldLine->Select(OldPos, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
 					} else if (SelAtBeginning) {
-						if (OldSelEnd == -1) {
+						if (OldSel.End == -1) {
 							OldLine->Select(-1, 0);
 							BlockStart = CurLine;
 							BlockStartLine = NumLine;
 
-							int CurSelStart, CurSelEnd;
-							CurLine->GetRealSelection(CurSelStart, CurSelEnd);
-							SelectRange(CurLine, CurLine->GetCurPos(), CurSelEnd);
+							const auto CurSel = CurLine->GetRealSelection();
+							SelectRange(CurLine, CurLine->GetCurPos(), CurSel.End);
 						} else {
-							OldLine->Select(OldSelEnd, -1);
+							OldLine->Select(OldSel.End, -1);
 							CurLine->Select(0, CurLine->GetCurPos());
 						}
 					} else {
-						OldLine->Select(OldSelStart, -1);
+						OldLine->Select(OldSel.Start, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
 					}
 				}
@@ -1954,39 +1947,37 @@ int Editor::ProcessKey(FarKey Key)
 
 			if (SelAtBeginning)		// Снимаем выделение
 			{
-				if (SelEnd == -1) {
+				if (Sel.End == -1) {
 					CurLine->Select(-1, 0);
 					BlockStart = CurLine->m_next;
 					BlockStartLine = NumLine + 1;
 				} else {
-					CurLine->Select(SelEnd, -1);
+					CurLine->Select(Sel.End, -1);
 				}
 
-				CurLine->m_next->GetRealSelection(SelStart, SelEnd);
+				Sel = CurLine->m_next->GetRealSelection();
 
-				if (SelStart != -1)
-					SelStart = CurLine->m_next->RealPosToCell(SelStart);
+				if (Sel.Start != -1)
+					Sel.Start = CurLine->m_next->RealPosToCell(Sel.Start);
 
-				if (SelEnd != -1)
-					SelEnd = CurLine->m_next->RealPosToCell(SelEnd);
+				if (Sel.End != -1)
+					Sel.End = CurLine->m_next->RealPosToCell(Sel.End);
 
-				if (SelStart == -1) {
-					SelStart = 0;
-					SelEnd = CurPos;
+				if (Sel.Start == -1) {
+					Sel.Start = 0;
+					Sel.End = CurPos;
+				} else if (Sel.End != -1 && Sel.End < CurPos) {
+					Sel.Start = Sel.End;
+					Sel.End = CurPos;
 				} else {
-					if (SelEnd != -1 && SelEnd < CurPos) {
-						SelStart = SelEnd;
-						SelEnd = CurPos;
-					} else {
-						SelStart = CurPos;
-					}
+					Sel.Start = CurPos;
 				}
 
-				if (SelStart != -1)
-					SelStart = CurLine->m_next->CellPosToReal(SelStart);
+				if (Sel.Start != -1)
+					Sel.Start = CurLine->m_next->CellPosToReal(Sel.Start);
 
-				if (SelEnd != -1)
-					SelEnd = CurLine->m_next->CellPosToReal(SelEnd);
+				if (Sel.End != -1)
+					Sel.End = CurLine->m_next->CellPosToReal(Sel.End);
 
 				/*
 				if(!EdOpt.CursorBeyondEOL && SelEnd>CurLine->m_next->GetLength())
@@ -2000,24 +1991,24 @@ int Editor::ProcessKey(FarKey Key)
 				*/
 			} else		// расширяем выделение
 			{
-				CurLine->Select(SelStart, -1);
+				CurLine->Select(Sel.Start, -1);
 
-				SelStart = CurLine->m_next->CellPosToReal(0);
-				SelEnd = CurLine->m_next->CellPosToReal(CurPos);
+				Sel.Start = CurLine->m_next->CellPosToReal(0);
+				Sel.End = CurLine->m_next->CellPosToReal(CurPos);
 			}
 
-			if (!EdOpt.CursorBeyondEOL && SelEnd > CurLine->m_next->GetLength()) {
-				SelEnd = CurLine->m_next->GetLength();
+			if (!EdOpt.CursorBeyondEOL && Sel.End > CurLine->m_next->GetLength()) {
+				Sel.End = CurLine->m_next->GetLength();
 			}
 
-			if (!EdOpt.CursorBeyondEOL && SelStart > CurLine->m_next->GetLength()) {
-				SelStart = CurLine->m_next->GetLength();
+			if (!EdOpt.CursorBeyondEOL && Sel.Start > CurLine->m_next->GetLength()) {
+				Sel.Start = CurLine->m_next->GetLength();
 			}
 
 			//			if(!SelStart && !SelEnd)
 			//				CurLine->m_next->Select(-1,0);
 			//			else
-			CurLine->m_next->Select(SelStart, SelEnd);
+			CurLine->m_next->Select(Sel.Start, Sel.End);
 
 			Down();
 			Show();
@@ -2035,8 +2026,7 @@ int Editor::ProcessKey(FarKey Key)
 
 				const int OldPos = CurLine->GetCurPos();
 				Edit* OldLine = CurLine;
-				int OldSelStart, OldSelEnd;
-				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
+				auto OldSel = OldLine->GetRealSelection();
 
 				Up();
 				RestoreWordWrapPreferredCellPos();
@@ -2048,7 +2038,7 @@ int Editor::ProcessKey(FarKey Key)
 						BlockStartLine = NumLine;
 					}
 					SelectRange(CurLine, CurLine->GetCurPos(),
-							SelFirst ? OldPos : (SelAtBeginning ? OldSelEnd : OldSelStart));
+							SelFirst ? OldPos : (SelAtBeginning ? OldSel.End : OldSel.Start));
 				}
 				else
 				{
@@ -2061,22 +2051,20 @@ int Editor::ProcessKey(FarKey Key)
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
 						CurLine->Select(CurLine->GetCurPos(), -1);
-						OldLine->Select(0, OldSelEnd);
+						OldLine->Select(0, OldSel.End);
 					} else if (BlockStartLine < NumLine + 1) {
 						OldLine->Select(-1, 0);
 
-						int CurSelStart, CurSelEnd;
-						CurLine->GetRealSelection(CurSelStart, CurSelEnd);
-
-						if (CurSelEnd == -1 || CurLine->GetCurPos() >= CurSelStart)
-							CurLine->Select(CurSelStart, CurLine->GetCurPos());
+						const auto CurSel = CurLine->GetRealSelection();
+						if (CurSel.End == -1 || CurLine->GetCurPos() >= CurSel.Start)
+							CurLine->Select(CurSel.Start, CurLine->GetCurPos());
 						else {
-							CurLine->Select(CurLine->GetCurPos(), CurSelStart);
+							CurLine->Select(CurLine->GetCurPos(), CurSel.Start);
 							BlockStart = CurLine;
 							BlockStartLine = NumLine;
 						}
 					} else {
-						OldLine->Select(0, OldSelStart);
+						OldLine->Select(0, OldSel.Start);
 						CurLine->Select(CurLine->GetCurPos(), -1);
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
@@ -2094,61 +2082,61 @@ int Editor::ProcessKey(FarKey Key)
 
 			if (SelAtBeginning || SelFirst)
 			{
-				CurLine->Select(0, SelEnd);
-				SelStart = CurPos;
+				CurLine->Select(0, Sel.End);
+				Sel.Start = CurPos;
 
 				if (!EdOpt.CursorBeyondEOL
-						&& CurLine->m_prev->CellPosToReal(SelStart) > CurLine->m_prev->GetLength()) {
-					SelStart = CurLine->m_prev->RealPosToCell(CurLine->m_prev->GetLength());
+						&& CurLine->m_prev->CellPosToReal(Sel.Start) > CurLine->m_prev->GetLength()) {
+					Sel.Start = CurLine->m_prev->RealPosToCell(CurLine->m_prev->GetLength());
 				}
 
-				SelStart = CurLine->m_prev->CellPosToReal(SelStart);
-				CurLine->m_prev->Select(SelStart, -1);
+				Sel.Start = CurLine->m_prev->CellPosToReal(Sel.Start);
+				CurLine->m_prev->Select(Sel.Start, -1);
 				BlockStart = CurLine->m_prev;
 				BlockStartLine = NumLine - 1;
 			}
 			else
 			{
-				if (!SelStart) {
+				if (!Sel.Start) {
 					CurLine->Select(-1, 0);
 				} else {
-					CurLine->Select(0, SelStart);
+					CurLine->Select(0, Sel.Start);
 				}
 
-				CurLine->m_prev->GetRealSelection(SelStart, SelEnd);
+				Sel = CurLine->m_prev->GetRealSelection();
 
-				if (SelStart != -1)
-					SelStart = CurLine->m_prev->RealPosToCell(SelStart);
+				if (Sel.Start != -1)
+					Sel.Start = CurLine->m_prev->RealPosToCell(Sel.Start);
 
-				if (SelEnd != -1)
-					SelEnd = CurLine->m_prev->RealPosToCell(SelEnd);
+				if (Sel.End != -1)
+					Sel.End = CurLine->m_prev->RealPosToCell(Sel.End);
 
-				if (SelStart == -1) {
+				if (Sel.Start == -1) {
 					BlockStart = CurLine->m_prev;
 					BlockStartLine = NumLine - 1;
-					SelStart = CurLine->m_prev->CellPosToReal(CurPos);
-					SelEnd = -1;
+					Sel.Start = CurLine->m_prev->CellPosToReal(CurPos);
+					Sel.End = -1;
 				} else {
-					if (CurPos < SelStart) {
-						SelEnd = SelStart;
-						SelStart = CurPos;
+					if (CurPos < Sel.Start) {
+						Sel.End = Sel.Start;
+						Sel.Start = CurPos;
 					} else {
-						SelEnd = CurPos;
+						Sel.End = CurPos;
 					}
 
-					SelStart = CurLine->m_prev->CellPosToReal(SelStart);
-					SelEnd = CurLine->m_prev->CellPosToReal(SelEnd);
+					Sel.Start = CurLine->m_prev->CellPosToReal(Sel.Start);
+					Sel.End = CurLine->m_prev->CellPosToReal(Sel.End);
 
-					if (!EdOpt.CursorBeyondEOL && SelEnd > CurLine->m_prev->GetLength()) {
-						SelEnd = CurLine->m_prev->GetLength();
+					if (!EdOpt.CursorBeyondEOL && Sel.End > CurLine->m_prev->GetLength()) {
+						Sel.End = CurLine->m_prev->GetLength();
 					}
 
-					if (!EdOpt.CursorBeyondEOL && SelStart > CurLine->m_prev->GetLength()) {
-						SelStart = CurLine->m_prev->GetLength();
+					if (!EdOpt.CursorBeyondEOL && Sel.Start > CurLine->m_prev->GetLength()) {
+						Sel.Start = CurLine->m_prev->GetLength();
 					}
 				}
 
-				CurLine->m_prev->Select(SelStart, SelEnd);
+				CurLine->m_prev->Select(Sel.Start, Sel.End);
 			}
 
 			Up();
@@ -2188,8 +2176,7 @@ int Editor::ProcessKey(FarKey Key)
 				return TRUE;
 
 			if (BlockStart || VBlockStart) {
-				int SelStart, SelEnd;
-				CurLine->GetSelection(SelStart, SelEnd);
+				auto Sel = CurLine->GetSelection();
 				Pasting++;
 				bool OldUseInternalClipboard = Clipboard::SetUseInternalClipboardState(true);
 				ProcessKey(Key == KEY_CTRLP ? KEY_CTRLINS : KEY_SHIFTDEL);
@@ -2199,9 +2186,9 @@ int Editor::ProcessKey(FarKey Key)
 					^P/^M - некорректно работали: уловие для CurPos должно быть ">=",
 					а не "меньше".
 				*/
-				if (Key == KEY_CTRLM && SelStart != -1 && SelEnd != -1) {
-					if (CurPos >= SelEnd)
-						CurLine->SetCurPos(CurPos - (SelEnd - SelStart));
+				if (Key == KEY_CTRLM && Sel.Start != -1 && Sel.End != -1) {
+					if (CurPos >= Sel.End)
+						CurLine->SetCurPos(CurPos - (Sel.End - Sel.Start));
 					else
 						CurLine->SetCurPos(CurPos);
 				}
@@ -2332,28 +2319,26 @@ int Editor::ProcessKey(FarKey Key)
 						if (!CurLine->m_next)
 							CurLine->SetEOL(L"");
 						else {
-							int SelStart, SelEnd, NextSelStart, NextSelEnd;
 							int Length = CurLine->GetLength();
-							CurLine->GetSelection(SelStart, SelEnd);
-							CurLine->m_next->GetSelection(NextSelStart, NextSelEnd);
-							int NextLength;
-							const wchar_t *Str = CurLine->m_next->GetStringAddr(NextLength);
-							CurLine->InsertBinaryString(Str, NextLength);
+							auto Sel = CurLine->GetSelection();
+							auto NextSel = CurLine->m_next->GetSelection();
+							CurLine->m_next->GetString(strTmp);
+							CurLine->InsertBinaryString(strTmp.data(), strTmp.size());
 							CurLine->SetEOL(CurLine->m_next->GetEOL());
 							CurLine->SetCurPos(CurPos);
 							DeleteString(CurLine->m_next, NumLine + 1, TRUE, NumLine + 1);
 
-							if (!NextLength)
+							if (strTmp.empty())
 								CurLine->SetEOL(L"");
 
-							if (NextSelStart != -1) {
-								if (SelStart == -1) {
-									CurLine->Select(Length + NextSelStart,
-											NextSelEnd == -1 ? -1 : Length + NextSelEnd);
+							if (NextSel.Start != -1) {
+								if (Sel.Start == -1) {
+									CurLine->Select(Length + NextSel.Start,
+											NextSel.End == -1 ? -1 : Length + NextSel.End);
 									BlockStart = CurLine;
 									BlockStartLine = NumLine;
 								} else
-									CurLine->Select(SelStart, NextSelEnd == -1 ? -1 : Length + NextSelEnd);
+									CurLine->Select(Sel.Start, NextSel.End == -1 ? -1 : Length + NextSel.End);
 							}
 						}
 
@@ -3248,8 +3233,7 @@ case KEY_CTRLNUMPAD3: {
 					BlockStart = CurLine;
 					BlockStartLine = NumLine;
 					// SelFirst=TRUE;
-					SelStart = SStart;
-					SelEnd = SEnd;
+					Sel = {SStart, SEnd};
 					// CurLine->ProcessKey(MCODE_OP_SELWORD);
 				}
 			}
@@ -3472,8 +3456,7 @@ case KEY_CTRLNUMPAD3: {
 				}
 
 				// <comment> - это требуется для корректной работы логики блоков для Ctrl-K
-				int PreSelStart, PreSelEnd;
-				CurLine->GetSelection(PreSelStart, PreSelEnd);
+				const auto PreSel = CurLine->GetSelection();
 				// </comment>
 				// AY: Это что бы при FastShow LeftPos не становился в конец строки.
 				int Width = ObjWidth() > 0 ? CalculateTextAreaWidth(ObjWidth(), EdOpt.ShowScrollBar) : 0;
@@ -3481,7 +3464,6 @@ case KEY_CTRLNUMPAD3: {
 
 				const int OldVisualLineCount = m_bWordWrap ? CurLine->GetVisualLineCount() : 0;
 				if (CurLine->ProcessKey(Key)) {
-					int SelStart, SelEnd;
 
 					/*
 						$ 17.09.2002 SKV
@@ -3499,8 +3481,8 @@ case KEY_CTRLNUMPAD3: {
 					}
 
 					if (Key == KEY_TAB && CurLine->GetConvertTabs() && BlockStart && BlockStart != CurLine) {
-						CurLine->GetSelection(SelStart, SelEnd);
-						CurLine->Select(SelStart == -1 ? -1 : 0, SelEnd);
+						auto Sel = CurLine->GetSelection();
+						CurLine->Select(Sel.Start == -1 ? -1 : 0, Sel.End);
 					}
 
 					if (!SkipCheckUndo && !CurLine->EqualTo(Str)) {
@@ -3514,19 +3496,19 @@ case KEY_CTRLNUMPAD3: {
 					if (Key == KEY_CTRLK && EdOpt.PersistentBlocks) {
 						if (CurLine == BlockStart) {
 							if (CurPos) {
-								CurLine->GetSelection(SelStart, SelEnd);
+								Sel = CurLine->GetSelection();
 
 								// 1. блок за концом строки (CurPos был ближе к началу, чем SelStart)
-								if ((SelEnd == -1 && PreSelStart > CurPos) || SelEnd > CurPos)
-									SelStart = SelEnd = -1;		// в этом случае снимаем выделение
+								if ((Sel.End == -1 && PreSel.Start > CurPos) || Sel.End > CurPos)
+									Sel.Start = Sel.End = -1;		// в этом случае снимаем выделение
 
 								// 2. CurPos внутри блока
-								else if (SelEnd == -1 && PreSelEnd > CurPos && SelStart < CurPos)
-									SelEnd = PreSelEnd;		// в этом случае усекаем блок
+								else if (Sel.End == -1 && PreSel.End > CurPos && Sel.Start < CurPos)
+									Sel.End = PreSel.End;		// в этом случае усекаем блок
 
 								// 3. блок остался слева от CurPos или выделение нужно снять (см. выше)
-								if (SelEnd >= CurPos || SelStart == -1)
-									CurLine->Select(SelStart, CurPos);
+								if (Sel.End >= CurPos || Sel.Start == -1)
+									CurLine->Select(Sel.Start, CurPos);
 							} else {
 								CurLine->Select(-1, -1);
 								BlockStart = BlockStart->m_next;
@@ -3537,9 +3519,9 @@ case KEY_CTRLNUMPAD3: {
 							Edit *CurPtrBlock = BlockStart, *CurPtrBlock2 = BlockStart;
 
 							while (CurPtrBlock) {
-								CurPtrBlock->GetRealSelection(SelStart, SelEnd);
+								Sel = CurPtrBlock->GetRealSelection();
 
-								if (SelStart == -1)
+								if (Sel.Start == -1)
 									break;
 
 								CurPtrBlock2 = CurPtrBlock;
@@ -3548,8 +3530,8 @@ case KEY_CTRLNUMPAD3: {
 
 							if (CurLine == CurPtrBlock2) {
 								if (CurPos) {
-									CurLine->GetSelection(SelStart, SelEnd);
-									CurLine->Select(SelStart, CurPos);
+									Sel = CurLine->GetSelection();
+									CurLine->Select(Sel.Start, CurPos);
 								} else {
 									CurLine->Select(-1, -1);
 									CurPtrBlock2 = CurPtrBlock2->m_next;
@@ -4081,27 +4063,25 @@ bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int Dr
 	ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 	ShowString.SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 
-	int SelStart = -1;
-	int SelEnd = 0;
-	CurLogicalLine->GetSelection(SelStart, SelEnd);
-	if (SelStart != -1) {
+	auto Sel = CurLogicalLine->GetSelection();
+	if (Sel.Start != -1) {
 		bool HasOverlap = false;
 		int TargetSelStart = -1, TargetSelEnd = 0;
 
-		if (SelStart == SelEnd && CurLogicalLine->GetLength() == 0) {
+		if (Sel.Start == Sel.End && CurLogicalLine->GetLength() == 0) {
 			HasOverlap = true;
 			TargetSelStart = 0;
 			TargetSelEnd = -1;
-		} else if (SelEnd == -1) {
-			const int ClippedSelStart = std::max(SelStart, VisualLineStart);
+		} else if (Sel.End == -1) {
+			const int ClippedSelStart = std::max(Sel.Start, VisualLineStart);
 			if (ClippedSelStart < VisualLineEnd) {
 				HasOverlap = true;
 				TargetSelStart = ClippedSelStart - VisualLineStart;
 				TargetSelEnd = -1;
 			}
 		} else {
-			const int ClippedSelStart = std::max(SelStart, VisualLineStart);
-			const int ClippedSelEnd = std::min(SelEnd, VisualLineEnd);
+			const int ClippedSelStart = std::max(Sel.Start, VisualLineStart);
+			const int ClippedSelEnd = std::min(Sel.End, VisualLineEnd);
 			if (ClippedSelStart < ClippedSelEnd) {
 				HasOverlap = true;
 				TargetSelStart = ClippedSelStart - VisualLineStart;
@@ -4115,10 +4095,8 @@ bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int Dr
 
 	bool is_selected_empty_logical_line = false;
 	if (CurLogicalLine->GetLength() == 0) {
-		int RealSelStart = -1;
-		int RealSelEnd = 0;
-		CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
-		is_selected_empty_logical_line = (RealSelStart == 0 && RealSelEnd == -1);
+		auto RealSel = CurLogicalLine->GetRealSelection();
+		is_selected_empty_logical_line = (RealSel.Start == 0 && RealSel.End == -1);
 		if (is_selected_empty_logical_line)
 			ShowString.Select(0, 1);
 	}
@@ -5439,16 +5417,15 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 		DataSize = wcslen(ptrInitData);
 
 	size_t TotalChars = DataSize;
-	int StartSel, EndSel;
 	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next) {
-		Ptr->GetSelection(StartSel, EndSel);
-		if (StartSel == -1)
+		const auto Sel = Ptr->GetSelection();
+		if (Sel.Start == -1)
 			break;
-		if (EndSel == -1) {
-			TotalChars+= Ptr->GetLength() - StartSel;
+		if (Sel.End == -1) {
+			TotalChars+= Ptr->GetLength() - Sel.Start;
 			TotalChars+= wcslen(NATIVE_EOLW);	// CRLF
 		} else
-			TotalChars+= EndSel - StartSel;
+			TotalChars+= Sel.End - Sel.Start;
 	}
 	TotalChars++;	// '\0'
 
@@ -5471,24 +5448,23 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 
 	int line_in_block = 0;
 	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next, ++line_in_block) {
-		int RealStartSel, RealEndSel;
-		Ptr->GetSelection(StartSel, EndSel);
-		Ptr->GetRealSelection(RealStartSel, RealEndSel);
+		const auto Sel = Ptr->GetSelection();
+//		const auto RealSel = Ptr->GetRealSelection();
 
-		if (StartSel == -1) {
+		if (Sel.Start == -1) {
 			break;
 		}
 
 		int Length;
-		if (EndSel == -1)
-			Length = Ptr->GetLength() - StartSel;
+		if (Sel.End == -1)
+			Length = Ptr->GetLength() - Sel.Start;
 		else
-			Length = EndSel - StartSel;
+			Length = Sel.End - Sel.Start;
 
 		Ptr->GetSelString(CopyData + DataSize, Length + 1);
 		DataSize+= Length;
 
-		if (EndSel == -1) {
+		if (Sel.End == -1) {
 			wcscpy(CopyData + DataSize, NATIVE_EOLW);
 			DataSize+= wcslen(NATIVE_EOLW);
 		}
@@ -5513,20 +5489,19 @@ void Editor::DeleteBlock()
 	std::wstring strNext;
 	for (int i = BlockStartLine; CurPtr; i++) {
 		TextChanged(1);
-		int StartSel, EndSel;
 		/*
 			$ 17.09.2002 SKV
 			меняем на Real что б ловить выделение за концом строки.
 		*/
-		CurPtr->GetRealSelection(StartSel, EndSel);
+		auto Sel = CurPtr->GetRealSelection();
 
-		if (EndSel != -1 && EndSel > CurPtr->GetLength())
-			EndSel = -1;
+		if (Sel.End != -1 && Sel.End > CurPtr->GetLength())
+			Sel.End = -1;
 
-		if (StartSel == -1)
+		if (Sel.Start == -1)
 			break;
 
-		if (!StartSel && EndSel == -1) {
+		if (!Sel.Start && Sel.End == -1) {
 			Edit *NextLine = CurPtr->m_next;
 			DeleteString(CurPtr, i, FALSE, BlockStartLine);
 
@@ -5542,7 +5517,7 @@ void Editor::DeleteBlock()
 
 		int Length = CurPtr->GetLength();
 
-		if (StartSel || EndSel)
+		if (Sel.Start || Sel.End)
 			AddUndoData(UNDO_EDIT, BlockStartLine, CurPtr->GetCurPos(), CurPtr);
 
 		/*
@@ -5550,8 +5525,8 @@ void Editor::DeleteBlock()
 			опять про выделение за концом строки.
 			InsertBinaryString добавит trailing space'ов
 		*/
-		if (StartSel > Length) {
-			Length = StartSel;
+		if (Sel.Start > Length) {
+			Length = Sel.Start;
 			CurPtr->SetCurPos(Length);
 			CurPtr->InsertBinaryString(L"", 0);
 		}
@@ -5560,24 +5535,24 @@ void Editor::DeleteBlock()
 
 		int DeleteNext = FALSE;
 
-		if (EndSel == -1) {
-			EndSel = Length;
+		if (Sel.End == -1) {
+			Sel.End = Length;
 
 			if (CurPtr->m_next)
 				DeleteNext = TRUE;
 		}
 
-		strTmp.erase(StartSel, EndSel - StartSel);
-		int CurPos = StartSel;
+		strTmp.erase(Sel.Start, Sel.End - Sel.Start);
+		int CurPos = Sel.Start;
 		/*
-		if (CurPos>=StartSel)
+		if (CurPos>=Sel.Start)
 		{
-			CurPos-=(EndSel-StartSel);
-			if (CurPos<StartSel)
-				CurPos=StartSel;
+			CurPos-=(Sel.End-Sel.Start);
+			if (CurPos<Sel.Start)
+				CurPos=Sel.Start;
 		}
 		*/
-		Length-= EndSel - StartSel;
+		Length-= Sel.End - Sel.Start;
 
 		if (DeleteNext) {
 			auto NextSel = CurPtr->m_next->GetSelection();
@@ -5586,7 +5561,7 @@ void Editor::DeleteBlock()
 				NextSel.End = 0;
 
 			if (NextSel.End == -1) {
-				EndSel = -1;
+				Sel.End = -1;
 			} else {
 				CurPtr->m_next->GetString(strNext);
 				if (int(strNext.size()) > NextSel.End) {
@@ -5612,7 +5587,7 @@ void Editor::DeleteBlock()
 		strTmp+= CurPtr->GetEOL();
 		CurPtr->SetBinaryString(strTmp.data(), strTmp.size());
 		CurPtr->SetCurPos(CurPos);
-		if (DeleteNext && EndSel == -1) {
+		if (DeleteNext && Sel.End == -1) {
 			CurPtr->Select(CurPtr->GetLength(), -1);
 		} else {
 			CurPtr->Select(-1, 0);
@@ -5703,10 +5678,9 @@ bool Editor::UnmarkBlock()
 	Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
 
 	while (BlockStart) {
-		int StartSel, EndSel;
-		BlockStart->GetSelection(StartSel, EndSel);
+		auto Sel = BlockStart->GetSelection();
 
-		if (StartSel == -1) {
+		if (Sel.Start == -1) {
 			/*
 				$ 24.06.2002 SKV
 				Если в текущей строки нет выделения,
@@ -5714,9 +5688,9 @@ bool Editor::UnmarkBlock()
 				Это может быть только начало :)
 			*/
 			if (BlockStart->m_next) {
-				BlockStart->m_next->GetSelection(StartSel, EndSel);
+				Sel = BlockStart->m_next->GetSelection();
 
-				if (StartSel == -1) {
+				if (Sel.Start == -1) {
 					break;
 				}
 			} else
@@ -5747,7 +5721,7 @@ void Editor::UnmarkEmptyBlock()
 
 	if (BlockStart || VBlockStart)		// присутствует выделение
 	{
-		int Lines = 0, StartSel, EndSel;
+		int Lines = 0;
 		Edit *Block = BlockStart;
 
 		if (VBlockStart) {
@@ -5756,12 +5730,12 @@ void Editor::UnmarkEmptyBlock()
 		} else
 			while (Block)		// пробегаем по всем выделенным строкам
 			{
-				Block->GetRealSelection(StartSel, EndSel);
+				const auto Sel = Block->GetRealSelection();
 
-				if (StartSel == -1)
+				if (Sel.Start == -1)
 					break;
 
-				if (StartSel != EndSel)		// выделено сколько-то символов
+				if (Sel.Start != Sel.End)		// выделено сколько-то символов
 				{
 					++Lines;				// увеличим счетчик непустых строк
 					break;
@@ -6185,19 +6159,16 @@ void Editor::BlockLeft()
 	AddUndoData(UNDO_BEGIN);
 
 	while (CurPtr) {
-		int StartSel, EndSel;
-		CurPtr->GetSelection(StartSel, EndSel);
+		auto Sel = CurPtr->GetSelection();
 
 		/*
 			$ 14.02.2001 VVM
 			+ Блока нет - сделаем его искусственно
 		*/
-		if (MoveLine) {
-			StartSel = 0;
-			EndSel = -1;
-		}
+		if (MoveLine)
+			Sel = {0, -1};
 
-		if (StartSel == -1)
+		if (Sel.Start == -1)
 			break;
 
 		CurPtr->GetString(strTmp);
@@ -6210,7 +6181,7 @@ void Editor::BlockLeft()
 			strTmp.replace(0, 1, EdOpt.TabSize - 1, L' ');
 		}
 
-		if ((EndSel == -1 || EndSel > StartSel) && IsSpace(CurFront)) {
+		if ((Sel.End == -1 || Sel.End > Sel.Start) && IsSpace(CurFront)) {
 			strTmp+= CurPtr->GetEOL();
 			// EOL? - CurLine->GetEOL() GlobalEOL ""
 			AddUndoData(UNDO_EDIT, LineNum, 0, CurPtr);
@@ -6219,7 +6190,7 @@ void Editor::BlockLeft()
 			CurPtr->SetCurPos(CurPos > 0 ? CurPos - 1 : CurPos);
 
 			if (!MoveLine)
-				CurPtr->Select(StartSel > 0 ? StartSel - 1 : StartSel, EndSel > 0 ? EndSel - 1 : EndSel);
+				CurPtr->Select(Sel.Start > 0 ? Sel.Start - 1 : Sel.Start, Sel.End > 0 ? Sel.End - 1 : Sel.End);
 
 			TextChanged(1);
 		}
@@ -6256,22 +6227,19 @@ void Editor::BlockRight()
 	AddUndoData(UNDO_BEGIN);
 
 	while (CurPtr) {
-		int StartSel, EndSel;
-		CurPtr->GetSelection(StartSel, EndSel);
+		auto Sel = CurPtr->GetSelection();
 
 		/*
 			$ 14.02.2001 VVM
 			+ Блока нет - сделаем его искусственно
 		*/
-		if (MoveLine) {
-			StartSel = 0;
-			EndSel = -1;
-		}
+		if (MoveLine)
+			Sel = {0, -1};
 
-		if (StartSel == -1)
+		if (Sel.Start == -1)
 			break;
 
-		if (EndSel == -1 || EndSel > StartSel) {
+		if (Sel.End == -1 || Sel.End > Sel.Start) {
 			AddUndoData(UNDO_EDIT, LineNum, 0, CurPtr);
 			int CurPos = CurPtr->GetCurPos();
 
@@ -6286,7 +6254,7 @@ void Editor::BlockRight()
 			CurPtr->SetCurPos(CurPos + 1);
 
 			if (!MoveLine)
-				CurPtr->Select(StartSel > 0 ? StartSel + 1 : StartSel, EndSel > 0 ? EndSel + 1 : EndSel);
+				CurPtr->Select(Sel.Start > 0 ? Sel.Start + 1 : Sel.Start, Sel.End > 0 ? Sel.End + 1 : Sel.End);
 
 			TextChanged(1);
 		}
@@ -6985,7 +6953,7 @@ int Editor::EditorControl(int Command, void *Param)
 					return FALSE;
 				}
 
-				AddUndoData(UNDO_EDIT, StringNumber, CurPtr->GetCurPos(), CurPtr->GetStringAddr(), CurPtr->GetEOL(), CurPtr->GetLength());
+				AddUndoData(UNDO_EDIT, StringNumber, CurPtr->GetCurPos(), CurPtr);
 				CurPtr->ExpandTabs();
 			}
 
@@ -7819,7 +7787,7 @@ void Editor::Xlat()
 			if (CopySize > TBlockSizeX)
 				CopySize = TBlockSizeX;
 
-			AddUndoData(UNDO_EDIT, BlockStartLine + Line, CurLine->GetCurPos(), CurPtr->GetStringAddr(), CurPtr->GetEOL(), CurPtr->GetLength());
+			AddUndoData(UNDO_EDIT, BlockStartLine + Line, CurLine->GetCurPos(), CurPtr);
 			::Xlat(CurPtr->Str.Ptr(), TBlockX, TBlockX + CopySize, Opt.XLat.Flags);
 		}
 
@@ -7835,17 +7803,16 @@ void Editor::Xlat()
 		*/
 		if (CurPtr) {
 			while (CurPtr) {
-				int StartSel, EndSel;
-				CurPtr->GetSelection(StartSel, EndSel);
+				auto Sel = CurPtr->GetSelection();
 
-				if (StartSel == -1)
+				if (Sel.Start == -1)
 					break;
 
-				if (EndSel == -1)
-					EndSel = CurPtr->GetLength();	// StrLength(CurPtr->Str);
+				if (Sel.End == -1)
+					Sel.End = CurPtr->GetLength();	// StrLength(CurPtr->Str);
 
-				AddUndoData(UNDO_EDIT, BlockStartLine + Line, CurLine->GetCurPos(), CurPtr->GetStringAddr(), CurPtr->GetEOL(), CurPtr->GetLength());
-				::Xlat(CurPtr->Str.Ptr(), StartSel, EndSel, Opt.XLat.Flags);
+				AddUndoData(UNDO_EDIT, BlockStartLine + Line, CurLine->GetCurPos(), CurPtr);
+				::Xlat(CurPtr->Str.Ptr(), Sel.Start, Sel.End, Opt.XLat.Flags);
 				Line++;
 				CurPtr = CurPtr->m_next;
 			}
@@ -7878,7 +7845,7 @@ void Editor::Xlat()
 				while (end < StrSize && !IsWordDiv(Opt.XLat.strWordDivForXlat, Str[end]))
 					end++;
 
-				AddUndoData(UNDO_EDIT, NumLine, start, CurLine->GetStringAddr(), CurLine->GetEOL(), CurLine->GetLength());
+				AddUndoData(UNDO_EDIT, NumLine, start, CurLine);
 				::Xlat(Str, start, end, Opt.XLat.Flags);
 			}
 		}

@@ -243,7 +243,11 @@ public:
 
 	void SetShowWhiteSpace(int Mode) { Flags.Change(FEDITLINE_SHOWWHITESPACE, Mode); }
 
-	void GetString(wchar_t *Data, int MaxSize);
+	void GetString(int Offset, wchar_t *Data, int MaxSize);
+	inline void GetString(wchar_t *Data, int MaxSize)
+	{
+		GetString(0, Data, MaxSize);
+	}
 
 	template <class DST_T>
 		void GetString(DST_T &dst, const wchar_t **EOL = nullptr)
@@ -274,6 +278,11 @@ public:
 	// to avoid memory usage surge
 	const wchar_t *GetStringAddr(int &Length, const wchar_t **EOL = nullptr);
 	const wchar_t *GetStringAddr();
+
+	inline const wchar_t GetChar(int Pos) // similar to but faster than GetStringAddr()[Pos]
+	{
+		return Str.At(Pos);
+	}
 
 	void SetHiString(const wchar_t *Str);
 	void SetString(const wchar_t *Str, int Length = -1);

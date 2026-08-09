@@ -144,9 +144,7 @@ static bool DeleteRealRange(Edit *line, int start, int end, int cursor_pos)
 		return false;
 	}
 
-	const wchar_t *end_seq = nullptr;
-	int length = 0;
-	const wchar_t *cur_str = line->GetStringAddr(length, &end_seq);
+	int length = line->GetLength();
 
 	if (start < 0) {
 		start = 0;
@@ -162,20 +160,15 @@ static bool DeleteRealRange(Edit *line, int start, int end, int cursor_pos)
 		return false;
 	}
 
-	const int eol_length = StrLength(end_seq);
-	std::wstring tmp;
-	tmp.reserve(length - (end - start) + eol_length + 1);
-	if (start > 0) {
-		tmp.append(cur_str, start);
-	}
+	std::wstring tmp = line->GetString();
 	if (length > end) {
-		tmp.append(cur_str + end, length - end);
+		tmp.erase(start, end - start);
+	} else {
+		tmp.resize(start);
 	}
-	if (eol_length > 0) {
-		tmp.append(end_seq, eol_length);
-	}
+	tmp+= line->GetEOL();
 
-	line->SetBinaryString(tmp.c_str(), static_cast<int>(tmp.size()));
+	line->SetBinaryString(tmp.data(), static_cast<int>(tmp.size()));
 	line->SetCurPos(cursor_pos < start ? cursor_pos : start);
 	return true;
 }
@@ -1653,7 +1646,7 @@ int Editor::ProcessKey(FarKey Key)
 					Lock();
 
 					int targetPos = end;
-					if (targetPos > start && targetPos < CurLine->GetLength() && CurLine->GetStringAddr()[targetPos - 1] == L' ')
+					if (targetPos > start && targetPos < CurLine->GetLength() && CurLine->GetChar(targetPos - 1) == L' ')
 					{
 					    targetPos--;
 					}
@@ -1792,8 +1785,7 @@ int Editor::ProcessKey(FarKey Key)
 					int CurPos;
 
 					for (;;) {
-						int Length;
-						const wchar_t *Str = CurLine->GetStringAddr(Length);
+						int Length = CurLine->GetLength();
 						CurPos = CurLine->GetCurPos();
 
 						if (CurPos > Length) {
@@ -1811,11 +1803,10 @@ int Editor::ProcessKey(FarKey Key)
 						}
 
 						if (!CurPos)
-						{
 							break;
-						}
 
-						if (IsSpace(Str[CurPos - 1]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos - 1])) {
+						const wchar_t Ch = CurLine->GetChar(CurPos - 1);
+						if (IsSpace(Ch) || IsWordDiv(EdOpt.strWordDiv, Ch)) {
 							if (SkipSpace) {
 								ProcessKey(KEY_SHIFTLEFT);
 								continue;
@@ -1856,16 +1847,14 @@ int Editor::ProcessKey(FarKey Key)
 					int CurPos;
 
 					for (;;) {
-						int Length;
-						const wchar_t *Str = CurLine->GetStringAddr(Length);
+						int Length = CurLine->GetLength();
 						CurPos = CurLine->GetCurPos();
 
 						if (CurPos >= Length)
-						{
 							break;
-						}
 
-						if (IsSpace(Str[CurPos]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos])) {
+						const wchar_t Ch = CurLine->GetChar(CurPos);
+						if (IsSpace(Ch) || IsWordDiv(EdOpt.strWordDiv, Ch)) {
 							if (SkipSpace) {
 								ProcessKey(KEY_SHIFTRIGHT);
 								continue;
@@ -2934,8 +2923,7 @@ case KEY_CTRLNUMPAD3: {
 				Lock();
 
 				for (;;) {
-					int Length;
-					const wchar_t *Str = CurLine->GetStringAddr(Length);
+					int Length = CurLine->GetLength();
 					int CurPos = CurLine->GetCurPos();
 
 					if (CurPos > Length) {
@@ -2946,7 +2934,8 @@ case KEY_CTRLNUMPAD3: {
 					if (!CurPos)
 						break;
 
-					if (IsSpace(Str[CurPos - 1]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos - 1])) {
+					const wchar_t Ch = CurLine->GetChar(CurPos - 1);
+					if (IsSpace(Ch) || IsWordDiv(EdOpt.strWordDiv, Ch)) {
 						if (SkipSpace) {
 							ProcessKey(KEY_ALTSHIFTLEFT);
 							continue;
@@ -2972,14 +2961,14 @@ case KEY_CTRLNUMPAD3: {
 				Lock();
 
 				for (;;) {
-					int Length;
-					const wchar_t *Str = CurLine->GetStringAddr(Length);
+					int Length = CurLine->GetLength();
 					int CurPos = CurLine->GetCurPos();
 
 					if (CurPos >= Length)
 						break;
 
-					if (IsSpace(Str[CurPos]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos])) {
+					const wchar_t Ch = CurLine->GetChar(CurPos);
+					if (IsSpace(Ch) || IsWordDiv(EdOpt.strWordDiv, Ch)) {
 						if (SkipSpace) {
 							ProcessKey(KEY_ALTSHIFTRIGHT);
 							continue;
@@ -3292,7 +3281,7 @@ case KEY_CTRLNUMPAD3: {
 
 				int targetPos = MoveToEnd ? end : start;
 				if (MoveToEnd && targetPos > start && targetPos < CurLine->GetLength()
-						&& CurLine->GetStringAddr()[targetPos - 1] == L' ')
+						&& CurLine->GetChar(targetPos - 1) == L' ')
 					targetPos--;
 
 				SetWordWrapCursorPosition(targetPos);
@@ -4675,16 +4664,11 @@ void Editor::InsertString()
 				CurLine->ProcessKey(KEY_HOME);
 				int SaveOvertypeMode = CurLine->GetOvertypeMode();
 				CurLine->SetOvertypeMode(FALSE);
-				const wchar_t *PrevStr = nullptr;
-				int PrevLength = 0;
-
-				if (SrcIndent) {
-					PrevStr = SrcIndent->GetStringAddr(PrevLength);
-				}
+				int PrevLength = SrcIndent ? SrcIndent->GetLength() : 0;
 
 				for (int I = 0; CurLine->GetCellCurPos() < IndentPos; I++) {
-					if (SrcIndent && I < PrevLength && IsSpace(PrevStr[I])) {
-						CurLine->ProcessKey(PrevStr[I]);
+					if (SrcIndent && I < PrevLength && IsSpace(SrcIndent->GetChar(I))) {
+						CurLine->ProcessKey(SrcIndent->GetChar(I));
 					} else {
 						CurLine->ProcessKey(KEY_SPACE);
 					}
@@ -6388,9 +6372,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	for (int Line = 0; CurPtr && Line < VBlockSizeY; Line++, CurPtr = CurPtr->m_next) {
 		int TBlockX = CurPtr->CellPosToReal(VBlockX);
 		int TBlockSizeX = CurPtr->CellPosToReal(VBlockX + VBlockSizeX) - TBlockX;
-		const wchar_t *EndSeq;
-		int Length;
-		const wchar_t *CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
+		int Length = CurPtr->GetLength();
 
 		if (Length > TBlockX) {
 			int CopySize = Length - TBlockX;
@@ -6398,7 +6380,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 			if (CopySize > TBlockSizeX)
 				CopySize = TBlockSizeX;
 
-			wmemcpy(CopyData + DataSize, CurStr + TBlockX, CopySize);
+			CurPtr->GetString(TBlockX, CopyData + DataSize, CopySize);
 
 			if (CopySize < TBlockSizeX)
 				wmemset(CopyData + DataSize + CopySize, L' ', TBlockSizeX - CopySize);

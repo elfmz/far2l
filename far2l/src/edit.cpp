@@ -2075,12 +2075,18 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	Changed();
 }
 
-void Edit::GetString(wchar_t *Data, int MaxSize)
+void Edit::GetString(int Offset, wchar_t *Data, int MaxSize)
 {
 	if (LIKELY(MaxSize > 0)) {
-		const auto l = std::min(Str.Size(), MaxSize - 1);
-		Str.CopyTo(Data, 0, l);
-		Data[l] = 0;
+		if (Offset < Str.Size()) {
+			const auto l = std::min(Str.Size() - Offset, MaxSize);
+			Str.CopyTo(Data, Offset, l);
+			if (l < MaxSize) {
+				Data[l] = 0;
+			}
+		} else {
+			Data[0] = 0;
+		}
 	}
 }
 
@@ -2112,7 +2118,6 @@ const wchar_t *Edit::GetStringAddr(int &Length, const wchar_t **EOL)
 	Length = 0;
 	return L"";
 }
-
 
 int Edit::GetSelString(wchar_t *Data, int MaxSize)
 {

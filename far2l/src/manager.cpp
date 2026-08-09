@@ -1036,6 +1036,10 @@ int Manager::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 void Manager::PluginsMenu()
 {
 	_MANAGER(SysLog(1));
+	if (CurrentFrame->ProcessPluginMenu()) {
+		_MANAGER(SysLog(-1));
+		return;
+	}
 	int curType = CurrentFrame->GetType();
 
 	if (curType == MODALTYPE_PANELS || curType == MODALTYPE_EDITOR || curType == MODALTYPE_VIEWER

@@ -4678,16 +4678,18 @@ void Editor::InsertString()
 		CurLine->GetString(strCurLine);
 
 		if (SpaceOnly) {
+			int Decrement = 0;
 			for (int I = 0; I < IndentPos && I < (int)strCurLine.size(); I++) {
 				if (!IsSpace(strCurLine[I]))
 					break;
 
 				if (strCurLine[I] != L' ') {
 					int TabPos = CurLine->RealPosToCell(I);
-					IndentPos-= EdOpt.TabSize - (TabPos % EdOpt.TabSize);
+					Decrement+= EdOpt.TabSize - (TabPos % EdOpt.TabSize);
 				} else
-					IndentPos--;
+					Decrement++;
 			}
+			IndentPos-= Decrement;
 		}
 
 		if (IndentPos > 0) {

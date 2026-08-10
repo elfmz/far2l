@@ -20,9 +20,9 @@ bool Character::isLetter(UChar c)
   return u_isalpha(c);
 }
 
-bool Character::isLetterOrDigit(UChar c)
+bool Character::isLetterOrDigitOrUnderscore(UChar c)
 {
-  return u_isdigit(c) || u_isalpha(c);
+  return u_isdigit(c) || u_isalpha(c) || c == '_';
 }
 
 bool Character::isDigit(UChar c)

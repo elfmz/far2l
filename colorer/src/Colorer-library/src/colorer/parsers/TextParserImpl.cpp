@@ -228,9 +228,8 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
       if (!node->kwList->kwList[pos].isSymbol) {
         if (!node->worddiv) {
           // default word bound
-          if ((gx > 0 && (Character::isLetterOrDigit((*str)[gx - 1]) || (*str)[gx - 1] == L'_')) ||
-              (gx + kwlen < lowlen &&
-               (Character::isLetterOrDigit((*str)[gx + kwlen]) || (*str)[gx + kwlen] == L'_')))
+          if ((gx > 0 && Character::isLetterOrDigitOrUnderscore((*str)[gx - 1])) ||
+              (gx + kwlen < lowlen && Character::isLetterOrDigitOrUnderscore((*str)[gx + kwlen])))
           {
             badbound = true;
           }

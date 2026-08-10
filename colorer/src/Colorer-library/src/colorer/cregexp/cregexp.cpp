@@ -671,10 +671,9 @@ bool CRegExp::isWordBoundary(int toParse)
 {
   int before = 0;
   int after = 0;
-  if (toParse < end && (Character::isLetterOrDigit((*global_pattern)[toParse]) || (*global_pattern)[toParse] == '_'))
+  if (toParse < end && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse]))
     after = 1;
-  if (toParse > 0 &&
-      (Character::isLetterOrDigit((*global_pattern)[toParse - 1]) || (*global_pattern)[toParse - 1] == '_'))
+  if (toParse > 0 && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse - 1]))
     before = 1;
   return before + after == 1;
 }
@@ -731,12 +730,12 @@ bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
       toParse++;
       return true;
     case EMetaSymbols::ReWordSymb:
-      if (toParse >= end || !(Character::isLetterOrDigit(pattern[toParse]) || pattern[toParse] == '_'))
+      if (toParse >= end || !Character::isLetterOrDigitOrUnderscore(pattern[toParse]))
         return false;
       toParse++;
       return true;
     case EMetaSymbols::ReNWordSymb:
-      if (toParse >= end || Character::isLetterOrDigit(pattern[toParse]) || pattern[toParse] == '_')
+      if (toParse >= end || Character::isLetterOrDigitOrUnderscore(pattern[toParse]))
         return false;
       toParse++;
       return true;

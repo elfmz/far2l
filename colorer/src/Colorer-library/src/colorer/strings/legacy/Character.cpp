@@ -81,10 +81,10 @@ bool Character::isLetter(wchar c)
            ) >> c1) & 1) != 0;
 }
 
-bool Character::isLetterOrDigit(wchar c)
+bool Character::isLetterOrDigitOrUnderscore(wchar c)
 {
   if (unsigned(c) <= 0x7f) {
-    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || (c >= L'0' && c <= L'9');
+    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || (c >= L'0' && c <= L'9') || c == '_';
   }
   unsigned long c1 = CHAR_CATEGORY(CHAR_PROP(c));
   return ((((1 << CHAR_CATEGORY_Lu) |

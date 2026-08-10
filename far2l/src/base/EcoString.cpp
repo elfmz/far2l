@@ -470,7 +470,10 @@ wchar_t EcoString::At(int i) const
 
 void EcoString::Set(int i, wchar_t wc) const
 {
-	ASSERT_MSG(i >= 0 && i <= Size(),  "EcoString::Set: bad %d while _len=%d\n", i, _len);
+	if (wc == 0 && i == Size()) {
+		return;
+	}
+	ASSERT_MSG(i >= 0 && i < Size(),  "EcoString::Set: bad %d while _len=%d; wc=0x%x\n", i, _len, (unsigned int)wc);
 	if (unsigned(wc) <= 0xff && _len < 0) {
 		if (size_t(-_len) > sizeof(_data)) {
 			_data.pmb[i] = unsigned(wc);

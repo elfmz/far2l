@@ -142,14 +142,14 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
     return 0;
   }
 
-  inEventProcess = true;
+  inInputProcess = true;
   if (!editorSet) {
     editorSet = new FarEditorSet();
   }
 
   int result = editorSet->editorInput(ir);
 
-  inEventProcess = false;
+  inInputProcess = false;
 
   return result;
 }

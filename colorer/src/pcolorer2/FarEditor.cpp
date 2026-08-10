@@ -468,6 +468,9 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
   return 0;
 }
 
+// intentially global variable, so on slow system it will not start from non-optimal value on each file opened
+static int s_idleJobAmount = 100;
+
 bool FarEditor::progressParse(int msBudget)
 {
   if (!baseEditor->haveInvalidLine()) {
@@ -480,9 +483,38 @@ bool FarEditor::progressParse(int msBudget)
   }
   deadline+= std::chrono::milliseconds(msBudget);
   auto invalid_line1 = baseEditor->getInvalidLine();
-  do {
-    baseEditor->idleJob(100);
-  } while (baseEditor->haveInvalidLine() && std::chrono::steady_clock::now() < deadline);
+  for (int iterations = 1;; ++iterations) {
+    baseEditor->idleJob(s_idleJobAmount);
+    if (!baseEditor->haveInvalidLine()) {
+      break;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (now >= deadline) {
+      const int overdue = std::chrono::duration_cast<std::chrono::milliseconds>(now - deadline).count();
+      auto news_idleJobAmount = s_idleJobAmount;
+      if (s_idleJobAmount > 1 && overdue > msBudget * 20) {
+        news_idleJobAmount = 1;
+      } else if (s_idleJobAmount > 1 && overdue > msBudget * 10) {
+        news_idleJobAmount/= 2;
+      } else if (s_idleJobAmount > 1 && overdue > msBudget) {
+        news_idleJobAmount = news_idleJobAmount * 3 / 4;
+      } else if (s_idleJobAmount < 10 && overdue < msBudget / 10) {
+          news_idleJobAmount*= 2;
+      } else if (s_idleJobAmount < 30 && overdue < msBudget / 8) {
+          news_idleJobAmount+= s_idleJobAmount / 2;
+      } else if (s_idleJobAmount < 50 && overdue < msBudget / 4) {
+          news_idleJobAmount+= s_idleJobAmount / 4;
+      } else if (s_idleJobAmount < 100 && overdue < msBudget / 2) {
+          news_idleJobAmount++;
+      }
+      if (s_idleJobAmount != news_idleJobAmount) {
+        fprintf(stderr, "COLORER: %d iterations in %d msec + %d overdue, s_idleJobAmount: %d -> %d\n",
+            iterations, msBudget, overdue, s_idleJobAmount, news_idleJobAmount);
+        s_idleJobAmount = news_idleJobAmount;
+      }
+      break;
+    }
+  }
   auto invalid_line2 = baseEditor->getInvalidLine();
 
   EditorInfo ei = getEditorInfo();
@@ -494,9 +526,9 @@ bool FarEditor::progressParse(int msBudget)
   }
 
   if (!baseEditor->haveInvalidLine()) {
-    unsigned int delta = std::chrono::duration_cast<std::chrono::milliseconds>
+    int delta = std::chrono::duration_cast<std::chrono::milliseconds>
       (std::chrono::steady_clock::now() - parseStartTime).count();
-    fprintf(stderr, "COLORER: done in %u msec\n",  delta);
+    fprintf(stderr, "* COLORER: done in %d msec, s_idleJobAmount=%d\n", delta, s_idleJobAmount);
     parseStartTime = {};
     return false;
   }

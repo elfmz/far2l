@@ -59,9 +59,19 @@ bool Character::isTitleCase(wchar c)
   return CHAR_CATEGORY(CHAR_PROP(c)) == CHAR_CATEGORY_Lt;
 }
 
-
+/*
+Breakdown of ASCII Categories
+  Lu (Uppercase Letters): ASCII codes 65 to 90 (A through Z)
+  Ll (Lowercase Letters): ASCII codes 97 to 122 (a through z)
+  Lt (Titlecase Letters): None (applicable to specific multi-character Unicode digraphs like ǅ)
+  Lm (Modifier Letters): None in standard ASCII (e.g., spacing macrons or modifier apostrophes exist in extended Unicode blocks, though ASCII backtick ` (96) and single quote ' (39) are classified as punctuation/symbols, not Lm)
+  Lo (Other Letters): None (reserved for un-cased alphabets, ideographs, or syllabics like Hangul or Chinese characters found outside standard ASCII)
+*/
 bool Character::isLetter(wchar c)
 {
+  if (unsigned(c) <= 0x7f) {
+    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z');
+  }
   unsigned long c1 = CHAR_CATEGORY(CHAR_PROP(c));
   return ((((1 << CHAR_CATEGORY_Lu) |
             (1 << CHAR_CATEGORY_Ll) |
@@ -73,6 +83,9 @@ bool Character::isLetter(wchar c)
 
 bool Character::isLetterOrDigit(wchar c)
 {
+  if (unsigned(c) <= 0x7f) {
+    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || (c >= L'0' && c <= L'9');
+  }
   unsigned long c1 = CHAR_CATEGORY(CHAR_PROP(c));
   return ((((1 << CHAR_CATEGORY_Lu) |
             (1 << CHAR_CATEGORY_Ll) |
@@ -85,6 +98,9 @@ bool Character::isLetterOrDigit(wchar c)
 
 bool Character::isDigit(wchar c)
 {
+  if (unsigned(c) <= 0x7f) {
+    return (c >= L'0' && c <= L'9');
+  }
   return CHAR_CATEGORY(CHAR_PROP(c)) == CHAR_CATEGORY_Nd;
 }
 

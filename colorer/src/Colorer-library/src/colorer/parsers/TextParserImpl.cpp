@@ -216,11 +216,11 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
 
     int8_t compare_result;
     if (node->kwList->matchCase) {
-      compare_result = node->kwList->kwList[pos].keyword->compare(UnicodeString(*str, gx, kwlen));
+      compare_result = -str->compare(gx, kwlen, *node->kwList->kwList[pos].keyword);
     }
     else {
       compare_result =
-          UStr::caseCompare(*node->kwList->kwList[pos].keyword, UnicodeString(*str, gx, kwlen));
+          -UStr::caseCompare(*str, gx, kwlen, *node->kwList->kwList[pos].keyword);
     }
 
     if (compare_result == 0 && right - left == 1) {

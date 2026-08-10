@@ -50,7 +50,7 @@ void KeywordList::substrIndex()
           break;
         }
         if (kwList[ii].keyword->length() < kwList[i].keyword->length() &&
-            UnicodeString(*kwList[i].keyword, 0, kwList[ii].keyword->length()).compare(*kwList[ii].keyword) == 0)
+            kwList[i].keyword->compare(0, kwList[ii].keyword->length(), *kwList[ii].keyword) == 0)
         {
           kwList[i].indexOfShorter = ii;
           break;
@@ -61,8 +61,7 @@ void KeywordList::substrIndex()
           break;
         }
         if (kwList[ii].keyword->length() < kwList[i].keyword->length() &&
-            UStr::caseCompare(UnicodeString(*kwList[i].keyword, 0, kwList[ii].keyword->length()),
-                              *kwList[ii].keyword) == 0)
+            UStr::caseCompare(*kwList[i].keyword, 0, kwList[ii].keyword->length(), *kwList[ii].keyword) == 0)
         {
           kwList[i].indexOfShorter = ii;
           break;

@@ -19,13 +19,17 @@ int UnicodeTools::getNumber(const UnicodeString* pstr)
 
 int UnicodeTools::getHex(wchar c)
 {
-  c = Character::toLowerCase(c);
-  c -= '0';
-  if (c >= 'a' - '0' && c <= 'f' - '0')
-    c -= 0x27;
-  else if (c > 9)
-    return -1;
-  return c;
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+//  c = Character::toLowerCase(c);
+  if (c >= 'a' && c <= 'f') {
+    return 10 + (c - 'a');
+  }
+  if (c >= 'A' && c <= 'F') {
+    return 10 + (c - 'A');
+  }
+  return -1;
 }
 
 int UnicodeTools::getHexNumber(const UnicodeString* pstr)

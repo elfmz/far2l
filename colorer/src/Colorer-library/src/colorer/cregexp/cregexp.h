@@ -121,6 +121,8 @@ enum class EError { EOK = 0, EERROR, ESYNTAX, EBRACKETS, EENUM, EOP };
 /// @ingroup cregexp
 struct SMatches
 {
+  SMatches() : cMatch(0), cnMatch(0) { s[0] = e[0] = 0; }
+
   int s[MATCHES_NUM];
   int e[MATCHES_NUM];
   int cMatch;

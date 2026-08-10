@@ -303,7 +303,7 @@ int TextParser::Impl::searchIN(SchemeNodeInherit* node, int no, int lowLen, int 
 
 int TextParser::Impl::searchRE(SchemeNodeRegexp* node, int /*no*/, int lowLen, int hiLen)
 {
-  SMatches match {};
+  SMatches match;
   if (!node->start->parse(str, gx, node->lowPriority ? lowLen : hiLen, &match, schemeStart)) {
     return MATCH_NOTHING;
   }
@@ -334,7 +334,7 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
   }
 
   // проверяем совпадение по регулярному выражению start
-  SMatches match {};
+  SMatches match;
   if (!node->start->parse(str, gx, node->lowPriority ? lowLen : hiLen, &match, schemeStart)) {
     return MATCH_NOTHING;
   }

@@ -4,10 +4,13 @@
 #include "FarEditorSet.h"
 
 FarEditorSet* editorSet = nullptr;
-unsigned inEventProcess = 0;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString* PluginPath = nullptr;
+
+static bool inEventProcess = false;
+static bool inInputProcess = false;
+static bool isSynchroPending = false;
 
 std::unique_ptr<CerrLogger> logger;
 
@@ -117,11 +120,11 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 */
 SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 {
-  if (inEventProcess & 2) {
+  if (inEventProcess) {
     return 0;
   }
 
-  inEventProcess|= 2;
+  inEventProcess = true;
 
   if (!editorSet) {
     editorSet = new FarEditorSet();
@@ -129,16 +132,32 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 
   int result = editorSet->editorEvent(Event, Param);
 
-  inEventProcess&= ~2;
+  inEventProcess = false;
   return result;
 }
 
-static bool SynchroPending = false;
+SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
+{
+  if (inEventProcess || inInputProcess) {
+    return 0;
+  }
+
+  inEventProcess = true;
+  if (!editorSet) {
+    editorSet = new FarEditorSet();
+  }
+
+  int result = editorSet->editorInput(ir);
+
+  inEventProcess = false;
+
+  return result;
+}
 
 void colorerRequestSynchro()
 {
-  if (!SynchroPending) {
-    SynchroPending = true;
+  if (!isSynchroPending) {
+    isSynchroPending = true;
     Info.AdvControl(Info.ModuleNumber, ACTL_SYNCHRO, nullptr, (void *)(LONG_PTR)FCTL_SYNCHRO_IDLE);
   }
 }
@@ -147,7 +166,7 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void* Param)
 {
   (void) Param;
   if (Event == SE_COMMONSYNCHRO) {
-    SynchroPending = false;
+    isSynchroPending = false;
     if (editorSet) {
       editorSet->onSynchroTick();
     }
@@ -155,22 +174,6 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void* Param)
   return 0;
 }
 
-SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
-{
-  if (inEventProcess) {
-    return 0;
-  }
-
-  inEventProcess|= 1;
-  if (!editorSet) {
-    editorSet = new FarEditorSet();
-  }
-
-  int result = editorSet->editorInput(ir);
-
-  inEventProcess&= ~1;
-  return result;
-}
 
 /* ***** BEGIN LICENSE BLOCK *****
  * Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.

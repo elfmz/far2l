@@ -444,11 +444,9 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
         return EError::EBRACKETS;
       if (comma == -1)
         comma = en;
-      UnicodeString ds = UnicodeString(expr, st, comma - st);
-      next->s = UnicodeTools::getNumber(&ds);
-      UnicodeString de = UnicodeString(expr, comma + 1, en - comma - 1);
+      next->s = UnicodeTools::getNumber(&expr, st, comma - st);
       if (comma != en)
-        next->e = UnicodeTools::getNumber(&de);
+        next->e = UnicodeTools::getNumber(&expr, comma + 1, en - comma - 1);
       else
         next->e = next->s;
       if (next->e == -1)
@@ -919,7 +917,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
               continue;
             }
             if (ignoreCase) {
-              if (UStr::caseCompare(UnicodeString(pattern, toParse, wlen), *re->un.word) != 0) {
+              if (UStr::caseCompare(pattern, toParse, wlen, *re->un.word) != 0) {
                 check_stack(false, &re, &prev, &toParse, &leftenter, &action);
                 continue;
               }

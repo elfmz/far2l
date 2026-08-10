@@ -1,5 +1,4 @@
 #include "FarEditor.h"
-#include <chrono>
 #include <vector>
 
 const UnicodeString DShowCross("show-cross");
@@ -472,11 +471,15 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
 bool FarEditor::progressParse(int msBudget)
 {
   if (!baseEditor->haveInvalidLine()) {
+    parseStartTime = {};
     return false;
   }
-
+  auto deadline = std::chrono::steady_clock::now();
+  if (parseStartTime == std::chrono::time_point<std::chrono::steady_clock>()) {
+    parseStartTime = deadline;
+  }
+  deadline+= std::chrono::milliseconds(msBudget);
   auto invalid_line1 = baseEditor->getInvalidLine();
-  const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(msBudget);
   do {
     baseEditor->idleJob(100);
   } while (baseEditor->haveInvalidLine() && std::chrono::steady_clock::now() < deadline);
@@ -490,7 +493,15 @@ bool FarEditor::progressParse(int msBudget)
     info->EditorControl(ECTL_REDRAW, nullptr);
   }
 
-  return baseEditor->haveInvalidLine();
+  if (!baseEditor->haveInvalidLine()) {
+    unsigned int delta = std::chrono::duration_cast<std::chrono::milliseconds>
+      (std::chrono::steady_clock::now() - parseStartTime).count();
+    fprintf(stderr, "COLORER: done in %u msec\n",  delta);
+    parseStartTime = {};
+    return false;
+  }
+
+  return true;
 }
 
 

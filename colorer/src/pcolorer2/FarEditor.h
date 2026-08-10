@@ -5,6 +5,7 @@
 #include <colorer/editor/Outliner.h>
 #include <colorer/handlers/StyledRegion.h>
 #include "pcolorer.h"
+#include <chrono>
 
 struct color
 {
@@ -173,6 +174,7 @@ class FarEditor : public LineSource
   std::unique_ptr<LineRegion> cursorRegion;
 
   int visibleLevel = 100;
+  std::chrono::time_point<std::chrono::steady_clock> parseStartTime{};
   std::unique_ptr<Outliner> structOutliner;
   std::unique_ptr<Outliner> errorOutliner;
 

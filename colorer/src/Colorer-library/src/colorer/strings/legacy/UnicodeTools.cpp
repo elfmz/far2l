@@ -9,8 +9,8 @@ int UnicodeTools::getNumber(const UnicodeString* pstr, int ofs, int len)
   if (pstr == nullptr)
     return -1;
   if (len < 0)
-    len = pstr->length();
-  for (int i = len - 1; i >= ofs; i--) {
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     if ((*pstr)[i] > '9' || (*pstr)[i] < '0')
       return -1;
     num += ((*pstr)[i] - 0x30) * r;
@@ -40,8 +40,8 @@ int UnicodeTools::getHexNumber(const UnicodeString* pstr, int ofs, int len)
   if (pstr == nullptr)
     return -1;
   if (len < 0)
-    len = pstr->length();
-  for (int i = len - 1; i >= ofs; i--) {
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     int d = getHex((*pstr)[i]);
     if (d == -1)
       return -1;

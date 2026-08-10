@@ -434,33 +434,76 @@ void FarEditor::updateHighlighting()
   baseEditor->validate(ei.TopScreenLine, true);
 }
 
+// Parses pending (invalid) lines for at most msBudget milliseconds and
+// triggers editor redraw once parsed area reaches the visible window.
+// Returns true if there is still work left after the budget is over.
+//
+// Rationale: a single idleJob() call parses at most ~500 lines, while
+// KEY_IDLE arrives roughly twice a second, capping background highlighting
+// at ~1000 lines/sec regardless of CPU speed. Parsing by time budget
+// keeps UI responsive but lets modern CPU parse tens of thousands lines
+// per second; and if work still remains, caller requests a synchro event
+// to continue almost immediately instead of waiting for the next KEY_IDLE.
+static int backgroundBudget = 50;
+bool FarEditor::backgroundParseTick()
+{
+  if (backgroundBudget < 100)
+    backgroundBudget+= 10;
+  return progressParse(backgroundBudget);
+}
+
 int FarEditor::editorInput(const INPUT_RECORD* ir)
 {
-  if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
-    if (baseEditor->haveInvalidLine()) {
-      auto invalid_line1 = baseEditor->getInvalidLine();
-      idleCount++;
-      if (idleCount > 10) {
-        idleCount = 10;
+  if (ir->EventType == KEY_EVENT) {
+    if (ir->Event.KeyEvent.wVirtualKeyCode == 0) {
+      if (progressParse(50)) {
+       backgroundBudget = std::max(backgroundBudget, 20);
+       colorerRequestSynchro();
       }
-      baseEditor->idleJob(idleCount * 10);
-      auto invalid_line2 = baseEditor->getInvalidLine();
-
-      EditorInfo ei = getEditorInfo();
-      if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
-          (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
-           invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
-      {
-        info->EditorControl(ECTL_REDRAW, nullptr);
-      }
+    } else {
+       backgroundBudget = 10;
     }
-  }
-  else if (ir->EventType == KEY_EVENT) {
-    idleCount = 0;
   }
 
   return 0;
 }
+
+bool FarEditor::progressParse(int msBudget)
+{
+  if (!baseEditor->haveInvalidLine()) {
+    parseStartTime = {};
+    return false;
+  }
+  auto deadline = std::chrono::steady_clock::now();
+  if (parseStartTime == std::chrono::time_point<std::chrono::steady_clock>()) {
+    parseStartTime = deadline;
+  }
+  deadline+= std::chrono::milliseconds(msBudget);
+  auto invalid_line1 = baseEditor->getInvalidLine();
+  do {
+    baseEditor->idleJob(100);
+  } while (baseEditor->haveInvalidLine() && std::chrono::steady_clock::now() < deadline);
+  auto invalid_line2 = baseEditor->getInvalidLine();
+
+  EditorInfo ei = getEditorInfo();
+  if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
+      (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
+       invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
+  {
+    info->EditorControl(ECTL_REDRAW, nullptr);
+  }
+
+  if (!baseEditor->haveInvalidLine()) {
+    unsigned int delta = std::chrono::duration_cast<std::chrono::milliseconds>
+      (std::chrono::steady_clock::now() - parseStartTime).count();
+    fprintf(stderr, "COLORER: done in %u msec\n",  delta);
+    parseStartTime = {};
+    return false;
+  }
+
+  return true;
+}
+
 
 int FarEditor::editorEvent(int event, void* param)
 {

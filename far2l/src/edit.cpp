@@ -2696,45 +2696,41 @@ void Edit::DeleteBlock()
 
 void Edit::AddColor(const ColorItem *col)
 {
-	MyEcoLazy::Use my(fields);
-	my->ColorList.emplace_back(*col);
+	ColorList.emplace_back(*col);
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	MyEcoLazy::Use my(fields);
-	if (my->ColorList.empty())
+	if (ColorList.empty())
 		return 0;
 
 	size_t Dest, Src;
 
-	for (Src = Dest = 0; Src < my->ColorList.size(); ++Src)
-		if (ColorPos != -1 && my->ColorList[Src].StartPos != ColorPos) {
+	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
+		if (ColorPos != -1 && ColorList[Src].StartPos != ColorPos) {
 			if (Dest != Src)
-				my->ColorList[Dest] = my->ColorList[Src];
+				ColorList[Dest] = ColorList[Src];
 
 			++Dest;
 		}
 
-	const size_t DelCount = my->ColorList.size() - Dest;
-	my->ColorList.resize(Dest);
+	const size_t DelCount = ColorList.size() - Dest;
+	ColorList.resize(Dest);
 	return DelCount;
 }
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	MyEcoLazy::See my(fields);
-	if ((size_t)Item >= my->ColorList.size())
+	if ((size_t)Item >= ColorList.size())
 		return false;
 
-	*col = my->ColorList[Item];
+	*col = ColorList[Item];
 	return true;
 }
 
 void Edit::ApplyColor()
 {
-	MyEcoLazy::Use my(fields);
-	if (my->ColorList.empty())
+	if (ColorList.empty())
 		return;
 
 	uint64_t Color, SelColor, ColorUnChanged;
@@ -2743,8 +2739,9 @@ void Edit::ApplyColor()
 	// Для оптимизации сохраняем вычисленные позиции между итерациями цикла
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
+	MyEcoLazy::See my(fields);
 	// Обрабатываем элементы ракраски
-	for (auto &CurItem : my->ColorList) {
+	for (auto &CurItem : ColorList) {
 
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)

@@ -692,6 +692,17 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
   return &(parserFactory->getHrdNode(_hrdClass, *names[result]).hrd_name);
 }
 
+void FarEditorSet::onSynchroTick()
+{
+  if (!Opt.rEnabled) {
+    return;
+  }
+  FarEditor* editor = getCurrentEditor();
+  if (editor && editor->backgroundParseTick()) {
+    colorerRequestSynchro();
+  }
+}
+
 int FarEditorSet::editorInput(const INPUT_RECORD* ir)
 {
   if (Opt.rEnabled) {

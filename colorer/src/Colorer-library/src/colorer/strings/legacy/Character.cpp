@@ -5,6 +5,12 @@
 
 wchar Character::toLowerCase(wchar c)
 {
+  if (unsigned(c) <= 0x7f) {
+    if (c >= L'A' && c <= L'Z') {
+      return c + L'a' - L'A';
+    }
+    return c;
+  }
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Ll) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c + 1;
@@ -13,6 +19,12 @@ wchar Character::toLowerCase(wchar c)
 
 wchar Character::toUpperCase(wchar c)
 {
+  if (unsigned(c) <= 0x7f) {
+    if (c >= L'a' && c <= L'z') {
+      return c - (L'a' - L'A');
+    }
+    return c;
+  }
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lu) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c - 1;

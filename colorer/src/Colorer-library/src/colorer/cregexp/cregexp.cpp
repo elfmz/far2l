@@ -74,6 +74,12 @@ CRegExp::~CRegExp()
 #endif
 }
 
+bool CRegExp::matchChars(wchar one, wchar another) const
+{
+  return one == another ||
+    (ignoreCase && Character::toLowerCase(one) == Character::toLowerCase(another));
+}
+
 EError CRegExp::setRELow(const UnicodeString& expr)
 {
   auto len = expr.length();
@@ -890,15 +896,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
-            if (ignoreCase) {
-              if (Character::toLowerCase(pattern[toParse]) != Character::toLowerCase(re->un.symbol) &&
-                  Character::toUpperCase(pattern[toParse]) != Character::toUpperCase(re->un.symbol))
-              {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                continue;
-              }
-            }
-            else if (pattern[toParse] != re->un.symbol) {
+            if (!matchChars(pattern[toParse], re->un.symbol)) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
@@ -1347,15 +1345,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
 inline bool CRegExp::quickCheck(int toParse)
 {
   if (firstChar != BAD_WCHAR) {
-    if (toParse >= end)
-      return false;
-    if (ignoreCase) {
-      if (Character::toLowerCase((*global_pattern)[toParse]) != Character::toLowerCase(firstChar))
-        return false;
-    }
-    else if ((*global_pattern)[toParse] != firstChar)
-      return false;
-    return true;
+    return toParse < end && matchChars((*global_pattern)[toParse], firstChar);
   }
   if (firstMetaChar != EMetaSymbols::ReBadMeta)
     switch (firstMetaChar) {

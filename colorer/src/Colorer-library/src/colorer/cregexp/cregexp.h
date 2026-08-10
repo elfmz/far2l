@@ -351,6 +351,7 @@ class CRegExp
   EError setRELow(const UnicodeString& re);
   EError setStructs(SRegInfo*&, const UnicodeString& expr, int& endPos);
 
+  bool matchChars(wchar one, wchar another) const;
   void optimize();
   bool quickCheck(int toParse);
   bool isWordBoundary(int toParse);

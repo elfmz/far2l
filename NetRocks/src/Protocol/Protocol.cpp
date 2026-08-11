@@ -11,6 +11,7 @@ void ConfigureProtocolWebDAV(std::string &options);
 void ConfigureProtocolWebDAVs(std::string &options);
 void ConfigureProtocolFile(std::string &options);
 void ConfigureProtocolSHELL(std::string &options);
+void ConfigureProtocolFISHPLUS(std::string &options);
 void ConfigureProtocolAWS(std::string &options);
 
 static ProtocolInfo s_protocols[] = {
@@ -19,6 +20,7 @@ static ProtocolInfo s_protocols[] = {
 	{ "scp", "NetRocks-SFTP", 22, true, true, true, ConfigureProtocolSCP},
 #endif
 	{ "shell", "NetRocks-SHELL", 22, true, true, true, ConfigureProtocolSHELL},
+	{ "fish+", "NetRocks-FISHPLUS", 22, true, true, false, ConfigureProtocolFISHPLUS},
 
 	{ "ftp", "NetRocks-FTP", 21, true, true, true, ConfigureProtocolFTP},
 #ifdef HAVE_OPENSSL

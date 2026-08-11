@@ -1084,6 +1084,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _console_handle;
 	}
 
+	virtual void InjectRawInput(const char *data, size_t len)
+	{
+		if (len == 0 || _fd_in == -1)
+			return;
+		std::lock_guard<std::mutex> lock(_write_term_mutex);
+		if (WriteAll(_fd_in, (const void *)data, len) != len) {
+			perror("VT: InjectRawInput - write");
+		}
+	}
+
 	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd, bool may_notify)
 	{
 		ASSERT(!_console_handle);
@@ -1315,6 +1325,34 @@ void VTShell_Shutdown()
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	g_vts.clear();
 	g_vt.reset();
+}
+
+void VTShell_InjectRawInput(const char *data, size_t len)
+{
+	// g_vts_mutex is held across the PTY write below. This is an intentional
+	// scoped exception to the rule that g_vts_mutex guards only brief container
+	// ops (swap/erase/lookup): the payload is bounded to <=2048 bytes by the
+	// test-controller protocol (TestRequestSendRaw.data), and the kernel PTY
+	// buffer (>=64KB) cannot fill from a single test injection, so the write is
+	// effectively non-blocking in practice. Test-only path — do NOT call this
+	// with unbounded/large payloads. Releasing the lock before the write would
+	// require shared_ptr<VTShell> to keep the shell alive across concurrent
+	// Switch/Shutdown; see ARCHITECTURE.md "Lock Hierarchy Conventions".
+	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	if (g_vt) {
+		g_vt->InjectRawInput(data, len);
+		return;
+	}
+	// If the foreground shell completed or was moved to background,
+	// try background shells (newest first — the active tab).
+	for (auto it = g_vts.rbegin(); it != g_vts.rend(); ++it) {
+		if (*it) {
+			(*it)->InjectRawInput(data, len);
+			return;
+		}
+	}
+	fprintf(stderr, "VTShell_InjectRawInput: no shell available, dropped %lu bytes\n",
+		(unsigned long)len);
 }
 
 bool VTShell_Busy()

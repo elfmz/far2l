@@ -101,6 +101,12 @@ ProtocolAuthFailedError::ProtocolAuthFailedError(const std::string &info)
 {
 }
 
+
+ProtocolKeyPassphraseNeededError::ProtocolKeyPassphraseNeededError(const std::string &info)
+	: std::runtime_error(info)
+{
+}
+
 ////////////
 
 ServerIdentityMismatchError::ServerIdentityMismatchError(const std::string &identity)

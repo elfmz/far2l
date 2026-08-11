@@ -37,6 +37,10 @@ struct ProtocolAuthFailedError : std::runtime_error
 {
 	ProtocolAuthFailedError(const std::string &info = std::string());
 };
+struct ProtocolKeyPassphraseNeededError : std::runtime_error
+{
+	ProtocolKeyPassphraseNeededError(const std::string &info = std::string());
+};
 
 
 struct ProtocolUnsupportedError : ProtocolError

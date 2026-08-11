@@ -2702,7 +2702,13 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-	if (MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED && MouseEvent->dwEventFlags != MOUSE_MOVED) {
+	if ((MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) && MouseEvent->dwEventFlags != MOUSE_MOVED) {
+		if (Opt.PasteFromPrimarySelection && !MouseEvent->dwControlKeyState 
+				&& MouseEvent->dwMousePosition.Y >= Y2 - 2 * Opt.ShowPanelStatus /* command line area */) {
+			// CopyToPrimarySelection -- let EditorControl to do the rest
+			return FALSE;
+		}
+
 		FarKey Key = KEY_ENTER;
 		if (MouseEvent->dwControlKeyState & SHIFT_PRESSED) {
 			Key|= KEY_SHIFT;

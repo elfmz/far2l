@@ -1526,42 +1526,7 @@ int Edit::ProcessKey(FarKey Key)
 		case KEY_SHIFTINS:
 		case KEY_SHIFTNUMPAD0: {
 			wchar_t *ClipText = PasteFromClipboardEx(GetMaxLength());
-
-			if (!ClipText)
-				return TRUE;
-
-			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				PauseEditListener pel(*this);
-				DeleteBlock();
-			}
-
-			for (int i = StrLength(Str.CPtr()) - 1; i >= 0 && IsEol(Str[i]); i--)
-				Str[i] = 0;
-
-			for (int i = 0; ClipText[i]; i++) {
-				if (IsEol(ClipText[i])) {
-					if (IsEol(ClipText[i + 1]))
-						wmemmove(&ClipText[i], &ClipText[i + 1], StrLength(&ClipText[i + 1]) + 1);
-
-					if (!ClipText[i + 1])
-						ClipText[i] = 0;
-					else
-						ClipText[i] = L' ';
-				}
-			}
-
-			if (Flags.Check(FEDITLINE_CLEARFLAG)) {
-				my->LeftPos = 0;
-				Flags.Clear(FEDITLINE_CLEARFLAG);
-				SetString(ClipText);
-			} else {
-				InsertString(ClipText);
-			}
-
-			if (ClipText)
-				free(ClipText);
-
-			Show();
+			if(DoPaste(ClipText)) Show();
 			return TRUE;
 		}
 		case KEY_SHIFTTAB: {
@@ -2284,8 +2249,123 @@ void Edit::RefreshStrByMask(int InitMode)
 	}
 }
 
+BOOL Edit::DoPaste(wchar_t* ClipText)
+{
+	if (!ClipText)
+		return TRUE;
+
+	if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
+		PauseEditListener pel(*this);
+		DeleteBlock();
+	}
+
+	for (int i = StrLength(Str.CPtr()) - 1; i >= 0 && IsEol(Str[i]); i--)
+		Str[i] = 0;
+
+	for (int i = 0; ClipText[i]; i++) {
+		if (IsEol(ClipText[i])) {
+			if (IsEol(ClipText[i + 1]))
+				wmemmove(&ClipText[i], &ClipText[i + 1], StrLength(&ClipText[i + 1]) + 1);
+
+			if (!ClipText[i + 1])
+				ClipText[i] = 0;
+			else
+				ClipText[i] = L' ';
+		}
+	}
+
+	MyEcoLazy::Use my(fields);
+	if (Flags.Check(FEDITLINE_CLEARFLAG)) {
+		my->LeftPos = 0;
+		Flags.Clear(FEDITLINE_CLEARFLAG);
+		SetString(ClipText);
+	} else {
+		InsertString(ClipText);
+	}
+
+	if (ClipText)
+		free(ClipText);
+	return TRUE;
+}
+
+void Edit::ProcessPasteEventFromPrimary()
+{
+	if (!Opt.PasteFromPrimarySelection) {
+		return;
+	}
+
+	Clipboard clip;
+	if (clip.GetUseInternalClipboardState())
+		return;
+
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		if (clip.Open()) {
+
+			fprintf(stderr, "Middle button clicked => looking for clip text\n");
+
+			bool IsVertical;	
+			wchar_t *ClipText = clip.Paste(IsVertical, -1);
+
+			if (ClipText) fprintf(stderr, "Middle button clicked => `%ls`\n", ClipText);
+
+			DoPaste(ClipText);
+			clip.Close();
+		}
+    	clip.SetUseSelectionWhenPossible(0);
+		Show();
+	}
+}
+
+void Edit::AutoGrabToClipboard()
+{
+	if (!Opt.CopyToPrimarySelection) {
+		return;
+	}
+
+	Clipboard clip;
+	if (clip.GetUseInternalClipboardState())
+		return;
+
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		if (clip.Open()) {
+			MyEcoLazy::Use my(fields);
+
+			if (!Flags.Check(FEDITLINE_PASSWORDMODE)) {
+				if (my->SelStart == -1 || my->SelStart >= my->SelEnd) {
+					const wchar_t *Mask = GetInputMask();
+					if (Mask && *Mask) {
+						std::wstring TrimmedStr(Str.CPtr(), CalcRTrimmedStrSize());
+						clip.Copy(TrimmedStr.c_str());
+					} else {
+						clip.Copy(Str.CPtr());
+					}
+				} 
+				else if (my->SelEnd <= Str.Size())		// TODO: если в начало условия добавить "StrSize &&", то пропадет баг "Ctrl-Ins в пустой строке очищает клипборд"
+				{
+					int Ch = Str[my->SelEnd];
+					Str[my->SelEnd] = 0;
+					clip.Copy(Str.CPtr() + my->SelStart);
+					Str[my->SelEnd] = Ch;
+				}
+			}
+			clip.Close();
+		}
+    	clip.SetUseSelectionWhenPossible(0);
+	}
+}
+
 int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
+	// handle middle button click to paste from primary selection (if exists)
+	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED) {
+		fprintf(stderr, "edit::Middle button clicked?\n");
+		if (Opt.PasteFromPrimarySelection) {
+			fprintf(stderr, "edit::Middle button clicked\n");
+			ProcessPasteEventFromPrimary();
+		}
+		return TRUE;
+	}
+
 	if (!(MouseEvent->dwButtonState & 3))
 		return FALSE;
 
@@ -2316,6 +2396,8 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			ProcessKey(KEY_OP_SELWORD);
 			PrevDoubleClick = WINPORT(GetTickCount)();
 			PrevPosition = MouseEvent->dwMousePosition;
+
+			AutoGrabToClipboard();
 		} else {
 			PrevDoubleClick = 0;
 			PrevPosition.X = 0;
@@ -3444,8 +3526,20 @@ int EditControl::ProcessKey(FarKey Key)
 	}
 	return ret_code;
 }
+
 int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
+	// handle middle button click to paste from primary selection (if exists)
+	fprintf(stderr, "editcontrol::mouse: %x\n", MouseEvent->dwButtonState);
+	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED) {
+		fprintf(stderr, "editcontrol::Middle button clicked?\n");
+		if (Opt.PasteFromPrimarySelection) {
+			fprintf(stderr, "editcontrol::Middle button clicked\n");
+			ProcessPasteEventFromPrimary();
+		}
+		return TRUE;
+	}
+
 	MyEcoLazy::Use my(fields);
 	if (Edit::ProcessMouse(MouseEvent)) {
 		while (IsMouseButtonPressed() == FROM_LEFT_1ST_BUTTON_PRESSED) {
@@ -3462,6 +3556,7 @@ int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					}
 					Select(Min(SelectionStart, my->CurPos), Min(Str.Size(), Max(SelectionStart, my->CurPos)));
 					Show();
+					AutoGrabToClipboard();
 				}
 			}
 		}

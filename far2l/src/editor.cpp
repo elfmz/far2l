@@ -1318,6 +1318,36 @@ void Editor::ProcessPasteEvent()
 	Show();
 }
 
+void Editor::ProcessPasteEventFromPrimary()
+{
+	if (!Opt.PasteFromPrimarySelection) {
+		return;
+	}
+
+	Clipboard clip;
+	if (clip.GetUseInternalClipboardState())
+		return;
+
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		Pasting++;
+		if (!EdOpt.PersistentBlocks && !VBlockStart)
+			DeleteBlock();
+
+		Paste();
+
+		Flags.Change(FEDITOR_MARKINGBLOCK, !VBlockStart);
+		Flags.Clear(FEDITOR_MARKINGVBLOCK);
+
+		if (!EdOpt.PersistentBlocks)
+			UnmarkBlock();
+
+		Pasting--;
+		Show();
+
+    	clip.SetUseSelectionWhenPossible(0);
+	}
+}
+
 int Editor::ProcessKey(FarKey Key)
 {
 	if (Key == KEY_IDLE) {
@@ -3542,6 +3572,39 @@ case KEY_CTRLNUMPAD3: {
 	}
 }
 
+int Editor::AutoGrabToClipboard ()
+{
+	int status = 0;
+
+	if (!Opt.CopyToPrimarySelection) {
+		return status;
+	}
+
+	wchar_t *CopyData = Block2Text(nullptr);
+	if (!CopyData) return status;
+
+	if (wcslen(CopyData) < 1) {
+		free(CopyData);
+		return status;
+	}
+
+	Clipboard clip;
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		if (clip.Open()) {
+			clip.Copy(CopyData);
+			clip.Close();
+		}
+		clip.SetUseSelectionWhenPossible(0);
+	}
+
+	if (CopyData) {
+		free(CopyData);
+		status = 1;
+	}
+
+	return status;
+}
+
 static bool AltDown(const MOUSE_EVENT_RECORD *MouseEvent)
 {
 	return (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
@@ -3557,6 +3620,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 		WINPORT(BeginConsoleAdhocQuickEdit)();
 		return TRUE;
+	}
+
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
+		if (MouseSelStartingLine!= -1 && (VBlockStart || BlockStart)) AutoGrabToClipboard();
 	}
 
 	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0 && !IsMouseButtonPressed()) {
@@ -3707,6 +3774,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			if (EditorPrevClickCount == 2) // Double-click
 			{
 				ProcessKey(KEY_OP_SELWORD);
+
+				AutoGrabToClipboard();
 			}
 			else if (EditorPrevClickCount >= 3) // Triple-click (and more)
 			{
@@ -3717,6 +3786,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					BlockStartLine = NumLine;
 				}
 				EditorPrevClickCount = 0; // Reset to avoid re-triggering
+
+				AutoGrabToClipboard();
 			}
 			Show();
 		}
@@ -3724,7 +3795,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
 			&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) == 0) {
-		ProcessPasteEvent();
+		if (Opt.PasteFromPrimarySelection)
+			ProcessPasteEventFromPrimary();
+		else
+			ProcessPasteEvent();
 	}
 
 	return TRUE;

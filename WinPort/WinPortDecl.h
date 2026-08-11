@@ -230,6 +230,7 @@
 	// use Clipboard-Alloc/-Free/-Size to operate data pointers
 	WINPORT_DECL_DEF(GetClipboardData, PVOID, (UINT format))
 	WINPORT_DECL_DEF(SetClipboardData, PVOID, (UINT format, HANDLE mem))
+	WINPORT_DECL_DEF(ChooseClipboard, INT, (INT type))
 
 	// these are simplified analogs for Win32's Global* APIs, that dedicated to reference clipboard data
 	WINPORT_DECL_DEF(ClipboardAlloc, PVOID, (SIZE_T len)) // allocates zero-initialized memory

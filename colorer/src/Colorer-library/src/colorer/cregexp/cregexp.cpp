@@ -1370,6 +1370,11 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
   }
 }
 
+bool CRegExp::canStartWith(wchar ch) const
+{
+  return firstChar == BAD_WCHAR || matchChars(ch, firstChar);
+}
+
 inline bool CRegExp::quickCheck(int toParse)
 {
   if (firstChar != BAD_WCHAR) {

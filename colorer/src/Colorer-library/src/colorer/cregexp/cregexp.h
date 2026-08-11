@@ -335,6 +335,7 @@ class CRegExp
   bool parse(const UnicodeString* str, int pos, int eol, SMatches* mtch, int soscheme = 0,
              int moves = -1);
 #endif
+  bool canStartWith(wchar ch) const;
 
  private:
   bool ignoreCase = false;

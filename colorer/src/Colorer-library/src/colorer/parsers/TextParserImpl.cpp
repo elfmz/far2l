@@ -278,7 +278,7 @@ int TextParser::Impl::searchIN(SchemeNodeInherit* node, int no, int lowLen, int 
 
   int re_result = MATCH_NOTHING;
   // ищем для текущей схемы возможную замену через virtual предыдущих inherit
-  SchemeImpl* ssubst = vtlist->pushvirt(node->scheme);
+  SchemeImpl* ssubst = node->scheme->virtualTarget ? vtlist->pushvirt(node->scheme) : nullptr;
   if (!ssubst) {
     // не нашли замену
     // помещаем текущий inherit в список для будущих замен. True - если поместили, не было
@@ -341,7 +341,7 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
   COLORER_LOG_DEEPTRACE("[TextParserImpl] Scheme matched. gx=%", gx);
   gx = match.e[0];
   // проверяем наличие замены через virtual для данной схемы
-  SchemeImpl* ssubst = vtlist->pushvirt(node->scheme);
+  SchemeImpl* ssubst = node->scheme->virtualTarget ? vtlist->pushvirt(node->scheme) : nullptr;
   if (!ssubst) {
     // замены нет, работаем с текущей
     ssubst = node->scheme;
@@ -459,7 +459,20 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
 #ifdef COLORER_USE_DEEPTRACE
   int idx = 0;
 #endif
-  for (auto* schemeNode : cscheme->searchNodes) {
+  uint32_t dispatchChar = 128;
+  if (cscheme->searchDispatch && gx < str->length()) {
+    const auto ch = static_cast<uint32_t>((*str)[gx]);
+    if (ch < 128) {
+      dispatchChar = ch;
+    }
+  }
+  for (size_t i = 0; i < cscheme->searchNodes.size(); i++) {
+    if (dispatchChar < 128 &&
+        !(cscheme->searchDispatch->masks[i][dispatchChar / 64] &
+          (uint64_t {1} << (dispatchChar % 64)))) {
+      continue;
+    }
+    auto* schemeNode = cscheme->searchNodes[i];
     COLORER_LOG_DEEPTRACE("[TextParserImpl] searchMatch: processing node:%/%, type:%", idx + 1,
                          cscheme->searchNodes.size(),
                          SchemeNode::schemeNodeTypeNames[static_cast<int>(schemeNode->type)]);

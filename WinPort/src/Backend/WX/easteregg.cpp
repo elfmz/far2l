@@ -275,6 +275,9 @@ wxImage PotatoPlasmaEffect::Render()
 
 #include <chrono>
 
+// bool IsEasterEggActive(){ return true; }
+// bool IsEasterEggAnimationActive() { return false; }
+
 bool IsEasterEggActive()
 {
     using namespace std::chrono;
@@ -291,6 +294,20 @@ bool IsEasterEggActive()
     return (month == 8 && day >= 9 && day <= 15);
 }
 
+bool IsEasterEggAnimationActive() {
+    using namespace std::chrono;
+
+    // get local time
+    auto now = system_clock::now();
+    time_t tt = system_clock::to_time_t(now);
+    tm local{};
+    localtime_r(&tt, &local);   // or localtime_s on Windows
+
+    int hour   = local.tm_hour;
+    int minute = local.tm_min;
+
+    return hour == 0 && minute >= 15 && minute < 30; // night time, 15 minutes
+}
 
 FireEffect fire(400, 200);
 // MarsEffect terrain(320, 200);

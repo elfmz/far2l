@@ -90,3 +90,5 @@ extern FireEffect fire;
 // extern PotatoPlasmaEffect potato;
 
 bool IsEasterEggActive();
+bool IsEasterEggAnimationActive();
+

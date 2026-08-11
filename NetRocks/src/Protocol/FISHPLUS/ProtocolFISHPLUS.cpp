@@ -385,6 +385,14 @@ void ProtocolFISHPLUS::Rename(const std::string &path_old, const std::string &pa
 	FishPlus::Session::ThrowIfFailed(resp, "FISH+ rename error", path_old);
 }
 
+void ProtocolFISHPLUS::FileCopy(const std::string &path_src, const std::string &path_dst)
+{
+	// cp -R -f on the far side: recursive, so a whole tree costs one round
+	// trip and the data never touches the network.
+	auto resp = _sess->ExecPaths("cp", {path_src, path_dst});
+	FishPlus::Session::ThrowIfFailed(resp, "FISH+ copy error", path_src);
+}
+
 void ProtocolFISHPLUS::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	// utime <mtime> <atime>, either of them '-' for "leave it alone". The epoch

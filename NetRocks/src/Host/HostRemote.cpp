@@ -578,6 +578,17 @@ void HostRemote::Rename(const std::string &path_old, const std::string &path_new
 }
 
 
+void HostRemote::FileCopy(const std::string &path_src, const std::string &path_dst)
+{
+	CheckReady();
+
+	SendCommand(IPC_FILE_COPY);
+	SendString(CodepageLocal2Remote(path_src));
+	SendString(CodepageLocal2Remote(path_dst));
+	RecvReply(IPC_FILE_COPY);
+}
+
+
 void HostRemote::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	CheckReady();

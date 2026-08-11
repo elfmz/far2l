@@ -3,8 +3,32 @@
 
 StackElem* CRegExp::RegExpStack {nullptr};
 int CRegExp::RegExpStack_Size {0};
+
+
 /////////////////////////////////////////////////////////////////////////////
-//
+
+
+void SMatches::topseSanitize(int cur)
+{
+    while (topse < cur) {
+      ++topse;
+      s[topse] = -1;
+      e[topse] = -1;
+    }
+}
+
+#if !defined NAMED_MATCHES_IN_HASH
+void SMatches::topnseSanitize(int cur)
+{
+    while (topnse < cur) {
+      ++topnse;
+      s[topnse] = -1;
+      e[topnse] = -1;
+    }
+}
+#endif
+
+
 SRegInfo::SRegInfo()
 {
   un.param = nullptr;
@@ -872,6 +896,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             if (re->param0 == -1)
               break;
             if (re->op == EOps::ReBrackets) {
+              matches->topseSanitize(re->param0);
               if (re->param0 || !startChange)
                 matches->s[re->param0] = re->s;
               if (re->param0 || !endChange)
@@ -881,6 +906,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             }
             else {
 #ifndef NAMED_MATCHES_IN_HASH
+              matches->topnseSanitize(re->param0);
               matches->ns[re->param0] = re->s;
               matches->ne[re->param0] = toParse;
               if (matches->ne[re->param0] < matches->ns[re->param0])
@@ -1055,6 +1081,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
+            matches->topnseSanitize(sv);
             if (matches->ns[sv] == -1 || matches->ne[sv] == -1) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
@@ -1102,6 +1129,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
+            matches->topseSanitize(sv);
             if (matches->s[sv] == -1 || matches->e[sv] == -1) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
@@ -1394,17 +1422,16 @@ inline bool CRegExp::parseRE(int pos)
   if (!positionMoves && (firstChar != BAD_WCHAR || firstMetaChar != EMetaSymbols::ReBadMeta) && !quickCheck(toParse))
     return false;
 
-  int i;
-  for (i = 0; i < cMatch; i++) matches->s[i] = matches->e[i] = -1;
+  matches->reset();
   matches->cMatch = cMatch;
 #ifndef NAMED_MATCHES_IN_HASH
-  for (i = 0; i < cnMatch; i++) matches->ns[i] = matches->ne[i] = -1;
   matches->cnMatch = cnMatch;
 #endif
   do {
     // stack=null;
-    if (lowParse(tree_root, nullptr, toParse))
+    if (lowParse(tree_root, nullptr, toParse)) {
       return true;
+    }
     if (!positionMoves)
       return false;
     toParse = ++pos;

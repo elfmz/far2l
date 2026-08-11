@@ -121,14 +121,33 @@ enum class EError { EOK = 0, EERROR, ESYNTAX, EBRACKETS, EENUM, EOP };
 /// @ingroup cregexp
 struct SMatches
 {
-  SMatches() : cMatch(0), cnMatch(0) { s[0] = e[0] = 0; }
+  SMatches()
+  {
+    reset();
+  }
+  void reset()
+  {
+    s[0] = e[0] = -1;
+    cMatch = 0;
+    topse = 0;
+#if !defined NAMED_MATCHES_IN_HASH
+    ns[0] = ne[0] = -1;
+    cnMatch = 0;
+    topnse = 0;
+#endif
+  }
 
+  void topseSanitize(int cur); // use before accessing s[cur]/e[cur] to ensure their lazy inited to -1
   int s[MATCHES_NUM];
   int e[MATCHES_NUM];
+  int topse;
   int cMatch;
+
 #if !defined NAMED_MATCHES_IN_HASH
+  void topnseSanitize(int cur); // use before accessing ns[cur]/ne[cur] to ensure their lazy inited to -1
   int ns[NAMED_MATCHES_NUM];
   int ne[NAMED_MATCHES_NUM];
+  int topnse;
   int cnMatch;
 #endif
 };
@@ -340,6 +359,7 @@ class CRegExp
 
   SMatches* matches = nullptr;
   int cMatch = 0;
+
 #if !defined NAMED_MATCHES_IN_HASH
   UnicodeString* brnames[NAMED_MATCHES_NUM] = {};
   int cnMatch = 0;

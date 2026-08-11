@@ -1,6 +1,5 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
 
-#include <algorithm>
 #include <memory>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
@@ -1032,11 +1031,7 @@ void HrcLibrary::Impl::updateLinks()
     for (const auto& node : scheme->nodes) {
       if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
         auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
-        if (inherit->scheme && inherit->virtualEntryVector.empty() &&
-            !inherit->scheme->virtualTarget && std::none_of(
-              inherit->scheme->nodes.begin(), inherit->scheme->nodes.end(), [](const auto& node) {
-                return node->type == SchemeNode::SchemeNodeType::SNT_INHERIT;
-              })) {
+        if (inherit->scheme && inherit->virtualEntryVector.empty() && !inherit->scheme->virtualTarget) {
           for (const auto& inheritedNode : inherit->scheme->nodes) {
             scheme->searchNodes.push_back(inheritedNode.get());
           }

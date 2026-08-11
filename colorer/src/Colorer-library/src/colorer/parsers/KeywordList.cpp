@@ -1,4 +1,5 @@
 #include "colorer/parsers/KeywordList.h"
+#include <algorithm>
 
 KeywordList::KeywordList(size_t list_size)
 {
@@ -11,27 +12,22 @@ KeywordList::~KeywordList()
   delete[] kwList;
 }
 
-int kwCompare(const void* e1, const void* e2)
+void KeywordList::sortList() // sort and remove dups
 {
-  return ((KeywordInfo*) e1)->keyword->compare(*((KeywordInfo*) e2)->keyword);
-}
-
-int kwCompareI(const void* e1, const void* e2)
-{
-  return UStr::caseCompare(*((KeywordInfo*) e1)->keyword, *((KeywordInfo*) e2)->keyword);
-}
-
-void KeywordList::sortList()
-{
-  if (count < 2) {
-    return;
-  }
-
-  if (matchCase) {
-    qsort((void*) kwList, count, sizeof(KeywordInfo), &kwCompare);
-  } else {
-    qsort((void*) kwList, count, sizeof(KeywordInfo), &kwCompareI);
-  }
+  std::sort(kwList, kwList + count, [&](const KeywordInfo& a, const KeywordInfo& b) {
+      int cmp = a.keyword->compare(*b.keyword);
+      if (cmp != 0) {
+        return cmp < 0;
+      }
+      if (a.region != b.region) {
+        return a.region < b.region;
+      }
+      return a.isSymbol < b.isSymbol;
+  });
+  KeywordInfo* new_end = std::unique(kwList, kwList + count, [&](const KeywordInfo& a, const KeywordInfo& b) {
+      return a.region == b.region && a.isSymbol == b.isSymbol && a.keyword->compare(*b.keyword) == 0; // indexOfShorter is irrelevant now
+  });
+  count = new_end - kwList;
 }
 
 /* Searches previous elements num with same partial name
@@ -43,29 +39,23 @@ void KeywordList::sortList()
 */
 void KeywordList::substrIndex()
 {
+  for (int i = 0; i < count; i++) {
+    if (kwList[i].isSymbol) {
+      hasSymbols = true;
+    } else {
+      hasNonSymbols = true;
+    }
+  }
   for (int i = count - 1; i > 0; i--) {
     for (int ii = i - 1; ii >= 0; ii--) {
-      if (matchCase) {
-        if ((*kwList[ii].keyword)[0] != (*kwList[i].keyword)[0]) {
-          break;
-        }
-        if (kwList[ii].keyword->length() < kwList[i].keyword->length() &&
-            kwList[i].keyword->compare(0, kwList[ii].keyword->length(), *kwList[ii].keyword) == 0)
-        {
-          kwList[i].indexOfShorter = ii;
-          break;
-        }
+      if ((*kwList[ii].keyword)[0] != (*kwList[i].keyword)[0]) {
+        break;
       }
-      else {
-        if (Character::toLowerCase((*kwList[ii].keyword)[0]) != Character::toLowerCase((*kwList[i].keyword)[0])) {
-          break;
-        }
-        if (kwList[ii].keyword->length() < kwList[i].keyword->length() &&
-            UStr::caseCompare(*kwList[i].keyword, 0, kwList[ii].keyword->length(), *kwList[ii].keyword) == 0)
-        {
-          kwList[i].indexOfShorter = ii;
-          break;
-        }
+      if (kwList[ii].keyword->length() < kwList[i].keyword->length() &&
+          kwList[i].keyword->compare(0, kwList[ii].keyword->length(), *kwList[ii].keyword) == 0)
+      {
+        kwList[i].indexOfShorter = ii;
+        break;
       }
     }
   }

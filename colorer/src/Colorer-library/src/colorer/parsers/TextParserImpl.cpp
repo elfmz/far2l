@@ -201,7 +201,22 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
     return MATCH_NOTHING;
   }
 
-  if (gx < lowlen && !node->kwList->firstChar->contains((*str)[gx])) {
+  UnicodeString *use_str = node->kwList->matchCase ? str : &str_lowercase;
+  bool leftbound_bad = false;
+  if (node->kwList->hasNonSymbols) {
+    if (gx > 0) {
+      if (!node->worddiv) { // default word bound
+        leftbound_bad = Character::isLetterOrDigitOrUnderscore((*use_str)[gx - 1]);
+      } else { // custom check for word bound
+        leftbound_bad = !node->worddiv->contains((*use_str)[gx - 1]);
+      }
+    }
+    if (leftbound_bad && !node->kwList->hasSymbols) {
+      return MATCH_NOTHING; // otherwise its just a waist of time
+    }
+  }
+
+  if (gx < lowlen && !node->kwList->firstChar->contains((*use_str)[gx])) {
     return MATCH_NOTHING;
   }
 
@@ -214,36 +229,23 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
       kwlen = lowlen - gx;
     }
 
-    int8_t compare_result;
-    if (node->kwList->matchCase) {
-      compare_result = -str->compare(gx, kwlen, *node->kwList->kwList[pos].keyword);
-    }
-    else {
-      compare_result =
-          -UStr::caseCompare(*str, gx, kwlen, *node->kwList->kwList[pos].keyword);
-    }
+    int8_t compare_result = -use_str->compare(gx, kwlen, *node->kwList->kwList[pos].keyword);
 
     if (compare_result == 0 && right - left == 1) {
-      bool badbound = false;
       if (!node->kwList->kwList[pos].isSymbol) {
-        if (!node->worddiv) {
-          // default word bound
-          if ((gx > 0 && Character::isLetterOrDigitOrUnderscore((*str)[gx - 1])) ||
-              (gx + kwlen < lowlen && Character::isLetterOrDigitOrUnderscore((*str)[gx + kwlen])))
-          {
-            badbound = true;
-          }
+        if (leftbound_bad) {
+          compare_result = -1;
         }
-        else {
-          // custom check for word bound
-          if ((gx > 0 && !node->worddiv->contains((*str)[gx - 1])) ||
-              (gx + kwlen < lowlen && !node->worddiv->contains((*str)[gx + kwlen])))
-          {
-            badbound = true;
+        // do similar check for right boundary each iteration cuz kwlen varies
+        else if (!node->worddiv) {
+          if (gx + kwlen < lowlen && Character::isLetterOrDigitOrUnderscore((*use_str)[gx + kwlen])) {
+            compare_result = -1;
           }
+        } else if (gx + kwlen < lowlen && !node->worddiv->contains((*use_str)[gx + kwlen])) {
+          compare_result = -1;
         }
       }
-      if (!badbound) {
+      if (compare_result == 0) {
         COLORER_LOG_DEEPTRACE("[TextParserImpl] KW matched. gx=%, region=%", gx,
                              node->kwList->kwList[pos].region->getName());
         addRegion(current_parse_line, gx, gx + kwlen, node->kwList->kwList[pos].region);
@@ -253,20 +255,17 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
     }
     if (right - left == 1) {
       left = node->kwList->kwList[pos].indexOfShorter;
-      if (left != -1) {
-        right = left + 1;
-        continue;
+      if (left == -1) {
+        return MATCH_NOTHING;
       }
-      break;
-    }
-    if (compare_result == 1) {
+      right = left + 1;
+    } else if (compare_result == 1) {
       right = pos;
-    }
-    else {  // if (compare_result == 0 || compare_result == -1)
+    } else {  // if (compare_result == 0 || compare_result == -1)
       left = pos;
     }
   }
-  return MATCH_NOTHING;
+
 }
 
 int TextParser::Impl::searchIN(SchemeNodeInherit* node, int no, int lowLen, int hiLen)
@@ -523,6 +522,8 @@ bool TextParser::Impl::colorize(CRegExp* root_end_re, bool lowContentPriority)
         throw Exception("null String passed into the parser: " +
                         UStr::to_unistr(current_parse_line));
       }
+      str_lowercase = *str;
+      str_lowercase.toLower();
       regionHandler->clearLine(current_parse_line, str);
     }
     // hack to include invisible regions in start of block

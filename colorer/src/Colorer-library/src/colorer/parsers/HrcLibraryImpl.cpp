@@ -774,7 +774,6 @@ void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const XMLNode& el
   loopSchemeKeywords(elem, scheme, scheme_node.get(), region);
   scheme_node->kwList->firstChar->freeze();
 
-  // TODO unique keywords in list
   scheme_node->kwList->sortList();
   scheme_node->kwList->substrIndex();
   scheme->nodes.push_back(std::move(scheme_node));
@@ -875,17 +874,16 @@ void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* s
     rgn = getNCRegion(&elem, hrcWordAttrRegion);
   }
 
+  auto keyword = std::make_unique<UnicodeString>(keyword_value);
+  if (!scheme_node->kwList->matchCase) {
+      keyword->toLower();
+  }
   KeywordInfo& list = scheme_node->kwList->kwList[scheme_node->kwList->count];
-  list.keyword = std::make_unique<UnicodeString>(keyword_value);
+  list.keyword = std::move(keyword);
   list.region = rgn;
   list.isSymbol = keyword_type == KeywordInfo::KeywordType::KT_SYMB;
   auto* first_char = scheme_node->kwList->firstChar.get();
   first_char->add(keyword_value[0]);
-  if (!scheme_node->kwList->matchCase) {
-    first_char->add(Character::toLowerCase(keyword_value[0]));
-    first_char->add(Character::toUpperCase(keyword_value[0]));
-    first_char->add(Character::toTitleCase(keyword_value[0]));
-  }
   scheme_node->kwList->count++;
   scheme_node->kwList->minKeywordLength = std::min(scheme_node->kwList->minKeywordLength, list.keyword->length());
 }

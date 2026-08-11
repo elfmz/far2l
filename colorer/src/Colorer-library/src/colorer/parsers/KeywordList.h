@@ -26,6 +26,8 @@ class KeywordList
 {
  public:
   bool matchCase = false;
+  bool hasSymbols = false;
+  bool hasNonSymbols = false;
   int count = 0;
   int minKeywordLength = INT_MAX;
   std::unique_ptr<CharacterClass> firstChar;

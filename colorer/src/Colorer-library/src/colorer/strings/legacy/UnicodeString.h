@@ -111,6 +111,7 @@ class UnicodeString
   }
 
   UnicodeString& trim();
+  UnicodeString& toLower();
 
   /** Searches first index of substring @c str, starting from @c pos */
   int32_t indexOf(const UnicodeString& str, int32_t pos = 0) const;

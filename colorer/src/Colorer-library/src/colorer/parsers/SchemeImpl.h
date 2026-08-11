@@ -33,7 +33,9 @@ class SchemeImpl : public Scheme
  protected:
   uUnicodeString schemeName;
   std::vector<std::unique_ptr<SchemeNode>> nodes;
+  std::vector<SchemeNode*> searchNodes;
   FileType* fileType = nullptr;
+  bool virtualTarget = false;
 
   explicit SchemeImpl(const UnicodeString* sn)
   {

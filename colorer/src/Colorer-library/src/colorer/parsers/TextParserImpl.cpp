@@ -459,13 +459,13 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
 #ifdef COLORER_USE_DEEPTRACE
   int idx = 0;
 #endif
-  for (auto const& schemeNode : cscheme->nodes) {
+  for (auto* schemeNode : cscheme->searchNodes) {
     COLORER_LOG_DEEPTRACE("[TextParserImpl] searchMatch: processing node:%/%, type:%", idx + 1,
-                         cscheme->nodes.size(),
+                         cscheme->searchNodes.size(),
                          SchemeNode::schemeNodeTypeNames[static_cast<int>(schemeNode->type)]);
     switch (schemeNode->type) {
       case SchemeNode::SchemeNodeType::SNT_INHERIT: {
-        auto schemeNodeInherit = static_cast<SchemeNodeInherit*>(schemeNode.get());
+        auto schemeNodeInherit = static_cast<SchemeNodeInherit*>(schemeNode);
         int re_result = searchIN(schemeNodeInherit, no, lowLen, hiLen);
         if (re_result != MATCH_NOTHING) {
           return re_result;
@@ -473,21 +473,21 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
         break;
       }
       case SchemeNode::SchemeNodeType::SNT_KEYWORDS: {
-        auto schemeNodeKe = static_cast<SchemeNodeKeywords*>(schemeNode.get());
+        auto schemeNodeKe = static_cast<SchemeNodeKeywords*>(schemeNode);
         if (searchKW(schemeNodeKe, no, lowLen, hiLen) == MATCH_RE) {
           return MATCH_RE;
         }
         break;
       }
       case SchemeNode::SchemeNodeType::SNT_RE: {
-        auto schemeNodeRe = static_cast<SchemeNodeRegexp*>(schemeNode.get());
+        auto schemeNodeRe = static_cast<SchemeNodeRegexp*>(schemeNode);
         if (searchRE(schemeNodeRe, no, lowLen, hiLen) == MATCH_RE) {
           return MATCH_RE;
         }
         break;
       }
       case SchemeNode::SchemeNodeType::SNT_BLOCK: {
-        auto schemeNodeBlock = static_cast<SchemeNodeBlock*>(schemeNode.get());
+        auto schemeNodeBlock = static_cast<SchemeNodeBlock*>(schemeNode);
         if (searchBL(schemeNodeBlock, no, lowLen, hiLen) != MATCH_NOTHING) {
           return MATCH_SCHEME;
         }

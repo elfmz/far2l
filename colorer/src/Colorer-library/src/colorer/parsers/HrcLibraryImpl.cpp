@@ -1,4 +1,6 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
+
+#include <algorithm>
 #include <memory>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
@@ -1011,6 +1013,9 @@ void HrcLibrary::Impl::updateLinks()
           updateSchemeLink(snode_inherit->schemeName, &snode_inherit->scheme, 1, scheme);
           for (auto* vt : snode_inherit->virtualEntryVector) {
             updateSchemeLink(vt->virtSchemeName, &vt->virtScheme, 2, scheme);
+            if (vt->virtScheme) {
+              vt->virtScheme->virtualTarget = true;
+            }
             updateSchemeLink(vt->substSchemeName, &vt->substScheme, 3, scheme);
           }
         }
@@ -1019,6 +1024,26 @@ void HrcLibrary::Impl::updateLinks()
       if (structureChanged) {
         break;
       }
+    }
+  }
+
+  for (const auto& [key, scheme] : schemeHash) {
+    scheme->searchNodes.clear();
+    for (const auto& node : scheme->nodes) {
+      if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
+        auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
+        if (inherit->scheme && inherit->virtualEntryVector.empty() &&
+            !inherit->scheme->virtualTarget && std::none_of(
+              inherit->scheme->nodes.begin(), inherit->scheme->nodes.end(), [](const auto& node) {
+                return node->type == SchemeNode::SchemeNodeType::SNT_INHERIT;
+              })) {
+          for (const auto& inheritedNode : inherit->scheme->nodes) {
+            scheme->searchNodes.push_back(inheritedNode.get());
+          }
+          continue;
+        }
+      }
+      scheme->searchNodes.push_back(node.get());
     }
   }
 }

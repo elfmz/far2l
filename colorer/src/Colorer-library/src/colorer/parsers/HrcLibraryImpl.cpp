@@ -883,7 +883,7 @@ void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* s
   list.region = rgn;
   list.isSymbol = keyword_type == KeywordInfo::KeywordType::KT_SYMB;
   auto* first_char = scheme_node->kwList->firstChar.get();
-  first_char->add(keyword_value[0]);
+  first_char->add((*list.keyword)[0]);
   scheme_node->kwList->count++;
   scheme_node->kwList->minKeywordLength = std::min(scheme_node->kwList->minKeywordLength, list.keyword->length());
 }

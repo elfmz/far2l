@@ -29,6 +29,7 @@ class TextParser::Impl
 
  private:
   UnicodeString* str = nullptr;
+  UnicodeString str_lowercase;
   int stackLevel = 0;
   int current_parse_line = 0;
   int gx = 0;

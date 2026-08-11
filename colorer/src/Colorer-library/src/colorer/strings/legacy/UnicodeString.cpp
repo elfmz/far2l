@@ -94,6 +94,14 @@ UnicodeString::UnicodeString(int no)
   construct(&dtext, 0, npos);
 }
 
+UnicodeString& UnicodeString::toLower()
+{
+  for (auto i = length(); i--;) {
+    wstr[i] = Character::toLowerCase(wstr[i]);
+  }
+  return *this;
+}
+
 UnicodeString& UnicodeString::trim()
 {
   int32_t left;

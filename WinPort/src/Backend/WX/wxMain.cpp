@@ -81,6 +81,7 @@ void WinPortAppThread::Start(IConsoleOutputBackend *backend)
 {
 	_backend = backend;
 	_start.unlock();
+	wxInitAllImageHandlers();
 }
 
 wxThread::ExitCode WinPortAppThread::Entry()

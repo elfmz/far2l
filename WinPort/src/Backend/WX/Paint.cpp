@@ -488,16 +488,6 @@ void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 	if (IsEasterEggActive()) {
 		wxRect winbox = _window->GetSize();
 
-		if (IsEasterEggAnimationActive()) {
-		    fire.Update();
-		    //terrain.Update();
-		    //potato.Update();
-
-		    wxImage fireImg = fire.Render();
-		    wxImage scaledFire = fireImg.Scale(winbox.GetWidth(), winbox.GetHeight() / 4, wxIMAGE_QUALITY_HIGH);
-		    wxBitmap bmpFire(scaledFire);
-		}
-
 	    static bool readyToRender = false;
 		static wxBitmap bmpAM;
 		static wxBitmap bmpGR;
@@ -516,7 +506,17 @@ void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 
 	    dc.DrawBitmap(bmpGR, 0 + winbox.GetRight() - bmpGR.GetWidth(), 40, true);
 	    dc.DrawBitmap(bmpAM, 0 + winbox.GetRight() - bmpAM.GetWidth(), 0 + winbox.GetBottom() - bmpAM.GetHeight(), true);
-	    if (IsEasterEggAnimationActive()) dc.DrawBitmap(bmpFire, 0, winbox.GetBottom() - scaledFire.GetHeight(), true);
+
+		if (IsEasterEggAnimationActive()) {
+		    fire.Update();
+		    //terrain.Update();
+		    //potato.Update();
+
+		    wxImage fireImg = fire.Render();
+		    wxImage scaledFire = fireImg.Scale(winbox.GetWidth(), winbox.GetHeight() / 4, wxIMAGE_QUALITY_HIGH);
+		    wxBitmap bmpFire(scaledFire);
+	    	dc.DrawBitmap(bmpFire, 0, winbox.GetBottom() - scaledFire.GetHeight(), true);
+		}
 	}
 }
 

@@ -22,8 +22,8 @@ void SMatches::topnseSanitize(int cur)
 {
     while (topnse < cur) {
       ++topnse;
-      s[topnse] = -1;
-      e[topnse] = -1;
+      ns[topnse] = -1;
+      ne[topnse] = -1;
     }
 }
 #endif
@@ -1430,6 +1430,10 @@ inline bool CRegExp::parseRE(int pos)
   do {
     // stack=null;
     if (lowParse(tree_root, nullptr, toParse)) {
+      matches->topseSanitize(cMatch - 1);
+#ifndef NAMED_MATCHES_IN_HASH
+      matches->topnseSanitize(cnMatch - 1);
+#endif
       return true;
     }
     if (!positionMoves)

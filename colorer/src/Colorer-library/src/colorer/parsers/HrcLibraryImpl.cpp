@@ -1,4 +1,5 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
+
 #include <memory>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
@@ -1011,6 +1012,9 @@ void HrcLibrary::Impl::updateLinks()
           updateSchemeLink(snode_inherit->schemeName, &snode_inherit->scheme, 1, scheme);
           for (auto* vt : snode_inherit->virtualEntryVector) {
             updateSchemeLink(vt->virtSchemeName, &vt->virtScheme, 2, scheme);
+            if (vt->virtScheme) {
+              vt->virtScheme->virtualTarget = true;
+            }
             updateSchemeLink(vt->substSchemeName, &vt->substScheme, 3, scheme);
           }
         }
@@ -1018,6 +1022,58 @@ void HrcLibrary::Impl::updateLinks()
       current_parse_type = old_parseType;
       if (structureChanged) {
         break;
+      }
+    }
+  }
+
+  const auto canStartWith = [](const SchemeNode* node, wchar ch) {
+    switch (node->type) {
+      case SchemeNode::SchemeNodeType::SNT_RE:
+        return static_cast<const SchemeNodeRegexp*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_BLOCK:
+        return static_cast<const SchemeNodeBlock*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_KEYWORDS: {
+        const auto* keywords = static_cast<const SchemeNodeKeywords*>(node)->kwList.get();
+        return keywords->count != 0 && keywords->firstChar->contains(
+          keywords->matchCase ? ch : Character::toLowerCase(ch));
+      }
+      case SchemeNode::SchemeNodeType::SNT_INHERIT:
+        return true;
+    }
+    return true;
+  };
+
+  for (const auto& [key, scheme] : schemeHash) {
+    scheme->searchNodes.clear();
+    for (const auto& node : scheme->nodes) {
+      if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
+        auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
+        if (inherit->scheme && inherit->virtualEntryVector.empty() && !inherit->scheme->virtualTarget) {
+          for (const auto& inheritedNode : inherit->scheme->nodes) {
+            scheme->searchNodes.push_back(inheritedNode.get());
+          }
+          continue;
+        }
+      }
+      scheme->searchNodes.push_back(node.get());
+    }
+
+    scheme->searchDispatch.reset();
+    if (scheme->searchNodes.size() >= 2) {
+      auto dispatch = std::make_unique<SchemeImpl::SearchDispatch>();
+      dispatch->masks.resize(scheme->searchNodes.size());
+      size_t candidates = 0;
+      for (size_t i = 0; i < scheme->searchNodes.size(); i++) {
+        auto* node = scheme->searchNodes[i];
+        for (uint32_t ch = 0; ch < 128; ch++) {
+          if (canStartWith(node, static_cast<wchar>(ch))) {
+            dispatch->masks[i][ch / 64] |= uint64_t {1} << (ch % 64);
+            candidates++;
+          }
+        }
+      }
+      if (candidates * 4 <= scheme->searchNodes.size() * 128 * 3) {
+        scheme->searchDispatch = std::move(dispatch);
       }
     }
   }

@@ -22,8 +22,8 @@ void SMatches::topnseSanitize(int cur)
 {
     while (topnse < cur) {
       ++topnse;
-      s[topnse] = -1;
-      e[topnse] = -1;
+      ns[topnse] = -1;
+      ne[topnse] = -1;
     }
 }
 #endif
@@ -65,7 +65,7 @@ void CRegExp::init()
   tree_root = nullptr;
   positionMoves = false;
   error = EError::EERROR;
-  firstChar = 0;
+  firstNode = nullptr;
   cMatch = 0;
   global_pattern = nullptr;
 #ifdef COLORERMODE
@@ -169,30 +169,40 @@ EError CRegExp::setRELow(const UnicodeString& expr)
 void CRegExp::optimize()
 {
   SRegInfo* next = tree_root;
-  firstChar = BAD_WCHAR;
-  firstMetaChar = EMetaSymbols::ReBadMeta;
+  firstNode = nullptr;
   while (next) {
     if (next->op == EOps::ReBrackets) {
       next = next->un.param;
       continue;
     }
-    /*    if (next->op == EOps::ReMetaSymb &&
-            next->un.metaSymbol >= ReWBound && next->un.metaSymbol < ReChrLast){
+    if (next->op == EOps::ReAhead || next->op == EOps::ReNAhead ||
+        next->op == EOps::ReBehind || next->op == EOps::ReNBehind) {
+      next = next->next;
+      continue;
+    }
+    if (next->op == EOps::ReMetaSymb) {
+      firstNode = next;
+      switch (next->un.metaSymbol) {
+        case EMetaSymbols::ReSoL:
+        case EMetaSymbols::ReEoL:
+        case EMetaSymbols::ReWBound:
+        case EMetaSymbols::ReNWBound:
+        case EMetaSymbols::RePreNW:
+#ifdef COLORERMODE
+        case EMetaSymbols::ReSoScheme:
+        case EMetaSymbols::ReStart:
+        case EMetaSymbols::ReEnd:
+#endif
           next = next->next;
           continue;
-        };*/
-    if (next->op == EOps::ReMetaSymb) {
-      if (next->un.metaSymbol != EMetaSymbols::ReSoL && next->un.metaSymbol != EMetaSymbols::ReWBound)
-        break;
-      firstMetaChar = next->un.metaSymbol;
+        default:
+          break;
+      }
       break;
     }
-    if (next->op == EOps::ReSymb) {
-      firstChar = next->un.symbol;
-      break;
-    }
-    if (next->op == EOps::ReWord) {
-      firstChar = (*next->un.word)[0];
+    if (next->op == EOps::ReSymb || next->op == EOps::ReWord ||
+        next->op == EOps::ReEnum || next->op == EOps::ReNEnum) {
+      firstNode = next;
     }
     break;
   }
@@ -1370,46 +1380,77 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
   }
 }
 
+bool CRegExp::canStartWith(wchar ch) const
+{
+  if (!firstNode) {
+    return true;
+  }
+  switch (firstNode->op) {
+    case EOps::ReSymb:
+      return matchChars(ch, firstNode->un.symbol);
+    case EOps::ReWord:
+      return matchChars(ch, (*firstNode->un.word)[0]);
+    case EOps::ReEnum:
+      return firstNode->un.charclass->contains(ch);
+    case EOps::ReNEnum:
+      return !firstNode->un.charclass->contains(ch);
+    case EOps::ReMetaSymb:
+      switch (firstNode->un.metaSymbol) {
+        case EMetaSymbols::ReAnyChr:
+          return singleLine || (ch != 0x0A && ch != 0x0B && ch != 0x0C && ch != 0x0D &&
+                                ch != 0x85 && ch != 0x2028 && ch != 0x2029);
+        case EMetaSymbols::ReDigit:
+          return Character::isDigit(ch);
+        case EMetaSymbols::ReNDigit:
+          return !Character::isDigit(ch);
+        case EMetaSymbols::ReWordSymb:
+          return Character::isLetterOrDigitOrUnderscore(ch);
+        case EMetaSymbols::ReNWordSymb:
+          return !Character::isLetterOrDigitOrUnderscore(ch);
+        case EMetaSymbols::ReWSpace:
+          return Character::isWhitespace(ch);
+        case EMetaSymbols::ReNWSpace:
+          return !Character::isWhitespace(ch);
+        case EMetaSymbols::ReUCase:
+          return Character::isUpperCase(ch);
+        case EMetaSymbols::ReNUCase:
+          return Character::isLowerCase(ch);
+        default:
+          return true;
+      }
+    default:
+      return true;
+  }
+}
+
 inline bool CRegExp::quickCheck(int toParse)
 {
-  if (firstChar != BAD_WCHAR) {
-    return toParse < end && matchChars((*global_pattern)[toParse], firstChar);
-  }
-  if (firstMetaChar != EMetaSymbols::ReBadMeta)
-    switch (firstMetaChar) {
-      case EMetaSymbols::ReSoL:
-        if (toParse != 0)
-          return false;
-        return true;
+  switch (firstNode->op) {
+    case EOps::ReSymb:
+      return toParse < end && matchChars((*global_pattern)[toParse], firstNode->un.symbol);
+    case EOps::ReWord:
+      return toParse < end && matchChars((*global_pattern)[toParse], (*firstNode->un.word)[0]);
+    case EOps::ReEnum:
+    case EOps::ReNEnum:
+      return toParse < end &&
+             (firstNode->un.charclass->contains((*global_pattern)[toParse]) ==
+              (firstNode->op == EOps::ReEnum));
+    case EOps::ReMetaSymb:
+      switch (firstNode->un.metaSymbol) {
 #ifdef COLORERMODE
-      case EMetaSymbols::ReSoScheme:
-        if (toParse != schemeStart)
-          return false;
-        return true;
+        case EMetaSymbols::ReStart:
+        case EMetaSymbols::ReEnd:
+          return true;
 #endif
-        //    case ReWBound:
-        //      return relocale->cl_isword(*toParse) && (toParse == start ||
-        //      !relocale->cl_isword(*(toParse-1)));
-      case EMetaSymbols::ReBadMeta:
-      case EMetaSymbols::ReAnyChr:
-      case EMetaSymbols::ReEoL:
-      case EMetaSymbols::ReDigit:
-      case EMetaSymbols::ReNDigit:
-      case EMetaSymbols::ReWordSymb:
-      case EMetaSymbols::ReNWordSymb:
-      case EMetaSymbols::ReWSpace:
-      case EMetaSymbols::ReNWSpace:
-      case EMetaSymbols::ReUCase:
-      case EMetaSymbols::ReNUCase:
-      case EMetaSymbols::ReWBound:
-      case EMetaSymbols::ReNWBound:
-      case EMetaSymbols::RePreNW:
-      case EMetaSymbols::ReStart:
-      case EMetaSymbols::ReEnd:
-      case EMetaSymbols::ReChrLast:
-        break;
-    }
-  return true;
+        case EMetaSymbols::ReBadMeta:
+        case EMetaSymbols::ReChrLast:
+          return true;
+        default:
+          return checkMetaSymbol(firstNode->un.metaSymbol, toParse);
+      }
+    default:
+      return true;
+  }
 }
 
 inline bool CRegExp::parseRE(int pos)
@@ -1419,7 +1460,7 @@ inline bool CRegExp::parseRE(int pos)
 
   int toParse = pos;
 
-  if (!positionMoves && (firstChar != BAD_WCHAR || firstMetaChar != EMetaSymbols::ReBadMeta) && !quickCheck(toParse))
+  if (!positionMoves && firstNode && !quickCheck(toParse))
     return false;
 
   matches->reset();
@@ -1430,6 +1471,10 @@ inline bool CRegExp::parseRE(int pos)
   do {
     // stack=null;
     if (lowParse(tree_root, nullptr, toParse)) {
+      matches->topseSanitize(cMatch - 1);
+#ifndef NAMED_MATCHES_IN_HASH
+      matches->topnseSanitize(cnMatch - 1);
+#endif
       return true;
     }
     if (!positionMoves)

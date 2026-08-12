@@ -9,13 +9,10 @@
 
 CharacterClass::CharacterClass()
 {
-  infoIndex = new BitArray[256];
 }
 
 CharacterClass::~CharacterClass()
 {
-  clear();
-  delete[] infoIndex;
 }
 
 /**
@@ -295,18 +292,8 @@ void CharacterClass::clear()
 void CharacterClass::fill()
 {
   for (int i = 0; i < 256; i++) {
-    infoIndex[i].addRange(0, 0xFF);
+    infoIndex[i].setAll();
   }
-}
-
-bool CharacterClass::inClass(wchar c) const
-{
-  return infoIndex[(c >> 8) & 0xFF].getBit(c & 0xFF);
-}
-
-bool CharacterClass::contains(wchar c) const
-{
-  return inClass(c);
 }
 
 void CharacterClass::freeze()

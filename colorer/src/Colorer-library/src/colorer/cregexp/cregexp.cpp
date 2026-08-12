@@ -705,15 +705,16 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
 // parsing
 ////////////////////////////////////////////////////////////////////////////
 
+static bool isLineBreak(wchar_t c)
+{
+   return c == 0x0A || c == 0x0B || c == 0x0C || c == 0x0D || c == 0x85 || c == 0x2028 || c == 0x2029;
+}
+
 bool CRegExp::isWordBoundary(int toParse)
 {
-  int before = 0;
-  int after = 0;
-  if (toParse < end && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse]))
-    after = 1;
-  if (toParse > 0 && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse - 1]))
-    before = 1;
-  return before + after == 1;
+  const bool after = (toParse < end && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse]));
+  const bool before = (toParse > 0 && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse - 1]));
+  return before != after;
 }
 bool CRegExp::isNWordBoundary(int toParse)
 {
@@ -728,20 +729,14 @@ bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
     case EMetaSymbols::ReAnyChr:
       if (toParse >= end)
         return false;
-      if (!singleLine &&
-          (pattern[toParse] == 0x0A || pattern[toParse] == 0x0B || pattern[toParse] == 0x0C ||
-           pattern[toParse] == 0x0D || pattern[toParse] == 0x85 || pattern[toParse] == 0x2028 ||
-           pattern[toParse] == 0x2029))
+      if (!singleLine && isLineBreak(pattern[toParse]))
         return false;
       toParse++;
       return true;
     case EMetaSymbols::ReSoL:
       if (multiLine) {
         bool ok = false;
-        if (toParse &&
-            (pattern[toParse - 1] == 0x0A || pattern[toParse - 1] == 0x0B || pattern[toParse - 1] == 0x0C ||
-             pattern[toParse - 1] == 0x0D || pattern[toParse - 1] == 0x85 || pattern[toParse - 1] == 0x2028 ||
-             pattern[toParse - 1] == 0x2029))
+        if (toParse && isLineBreak(pattern[toParse - 1]))
           ok = true;
         return (toParse == 0 || ok);
       }
@@ -749,10 +744,7 @@ bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
     case EMetaSymbols::ReEoL:
       if (multiLine) {
         bool ok = false;  // ???check
-        if (toParse && toParse < end &&
-            (pattern[toParse - 1] == 0x0A || pattern[toParse - 1] == 0x0B || pattern[toParse - 1] == 0x0C ||
-             pattern[toParse - 1] == 0x0D || pattern[toParse - 1] == 0x85 || pattern[toParse - 1] == 0x2028 ||
-             pattern[toParse - 1] == 0x2029))
+        if (toParse && toParse < end && isLineBreak(pattern[toParse - 1]))
           ok = true;
         return (toParse == end || ok);
       }
@@ -1397,8 +1389,7 @@ bool CRegExp::canStartWith(wchar ch) const
     case EOps::ReMetaSymb:
       switch (firstNode->un.metaSymbol) {
         case EMetaSymbols::ReAnyChr:
-          return singleLine || (ch != 0x0A && ch != 0x0B && ch != 0x0C && ch != 0x0D &&
-                                ch != 0x85 && ch != 0x2028 && ch != 0x2029);
+          return singleLine || !isLineBreak(ch);
         case EMetaSymbols::ReDigit:
           return Character::isDigit(ch);
         case EMetaSymbols::ReNDigit:

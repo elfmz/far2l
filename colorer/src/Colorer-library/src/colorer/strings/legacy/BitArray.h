@@ -14,6 +14,7 @@ public:
   BitArray(int size = 256);
   ~BitArray();
 
+  void clearAll();
   /** Sets bit at position @c pos */
   void setBit(int pos);
   /** Clears bit at position @c pos */
@@ -36,7 +37,12 @@ public:
   /** Clears bit array from the passed byte stream. */
   void clearBitArray(char*, int);
   /** Returns bit value at position @c pos. */
-  bool getBit(int pos);
+  inline bool getBit(int pos) const
+  {
+    if (!array) return false;
+    if (size_t(array) == 1) return true;
+    return (array[pos >> 5] & (1 << (pos & 0x1f))) != 0;
+  }
 
 #define CNAME "BitArray"
 

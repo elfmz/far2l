@@ -16,7 +16,7 @@
 class CharacterClass
 {
 private:
-  BitArray** infoIndex;
+  BitArray* infoIndex;
 public:
   CharacterClass();
   ~CharacterClass();

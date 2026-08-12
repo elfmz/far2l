@@ -13,6 +13,14 @@ BitArray::~BitArray()
   if (array && size_t(array) != 1) delete[] array;
 }
 
+void BitArray::clearAll()
+{
+  if (array && size_t(array) != 1) {
+    delete[] array;
+  }
+  array = nullptr;
+}
+
 void BitArray::createArray(bool set)
 {
   array = new int[size];
@@ -137,12 +145,3 @@ void BitArray::clearBitArray(char* bits, int _size)
   for (int i = 0; i < _size && i < this->size * 4; i++)
     ((char*)array)[i] &= ~bits[i];
 }
-
-bool BitArray::getBit(int pos)
-{
-  if (!array) return false;
-  if (size_t(array) == 1) return true;
-  return (array[pos >> 5] & (1 << (pos & 0x1f))) != 0;
-}
-
-

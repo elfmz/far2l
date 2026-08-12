@@ -456,8 +456,16 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
   if (ir->EventType == KEY_EVENT) {
     if (ir->Event.KeyEvent.wVirtualKeyCode == 0) {
       if (progressParse(50)) {
-       backgroundBudget = std::max(backgroundBudget, 20);
-       colorerRequestSynchro();
+       auto now = std::chrono::steady_clock::now();
+       const int sinceAllDone = std::chrono::duration_cast<std::chrono::seconds>(now - lastAllDoneTime).count();
+       if (sinceAllDone > 900) { // hardcoded 15 minutes for now, mabe be need to move to the settings
+        if (!backgroundMode) {
+          fprintf(stderr, "* COLORER: background mode activated\n");
+          backgroundMode = true;
+        }
+        backgroundBudget = std::max(backgroundBudget, 20);
+        colorerRequestSynchro();
+       }
       }
     } else {
        backgroundBudget = 10;
@@ -525,9 +533,12 @@ bool FarEditor::progressParse(int msBudget)
   }
 
   if (!baseEditor->haveInvalidLine()) {
-    int delta = std::chrono::duration_cast<std::chrono::milliseconds>
-      (std::chrono::steady_clock::now() - parseStartTime).count();
-    fprintf(stderr, "* COLORER: done in %d msec, s_idleJobAmount=%d\n", delta, s_idleJobAmount);
+    const auto &now = std::chrono::steady_clock::now();
+    int delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - parseStartTime).count();
+    fprintf(stderr, "* COLORER: done in %d msec, s_idleJobAmount=%d %s background mode\n",
+      delta, s_idleJobAmount, backgroundMode ? "with" : "without");
+    backgroundMode = false;
+    lastAllDoneTime = now;
     parseStartTime = {};
     return false;
   }

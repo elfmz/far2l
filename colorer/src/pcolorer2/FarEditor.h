@@ -175,6 +175,8 @@ class FarEditor : public LineSource
 
   int visibleLevel = 100;
   std::chrono::time_point<std::chrono::steady_clock> parseStartTime{};
+  std::chrono::time_point<std::chrono::steady_clock> lastAllDoneTime{};
+  bool backgroundMode{false};
   std::unique_ptr<Outliner> structOutliner;
   std::unique_ptr<Outliner> errorOutliner;
 

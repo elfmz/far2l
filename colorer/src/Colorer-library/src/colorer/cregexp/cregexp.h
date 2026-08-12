@@ -345,8 +345,7 @@ class CRegExp
   bool multiLine = false;
   SRegInfo* tree_root = nullptr;
   EError error = EError::EOK;
-  UChar firstChar = 0;
-  EMetaSymbols firstMetaChar = EMetaSymbols::ReBadMeta;
+  SRegInfo* firstNode = nullptr;
 #ifdef COLORERMODE
   CRegExp* backRE = nullptr;
   const UnicodeString* backStr = nullptr;

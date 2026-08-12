@@ -35,7 +35,8 @@ class SchemeImpl : public Scheme
  protected:
   struct SearchDispatch
   {
-    std::vector<std::array<uint64_t, 2>> masks;
+    std::array<uint32_t, 129> offsets = {};
+    std::vector<uint16_t> nodeIndexes;
   };
 
   uUnicodeString schemeName;

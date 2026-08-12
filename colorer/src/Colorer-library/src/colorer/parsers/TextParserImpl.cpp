@@ -459,22 +459,22 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
 #ifdef COLORER_USE_DEEPTRACE
   int idx = 0;
 #endif
-  uint32_t dispatchChar = 128;
+  size_t searchBegin = 0;
+  size_t searchEnd = cscheme->searchNodes.size();
+  bool useDispatch = false;
   if (cscheme->searchDispatch && gx < str->length()) {
     const auto ch = static_cast<uint32_t>((*str)[gx]);
     if (ch < 128) {
-      dispatchChar = ch;
+      searchBegin = cscheme->searchDispatch->offsets[ch];
+      searchEnd = cscheme->searchDispatch->offsets[ch + 1];
+      useDispatch = true;
     }
   }
-  for (size_t i = 0; i < cscheme->searchNodes.size(); i++) {
-    if (dispatchChar < 128 &&
-        !(cscheme->searchDispatch->masks[i][dispatchChar / 64] &
-          (uint64_t {1} << (dispatchChar % 64)))) {
-      continue;
-    }
-    auto* schemeNode = cscheme->searchNodes[i];
+  for (size_t i = searchBegin; i < searchEnd; i++) {
+    auto* schemeNode = cscheme->searchNodes[
+      useDispatch ? cscheme->searchDispatch->nodeIndexes[i] : i];
     COLORER_LOG_DEEPTRACE("[TextParserImpl] searchMatch: processing node:%/%, type:%", idx + 1,
-                         cscheme->searchNodes.size(),
+                         searchEnd - searchBegin,
                          SchemeNode::schemeNodeTypeNames[static_cast<int>(schemeNode->type)]);
     switch (schemeNode->type) {
       case SchemeNode::SchemeNodeType::SNT_INHERIT: {

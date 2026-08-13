@@ -1,6 +1,8 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
 
+#include <functional>
 #include <memory>
+#include <unordered_map>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
 #include "colorer/xml/XmlReader.h"
@@ -1026,22 +1028,20 @@ void HrcLibrary::Impl::updateLinks()
     }
   }
 
-  const auto canStartWith = [](const SchemeNode* node, wchar ch) {
-    switch (node->type) {
-      case SchemeNode::SchemeNodeType::SNT_RE:
-        return static_cast<const SchemeNodeRegexp*>(node)->start->canStartWith(ch);
-      case SchemeNode::SchemeNodeType::SNT_BLOCK:
-        return static_cast<const SchemeNodeBlock*>(node)->start->canStartWith(ch);
-      case SchemeNode::SchemeNodeType::SNT_KEYWORDS: {
-        const auto* keywords = static_cast<const SchemeNodeKeywords*>(node)->kwList.get();
-        return keywords->count != 0 && keywords->firstChar->contains(
-          keywords->matchCase ? ch : Character::toLowerCase(ch));
+  std::unordered_map<const SchemeImpl*, std::vector<const SchemeImpl*>> virtualSubstitutions;
+  for (const auto& [key, scheme] : schemeHash) {
+    for (const auto& node : scheme->nodes) {
+      if (node->type != SchemeNode::SchemeNodeType::SNT_INHERIT) {
+        continue;
       }
-      case SchemeNode::SchemeNodeType::SNT_INHERIT:
-        return true;
+      const auto* inherit = static_cast<const SchemeNodeInherit*>(node.get());
+      for (const auto* entry : inherit->virtualEntryVector) {
+        if (entry->virtScheme && entry->substScheme) {
+          virtualSubstitutions[entry->virtScheme].push_back(entry->substScheme);
+        }
+      }
     }
-    return true;
-  };
+  }
 
   for (const auto& [key, scheme] : schemeHash) {
     scheme->searchNodes.clear();
@@ -1057,22 +1057,72 @@ void HrcLibrary::Impl::updateLinks()
       }
       scheme->searchNodes.push_back(node.get());
     }
+  }
 
-    scheme->searchDispatch.reset();
-    if (scheme->searchNodes.size() >= 2) {
-      auto dispatch = std::make_unique<SchemeImpl::SearchDispatch>();
-      dispatch->masks.resize(scheme->searchNodes.size());
-      size_t candidates = 0;
-      for (size_t i = 0; i < scheme->searchNodes.size(); i++) {
-        auto* node = scheme->searchNodes[i];
-        for (uint32_t ch = 0; ch < 128; ch++) {
-          if (canStartWith(node, static_cast<wchar>(ch))) {
-            dispatch->masks[i][ch / 64] |= uint64_t {1} << (ch % 64);
-            candidates++;
+  std::unordered_map<const SchemeImpl*, std::array<uint8_t, 128>> startCache;
+  std::function<bool(const SchemeImpl*, wchar)> schemeCanStartWith;
+  const auto nodeCanStartWith = [&schemeCanStartWith](const SchemeNode* node, wchar ch) {
+    switch (node->type) {
+      case SchemeNode::SchemeNodeType::SNT_RE:
+        return static_cast<const SchemeNodeRegexp*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_BLOCK:
+        return static_cast<const SchemeNodeBlock*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_KEYWORDS: {
+        const auto* keywords = static_cast<const SchemeNodeKeywords*>(node)->kwList.get();
+        return keywords->count != 0 && keywords->firstChar->contains(
+          keywords->matchCase ? ch : Character::toLowerCase(ch));
+      }
+      case SchemeNode::SchemeNodeType::SNT_INHERIT: {
+        const auto* inherit = static_cast<const SchemeNodeInherit*>(node);
+        return !inherit->scheme || schemeCanStartWith(inherit->scheme, ch);
+      }
+    }
+    return true;
+  };
+
+  schemeCanStartWith = [&startCache, &virtualSubstitutions, &nodeCanStartWith, &schemeCanStartWith](
+                         const SchemeImpl* scheme, wchar ch) {
+    auto& state = startCache[scheme][static_cast<uint32_t>(ch)];
+    if (state != 0) {
+      return state == 1 || state == 3;
+    }
+    state = 1;
+    bool result = false;
+    for (const auto* node : scheme->searchNodes) {
+      if (nodeCanStartWith(node, ch)) {
+        result = true;
+        break;
+      }
+    }
+    if (!result) {
+      const auto substitutions = virtualSubstitutions.find(scheme);
+      if (substitutions != virtualSubstitutions.end()) {
+        for (const auto* substitution : substitutions->second) {
+          if (schemeCanStartWith(substitution, ch)) {
+            result = true;
+            break;
           }
         }
       }
-      if (candidates * 4 <= scheme->searchNodes.size() * 128 * 3) {
+    }
+    state = result ? 3 : 2;
+    return result;
+  };
+
+  for (const auto& [key, scheme] : schemeHash) {
+    scheme->searchDispatch.reset();
+    if (scheme->searchNodes.size() >= 2 && scheme->searchNodes.size() <= UINT16_MAX) {
+      auto dispatch = std::make_unique<SchemeImpl::SearchDispatch>();
+      for (uint32_t ch = 0; ch < 128; ch++) {
+        dispatch->offsets[ch] = static_cast<uint32_t>(dispatch->nodeIndexes.size());
+        for (uint32_t i = 0; i < scheme->searchNodes.size(); i++) {
+          if (nodeCanStartWith(scheme->searchNodes[i], static_cast<wchar>(ch))) {
+            dispatch->nodeIndexes.push_back(i);
+          }
+        }
+      }
+      dispatch->offsets[128] = static_cast<uint32_t>(dispatch->nodeIndexes.size());
+      if (dispatch->nodeIndexes.size() * 4 <= scheme->searchNodes.size() * 128 * 3) {
         scheme->searchDispatch = std::move(dispatch);
       }
     }

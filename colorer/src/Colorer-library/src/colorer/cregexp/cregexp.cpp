@@ -1,4 +1,7 @@
 #include "colorer/cregexp/cregexp.h"
+#include <array>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 StackElem* CRegExp::RegExpStack {nullptr};
@@ -66,6 +69,8 @@ void CRegExp::init()
   positionMoves = false;
   error = EError::EERROR;
   firstNode = nullptr;
+  firstCharMask = {};
+  firstCharMaskUseful = false;
   cMatch = 0;
   global_pattern = nullptr;
 #ifdef COLORERMODE
@@ -206,6 +211,134 @@ void CRegExp::optimize()
     }
     break;
   }
+
+  const auto firstChars = analyzeFirstChars(tree_root);
+  firstCharMask = firstChars.mask;
+  firstCharMaskUseful = !firstChars.nullable &&
+    (firstCharMask[0] != ~uint64_t(0) || firstCharMask[1] != ~uint64_t(0));
+}
+
+void CRegExp::addFirstChar(FirstChars& result, wchar ch) const
+{
+  const auto value = static_cast<uint32_t>(ch);
+  if (value >= 128) return;
+  result.mask[value >> 6] |= uint64_t(1) << (value & 63);
+  if (ignoreCase && value >= 'A' && value <= 'Z') {
+    const auto lower = value + ('a' - 'A');
+    result.mask[lower >> 6] |= uint64_t(1) << (lower & 63);
+  }
+  else if (ignoreCase && value >= 'a' && value <= 'z') {
+    const auto upper = value - ('a' - 'A');
+    result.mask[upper >> 6] |= uint64_t(1) << (upper & 63);
+  }
+}
+
+CRegExp::FirstChars CRegExp::firstCharsForNode(const SRegInfo* re) const
+{
+  FirstChars result;
+  if (!re) {
+    result.nullable = true;
+    return result;
+  }
+  switch (re->op) {
+    case EOps::ReSymb:
+      addFirstChar(result, re->un.symbol);
+      break;
+    case EOps::ReWord:
+      if (re->un.word->length()) addFirstChar(result, (*re->un.word)[0]);
+      else result.nullable = true;
+      break;
+    case EOps::ReEnum:
+    case EOps::ReNEnum:
+      for (uint32_t ch = 0; ch < 128; ch++) {
+        if (re->un.charclass->contains(static_cast<wchar>(ch)) == (re->op == EOps::ReEnum)) {
+          result.mask[ch >> 6] |= uint64_t(1) << (ch & 63);
+        }
+      }
+      break;
+    case EOps::ReMetaSymb:
+      switch (re->un.metaSymbol) {
+        case EMetaSymbols::ReAnyChr:
+          result.mask = {~uint64_t(0), ~uint64_t(0)};
+          if (!singleLine) {
+            for (const uint32_t ch : {0x0Au, 0x0Bu, 0x0Cu, 0x0Du})
+              result.mask[ch >> 6] &= ~(uint64_t(1) << (ch & 63));
+          }
+          break;
+        case EMetaSymbols::ReDigit:
+        case EMetaSymbols::ReNDigit:
+        case EMetaSymbols::ReWordSymb:
+        case EMetaSymbols::ReNWordSymb:
+        case EMetaSymbols::ReWSpace:
+        case EMetaSymbols::ReNWSpace:
+        case EMetaSymbols::ReUCase:
+        case EMetaSymbols::ReNUCase:
+          for (uint32_t ch = 0; ch < 128; ch++) {
+            bool matchesChar = false;
+            switch (re->un.metaSymbol) {
+              case EMetaSymbols::ReDigit: matchesChar = Character::isDigit(ch); break;
+              case EMetaSymbols::ReNDigit: matchesChar = !Character::isDigit(ch); break;
+              case EMetaSymbols::ReWordSymb: matchesChar = Character::isLetterOrDigitOrUnderscore(ch); break;
+              case EMetaSymbols::ReNWordSymb: matchesChar = !Character::isLetterOrDigitOrUnderscore(ch); break;
+              case EMetaSymbols::ReWSpace: matchesChar = Character::isWhitespace(ch); break;
+              case EMetaSymbols::ReNWSpace: matchesChar = !Character::isWhitespace(ch); break;
+              case EMetaSymbols::ReUCase: matchesChar = Character::isUpperCase(ch); break;
+              case EMetaSymbols::ReNUCase: matchesChar = Character::isLowerCase(ch); break;
+              default: break;
+            }
+            if (matchesChar) result.mask[ch >> 6] |= uint64_t(1) << (ch & 63);
+          }
+          break;
+        default:
+          result.nullable = true;
+          break;
+      }
+      break;
+    case EOps::ReBrackets:
+    case EOps::ReNamedBrackets:
+      result = analyzeFirstChars(re->un.param);
+      break;
+    case EOps::ReOr: {
+      result = analyzeFirstChars(re->un.param);
+      const auto right = analyzeFirstChars(re->next);
+      result.mask[0] |= right.mask[0];
+      result.mask[1] |= right.mask[1];
+      result.nullable = result.nullable || right.nullable;
+      break;
+    }
+    case EOps::ReRangeN:
+    case EOps::ReRangeNM:
+    case EOps::ReNGRangeN:
+    case EOps::ReNGRangeNM:
+      result = analyzeFirstChars(re->un.param);
+      result.nullable = re->s == 0 || result.nullable;
+      break;
+    case EOps::ReAhead:
+    case EOps::ReNAhead:
+    case EOps::ReBehind:
+    case EOps::ReNBehind:
+    case EOps::ReEmpty:
+      result.nullable = true;
+      break;
+    default:
+      result.mask = {~uint64_t(0), ~uint64_t(0)};
+      break;
+  }
+  return result;
+}
+
+CRegExp::FirstChars CRegExp::analyzeFirstChars(const SRegInfo* re) const
+{
+  FirstChars result;
+  result.nullable = true;
+  for (auto* node = re; node && result.nullable; node = node->next) {
+    const auto current = firstCharsForNode(node);
+    result.mask[0] |= current.mask[0];
+    result.mask[1] |= current.mask[1];
+    result.nullable = current.nullable;
+    if (node->op == EOps::ReOr) break;
+  }
+  return result;
 }
 
 EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos)
@@ -1371,6 +1504,10 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
 
 bool CRegExp::canStartWith(wchar ch) const
 {
+  const auto value = static_cast<uint32_t>(ch);
+  if (firstCharMaskUseful && value < 128) {
+    return (firstCharMask[value >> 6] & (uint64_t(1) << (value & 63))) != 0;
+  }
   if (!firstNode) {
     return true;
   }
@@ -1448,6 +1585,11 @@ inline bool CRegExp::parseRE(int pos)
 
   int toParse = pos;
 
+  if (!positionMoves && firstCharMaskUseful) {
+    if (toParse >= end) return false;
+    const auto ch = static_cast<uint32_t>((*global_pattern)[toParse]);
+    if (ch < 128 && !(firstCharMask[ch >> 6] & (uint64_t(1) << (ch & 63)))) return false;
+  }
   if (!positionMoves && firstNode && !quickCheck(toParse))
     return false;
 

@@ -2,6 +2,7 @@
 #define COLORER_CREGEXP_H
 
 #include "colorer/Common.h"
+#include <array>
 
 /**
     @addtogroup cregexp Regular Expressions
@@ -346,6 +347,8 @@ class CRegExp
   SRegInfo* tree_root = nullptr;
   EError error = EError::EOK;
   SRegInfo* firstNode = nullptr;
+  std::array<uint64_t, 2> firstCharMask = {};
+  bool firstCharMaskUseful = false;
 #ifdef COLORERMODE
   CRegExp* backRE = nullptr;
   const UnicodeString* backStr = nullptr;
@@ -372,6 +375,14 @@ class CRegExp
   EError setStructs(SRegInfo*&, const UnicodeString& expr, int& endPos);
 
   bool matchChars(wchar one, wchar another) const;
+  struct FirstChars
+  {
+    std::array<uint64_t, 2> mask = {};
+    bool nullable = false;
+  };
+  FirstChars analyzeFirstChars(const SRegInfo* re) const;
+  FirstChars firstCharsForNode(const SRegInfo* re) const;
+  void addFirstChar(FirstChars& result, wchar ch) const;
   void optimize();
   bool quickCheck(int toParse);
   bool isWordBoundary(int toParse);

@@ -940,7 +940,6 @@ bool ImageView::ShowExifInfo()
 void ImageView::ShowGpsInfo()
 {
 	AutoShowGuard guard(this);
-
 	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 
 	ToolExec exiftool(_cancel);
@@ -993,40 +992,60 @@ void ImageView::ShowGpsInfo()
 		{ L"Wikimapia",     "https://wikimapia.org/#lat={lat}&lon={lon}&z=11&m=w"},
 		{ L"Yandex Maps",   "https://yandex.com/maps?whatshere%5Bpoint%5D={lon},{lat}"},
 	};
+	static int s_last_provider_idx = 0;
+
+	auto build_url = [&](int idx) {
+		std::string url = providers[static_cast<size_t>(idx)].url_template;
+		const std::pair<const char*, const std::string&> replacements[] = {
+			{"{lat}", lat},
+			{"{lon}", lon},
+			{"{abs_lat}", abs_lat},
+			{"{abs_lon}", abs_lon},
+			{"{lat_dir}", lat_dir},
+			{"{lon_dir}", lon_dir}
+		};
+		for (const auto& [gps_tag, gps_val] : replacements) {
+			while (CmdFindAndReplace(url, gps_tag, gps_val)) {}
+		}
+		return StrMB2Wide(url);
+	};
 
 	std::vector<FarMenuItem> menu_items(providers.size());
 	for (size_t i = 0; i < providers.size(); ++i) {
 		menu_items[i].Text = providers[i].name.c_str();
 	}
-	static int s_last_provider = 0;
-	menu_items[s_last_provider].Selected = 1;
 
 	const std::wstring ws_coords = StrMB2Wide(abs_lat) + L"\u00B0" + StrMB2Wide(lat_dir) + L", "
 			+ StrMB2Wide(abs_lon) + L"\u00B0" + StrMB2Wide(lon_dir);
 	wchar_t title_buf[256];
 	swprintf(title_buf, ARRAYSIZE(title_buf), g_settings.Msg(M_OPEN_GPS_COORDINATES_IN), ws_coords.c_str());
 
-	const int choice = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, title_buf,
-								  nullptr, nullptr, nullptr, nullptr, menu_items.data(), menu_items.size());
+	constexpr int BREAK_KEYS[] = { MAKELONG('C', PKF_CONTROL), 0 };
 
-	if (choice >= 0 && choice < static_cast<int>(providers.size())) {
-		s_last_provider = choice;
-		std::string url = providers[choice].url_template;
+	int active_menu_idx = s_last_provider_idx;
+	for (;;) {
+		int break_code = -1;
+		menu_items[active_menu_idx].Selected = 1;
+		const int selected_menu_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, title_buf,
+									  L"Enter Ctrl+C", nullptr, BREAK_KEYS, &break_code, menu_items.data(), menu_items.size());
+		menu_items[active_menu_idx].Selected = 0;
 
-		const std::pair<const char*, const std::string&> replacements[] = {
-					{"{lat}", lat},
-					{"{lon}", lon},
-					{"{abs_lat}", abs_lat},
-					{"{abs_lon}", abs_lon},
-					{"{lat_dir}", lat_dir},
-					{"{lon_dir}", lon_dir}
-		};
-
-		for (const auto& [gps_tag, gps_val] : replacements) {
-			while (CmdFindAndReplace(url, gps_tag, gps_val)) {}
+		if (selected_menu_idx < 0) {
+			return; // Esc/F10
 		}
 
-		const std::wstring ws_url = L"'" + StrMB2Wide(url) + L"'";
-		g_fsf.Execute(ws_url.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
+		active_menu_idx = selected_menu_idx;
+		const std::wstring url = build_url(active_menu_idx);
+
+		if (break_code == 0) { // Ctrl+C
+			// Copy URL of currently highlighted item, keep menu open.
+			g_fsf.CopyToClipboard(url.c_str());
+			continue;
+		}
+
+		s_last_provider_idx = active_menu_idx;
+		const std::wstring url_quoted = L"'" + url + L"'";
+		g_fsf.Execute(url_quoted.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
+		return;
 	}
 }

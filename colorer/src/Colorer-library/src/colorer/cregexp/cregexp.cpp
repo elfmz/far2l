@@ -716,10 +716,6 @@ bool CRegExp::isWordBoundary(int toParse)
   const bool before = (toParse > 0 && Character::isLetterOrDigitOrUnderscore((*global_pattern)[toParse - 1]));
   return before != after;
 }
-bool CRegExp::isNWordBoundary(int toParse)
-{
-  return !isWordBoundary(toParse);
-}
 
 bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
 {
@@ -727,88 +723,89 @@ bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
 
   switch (symb) {
     case EMetaSymbols::ReAnyChr:
-      if (toParse >= end)
-        return false;
-      if (!singleLine && isLineBreak(pattern[toParse]))
+      if (toParse >= end || (!singleLine && isLineBreak(pattern[toParse])))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReSoL:
-      if (multiLine) {
-        bool ok = false;
-        if (toParse && isLineBreak(pattern[toParse - 1]))
-          ok = true;
-        return (toParse == 0 || ok);
-      }
-      return (toParse == 0);
+        return toParse == 0 || (multiLine && isLineBreak(pattern[toParse - 1]));
+
     case EMetaSymbols::ReEoL:
-      if (multiLine) {
-        bool ok = false;  // ???check
-        if (toParse && toParse < end && isLineBreak(pattern[toParse - 1]))
-          ok = true;
-        return (toParse == end || ok);
-      }
-      return (end == toParse);
+      return toParse == end || (multiLine && toParse && toParse < end && isLineBreak(pattern[toParse - 1]));
+
     case EMetaSymbols::ReDigit:
       if (toParse >= end || !Character::isDigit(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReNDigit:
       if (toParse >= end || Character::isDigit(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReWordSymb:
       if (toParse >= end || !Character::isLetterOrDigitOrUnderscore(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReNWordSymb:
       if (toParse >= end || Character::isLetterOrDigitOrUnderscore(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReWSpace:
       if (toParse >= end || !Character::isWhitespace(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReNWSpace:
       if (toParse >= end || Character::isWhitespace(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReUCase:
       if (toParse >= end || !Character::isUpperCase(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReNUCase:
       if (toParse >= end || !Character::isLowerCase(pattern[toParse]))
         return false;
       toParse++;
       return true;
+
     case EMetaSymbols::ReWBound:
       return isWordBoundary(toParse);
+
     case EMetaSymbols::ReNWBound:
-      return isNWordBoundary(toParse);
+      return !isWordBoundary(toParse);
+
     case EMetaSymbols::RePreNW:
-      if (toParse >= end)
-        return true;
-      return toParse == 0 || !Character::isLetter(pattern[toParse - 1]);
+      return toParse == 0 || toParse >= end || !Character::isLetter(pattern[toParse - 1]);
+
 #ifdef COLORERMODE
     case EMetaSymbols::ReSoScheme:
       return (schemeStart == toParse);
+
     case EMetaSymbols::ReStart:
       matches->s[0] = toParse;
       startChange = true;
       return true;
+
     case EMetaSymbols::ReEnd:
       matches->e[0] = toParse;
       endChange = true;
       return true;
 #endif
+
     default:
       return false;
   }

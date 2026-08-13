@@ -375,7 +375,6 @@ class CRegExp
   void optimize();
   bool quickCheck(int toParse);
   bool isWordBoundary(int toParse);
-  bool isNWordBoundary(int toParse);
   bool checkMetaSymbol(EMetaSymbols metaSymbol, int& toParse);
   bool lowParse(SRegInfo* re, SRegInfo* prev, int toParse);
   bool parseRE(int toParse);

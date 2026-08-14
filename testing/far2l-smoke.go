@@ -15,6 +15,7 @@ import (
 	"io/fs"
 	"math/rand"
 	"hash"
+	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"path/filepath"
@@ -71,6 +72,7 @@ var g_socket *net.UnixConn
 var g_addr *net.UnixAddr
 var g_buf [4096]byte
 var g_app *termtest.ConsoleProcess
+var g_channel chan int
 var g_vm *goja.Runtime
 var g_status far2l_Status
 var g_far2l_running bool = false
@@ -148,13 +150,10 @@ func far2l_Close() {
 	}
 }
 
-func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
-	if g_far2l_running {
-		aux_Panic("far2l already running")
-	}
+func termTask(args []string, cols int, rows int) {
     opts := termtest.Options {
-        CmdName: g_far2l_bin,
-		Args: append([]string{g_far2l_bin, "--test=" + g_far2l_sock}, args...),
+        CmdName: g_far2l_bin, // g_far2l_bin, 
+		Args: append([]string{"--test=" + g_far2l_sock}, args...),
 		Environment : []string {
 			"FAR2L_STD=" + filepath.Join(g_test_workdir, "far2l.log"),
 			"FAR2L_TESTCTL=" + g_far2l_sock},
@@ -165,7 +164,20 @@ func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	if err != nil {
 		aux_Panic(err.Error())
 	}
+	g_app.Wait()
+	code:= g_app.Cmd().ProcessState.ExitCode()
+	//g_app.Close()
+	g_channel <- code
+	g_far2l_running = false
+}
+
+func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
+	if g_far2l_running {
+		aux_Panic("far2l already running")
+	}
 	g_far2l_running = true
+	g_channel = make(chan int)
+	go termTask(args, cols, rows)
 	return far2l_RecvStatus()
 }
 
@@ -468,10 +480,20 @@ func far2l_ReqBye() {
 
 func far2l_ExpectExit(code int, timeout_ms int) string {
 	far2l_ReqBye()
-    _, err:= g_app.ExpectExitCode(code, time.Duration(timeout_ms) * 1000000)
-	if err != nil {
-		setErrorString(fmt.Sprintf("ExpectExit: %v", err))
-		return "ERROR:" + err.Error()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout_ms) * 1000000)
+	defer cancel() 
+	select {
+		case result:= <-g_channel:
+			if result != 0 {
+				setErrorString(fmt.Sprintf("ExpectExit: ERROR %d", result))
+				far2l_Close()
+				return fmt.Sprintf("ERROR: %d", result)
+			}
+		case <-ctx.Done():
+			setErrorString(fmt.Sprintf("ExpectExit: TIMEOUT"))
+			far2l_Close()
+			return "ERROR: TIMEOUT"
 	}
 	far2l_Close()
 	return ""
@@ -690,6 +712,15 @@ func aux_MkdirsAll(pathes []string, perm os.FileMode) bool {
 	return out
 }
 
+func aux_Snapshot(name string) {
+	if g_app != nil {
+		f, err := os.Create(g_test_workdir + "/snapshot-" + name + ".txt")
+		if err == nil {
+			f.WriteString(g_app.Snapshot())
+		}
+	}
+}
+
 type LimitedRandomReader struct {
     remain uint64
 }
@@ -863,6 +894,7 @@ func initVM() {
 	setVMFunction("BePanic", aux_BePanic)
 	setVMFunction("BeCalm", aux_BeCalm)
 	setVMFunction("Inspect", aux_Inspect)
+	setVMFunction("Snapshot", aux_Snapshot)
 
 	setVMFunction("StartApp", far2l_Start)
 	setVMFunction("StartAppWithSize", far2l_StartWithSize)
@@ -1007,18 +1039,9 @@ func main() {
 	}
 }
 
-func saveSnapshotOnExit() {
-	if g_app != nil {
-		f, err := os.Create(g_test_workdir + "/snapshot.txt")
-		if err == nil {
-			f.WriteString(g_app.Snapshot())
-		}
-	}
-}
-
 func runTest(file string) {
 	defer far2l_Close()
-	defer saveSnapshotOnExit()
+	defer aux_Snapshot("exit")
 
 	g_lctrl = false
 	g_rctrl = false

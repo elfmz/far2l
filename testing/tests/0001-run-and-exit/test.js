@@ -10,10 +10,13 @@ StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", 
 ExpectString("left-fgdfgfd", 0, 0, -1, -1, 10000);
 ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
 TypeEscape(10)
+ExpectString("OSC52", 0, 0, -1, -1, 10000);
+TypeEscape(10)
 status = AppStatus();
 TypeFKey(10)
 ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
 TypeEnter()
+
 ExpectAppExit(0, 10000)
 
 ///////////////////

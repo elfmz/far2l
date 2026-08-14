@@ -17,6 +17,8 @@ left_hash = HashPathes(left_items, true, true, true, true, true)
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
 ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+TypeEscape(10)
+ExpectString("OSC52", 0, 0, -1, -1, 10000);
 
 status = AppStatus();
 

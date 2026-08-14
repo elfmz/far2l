@@ -34,6 +34,9 @@ This function useful in calm mode.
 If no problem happened so far - it returns empty string.  
 Otherwise - it returns error description and empties it for next invokations of `Inspect()`.
 
+`Snapshot("name")`  
+Saves terminal snapshot as "snapshot-name.txt"
+
 ---------------------------------------------------------
 
 `StartApp(["arg1", "arg2" ...]) far2l_Status`  

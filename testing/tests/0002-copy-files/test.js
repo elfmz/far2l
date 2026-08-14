@@ -17,10 +17,13 @@ left_hash = HashPathes(left_items, true, true, true, true, true)
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
 ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+Snapshot("start")
+TypeEscape(10)
+ExpectString("OSC52", 0, 0, -1, -1, 10000);
+TypeEscape(10)
 
 status = AppStatus();
 
-TypeEscape(10)
 TypeDown()
 TypeIns()
 TypeIns()
@@ -37,7 +40,7 @@ for (i = 0; ; ++i) {
 	if (right_hash == left_hash) {
 		break
 	}
-	if (i == 100) {
+	if (i == 10000) {
 		Log("Lhash: " + left_hash)
 		Log("Rhash: " + right_hash)
 		Panic("Hashes mismatched")

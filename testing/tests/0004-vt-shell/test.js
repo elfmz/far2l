@@ -7,6 +7,8 @@ StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", 
 ExpectString("left-fgdfgfd", 0, 0, -1, -1, 10000);
 ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
 TypeEscape(10)
+ExpectString("OSC52", 0, 0, -1, -1, 10000);
+TypeEscape(10)
 status = AppStatus();
 TypeText("echo 'VT' 'Shell' 'smoke' 'test'; false")
 TypeEnter()

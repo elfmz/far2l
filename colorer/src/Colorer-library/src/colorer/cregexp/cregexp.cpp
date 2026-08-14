@@ -1077,21 +1077,14 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
                 check_stack(false, &re, &prev, &toParse, &leftenter, &action);
                 continue;
               }
-              toParse += wlen;
             }
             else {
-              br = false;
-              for (i = 0; i < wlen; i++) {
-                if (pattern[toParse + i] != (*re->un.word)[i]) {
-                  check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                  br = true;
-                  break;
-                }
-              }
-              if (br)
+              if (pattern.compare(toParse, wlen, *re->un.word) != 0) {
+                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
                 continue;
-              toParse += wlen;
+              }
             }
+            toParse += wlen;
             break;
           case EOps::ReEnum:
             if (toParse >= end) {

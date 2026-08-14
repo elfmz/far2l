@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <map>
+#include <vector>
 #include <algorithm>
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -57,7 +58,39 @@ public:
 
 } g_wx_custom_formats;
 
-static wxDataObjectComposite *g_wx_data_to_clipboard = nullptr;
+// Data objects accumulated by OnClipboardSetData until OnClipboardClose hands them
+// over to wxTheClipboard. They're wrapped into a wxDataObjectComposite only if there
+// is more than one of them: wx's macOS backend publishes a composite's
+// wxDF_UNICODETEXT (UTF-16) buffer under the public.utf8-plain-text UTI, so text
+// copied out of far2l reaches other apps as UTF-16 bytes claiming to be UTF-8.
+// A standalone wxTextDataObject is handled correctly.
+static std::vector<wxDataObjectSimple *> g_wx_data_to_clipboard;
+
+static void AddDataToClipboard(wxDataObjectSimple *obj)
+{
+	g_wx_data_to_clipboard.emplace_back(obj);
+}
+
+// Returns object to be given to wxTheClipboard (ownership transferred to caller)
+// or nullptr if nothing was accumulated.
+static wxDataObject *TakeDataForClipboard()
+{
+	wxDataObject *out = nullptr;
+
+	if (g_wx_data_to_clipboard.size() == 1) {
+		out = g_wx_data_to_clipboard.front();
+
+	} else if (!g_wx_data_to_clipboard.empty()) {
+		wxDataObjectComposite *composite = new wxDataObjectComposite;
+		for (auto *obj : g_wx_data_to_clipboard) {
+			composite->Add(obj);
+		}
+		out = composite;
+	}
+
+	g_wx_data_to_clipboard.clear();
+	return out;
+}
 
 wxClipboardBackend::wxClipboardBackend()
 {
@@ -97,14 +130,14 @@ void wxClipboardBackend::OnClipboardClose()
 		return;
 	}
 
-	if (g_wx_data_to_clipboard) {
-		if (wxTheClipboard->SetData( g_wx_data_to_clipboard) ) {
+	wxDataObject *data_to_clipboard = TakeDataForClipboard();
+	if (data_to_clipboard) {
+		if (wxTheClipboard->SetData( data_to_clipboard) ) {
 			fprintf(stderr, "wxTheClipboard->SetData - OK\n");
 
 		} else {
 			fprintf(stderr, "wxTheClipboard->SetData - FAILED\n");
 		}
-		g_wx_data_to_clipboard = nullptr;
 
 	} else {
 		fprintf(stderr, "CloseClipboard without data\n");
@@ -148,8 +181,10 @@ void wxClipboardBackend::OnClipboardEmpty()
 	}
 
 	fprintf(stderr, "EmptyClipboard\n");
-	delete g_wx_data_to_clipboard;
-	g_wx_data_to_clipboard = nullptr;
+	for (auto *obj : g_wx_data_to_clipboard) {
+		delete obj;
+	}
+	g_wx_data_to_clipboard.clear();
 	wxTheClipboard->Clear();
 }
 
@@ -207,32 +242,33 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	size_t len = WINPORT(ClipboardSize)(data);
 	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
-	if (!g_wx_data_to_clipboard) {
-		g_wx_data_to_clipboard = new wxDataObjectComposite;
-	}
-
 	if (format == CF_UNICODETEXT) {
 
 		wxString wx_str((const wchar_t *)data);
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+		AddDataToClipboard(new wxTextDataObjectTweaked(wx_str));
 
+#ifndef __APPLE__
+		// needed by apps that look for the MIME type rather than for wxDF_TEXT;
+		// on macOS it only forces the composite that corrupts the UTF-8 flavor
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		const std::string &tmp = wx_str.ToStdString();
 		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
-		g_wx_data_to_clipboard->Add(cdo);
-
+		AddDataToClipboard(cdo);
+#endif
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
 	} else if (format == CF_TEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
+		AddDataToClipboard(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 
+#ifndef __APPLE__
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
-		g_wx_data_to_clipboard->Add(cdo);
+		AddDataToClipboard(cdo);
+#endif
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
@@ -240,7 +276,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format == CF_HTML) {
 		auto *cdo = new wxHTMLDataObject(wxString::FromUTF8((const char *)data));
-		g_wx_data_to_clipboard->Add(cdo);
+		AddDataToClipboard(cdo);
 
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
@@ -251,7 +287,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		} else {
 			wxCustomDataObject *dos = new wxCustomDataObject(*data_format);
 			dos->SetData(len, data);
-			g_wx_data_to_clipboard->Add(dos);
+			AddDataToClipboard(dos);
 		}
 	}
 

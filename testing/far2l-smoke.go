@@ -481,7 +481,7 @@ func far2l_ReqBye() {
 func far2l_ExpectExit(code int, timeout_ms int) string {
 	far2l_ReqBye()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout_ms) * 1000000)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout_ms) * time.Millisecond)
 	defer cancel() 
 	select {
 		case result:= <-g_channel:

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"net"
@@ -19,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"path/filepath"
+	"syscall"
     "github.com/ActiveState/termtest"
     "github.com/ActiveState/termtest/expect"
     "github.com/dop251/goja"
@@ -86,6 +88,11 @@ var g_test_workdir string
 var g_calm bool = false
 var g_last_error string
 
+const far2lTestTextMax = 2024
+const far2lStatusPacketSize = 20 + far2lTestTextMax
+const far2lReadCellPacketSize = 8 + far2lTestTextMax
+const far2lWaitStringPacketSize = 24 + far2lTestTextMax
+
 func stringFromBytes(buf []byte) string {
 	last := 0
 	for ; last < len(buf) && buf[last] != 0; last++ {
@@ -143,6 +150,34 @@ func far2l_ReadSocket(expected_n int, extra_timeout uint32) {
 	}
 }
 
+func isRetryableSocketWriteError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if netErr, ok := err.(net.Error); ok && (netErr.Timeout() || netErr.Temporary()) {
+		return true
+	}
+	return errors.Is(err, syscall.ENOBUFS) || errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK)
+}
+
+func far2l_WriteToPeer(data []byte) {
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		n, err := g_socket.WriteTo(data, g_addr)
+		if err == nil && n == len(data) {
+			return
+		}
+		if err == nil {
+			aux_Panic(fmt.Sprintf("short write %d/%d", n, len(data)))
+		}
+		if isRetryableSocketWriteError(err) && time.Now().Before(deadline) {
+			time.Sleep(2 * time.Millisecond)
+			continue
+		}
+		aux_Panic(err.Error())
+	}
+}
+
 func far2l_Close() {
 	if g_far2l_running {
 		g_far2l_running = false
@@ -187,15 +222,12 @@ func far2l_Start(args []string) far2l_Status {
 
 func far2l_ReqRecvStatus() far2l_Status {
 	binary.LittleEndian.PutUint32(g_buf[0:], 1)
-	n, err := g_socket.WriteTo(g_buf[0:4], g_addr)
-	if err != nil || n != 4 {
-		aux_Panic(err.Error())
-	}
+	far2l_WriteToPeer(g_buf[0:4])
 	return far2l_RecvStatus()
 }
 
 func far2l_RecvStatus() far2l_Status {
-	far2l_ReadSocket(2068, 0)
+	far2l_ReadSocket(far2lStatusPacketSize, 0)
 	g_status.Title = stringFromBytes(g_buf[20:])
 	g_status.CurH = g_buf[2]
 	g_status.CurV = g_buf[3] != 0
@@ -210,10 +242,7 @@ func far2l_RecvStatus() far2l_Status {
 func far2l_ReqRecvSync(tmout uint32) bool {
 	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SYNC
 	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
-	n, err := g_socket.WriteTo(g_buf[0:8], g_addr)
-	if err != nil || n != 8 {
-		aux_Panic(err.Error())
-	}
+	far2l_WriteToPeer(g_buf[0:8])
 	far2l_ReadSocket(1, tmout)
 	if g_buf[0] == 0 {
 		setErrorString("Sync timout")
@@ -262,17 +291,14 @@ func far2l_ReqRecvExpectXStrings(str_vec []string, x uint32, y uint32, w uint32,
 		g_buf[24 + p] = 0
 		p++
 	}
-	if p >= 2048 {
+	if p >= far2lTestTextMax {
 		aux_Panic("Too long strings")
 	}
-	for ; p < 2048; p++ {
+	for ; p < far2lTestTextMax; p++ {
 		g_buf[24 + p] = 0
 	}
 
-	n, err := g_socket.WriteTo(g_buf[0:24 + 2048], g_addr)
-	if err != nil || n != 24 + 2048 {
-		aux_Panic(err.Error())
-	}
+	far2l_WriteToPeer(g_buf[0:far2lWaitStringPacketSize])
 	far2l_ReadSocket(12, tmout / 1000)
 	out := far2l_FoundString {
 		I: binary.LittleEndian.Uint32(g_buf[0:]),
@@ -303,11 +329,8 @@ func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
 	binary.LittleEndian.PutUint32(g_buf[0:], 2) // TEST_CMD_READ_CELL
 	binary.LittleEndian.PutUint32(g_buf[4:], x) // left
 	binary.LittleEndian.PutUint32(g_buf[8:], y) // top
-	n, err := g_socket.WriteTo(g_buf[0:12], g_addr)
-	if err != nil || n != 12 {
-		aux_Panic(err.Error())
-	}
-	far2l_ReadSocket(2056, 0)
+	far2l_WriteToPeer(g_buf[0:12])
+	far2l_ReadSocket(far2lReadCellPacketSize, 0)
 	return far2l_CellRaw {
 		Text: stringFromBytes(g_buf[8:]),
 		Attributes: binary.LittleEndian.Uint64(g_buf[0:]),
@@ -472,10 +495,7 @@ func far2l_BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, hei
 
 func far2l_ReqBye() {
 	binary.LittleEndian.PutUint32(g_buf[0:], 0)
-	n, err := g_socket.WriteTo(g_buf[0:4], g_addr)
-	if err != nil || n != 4 {
-		aux_Panic(err.Error())
-	}
+	far2l_WriteToPeer(g_buf[0:4])
 }
 
 func far2l_ExpectExit(code int, timeout_ms int) string {
@@ -602,10 +622,7 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	binary.LittleEndian.PutUint32(g_buf[16:], 0)
 	binary.LittleEndian.PutUint32(g_buf[20:], 0)
 	if pressed { g_buf[20] = 1 }
-	n, err := g_socket.WriteTo(g_buf[0:24], g_addr)
-	if err != nil || n != 24 {
-		aux_Panic(err.Error())
-	}
+	far2l_WriteToPeer(g_buf[0:24])
 }
 
 func aux_RunCmd(args []string) string {
@@ -901,6 +918,7 @@ func initVM() {
 
 	setVMFunction("StartApp", far2l_Start)
 	setVMFunction("StartAppWithSize", far2l_StartWithSize)
+	setVMFunction("CloseApp", far2l_Close)
 
 	setVMFunction("AppStatus", far2l_ReqRecvStatus)
 	setVMFunction("Sync", far2l_ReqRecvSync)

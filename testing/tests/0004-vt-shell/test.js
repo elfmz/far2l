@@ -9,12 +9,14 @@ ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
 TypeEscape(10)
 ExpectString("OSC52", 0, 0, -1, -1, 10000);
 TypeEscape(10)
+ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated
 status = AppStatus();
 TypeText("echo 'VT' 'Shell' 'smoke' 'test'; false")
 TypeEnter()
 ExpectString("VT Shell smoke test", 0, 0, -1, -1, 10000)
 ExpectString("~~~~~~~~~~~~~~~~~~~", 0, 0, -1, -1, 10000)
 TypeEscape()
+ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated again
 TypeText("exit far")
 TypeEnter()
 ExpectAppExit(0, 10000)

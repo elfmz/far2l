@@ -19,14 +19,12 @@ ExpectNoString("test-paneldir", 0, 0, -1, 1, 10000);
 TypeText("echo 'VT' 'Shell' 'ready'")
 TypeEnter()
 ExpectString("VT Shell ready", 0, 0, -1, -1, 10000)
-ExpectString("------------------------------", 0, 0, -1, -3, 10000)
-TypeEscape()
+ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated again
 
 TypeText("cat '" + mydir + "/catme.txt'")
 TypeEnter()
 ExpectString("CATMECATMECATME", 0, 0, -1, -1, 10000)
-ExpectString("------------------------------", 0, 0, -1, -3, 10000)
-TypeEscape()
+ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated again
 
 // open viewer
 TypeFKey(3)

@@ -3278,6 +3278,11 @@ $ #Editor: search/replace#
 
       #Select found#        - ^<wrap>found text is selected
 
+    The search dialog also has the #All# button: it searches the whole file at once
+and shows the list of all found occurrences with their line and column numbers.
+Pressing #Enter# in that list moves the cursor to the selected occurrence, #Esc#
+leaves the current position unchanged.
+
 
 @FileOpenCreate
 $ #Editor: Open/Create file#

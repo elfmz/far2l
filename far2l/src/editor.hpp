@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bitflags.hpp"
 #include "config.hpp"
 #include <unordered_map>
+#include <vector>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
@@ -64,6 +65,22 @@ struct InternalEditorStackBookMark
 	DWORD ScreenLine;
 	DWORD LeftPos;
 	InternalEditorStackBookMark *prev, *next;
+};
+
+// координаты одного найденного вхождения (поиск по кнопке "Все")
+struct EditorFoundCoord
+{
+	int Line;
+	int Pos;
+	int SearchLen;
+};
+
+// чем закончился сбор вхождений для поиска по кнопке "Все"
+enum class EditorFindAllResult
+{
+	Completed,	// файл просмотрен целиком
+	Aborted,	// пользователь прервал поиск
+	TooMany,	// вхождений больше, чем имеет смысл показывать списком
 };
 
 struct EditorCacheParams
@@ -315,6 +332,11 @@ private:
 	void ScrollDown();
 	void ScrollUp();
 	BOOL Search(int Next);
+	BOOL SearchAll(const FARString &strSearchStr, int Case, int WholeWords, int Regexp, int SelectFound);
+	EditorFindAllResult CollectFoundItems(const FARString &strSearchStr, int Case, int WholeWords,
+			int Regexp, std::vector<EditorFoundCoord> &FoundItems);
+	void ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int SelectFound);
+	void SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound);
 
 	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);

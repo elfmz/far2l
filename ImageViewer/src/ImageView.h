@@ -54,6 +54,8 @@ protected:
 	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan);
 	bool CurFileSelected() const { return _all_files[_cur_file].second; }
 	const std::string &CurFile() const { return _all_files[_cur_file].first; }
+	volatile bool *CancelFlag() const { return _cancel; }
+	const std::string &CurFileSizeStr() const { return _file_size_str; }
 
 public:
 	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
@@ -85,6 +87,4 @@ public:
 	void Deselect();
 	void ToggleSelection();
 	void RunProcessingCommand();
-	bool ShowExifInfo();
-	void ShowGpsInfo();
 };

@@ -154,9 +154,9 @@ func termTask(args []string, cols int, rows int) {
     opts := termtest.Options {
         CmdName: g_far2l_bin, // g_far2l_bin, 
 		Args: append([]string{"--test=" + g_far2l_sock}, args...),
-		Environment : []string {
+		Environment : append(os.Environ(), []string {
 			"FAR2L_STD=" + filepath.Join(g_test_workdir, "far2l.log"),
-			"FAR2L_TESTCTL=" + g_far2l_sock},
+			"FAR2L_TESTCTL=" + g_far2l_sock}...),
 		ExtraOpts: []expect.ConsoleOpt{expect.WithTermRows(rows), expect.WithTermCols(cols)},
     }
 	var err error
@@ -287,14 +287,14 @@ func far2l_ReqRecvExpectXStrings(str_vec []string, x uint32, y uint32, w uint32,
 	}
 	if (need_presence) {
 		if out.I < uint32(len(str_vec)) {
-			fmt.Println(status)
+			log.Println(status)
 		} else {
 			setErrorString(status)
 		}
 	} else if out.I < uint32(len(str_vec)) {
 		setErrorString(status)
 	} else {
-		fmt.Println(status)
+		log.Println(status)
 	}
 	return out
 }
@@ -504,6 +504,9 @@ func aux_Log(message string) {
 }
 
 func aux_Panic(message string) {
+	log.Println("------------------- SNAPSHOT -------------------")
+	fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
+	log.Println("------------------------------------------------")
 	panic("\x1b[1;31m" + message + "\x1b[39;22m")
 }
 
@@ -884,7 +887,7 @@ func aux_CountExisting(pathes []string) int {
 
 func initVM() {
 	/* initialize */
-	fmt.Println("Initializing JS VM...")
+	log.Println("Initializing JS VM...")
 	g_vm = goja.New()
 
 	/* goja does not expose a standard "global" by default */
@@ -1011,7 +1014,7 @@ func main() {
 	if len(os.Args) < arg_ofs + 2 {
 		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/test1 [/path/to/test2 [/path/to/test3 ...]]\n")
 	}
-
+	log.SetFlags(log.LUTC | log.Ltime | log.Lmicroseconds)
 	g_far2l_sock = fmt.Sprintf("/tmp/far2l%d.sock", os.Getpid())
 //filepath.Join(workdir, "far2l.sock")
 	os.Remove(g_far2l_sock)
@@ -1031,7 +1034,7 @@ func main() {
 
 	for i := arg_ofs + 1; i < len(os.Args); i++ {
 		name := filepath.Base(os.Args[i])
-		fmt.Println("\x1b[1;32m---> Running test: " + name + "\x1b[39;22m")
+		log.Println("\x1b[1;32m---> Running test: " + name + "\x1b[39;22m")
 		testdir, err := filepath.Abs(os.Args[i])
 		if err != nil { log.Fatal(err) }
 		g_test_workdir = filepath.Join(testdir, "workdir")
@@ -1056,6 +1059,6 @@ func runTest(file string) {
 	rv, err := g_vm.RunString(src)
 	if err != nil { aux_Panic(err.Error()) }
 	if code := rv.Export().(int64); code != 0 {
- 	   fmt.Println("[FAILED] Error", code, "from test", file)
+		log.Println("[FAILED] Error", code, "from test", file)
 	}
 }

@@ -1,6 +1,12 @@
 #pragma once
 
 #define TEST_PROTOCOL_VERSION	0xF001
+enum
+{
+	// AF_UNIX datagrams on macOS reject payloads above 2048 bytes with EMSGSIZE.
+	// Keep every test message within that limit.
+	TEST_PROTOCOL_TEXT_MAX = 2024
+};
 
 enum TestCommand
 {
@@ -22,7 +28,7 @@ struct TestReplyStatus
 	uint32_t cur_y;
 	uint32_t width;
 	uint32_t height;
-	char title[2048]; // truncated if longer
+	char title[TEST_PROTOCOL_TEXT_MAX]; // truncated if longer
 };
 
 struct TestRequestReadCell
@@ -35,7 +41,7 @@ struct TestRequestReadCell
 struct TestReplyReadCell
 {
 	uint64_t attributes;
-	char str[2048]; // more than one UTF character if cell contains composite character
+	char str[TEST_PROTOCOL_TEXT_MAX]; // more than one UTF character if cell contains composite character
 };
 
 struct TestRequestWaitString
@@ -46,7 +52,7 @@ struct TestRequestWaitString
 	uint32_t top;
 	uint32_t width;
 	uint32_t height;
-	char str[2048]; // double NULL-terminated array of strings of total maximum length 2048
+	char str[TEST_PROTOCOL_TEXT_MAX]; // double NULL-terminated array of strings of total maximum length TEST_PROTOCOL_TEXT_MAX
 };
 
 struct TestReplyWaitString
@@ -78,3 +84,6 @@ struct TestReplySync
 	uint8_t waited;
 };
 
+static_assert(sizeof(TestReplyStatus) <= 2048, "TestReplyStatus must fit into one local datagram");
+static_assert(sizeof(TestReplyReadCell) <= 2048, "TestReplyReadCell must fit into one local datagram");
+static_assert(sizeof(TestRequestWaitString) <= 2048, "TestRequestWaitString must fit into one local datagram");

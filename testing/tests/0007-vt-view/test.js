@@ -4,7 +4,7 @@ profile=mydir + "/profile"
 paneldir=mydir + "/test-paneldir"
 MkdirsAll([profile, paneldir], 0700)
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", paneldir, "-cd", paneldir]);
-ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+ExpectString("Help - FAR2L", 0, 0, 0, 0, 10000);
 TypeEscape(10)
 ExpectString("OSC52", 0, 0, -1, -1, 10000);
 TypeEscape(10)
@@ -14,16 +14,16 @@ status = AppStatus();
 ToggleLCtrl(true)
 TypeText("O")
 ToggleLCtrl(false)
-ExpectNoString("test-paneldir", 0, 0, -1, 1, 10000);
+ExpectNoString("test-paneldir", 0, 0, 0, 1, 10000);
 
 TypeText("echo 'VT' 'Shell' 'ready'")
 TypeEnter()
-ExpectString("VT Shell ready", 0, 0, -1, -1, 10000)
+ExpectString("VT Shell ready", 0, 0, 0, 0, 10000)
 ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated again
 
 TypeText("cat '" + mydir + "/catme.txt'")
 TypeEnter()
-ExpectString("CATMECATMECATME", 0, 0, -1, -1, 10000)
+ExpectString("CATMECATMECATME", 0, 0, 0, 0, 10000)
 ExpectString("↑", -1, -2, 1, 1, 10000) // wait when command line input edit will be activated again
 
 // open viewer
@@ -33,14 +33,14 @@ ExpectString("XXXXXXXXXXXXXXXXXXX 🔀 XXX: foobar hello world XXXXXXXXXXXXXXXXX
 
 // open search dialog
 TypeFKey(7)
-ExpectString("════ Search ═══", 0, 0, -1, -1, 10000)
+ExpectString("════ Search ═══", 0, 0, 0, 0, 10000)
 TypeText("foobar")
 TypeEnter()
 // wait search dialog closed
-ExpectNoString("════ Search ═══", 0, 0, -1, -1, 10000)
+ExpectNoString("════ Search ═══", 0, 0, 0, 0, 10000)
 
 // ensure found text is not corrupted
-ExpectString("XXXXXXXXXXXXXXXXXXX 🔀 XXX: foobar hello world XXXXXXXXXXXXXXXXXXX", 0, 0, -1, -1, 10000)
+ExpectString("XXXXXXXXXXXXXXXXXXX 🔀 XXX: foobar hello world XXXXXXXXXXXXXXXXXXX", 0, 0, 0, 0, 10000)
 
 // close viewer
 TypeEscape()

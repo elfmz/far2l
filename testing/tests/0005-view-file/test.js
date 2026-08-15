@@ -12,7 +12,7 @@ status = AppStatus();
 TypeEscape()
 TypeDown()
 TypeFKey(3)
-ExpectString("left/viewme.txt", 0, 0, -1, -1, 10000)
+ExpectString("left/viewme.txt", 0, 0, 0, 0, 10000)
 
 Sync(10000)
 
@@ -33,7 +33,7 @@ Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test4.txt')
 
 TypeFKey(7)
-ExpectString("═══ Search ═══", 0, 0, -1, -1, 10000)
+ExpectString("═══ Search ═══", 0, 0, 0, 0, 10000)
 TypeText("::setselectpos")
 TypeEnter()
 
@@ -51,7 +51,7 @@ BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test7.txt')
 TypeEscape()
 
 TypeFKey(10)
-ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
+ExpectString("Do you want to quit FAR?", 0, 0, 0, 0, 10000)
 TypeEnter()
 ExpectAppExit(0, 10000)
 0;

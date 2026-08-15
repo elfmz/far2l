@@ -135,6 +135,8 @@ CheckCellChar returns cell character. But if no character matched then aborts ex
 `ExpectString("string", x, y, w, h, timeout_ms)`  
 `ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
 Waits given amount of milliseconds for given string/any of given strings will appear in provided rectangular area.  
+if x/y < 0 (negative) - then they treated as offsets from right/bottom screen edges
+if w/h <= 0 (zero or negative) - then they treated as offsets from right/bottom screen edges - x/y
 Aborts execution in case no string found before timeout reached unless in calm mode, otherwise:  
 Returns result as structure of following fields, that defines index of found string and its coordinates or -1 if no string found:
  * I uint32

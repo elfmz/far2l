@@ -39,6 +39,8 @@ TypeEnter()
 // wait search dialog closed
 ExpectNoString("════ Search ═══", 0, 0, 0, 0, 10000)
 
+Sleep(100) // give viewer time to paint selection that caused glitch, its enough 10 msec, so 100 is for sure
+
 // ensure found text is not corrupted
 ExpectString("XXXXXXXXXXXXXXXXXXX 🔀 XXX: foobar hello world XXXXXXXXXXXXXXXXXXX", 0, 0, 0, 0, 10000)
 

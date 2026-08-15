@@ -10,15 +10,7 @@ if [ "$APP" = "" ]; then
 	exit 1
 fi
 cd src
-if [ ! -f ./far2l-smoke ] || [ ./far2l-smoke -ot ./far2l-smoke.go ]; then
-	echo '--->' Prepare
-	go get far2l-smoke
-	echo PREPARE: downloading modules
-	go mod download
-	echo PREPARE: building
-	go build -o ../far2l-smoke
-	echo PREPARE: done
-fi
+make
 cd ..
 
 echo 'Cleaning up...'

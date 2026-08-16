@@ -1034,7 +1034,7 @@ int FileList::ProcessKey(FarKey Key)
 			// vk: if list have selected files, thety are pasted one-by-one; otherwise the file-under-cursor is being used as before
 			bool hasSelected = false;
 			FARString strFileName;
-			if (Opt.CmdLine.AllowSelectionPlacement && Key != KEY_CTRLSHIFTENTER && Key != KEY_CTRLSHIFTNUMENTER) {
+			if (Opt.CmdLine.CtrlEnterMultipleItems && Key != KEY_CTRLSHIFTENTER && Key != KEY_CTRLSHIFTNUMENTER) {
 				for (auto &item : ListData) {
 					if(item->Selected) {
 						hasSelected = true;

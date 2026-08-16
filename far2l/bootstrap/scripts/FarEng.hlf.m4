@@ -2925,7 +2925,8 @@ $ #Compare files#
     FileDiff compares the files selected on the active and passive file
 panels. The active panel's file is shown on the left and the passive panel's
 file on the right. Changed lines and changed parts within a line are
-highlighted. The center gutter contains merge arrows for each change block.
+highlighted. The center gutter contains merge actions for each change block.
+Arrows copy lines to the other pane; crosses delete one-sided extra lines.
 
     Both panes are editable. Word wrap, line numbers, syntax highlighting,
 search, clipboard commands, and the usual editor undo/redo keys are available.
@@ -2947,9 +2948,9 @@ search, clipboard commands, and the usual editor undo/redo keys are available.
 
     When a text pane has focus, #F5# copies its current change block to the
 other file. When the gutter has focus, use #Left# or #Right# to choose the
-arrow and #Enter# or #F5# to apply it. Clicking a gutter arrow applies that
-merge directly. Each merge is recorded as one undo operation in the target
-pane.
+action and #Enter# or #F5# to apply it. Clicking an arrow copies the block;
+clicking a cross deletes the extra lines on that side. Each merge is recorded
+as one undo operation in the target pane.
 
     Modified files are marked with #*#. Closing FileDiff asks whether changed
 files should be saved. If a file's encoding was detected heuristically,

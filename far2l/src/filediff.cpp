@@ -1886,7 +1886,13 @@ private:
 
 	bool CanMergeDirection(size_t HunkIndex, MergeDirection Direction) const
 	{
-		return HunkRange(HunkIndex, SourcePane(Direction)).HasLines;
+		return HunkRange(HunkIndex, SourcePane(Direction)).HasLines
+				|| HunkRange(HunkIndex, TargetPane(Direction)).HasLines;
+	}
+
+	bool MergeDeletesTarget(size_t HunkIndex, MergeDirection Direction) const
+	{
+		return !HunkRange(HunkIndex, SourcePane(Direction)).HasLines;
 	}
 
 	bool CanMergeHunk(size_t HunkIndex) const
@@ -2876,9 +2882,9 @@ private:
 			const bool DrawAction = ScreenIndex == VisibleHunkActionScreenIndex(HunkIndex);
 			if (DrawAction) {
 				if (CanMergeDirection(HunkIndex, MergeDirection::RightToLeft))
-					Gutter[0] = L'\x25C2';
+					Gutter[0] = MergeDeletesTarget(HunkIndex, MergeDirection::RightToLeft) ? L'\x00D7' : L'\x25C2';
 				if (CanMergeDirection(HunkIndex, MergeDirection::LeftToRight))
-					Gutter[2] = L'\x25B8';
+					Gutter[2] = MergeDeletesTarget(HunkIndex, MergeDirection::LeftToRight) ? L'\x00D7' : L'\x25B8';
 			}
 			Text(GutterX1(), Y, Color, Gutter, ARRAYSIZE(Gutter));
 			ApplyDiffOverlay(GutterX1(), Y, m_gutterWidth, Kind);

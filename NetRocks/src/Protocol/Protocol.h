@@ -81,6 +81,15 @@ struct IProtocol
 	virtual void DirectoryCreate(const std::string &path, mode_t mode) = 0;
 	virtual void Rename(const std::string &path_old, const std::string &path_new) = 0;
 
+	// Copies src to dst entirely on the server, without the data travelling
+	// through the client. Optional: the default refusal means the caller falls
+	// back to the ordinary download-and-upload path, so a protocol that has no
+	// such operation does not have to know this exists.
+	virtual void FileCopy(const std::string &path_src, const std::string &path_dst)
+	{
+		throw ProtocolUnsupportedError("on-site copy unsupported");
+	}
+
 	virtual void SetTimes(const std::string &path, const timespec &access_timem, const timespec &modification_time) = 0;
 	virtual void SetMode(const std::string &path, mode_t mode) = 0;
 

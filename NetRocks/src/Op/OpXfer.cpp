@@ -63,8 +63,8 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		}
 	}
 
-	if (_kind == XK_MOVE) {
-		// Try to use on-site rename operation if destination and source are on same server
+	if (_kind == XK_MOVE || _kind == XK_COPY) {
+		// Try to use on-site rename/copy operation if destination and source are on same server
 		// and authed under same username. Note that if server host is empty then need
 		// to avoid using of on-site renaming cuz servers may actually be different
 		// except its a file protocol, that means local filesystem
@@ -74,7 +74,14 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 		if ( (!src_identity.host.empty() || strcasecmp(src_identity.protocol.c_str(), "file") == 0)
 		 && src_identity.protocol == dst_identity.protocol && src_identity.host == dst_identity.host
 		 && src_identity.port == dst_identity.port && src_identity.username == dst_identity.username) {
-			_on_site_move = true;
+			if (_kind == XK_MOVE) {
+				_on_site_move = true;
+			} else {
+				// Not every protocol has a server-side copy; the first attempt
+				// that throws ProtocolUnsupportedError turns this back off and
+				// the ordinary transfer takes over.
+				_on_site_copy = true;
+			}
 		}
 	}
 
@@ -397,6 +404,24 @@ void OpXfer::Transfer()
 			} catch(std::exception &ex) {
 				fprintf(stderr,
 					"NetRocks: on-site move file error %s: '%s' -> '%s'\n",
+					ex.what(), e.first.c_str(), path_dst.c_str());
+			}
+
+			if (_on_site_copy) try {
+				_base_host->FileCopy(e.first, path_dst);
+				std::lock_guard<std::mutex> lock(_state.mtx);
+				_state.stats.all_complete+= e.second.size;
+				_state.stats.file_complete+= e.second.size;
+				_state.stats.count_complete++;
+				continue;
+
+			} catch(ProtocolUnsupportedError &) {
+				// Asked once, refused: stop asking for the rest of the batch.
+				_on_site_copy = false;
+
+			} catch(std::exception &ex) {
+				fprintf(stderr,
+					"NetRocks: on-site copy file error %s: '%s' -> '%s'\n",
 					ex.what(), e.first.c_str(), path_dst.c_str());
 			}
 

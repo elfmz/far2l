@@ -80,6 +80,7 @@ public:
 
 	virtual void DirectoryCreate(const std::string &path, mode_t mode);
 	virtual void Rename(const std::string &path_old, const std::string &path_new);
+	virtual void FileCopy(const std::string &path_src, const std::string &path_dst);
 
 	virtual void SetTimes(const std::string &path, const timespec &access_timem, const timespec &modification_time);
 	virtual void SetMode(const std::string &path, mode_t mode);

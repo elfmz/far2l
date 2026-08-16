@@ -94,17 +94,18 @@ class ProtocolOptionsSHELL : protected BaseDialog
 	}
 
 public:
-	ProtocolOptionsSHELL(std::string &way, StringConfig &sc)
+	ProtocolOptionsSHELL(std::string &way, StringConfig &sc,
+			const char *ways_ini_subpath, int box_title)
 		: _way(way), _sc(sc)
 	{
 		_ways_ini = StrWide2MB(G.plugin_path);
 		CutToSlash(_ways_ini, true);
-		_ways_ini+= "SHELL/ways.ini";
+		_ways_ini+= ways_ini_subpath;
 		TranslateInstallPath_Lib2Share(_ways_ini);
 
 		InitializeWays();
 
-		_di.SetBoxTitleItem(MSHELLOptionsTitle);
+		_di.SetBoxTitleItem(box_title);
 
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5, 34, 0, MSHELLWay);
@@ -153,17 +154,30 @@ public:
 	}
 };
 
-void ConfigureProtocolSHELL(std::string &options)
+static void ConfigureWayBasedProtocol(std::string &options,
+	const char *ways_ini_subpath, int box_title)
 {
 	try {
 		StringConfig sc(options);
 		std::string way = sc.GetString("Way");
-		while (ProtocolOptionsSHELL(way, sc).Configure()) {
+		while (ProtocolOptionsSHELL(way, sc, ways_ini_subpath, box_title).Configure()) {
 			;
 		}
 		options = sc.Serialize();
 	} catch (std::exception &e) {
 		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
 	}
+}
+
+void ConfigureProtocolSHELL(std::string &options)
+{
+	ConfigureWayBasedProtocol(options, "SHELL/ways.ini", MSHELLOptionsTitle);
+}
+
+// FISH+ reaches its remote shell exactly the way SHELL does, so it gets the
+// same dialog driven by its own ways.ini rather than a copy of this file.
+void ConfigureProtocolFISHPLUS(std::string &options)
+{
+	ConfigureWayBasedProtocol(options, "FISHPLUS/ways.ini", MFISHPLUSOptionsTitle);
 }
 

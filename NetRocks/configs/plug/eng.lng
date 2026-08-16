@@ -312,6 +312,7 @@
 "SHELL Protocol Options"
 "&Way to access shell"
 "Shell access way settings"
+"FISH+ Protocol Options"
 
 "Proxy settings"
 "Not using proxifier"

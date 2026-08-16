@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <farcolor.h>
 #include <farplug-wide.h>
 #include <KeyFileHelper.h>
 #include <WideMB.h>
@@ -140,14 +141,9 @@ struct Settings
 	bool enabled = true;
 	std::string baseline = "head";
 	int interval_ms = 500;
-	struct ColorPair
-	{
-		uint32_t fg = 0;
-		uint32_t bg = 0;
-	};
-	ColorPair color_added{0x00c000, 0x000000};
-	ColorPair color_modified{0xc0c000, 0x000000};
-	ColorPair color_deleted{0xc00000, 0x000000};
+	uint32_t color_added = 0x00c000;
+	uint32_t color_modified = 0xc0c000;
+	uint32_t color_deleted = 0xc00000;
 
 	void Load()
 	{
@@ -171,22 +167,9 @@ struct Settings
 				return def;
 			return static_cast<uint32_t>(val & 0x00ffffff);
 		};
-		auto parse_pair = [&](const std::string &s, const ColorPair &def) -> ColorPair
-		{
-			if (s.empty())
-				return def;
-			const size_t pos = s.find_first_of(",;");
-			if (pos == std::string::npos)
-				return def;
-			ColorPair out{};
-			out.fg = parse_color(s.substr(0, pos), def.fg);
-			out.bg = parse_color(s.substr(pos + 1), def.bg);
-			return out;
-		};
-
-		color_added = parse_pair(vals->GetString("ColorAdded", ""), color_added);
-		color_modified = parse_pair(vals->GetString("ColorModified", ""), color_modified);
-		color_deleted = parse_pair(vals->GetString("ColorDeleted", ""), color_deleted);
+		color_added = parse_color(vals->GetString("ColorAdded", ""), color_added);
+		color_modified = parse_color(vals->GetString("ColorModified", ""), color_modified);
+		color_deleted = parse_color(vals->GetString("ColorDeleted", ""), color_deleted);
 	}
 
 	void Save() const
@@ -202,14 +185,9 @@ struct Settings
 			std::snprintf(buf, sizeof(buf), "0x%06x", value & 0x00ffffff);
 			return std::string(buf);
 		};
-		auto fmt_pair = [&](const ColorPair &c) -> std::string
-		{
-			return fmt_color(c.fg) + "," + fmt_color(c.bg);
-		};
-
-		kfh.SetString("Settings", "ColorAdded", fmt_pair(color_added));
-		kfh.SetString("Settings", "ColorModified", fmt_pair(color_modified));
-		kfh.SetString("Settings", "ColorDeleted", fmt_pair(color_deleted));
+		kfh.SetString("Settings", "ColorAdded", fmt_color(color_added));
+		kfh.SetString("Settings", "ColorModified", fmt_color(color_modified));
+		kfh.SetString("Settings", "ColorDeleted", fmt_color(color_deleted));
 		kfh.Save();
 	}
 };
@@ -901,14 +879,13 @@ static void BuildMarksFromDiff(const std::string &diff, EditorState &st)
 			const bool added = (old_count == 0 && new_count > 0);
 			const bool deleted = (new_count == 0 && old_count > 0);
 
-			const Settings::ColorPair *pair = &g_settings.color_modified;
+			const uint32_t *color = &g_settings.color_modified;
 			if (added) {
-				pair = &g_settings.color_added;
+				color = &g_settings.color_added;
 			} else if (deleted) {
-				pair = &g_settings.color_deleted;
+				color = &g_settings.color_deleted;
 			}
-			hunk_color = MakeTrueColor(pair->fg);
-			hunk_color |= MakeTrueColorBack(pair->bg);
+			hunk_color = MakeTrueColor(*color);
 
 			if (new_count > 0) {
 				hunk_start = std::max(0, new_start - 1);
@@ -1125,6 +1102,9 @@ static void UpdateEditorState(EditorState &st)
 		}
 		RepoStateChanged(st);
 	}
+	if (!show_gutter) {
+		st.gutter_request = 1;
+	}
 
 	std::string out;
 	std::string effective_baseline = g_settings.baseline;
@@ -1146,20 +1126,12 @@ static void UpdateEditorState(EditorState &st)
 	if (out.empty()) {
 		st.marks.clear();
 		st.hunks.clear();
-		if (show_gutter) {
-			ApplyMarksToEditor(st);
-			if (st.gutter_forced) {
-				st.gutter_request = 0;
-			}
-		}
+		ApplyMarksToEditor(st);
 		st.dirty = false;
 		return;
 	}
 
 	BuildMarksFromDiff(out, st);
-	if (!st.marks.empty() && !show_gutter) {
-		st.gutter_request = 1;
-	}
 	ApplyMarksToEditor(st);
 	st.dirty = false;
 }
@@ -1169,11 +1141,6 @@ static std::wstring FormatColorHex(uint32_t value)
 	wchar_t buf[16];
 	swprintf_ws2ls(buf, sizeof(buf) / sizeof(buf[0]), L"0x%06x", value & 0x00ffffff);
 	return std::wstring(buf);
-}
-
-static std::wstring FormatColorPair(const Settings::ColorPair &value)
-{
-	return FormatColorHex(value.fg) + L"," + FormatColorHex(value.bg);
 }
 
 static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
@@ -1189,37 +1156,33 @@ static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
 	return static_cast<uint32_t>(val & 0x00ffffff);
 }
 
-static Settings::ColorPair ParseColorPair(const wchar_t *s, const Settings::ColorPair &def)
+static bool GetGutterBackground(uint64_t &background)
 {
-	if (!s || !*s) {
-		return def;
+	uint64_t color = 0;
+	if (!g_info.AdvControl(g_info.ModuleNumber, ACTL_GETCOLOR,
+				reinterpret_cast<void *>(static_cast<intptr_t>(COL_EDITORLINENUMBER)),
+				&color)) {
+		return false;
 	}
-	const wchar_t *sep = std::wcschr(s, L',');
-	if (!sep) {
-		sep = std::wcschr(s, L';');
-	}
-	if (!sep) {
-		return def;
-	}
-	Settings::ColorPair out{};
-	out.fg = ParseColorHex(s, def.fg);
-	out.bg = ParseColorHex(sep + 1, def.bg);
-	return out;
+	background = color & (0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR);
+	return true;
 }
 
-static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, const Settings::ColorPair &color)
+static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, uint32_t color)
 {
 	uint64_t colors[DLG_ITEM_MAX_CUST_COLORS]{};
 	g_info.SendDlgMessage(hdlg, DM_GETDEFAULTCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
-	const uint64_t bg_mask = 0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR;
-	for (size_t i = 0; i < DLG_ITEM_MAX_CUST_COLORS; ++i) {
-		colors[i] &= ~bg_mask;
-		colors[i] |= MakeTrueColorBack(color.bg);
+	uint64_t background = 0;
+	if (GetGutterBackground(background)) {
+		const uint64_t bg_mask = 0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR;
+		for (uint64_t &item_color : colors) {
+			item_color = (item_color & ~bg_mask) | background;
+		}
 	}
 	const uint64_t fg_mask = 0x000000FFFFFF000Full | FOREGROUND_TRUECOLOR;
 	for (size_t i = 0; i < DLG_ITEM_MAX_CUST_COLORS; ++i) {
 		colors[i] &= ~fg_mask;
-		colors[i] |= MakeTrueColor(color.fg);
+		colors[i] |= MakeTrueColor(color);
 	}
 	g_info.SendDlgMessage(hdlg, DM_SETCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
 }
@@ -1582,9 +1545,9 @@ static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::s
 	};
 
 	std::wstring interval_w = std::to_wstring(g_settings.interval_ms);
-	std::wstring color_added_w = FormatColorPair(g_settings.color_added);
-	std::wstring color_modified_w = FormatColorPair(g_settings.color_modified);
-	std::wstring color_deleted_w = FormatColorPair(g_settings.color_deleted);
+	std::wstring color_added_w = FormatColorHex(g_settings.color_added);
+	std::wstring color_modified_w = FormatColorHex(g_settings.color_modified);
+	std::wstring color_deleted_w = FormatColorHex(g_settings.color_deleted);
 
 	std::vector<std::string> baseline_values;
 	std::vector<std::wstring> baseline_labels;
@@ -1833,7 +1796,7 @@ static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::s
 			if (edit_id != -1) {
 				const wchar_t *ptr = reinterpret_cast<const wchar_t *>(
 						g_info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, edit_id, 0));
-				Settings::ColorPair color = ParseColorPair(ptr, Settings::ColorPair{0, 0});
+				uint32_t color = ParseColorHex(ptr, 0);
 				ApplyDialogEditColor(hDlg, edit_id, color);
 			}
 		}
@@ -1855,18 +1818,18 @@ static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::s
 			if (edit_id != -1) {
 				const wchar_t *ptr = reinterpret_cast<const wchar_t *>(
 						g_info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, edit_id, 0));
-				Settings::ColorPair color = ParseColorPair(ptr, Settings::ColorPair{0, 0});
-				uint64_t dlg_color = MakeTrueColor(color.fg) | MakeTrueColorBack(color.bg);
+				uint32_t color = ParseColorHex(ptr, 0);
+				uint64_t dlg_color = MakeTrueColor(color);
+				uint64_t background = 0;
+				if (GetGutterBackground(background)) {
+					dlg_color |= background;
+				}
 				if (g_info.ColorDialog(0, &dlg_color)) {
 					if (dlg_color & FOREGROUND_TRUECOLOR) {
 						const uint32_t fg = static_cast<uint32_t>((dlg_color >> 16) & 0x00FFFFFF);
-						color.fg = SwapRB(fg);
+						color = SwapRB(fg);
 					}
-					if (dlg_color & BACKGROUND_TRUECOLOR) {
-						const uint32_t bg = static_cast<uint32_t>((dlg_color >> 40) & 0x00FFFFFF);
-						color.bg = SwapRB(bg);
-					}
-					const std::wstring text = FormatColorPair(color);
+					const std::wstring text = FormatColorHex(color);
 					g_info.SendDlgMessage(hDlg, DM_SETTEXTPTR, edit_id, reinterpret_cast<LONG_PTR>(text.c_str()));
 					ApplyDialogEditColor(hDlg, edit_id, color);
 				}
@@ -1896,11 +1859,11 @@ static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::s
 			const long interval_val = std::wcstol(interval_ptr, nullptr, 10);
 			g_settings.interval_ms = std::max(50, static_cast<int>(interval_val));
 		}
-		g_settings.color_added = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_added = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_ADDED, 0)), g_settings.color_added);
-		g_settings.color_modified = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_modified = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_MODIFIED, 0)), g_settings.color_modified);
-		g_settings.color_deleted = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_deleted = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_DELETED, 0)), g_settings.color_deleted);
 		if (!g_settings.enabled) {
 			g_pending_tick = false;

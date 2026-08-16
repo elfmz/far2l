@@ -75,16 +75,15 @@ $^#Configuration dialog#
 sooner while typing, but may run Git more often.
 
  #-# Color added
-   Foreground and background color for added lines.
+   Color for added-line marks.
 
  #-# Color modified
-   Foreground and background color for modified lines.
+   Color for modified-line marks.
 
  #-# Color deleted
-   Foreground and background color for deleted lines.
+   Color for deleted-line marks.
 
- Colors are stored as #0xRRGGBB,0xRRGGBB#. The first value is foreground, the
-second value is background. The #...# buttons open the color picker.
+ Colors are stored as #0xRRGGBB#. The #...# buttons open the color picker.
 
    ~Contents~@Contents@
 

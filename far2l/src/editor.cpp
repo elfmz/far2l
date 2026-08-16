@@ -472,10 +472,13 @@ void Editor::DrawGutterMark(int logical_line, int y, int line_num_x1)
 		return;
 
 	const int gx = line_num_x1 - 1;
+	uint64_t color = FarColorToReal(COL_EDITORLINENUMBER);
+	color &= ~(0x000000FFFFFF000Full | FOREGROUND_TRUECOLOR);
+	color |= it->second & (0x000000FFFFFF000Full | FOREGROUND_TRUECOLOR);
 
 	const CHAR_INFO cell{
 		{ .UnicodeChar = L'\x258d' },
-		it->second
+		color
 	};
 
 	ScrBuf.Write(gx, y, &cell, 1);

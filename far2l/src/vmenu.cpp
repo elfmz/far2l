@@ -61,6 +61,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "UsedChars.hpp"
 #include "help.hpp"
 
+namespace
+{
+FARString MenuDisplayText(const FARString &text)
+{
+	FARString display(text);
+	ReplaceStrings(display, L"\r", L"\x240D", -1);
+	ReplaceStrings(display, L"\n", L"\x21B5", -1);
+	return display;
+}
+}
+
 VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 		MenuDataEx *Data,				// пункты меню
 		int ItemCount,					// количество пунктов меню
@@ -1019,10 +1030,11 @@ int VMenu::ProcessKey(FarKey Key)
 				int _len;
 
 				for (int I = 0; I < ItemCount; ++I) {
+					const FARString itemText = MenuDisplayText(Item[I]->strName);
 					if (CheckFlags(VMENU_SHOWAMPERSAND))
-						_len = static_cast<int>(Item[I]->strName.CellsCount());
+						_len = static_cast<int>(itemText.CellsCount());
 					else
-						_len = HiStrCellsCount(Item[I]->strName);
+						_len = HiStrCellsCount(itemText);
 
 					if (_len >= MaxLineWidth)
 						Item[I]->ShowPos = _len - MaxLineWidth;
@@ -1426,11 +1438,12 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 {
 	int _len;
 	int ItemShowPos = Item[Pos]->ShowPos;
+	const FARString itemText = MenuDisplayText(Item[Pos]->strName);
 
 	if (VMFlags.Check(VMENU_SHOWAMPERSAND))
-		_len = (int)Item[Pos]->strName.CellsCount();
+		_len = (int)itemText.CellsCount();
 	else
-		_len = HiStrCellsCount(Item[Pos]->strName);
+		_len = HiStrCellsCount(itemText);
 
 	if (_len < MaxLineWidth || (Direct < 0 && !ItemShowPos) || (Direct > 0 && ItemShowPos > _len))
 		return false;
@@ -1441,7 +1454,7 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 		else
 			ItemShowPos++;
 	} else {
-		ItemShowPos = HiFindNextVisualPos(Item[Pos]->strName, ItemShowPos, Direct);
+		ItemShowPos = HiFindNextVisualPos(itemText, ItemShowPos, Direct);
 	}
 
 	if (ItemShowPos < 0)
@@ -1696,11 +1709,12 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 	// BUGBUG, this must be optimized
 	for (int i = 0; i < ItemCount; i++) {
 		int ItemLen;
+		const FARString itemText = MenuDisplayText(Item[i]->strName);
 
 		if (CheckFlags(VMENU_SHOWAMPERSAND))
-			ItemLen = static_cast<int>(Item[i]->strName.CellsCount());
+			ItemLen = static_cast<int>(itemText.CellsCount());
 		else
-			ItemLen = HiStrCellsCount(Item[i]->strName);
+			ItemLen = HiStrCellsCount(itemText);
 
 		if (ItemLen > MaxItemLength)
 			MaxItemLength = ItemLen;
@@ -1894,10 +1908,11 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1, Y);
 
 				FARString strMenuLine;
+				FARString itemText = MenuDisplayText(Item[I]->strName);
 
 				int ShowPos =
-						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
+						HiFindRealPos(itemText, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+				FARString strMItemPtr(itemText.CPtr() + ShowPos);
 				const int strMItemPtrLen = CheckFlags(VMENU_SHOWAMPERSAND)
 					? static_cast<int>(strMItemPtr.CellsCount())
 					: HiStrCellsCount(strMItemPtr);

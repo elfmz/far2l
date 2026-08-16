@@ -4,18 +4,31 @@ import (
 	"encoding/binary"
 )
 
-var g_lctrl bool
-var g_rctrl bool
-var g_lalt bool
-var g_ralt bool
-var g_shift bool
+const RIGHT_ALT_PRESSED     = 0x0001 // the right alt key is pressed.
+const LEFT_ALT_PRESSED      = 0x0002 // the left alt key is pressed.
+const RIGHT_CTRL_PRESSED    = 0x0004 // the right ctrl key is pressed.
+const LEFT_CTRL_PRESSED     = 0x0008 // the left ctrl key is pressed.
+const SHIFT_PRESSED         = 0x0010 // the shift key is pressed.
+const NUMLOCK_ON            = 0x0020 // the numlock light is on.
+const SCROLLLOCK_ON         = 0x0040 // the scrolllock light is on.
+const CAPSLOCK_ON           = 0x0080 // the capslock light is on.
+const ENHANCED_KEY          = 0x0100 // the key is enhanced.
+
+const FROM_LEFT_1ST_BUTTON_PRESSED    = 0x0001
+const RIGHTMOST_BUTTON_PRESSED        = 0x0002
+const FROM_LEFT_2ND_BUTTON_PRESSED    = 0x0004
+const FROM_LEFT_3RD_BUTTON_PRESSED    = 0x0008
+const FROM_LEFT_4TH_BUTTON_PRESSED    = 0x0010
+
+const MOUSE_MOVED    = 0x0001
+const DOUBLE_CLICK   = 0x0002
+const MOUSE_WHEELED  = 0x0004
+const MOUSE_HWHEELED = 0x0008
+
+var g_controls uint32
 
 func typingReset() {
-	g_lctrl = false
-	g_rctrl = false
-	g_lalt = false
-	g_ralt = false
-	g_shift = false
+	g_controls = 0
 }
 
 func tty_Write(s string) {
@@ -26,28 +39,36 @@ func tty_CtrlC() {
     g_app.SendCtrlC()
 }
 
+func toggleControl(pressed bool, what uint32) {
+	if pressed {
+		g_controls = g_controls | what
+	} else {
+		g_controls = g_controls & (what ^ 0xffffffff)
+	}
+}
+
 func far2l_ToggleShift(pressed bool) {
-	g_shift = pressed
+	toggleControl(pressed, SHIFT_PRESSED)
 	far2l_SendKeyEvent(0, 0x10, pressed)
 }
 
 func far2l_ToggleLCtrl(pressed bool) {
-	g_lctrl = pressed
+	toggleControl(pressed, LEFT_CTRL_PRESSED)
 	far2l_SendKeyEvent(0, 0x11, pressed)
 }
 
 func far2l_ToggleRCtrl(pressed bool) {
-	g_rctrl = pressed
+	toggleControl(pressed, RIGHT_CTRL_PRESSED)
 	far2l_SendKeyEvent(0, 0x11, pressed)
 }
 
 func far2l_ToggleLAlt(pressed bool) {
-	g_lalt = pressed
+	toggleControl(pressed, LEFT_ALT_PRESSED)
 	far2l_SendKeyEvent(0, 0x12, pressed)
 }
 
 func far2l_ToggleRAlt(pressed bool) {
-	g_ralt = pressed
+	toggleControl(pressed, RIGHT_ALT_PRESSED)
 	far2l_SendKeyEvent(0, 0x12, pressed)
 }
 
@@ -119,14 +140,8 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 		}
 	}
 
-	var controls uint32 = 0
-	if g_lctrl { controls |= 0x0008 } // LEFT_CTRL_PRESSED
-	if g_rctrl { controls |= 0x0004 } // RIGHT_CTRL_PRESSED
-	if g_lalt  { controls |= 0x0002 } // LEFT_ALT_PRESSED
-	if g_ralt  { controls |= 0x0001 } // RIGHT_ALT_PRESSED
-	if g_shift { controls |= 0x0010 } // SHFIT_PRESSED
 	binary.LittleEndian.PutUint32(g_buf[0:], 5) // TEST_CMD_SEND_KEY
-	binary.LittleEndian.PutUint32(g_buf[4:], controls)
+	binary.LittleEndian.PutUint32(g_buf[4:], g_controls)
 	binary.LittleEndian.PutUint32(g_buf[8:], utf32_code)
 	binary.LittleEndian.PutUint32(g_buf[12:], key_code)
 	binary.LittleEndian.PutUint32(g_buf[16:], 0)
@@ -135,3 +150,43 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	far2l_WriteToPeer(g_buf[0:24])
 }
 
+/////////////
+
+func far2l_LClickWhereFound(where far2l_FoundString) {
+	far2l_LClick(where.X, where.Y)
+}
+
+func far2l_RClickWhereFound(where far2l_FoundString) {
+	far2l_RClick(where.X, where.Y)
+}
+
+func far2l_DblClickWhereFound(where far2l_FoundString) {
+	far2l_DblClick(where.X, where.Y)
+}
+
+func far2l_LClick(x, y uint32) {
+	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, 0)
+	far2l_SendMouseEvent(x, y, 0, 0)
+}
+
+func far2l_RClick(x, y uint32) {
+	far2l_SendMouseEvent(x, y, RIGHTMOST_BUTTON_PRESSED, 0)
+	far2l_SendMouseEvent(x, y, 0, 0)
+}
+
+func far2l_DblClick(x, y uint32) {
+	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, DOUBLE_CLICK)
+	far2l_SendMouseEvent(x, y, 0, 0)
+}
+
+
+func far2l_SendMouseEvent(x, y, btn, flags uint32) {
+
+	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SEND_MOUSE
+	binary.LittleEndian.PutUint32(g_buf[4:], flags)
+	binary.LittleEndian.PutUint32(g_buf[8:], g_controls)
+	binary.LittleEndian.PutUint32(g_buf[12:], btn)
+	binary.LittleEndian.PutUint32(g_buf[16:], x)
+	binary.LittleEndian.PutUint32(g_buf[20:], y)
+	far2l_WriteToPeer(g_buf[0:24])
+}

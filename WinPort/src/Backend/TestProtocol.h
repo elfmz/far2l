@@ -17,6 +17,7 @@ enum TestCommand
 	TEST_CMD_WAIT_NO_STRING,
 	TEST_CMD_SEND_KEY,
 	TEST_CMD_SYNC,
+	TEST_CMD_SEND_MOUSE,
 };
 
 struct TestReplyStatus
@@ -71,6 +72,16 @@ struct TestRequestSendKey
 	uint32_t scan_code;
 	uint8_t  pressed;
 	uint8_t  reserved[3];
+};
+
+struct TestRequestSendMouse
+{
+	uint32_t cmd;
+	uint32_t flags;
+	uint32_t controls;
+	uint32_t buttons;
+	uint32_t x;
+	uint32_t y;
 };
 
 struct TestRequestSync

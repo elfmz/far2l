@@ -311,4 +311,20 @@ Loads given text file into array of strings
 `BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool`  
 Loads given text file into array of strings and checks that given screen region contains exactly same strings
 
+
+---------------------------------------------------------
+
+`LClick(x, y uint32)`  
+`RClick(x, y uint32)`  
+`DblClick(x, y uint32)`  
+Performs mouse left button/right button/left double click at specified position
+
+---------------------------------------------------------
+
+`LClickWhereFound(where)`  
+`RClickWhereFound(where)`  
+`DblClickWhereFound(where)`  
+Performs mouse left button/right button/left double click at location returned by any ExpectString-like function
+
+
 ---------------------------------------------------------

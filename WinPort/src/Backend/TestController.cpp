@@ -47,6 +47,7 @@ void *TestController::ThreadProc()
 void TestController::ClientLoop(const std::string &ipc_client)
 {
 	LocalSocketClient sock(LocalSocket::DATAGRAM, _ipc_server, ipc_client);
+	sock.SetBufferSize(1024 * 1024);
 	sock.Send(&_buf, ClientDispatchStatus());
 	for (;;) {
 		size_t len = sock.Recv(&_buf, sizeof(_buf));

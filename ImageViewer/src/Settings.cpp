@@ -1,5 +1,5 @@
-#include "Common.h"
 #include "Settings.h"
+#include "Common.h"
 #include <KeyFileHelper.h>
 #include <utils.h>
 #include <wchar.h>
@@ -98,73 +98,108 @@ const wchar_t *Settings::Msg(int msgId)
 
 bool Settings::ExtraCommandsMenuInternal(Commands &commands, std::string *selected_cmd)
 {
-	wchar_t command_name[0x100]{};
-	wchar_t command_line[0x1000]{};
+	const wchar_t* help_topic_ptr = nullptr;
+	std::wstring help_topic = g_far.ModuleName;
+	if (auto slash_pos = help_topic.rfind(LGOOD_SLASH); slash_pos != std::wstring::npos) {
+		help_topic = L'<' + help_topic.substr(0, slash_pos + 1) + L">ExtraCommands";
+		help_topic_ptr = help_topic.c_str();
+	}
+
+	constexpr int break_keys[] = {VK_F4, VK_INSERT, VK_DELETE, MAKELONG(VK_UP, PKF_CONTROL), MAKELONG(VK_DOWN, PKF_CONTROL), 0};
+	enum BreakCode { BC_EDIT, BC_INSERT, BC_DELETE, BC_MOVE_UP, BC_MOVE_DOWN };
 	int selected_idx = 0;
+
 	for (;;) {
-		std::vector<FarMenuItem> menu_items;
-		for (const auto &cmd : commands) {
-			auto &mi = menu_items.emplace_back();
-			mi.Text = cmd.first.c_str();
-			if ((int)menu_items.size() - 1 == selected_idx) {
-				mi.Selected = 1;
-			}
+		std::vector<FarMenuItem> menu_items(commands.size());
+		for (size_t i = 0; i < commands.size(); ++i) {
+			menu_items[i].Text = commands[i].first.c_str();
+			menu_items[i].Selected = (static_cast<int>(i) == selected_idx);
 		}
+
 		// Display the menu and get the user's selection.
-		constexpr int break_keys[] = {VK_F4, VK_INSERT, VK_DELETE, 0};
 		int break_code = -1;
 
-		selected_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE,
-				   Msg(M_EXTRA_COMMANDS_TITLE), L"F4 INS DEL ENTER ESC", L"ExtraCommands", break_keys, &break_code, menu_items.data(), menu_items.size());
-		if (selected_idx < 0 || selected_idx >= (int)_commands.size()) {
-			return false; // User cancelled the menu (e.g., with Esc)
+		selected_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, Msg(M_EXTRA_COMMANDS_TITLE),
+								  L"F4 INS DEL Ctrl+Up/Down ENTER ESC", L"ExtraCommands", break_keys, &break_code, menu_items.data(), menu_items.size());
+
+		// A break key (e.g., Ins) pressed on an empty list also yields selected_idx == -1, just like Esc/F10.
+		// We must check break_code == -1 to return false only on actual cancellation.
+		if (selected_idx == -1 && break_code == -1) {
+			return false; // User cancelled the menu
 		}
 
-		if (break_code == 2) {
-			commands.erase(commands.begin() + selected_idx);
-		} else if (break_code == 0 || break_code == 1) {
-			const wchar_t *initial_name = (break_code == 0) ? commands[selected_idx].first.c_str() : NULL;
-			const wchar_t *initial_line = (break_code == 0) ? commands[selected_idx].second.c_str() : NULL;
-			std::wstring help_topic = g_far.ModuleName;
-			std::string::size_type help_topic_n = help_topic.rfind(LGOOD_SLASH);
-			if (help_topic_n != std::string::npos) {
-				help_topic = L'<' + help_topic.substr(0, help_topic_n + 1) + L'>';
-				help_topic += L"ExtraCommands";
-			}
-			if (g_far.InputBox(Msg(M_INPUT_CMDNAME_TITLE), Msg(M_INPUT_CMDNAME_PROMPT),
-								NULL, initial_name, command_name, ARRAYSIZE(command_name) - 1,
-								help_topic_n != std::string::npos ? help_topic.c_str() : NULL, 0)
-			 && g_far.InputBox(Msg(M_INPUT_CMDLINE_TITLE), Msg(M_INPUT_CMDLINE_PROMPT),
-								NULL, initial_line, command_line, ARRAYSIZE(command_line) - 1,
-								help_topic_n != std::string::npos ? help_topic.c_str() : NULL, 0)) {
-				std::pair<std::wstring, std::wstring> command(command_name, command_line);
-				if (break_code == 0) {
-					commands[selected_idx] = command;
-				} else {
-					commands.insert(commands.begin() + selected_idx, command);
+		switch (break_code) {
+			case BC_DELETE:
+				if (selected_idx >= 0) {
+					commands.erase(commands.begin() + selected_idx);
+					selected_idx = std::min(selected_idx, static_cast<int>(commands.size()) - 1);
 				}
+				break;
+
+			case BC_EDIT:
+			case BC_INSERT: {
+				bool is_edit = break_code == BC_EDIT;
+				if (is_edit && selected_idx < 0) {
+					break;
+				}
+				const wchar_t *initial_name = is_edit ? commands[selected_idx].first.c_str() : NULL;
+				const wchar_t *initial_line = is_edit ? commands[selected_idx].second.c_str() : NULL;
+				wchar_t command_name[0x100]{};
+				wchar_t command_line[0x1000]{};
+				if (g_far.InputBox(Msg(M_INPUT_CMDNAME_TITLE), Msg(M_INPUT_CMDNAME_PROMPT), NULL, initial_name,
+								   command_name, ARRAYSIZE(command_name) - 1, help_topic_ptr, 0)
+				 && g_far.InputBox(Msg(M_INPUT_CMDLINE_TITLE), Msg(M_INPUT_CMDLINE_PROMPT), NULL, initial_line,
+								   command_line, ARRAYSIZE(command_line) - 1, help_topic_ptr, 0)) {
+					if (is_edit) {
+						commands[selected_idx] = {command_name, command_line};
+					} else {
+						const int insert_at = std::max(0, selected_idx);
+						commands.insert(commands.begin() + insert_at, {command_name, command_line});
+						selected_idx = insert_at;
+					}
+				}
+				break;
 			}
-		} else {
-			if (selected_cmd) {
-				*selected_cmd = StrWide2MB(_commands[selected_idx].second);
-			}
-			return true;
+
+			case BC_MOVE_UP:
+				if (selected_idx > 0) {
+					std::swap(commands[selected_idx], commands[selected_idx - 1]);
+					--selected_idx;
+				}
+				break;
+
+			case BC_MOVE_DOWN:
+				if (selected_idx >= 0 && selected_idx + 1 < (int)commands.size()) {
+					std::swap(commands[selected_idx], commands[selected_idx + 1]);
+					++selected_idx;
+				}
+				break;
+
+			default: // Enter
+				if (selected_cmd) {
+					*selected_cmd = StrWide2MB(commands[selected_idx].second);
+				}
+				return true;
 		}
 	}
+}
+
+bool Settings::AskSaveCommandsChanges()
+{
+	const wchar_t *MsgItems[] = {Msg(M_EXTRA_COMMANDS_TITLE), Msg(M_SAVE_COMMANDS_CHANGES_PROMPT)};
+	return g_far.Message(g_far.ModuleNumber, FMSG_MB_YESNO, nullptr, MsgItems, ARRAYSIZE(MsgItems), 0) == 0;
 }
 
 std::string Settings::ExtraCommandsMenu()
 {
 	auto commands_copy = _commands;
 	std::string selected_cmd;
-	if (!ExtraCommandsMenuInternal(commands_copy, &selected_cmd)) {
-		return std::string();
-	}
-	if (_commands != commands_copy) {
+	bool is_command_selected = ExtraCommandsMenuInternal(commands_copy, &selected_cmd);
+	if (commands_copy != _commands && AskSaveCommandsChanges()) {
 		_commands = std::move(commands_copy);
 		SaveCommands();
 	}
-	return selected_cmd;
+	return is_command_selected ? selected_cmd : std::string();
 }
 
 void Settings::ConfigurationDialog()
@@ -210,7 +245,7 @@ void Settings::ConfigurationDialog()
 			break;
 		}
 		auto commands_copy_copy = commands_copy;
-		if (ExtraCommandsMenuInternal(commands_copy)) {
+		if (!ExtraCommandsMenuInternal(commands_copy)) {
 			commands_copy = std::move(commands_copy_copy);
 		}
 	};

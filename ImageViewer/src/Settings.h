@@ -1,6 +1,7 @@
 #ifndef FAR_SETTINGS_H
 #define FAR_SETTINGS_H
 #include <string>
+#include <vector>
 #include <stdint.h>
 #include "lng.h"
 
@@ -31,7 +32,7 @@ private:
 	struct Commands : std::vector<std::pair<std::wstring, std::wstring>> {}_commands;
 
 	bool ExtraCommandsMenuInternal(Commands &commands, std::string *selected_cmd = nullptr);
-
+	bool AskSaveCommandsChanges();
 	void SaveCommands();
 
 public:

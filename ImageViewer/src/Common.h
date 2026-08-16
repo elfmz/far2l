@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_set>
+#include <vector>
 #include <assert.h>
 
 #include <farplug-wide.h>
@@ -13,19 +14,23 @@
 enum EXITED_DUE
 {
 	EXITED_DUE_ERROR  = 11,
+	EXITED_DUE_CANCELLED = 12,
 	EXITED_DUE_ENTER  = 42,
 	EXITED_DUE_ESCAPE = 24,
-	EXITED_DUE_RESIZE = 37
+	EXITED_DUE_RESIZE = 37,
+	EXITED_DUE_GOTO_CURFILE = 55
 };
 
 extern PluginStartupInfo g_far;
 extern FarStandardFunctions g_fsf;
 
+void ShowError(const std::vector<std::wstring> &lines, const wchar_t *help_topic = nullptr);
+
 void PurgeAccumulatedInputEvents();
 bool CheckForEscAndPurgeAccumulatedInputEvents();
 
-EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error);
-EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error);
+EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file = nullptr);
+EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error, std::string *goto_file = nullptr);
 
 void ShowImageAtQV(const std::string &file, const SMALL_RECT &area);
 bool IsShowingImageAtQV();

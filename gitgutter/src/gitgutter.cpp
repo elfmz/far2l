@@ -15,6 +15,7 @@
 #include <mutex>
 #include <thread>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <unordered_map>
@@ -265,6 +266,8 @@ struct EditorState
 	std::wstring file_w;
 	std::string file;
 	std::string repo_root;
+	std::vector<std::string> repo_watch_paths;
+	uint64_t repo_watch_state = 0;
 	std::string rel_path;
 	std::string temp_path;
 	std::wstring baseline_label;
@@ -287,6 +290,7 @@ struct PendingPopup
 };
 static PendingPopup g_pending_popup;
 static bool g_popup_active = false;
+static std::atomic<bool> g_watch_active{false};
 static std::atomic<bool> g_pending_tick{false};
 static std::mutex g_tick_mutex;
 static std::condition_variable g_tick_cv;
@@ -294,6 +298,7 @@ static std::thread g_tick_thread;
 static bool g_tick_stopping = false;
 static uint64_t g_tick_generation = 0;
 static int g_tick_delay_ms = 0;
+static constexpr int GIT_WATCH_INTERVAL_MS = 2000;
 
 enum PopupItemId
 {
@@ -394,7 +399,18 @@ static void TickThreadProc()
 	std::unique_lock<std::mutex> Lock(g_tick_mutex);
 	uint64_t Generation = 0;
 	while (!g_tick_stopping) {
-		g_tick_cv.wait(Lock, [&] { return g_tick_stopping || Generation != g_tick_generation; });
+		if (!g_watch_active.load()) {
+			g_tick_cv.wait(Lock, [&] { return g_tick_stopping || g_watch_active.load() || Generation != g_tick_generation; });
+			if (Generation == g_tick_generation)
+				continue;
+		} else if (!g_tick_cv.wait_for(Lock, std::chrono::milliseconds(GIT_WATCH_INTERVAL_MS),
+				[&] { return g_tick_stopping || Generation != g_tick_generation; })) {
+			Lock.unlock();
+			if (!g_pending_tick.exchange(true))
+				g_info.AdvControlAsync(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+			Lock.lock();
+			continue;
+		}
 		if (g_tick_stopping)
 			break;
 		Generation = g_tick_generation;
@@ -940,6 +956,37 @@ static bool GetRepoRoot(const std::string &file_path, std::string &repo_root)
 	return !repo_root.empty();
 }
 
+static bool RepoStateChanged(EditorState &st)
+{
+	if (st.repo_root.empty()) {
+		return false;
+	}
+	if (st.repo_watch_paths.empty()) {
+		std::string root_arg = st.repo_root;
+		QuoteCmdArgIfNeed(root_arg);
+		std::string out;
+		if (!RunCommand("git -C " + root_arg
+				+ " rev-parse --git-path HEAD --git-path logs/HEAD --git-path index --git-path packed-refs", out)) {
+			return false;
+		}
+		SplitLines(out, st.repo_watch_paths);
+		for (std::string &path : st.repo_watch_paths) {
+			if (!path.empty() && path[0] != '/')
+				path = st.repo_root + "/" + path;
+		}
+	}
+
+	uint64_t state = 0;
+	for (const std::string &path : st.repo_watch_paths) {
+		struct stat stbuf {};
+		if (stat(path.c_str(), &stbuf) == 0)
+			state = state * 33 + stbuf.st_ino + stbuf.st_size + stbuf.st_mtime;
+	}
+	const bool changed = st.repo_watch_state && state != st.repo_watch_state;
+	st.repo_watch_state = state;
+	return changed;
+}
+
 static std::string MakeDiffCommandBaseline(const std::string &repo_root, const std::string &file_path, const std::string &baseline)
 {
 	std::string root_arg = repo_root;
@@ -1063,6 +1110,8 @@ static void UpdateEditorState(EditorState &st)
 		st.file_w = file_w;
 		st.file = Wide2MB(file_w.c_str());
 		st.repo_root.clear();
+		st.repo_watch_paths.clear();
+		st.repo_watch_state = 0;
 		st.rel_path.clear();
 	}
 
@@ -1074,6 +1123,7 @@ static void UpdateEditorState(EditorState &st)
 		if (!GetRepoRoot(st.file, st.repo_root)) {
 			return;
 		}
+		RepoStateChanged(st);
 	}
 
 	std::string out;
@@ -1497,9 +1547,6 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 {
 	memset(Info, 0, sizeof(*Info));
 	Info->StructSize = sizeof(*Info);
-	if (!g_git_available) {
-		return;
-	}
 	g_plugin_menu_strings[0] = GetMsg(MPluginTitle);
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS | PF_PRELOAD;
 	Info->PluginConfigStringsNumber = 1;
@@ -1508,11 +1555,12 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->PluginMenuStrings = g_plugin_menu_strings;
 }
 
-static int ShowConfigDialog()
+static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::string *repo_root = nullptr)
 {
 	enum
 	{
 		CD_BOX,
+		CD_GIT_ROOT,
 		CD_ENABLED,
 		CD_BASELINE_TEXT,
 		CD_BASELINE,
@@ -1550,15 +1598,19 @@ static int ShowConfigDialog()
 	add_baseline("unstaged");
 
 	std::string branches_out;
-	if (RunCommand("git branch --format='%(refname:short)'", branches_out)) {
-		std::vector<std::string> lines;
-		SplitLines(branches_out, lines);
-		for (const auto &line : lines) {
-			const std::string name = TrimLineEnd(line);
-			if (name.empty())
-				continue;
-			if (std::find(baseline_values.begin(), baseline_values.end(), name) == baseline_values.end()) {
-				add_baseline(name);
+	if (repo_root && !repo_root->empty()) {
+		std::string root_arg = *repo_root;
+		QuoteCmdArgIfNeed(root_arg);
+		if (RunCommand("git -C " + root_arg + " branch --format='%(refname:short)'", branches_out)) {
+			std::vector<std::string> lines;
+			SplitLines(branches_out, lines);
+			for (const auto &line : lines) {
+				const std::string name = TrimLineEnd(line);
+				if (name.empty())
+					continue;
+				if (std::find(baseline_values.begin(), baseline_values.end(), name) == baseline_values.end()) {
+					add_baseline(name);
+				}
 			}
 		}
 	}
@@ -1601,6 +1653,24 @@ static int ShowConfigDialog()
 			3 + msg_cells(MConfigTitle) + 4
 	});
 	const int DialogWidth = DialogX2 + 4;
+	constexpr int ContextRows = 2;
+	constexpr int DialogBottomMargin = 2;
+	const bool show_context = git_info != nullptr;
+	const bool have_repo_root = repo_root && !repo_root->empty();
+	const int ContextGitY = 2;
+	const std::wstring git_value = show_context && git_info ? *git_info : L"";
+	const int ContextWidth = DialogX2 - LabelX - 1;
+	std::wstring root_text = git_value;
+	if (show_context) {
+		if (have_repo_root) {
+			const std::wstring label = std::wstring(GetMsg(MGitRoot)) + L": ";
+			g_fsf.TruncPathStr(&root_text[0], std::max(0, ContextWidth
+					- static_cast<int>(g_fsf.StrCellsCount(label.c_str(), label.size()))));
+			root_text = label + root_text;
+		} else {
+			g_fsf.TruncPathStr(&root_text[0], ContextWidth);
+		}
+	}
 
 	FarDialogItem items[CD_COUNT]{};
 	items[CD_BOX].Type = DI_DOUBLEBOX;
@@ -1609,6 +1679,12 @@ static int ShowConfigDialog()
 	items[CD_BOX].X2 = DialogX2;
 	items[CD_BOX].Y2 = 14;
 	items[CD_BOX].PtrData = GetMsg(MConfigTitle);
+
+	items[CD_GIT_ROOT].Type = DI_TEXT;
+	items[CD_GIT_ROOT].X1 = LabelX;
+	items[CD_GIT_ROOT].Y1 = ContextGitY;
+	items[CD_GIT_ROOT].X2 = DialogX2 - 2;
+	items[CD_GIT_ROOT].PtrData = root_text.c_str();
 
 	items[CD_ENABLED].Type = DI_CHECKBOX;
 	items[CD_ENABLED].X1 = LabelX;
@@ -1725,6 +1801,17 @@ static int ShowConfigDialog()
 	items[CD_CANCEL].Flags = DIF_CENTERGROUP;
 	items[CD_CANCEL].PtrData = GetMsg(MCancel);
 
+	if (show_context) {
+		for (int id = CD_ENABLED; id < CD_COUNT; ++id) {
+			items[id].Y1 += ContextRows;
+			if (items[id].Y2) {
+				items[id].Y2 += ContextRows;
+			}
+		}
+		items[CD_BOX].Y2 += ContextRows;
+	}
+	const int DialogBottomY = items[CD_BOX].Y2 + DialogBottomMargin;
+
 	auto dlg_proc = [](HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) -> LONG_PTR
 	{
 		if (Msg == DN_INITDIALOG) {
@@ -1789,7 +1876,7 @@ static int ShowConfigDialog()
 	};
 
 	HANDLE hdlg = g_info.DialogInit(
-			g_info.ModuleNumber, -1, -1, DialogWidth, 16, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
+			g_info.ModuleNumber, -1, -1, DialogWidth, DialogBottomY, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
 			dlg_proc, 0);
 	if (hdlg == INVALID_HANDLE_VALUE) {
 		return 0;
@@ -1854,9 +1941,6 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	(void)ItemNumber;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
-	if (!g_git_available) {
-		return 0;
-	}
 	return ShowConfigDialog();
 }
 
@@ -1866,10 +1950,19 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	(void)Item;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
+	std::wstring file_w;
+	std::string repo_root;
+	std::wstring git_info;
 	if (!g_git_available) {
-		return INVALID_HANDLE_VALUE;
+		git_info = GetMsg(MGitUnavailable);
+	} else if (!GetEditorFileName(file_w) || file_w.empty()) {
+		git_info = GetMsg(MRepositoryUnavailable);
+	} else if (GetRepoRoot(Wide2MB(file_w.c_str()), repo_root)) {
+		git_info = StrMB2Wide(repo_root.c_str());
+	} else {
+		git_info = GetMsg(MRepositoryUnavailable);
 	}
-	ShowConfigDialog();
+	ShowConfigDialog(&git_info, repo_root.empty() ? nullptr : &repo_root);
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -1901,17 +1994,24 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
 			}
 			g_editors.erase(ei.EditorID);
 		}
+		g_watch_active = !g_editors.empty();
+		g_tick_cv.notify_one();
 		return 0;
 	}
 
 	EditorState &st = g_editors[ei.EditorID];
 	st.editor_id = ei.EditorID;
+	g_watch_active = true;
+	g_tick_cv.notify_one();
 
 	const bool content_change_event =
 			Event == EE_READ || Event == EE_SAVE || (Event == EE_REDRAW && Param == EEREDRAW_CHANGE);
 
-	if (content_change_event) {
+	if (content_change_event || Event == EE_GOTFOCUS) {
 		st.dirty = true;
+		if (Event == EE_GOTFOCUS) {
+			st.last_update_ms = 0;
+		}
 		UpdateEditorState(st);
 		if (st.dirty) {
 			MaybeScheduleTick();
@@ -1958,6 +2058,10 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		if (GetEditorInfo(ei)) {
 			EditorState &st = g_editors[ei.EditorID];
 			st.editor_id = ei.EditorID;
+			if (RepoStateChanged(st)) {
+				st.dirty = true;
+				st.last_update_ms = 0;
+			}
 			if (st.dirty) {
 				UpdateEditorState(st);
 				did_work = true;
@@ -2018,4 +2122,5 @@ SHAREDSYMBOL void WINAPI ExitFARW()
 {
 	StopTickThread();
 	g_editors.clear();
+	g_watch_active = false;
 }

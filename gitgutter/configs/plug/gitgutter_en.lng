@@ -10,3 +10,6 @@
 "Color deleted"
 "OK"
 "Cancel"
+"Git not found."
+"File is not in a Git repository."
+"Git root"

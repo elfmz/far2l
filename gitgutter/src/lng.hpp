@@ -12,4 +12,7 @@ enum GitGutterLng
 	MColorDeleted,
 	MOk,
 	MCancel,
+	MGitUnavailable,
+	MRepositoryUnavailable,
+	MGitRoot,
 };

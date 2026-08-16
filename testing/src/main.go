@@ -70,10 +70,31 @@ var g_test_workdir string
 var g_calm bool = false
 var g_last_error string
 
-const far2lTestTextMax = 2024
+const far2lTestTextMax = 2048
 const far2lStatusPacketSize = 20 + far2lTestTextMax
 const far2lReadCellPacketSize = 8 + far2lTestTextMax
 const far2lWaitStringPacketSize = 24 + far2lTestTextMax
+const far2lSocketBufferSize = 1024 * 1024
+
+func far2l_ConfigureSocketBuffers(socket *net.UnixConn) error {
+	rawConn, err := socket.SyscallConn()
+	if err != nil {
+		return err
+	}
+
+	var socketErr error
+	err = rawConn.Control(func(fd uintptr) {
+		if err := syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_RCVBUF, far2lSocketBufferSize); err != nil {
+			socketErr = err
+			return
+		}
+		socketErr = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_SNDBUF, far2lSocketBufferSize)
+	})
+	if err != nil {
+		return err
+	}
+	return socketErr
+}
 
 func stringFromBytes(buf []byte) string {
 	last := 0
@@ -431,6 +452,9 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+	if err = far2l_ConfigureSocketBuffers(g_socket); err != nil {
+		log.Fatal(err)
+	}
 
 	initVM()
 

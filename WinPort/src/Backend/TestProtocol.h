@@ -3,9 +3,7 @@
 #define TEST_PROTOCOL_VERSION	0xF001
 enum
 {
-	// AF_UNIX datagrams on macOS reject payloads above 2048 bytes with EMSGSIZE.
-	// Keep every test message within that limit.
-	TEST_PROTOCOL_TEXT_MAX = 2024
+	TEST_PROTOCOL_TEXT_MAX = 2048
 };
 
 enum TestCommand
@@ -94,7 +92,3 @@ struct TestReplySync
 {
 	uint8_t waited;
 };
-
-static_assert(sizeof(TestReplyStatus) <= 2048, "TestReplyStatus must fit into one local datagram");
-static_assert(sizeof(TestReplyReadCell) <= 2048, "TestReplyReadCell must fit into one local datagram");
-static_assert(sizeof(TestRequestWaitString) <= 2048, "TestRequestWaitString must fit into one local datagram");

@@ -21,6 +21,9 @@ while there are marks to show.
 @HunkPopup
 $^#GitGutter plugin#
 $^#Hunk popup#
+
+   ~Contents~@Contents@
+
  Click a GitGutter mark in the editor gutter to open a popup with the diff hunk
 for that change. The popup is positioned near the clicked mark when possible.
 
@@ -47,6 +50,9 @@ reverted.
 @ConfigurationDialog
 $^#GitGutter plugin#
 $^#Configuration dialog#
+
+   ~Contents~@Contents@
+
  The configuration dialog is available from the plugin menu and from
 ~Plugins Configuration~@:PluginsConfig@.
 
@@ -69,22 +75,24 @@ $^#Configuration dialog#
 sooner while typing, but may run Git more often.
 
  #-# Color added
-   Foreground and background color for added lines.
+   Color for added-line marks.
 
  #-# Color modified
-   Foreground and background color for modified lines.
+   Color for modified-line marks.
 
  #-# Color deleted
-   Foreground and background color for deleted lines.
+   Color for deleted-line marks.
 
- Colors are stored as #0xRRGGBB,0xRRGGBB#. The first value is foreground, the
-second value is background. The #...# buttons open the color picker.
+ Colors are stored as #0xRRGGBB#. The #...# buttons open the color picker.
 
    ~Contents~@Contents@
 
 @Troubleshooting
 $^#GitGutter plugin#
 $^#Troubleshooting#
+
+   ~Contents~@Contents@
+
  If no marks are shown, check that:
 
  #-# The #git# executable is available in #PATH#.

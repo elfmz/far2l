@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <farcolor.h>
 #include <farplug-wide.h>
 #include <KeyFileHelper.h>
 #include <WideMB.h>
@@ -15,6 +16,7 @@
 #include <mutex>
 #include <thread>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <unordered_map>
@@ -139,14 +141,9 @@ struct Settings
 	bool enabled = true;
 	std::string baseline = "head";
 	int interval_ms = 500;
-	struct ColorPair
-	{
-		uint32_t fg = 0;
-		uint32_t bg = 0;
-	};
-	ColorPair color_added{0x00c000, 0x000000};
-	ColorPair color_modified{0xc0c000, 0x000000};
-	ColorPair color_deleted{0xc00000, 0x000000};
+	uint32_t color_added = 0x00c000;
+	uint32_t color_modified = 0xc0c000;
+	uint32_t color_deleted = 0xc00000;
 
 	void Load()
 	{
@@ -170,22 +167,9 @@ struct Settings
 				return def;
 			return static_cast<uint32_t>(val & 0x00ffffff);
 		};
-		auto parse_pair = [&](const std::string &s, const ColorPair &def) -> ColorPair
-		{
-			if (s.empty())
-				return def;
-			const size_t pos = s.find_first_of(",;");
-			if (pos == std::string::npos)
-				return def;
-			ColorPair out{};
-			out.fg = parse_color(s.substr(0, pos), def.fg);
-			out.bg = parse_color(s.substr(pos + 1), def.bg);
-			return out;
-		};
-
-		color_added = parse_pair(vals->GetString("ColorAdded", ""), color_added);
-		color_modified = parse_pair(vals->GetString("ColorModified", ""), color_modified);
-		color_deleted = parse_pair(vals->GetString("ColorDeleted", ""), color_deleted);
+		color_added = parse_color(vals->GetString("ColorAdded", ""), color_added);
+		color_modified = parse_color(vals->GetString("ColorModified", ""), color_modified);
+		color_deleted = parse_color(vals->GetString("ColorDeleted", ""), color_deleted);
 	}
 
 	void Save() const
@@ -201,14 +185,9 @@ struct Settings
 			std::snprintf(buf, sizeof(buf), "0x%06x", value & 0x00ffffff);
 			return std::string(buf);
 		};
-		auto fmt_pair = [&](const ColorPair &c) -> std::string
-		{
-			return fmt_color(c.fg) + "," + fmt_color(c.bg);
-		};
-
-		kfh.SetString("Settings", "ColorAdded", fmt_pair(color_added));
-		kfh.SetString("Settings", "ColorModified", fmt_pair(color_modified));
-		kfh.SetString("Settings", "ColorDeleted", fmt_pair(color_deleted));
+		kfh.SetString("Settings", "ColorAdded", fmt_color(color_added));
+		kfh.SetString("Settings", "ColorModified", fmt_color(color_modified));
+		kfh.SetString("Settings", "ColorDeleted", fmt_color(color_deleted));
 		kfh.Save();
 	}
 };
@@ -265,6 +244,8 @@ struct EditorState
 	std::wstring file_w;
 	std::string file;
 	std::string repo_root;
+	std::vector<std::string> repo_watch_paths;
+	uint64_t repo_watch_state = 0;
 	std::string rel_path;
 	std::string temp_path;
 	std::wstring baseline_label;
@@ -287,6 +268,7 @@ struct PendingPopup
 };
 static PendingPopup g_pending_popup;
 static bool g_popup_active = false;
+static std::atomic<bool> g_watch_active{false};
 static std::atomic<bool> g_pending_tick{false};
 static std::mutex g_tick_mutex;
 static std::condition_variable g_tick_cv;
@@ -294,6 +276,7 @@ static std::thread g_tick_thread;
 static bool g_tick_stopping = false;
 static uint64_t g_tick_generation = 0;
 static int g_tick_delay_ms = 0;
+static constexpr int GIT_WATCH_INTERVAL_MS = 2000;
 
 enum PopupItemId
 {
@@ -394,7 +377,18 @@ static void TickThreadProc()
 	std::unique_lock<std::mutex> Lock(g_tick_mutex);
 	uint64_t Generation = 0;
 	while (!g_tick_stopping) {
-		g_tick_cv.wait(Lock, [&] { return g_tick_stopping || Generation != g_tick_generation; });
+		if (!g_watch_active.load()) {
+			g_tick_cv.wait(Lock, [&] { return g_tick_stopping || g_watch_active.load() || Generation != g_tick_generation; });
+			if (Generation == g_tick_generation)
+				continue;
+		} else if (!g_tick_cv.wait_for(Lock, std::chrono::milliseconds(GIT_WATCH_INTERVAL_MS),
+				[&] { return g_tick_stopping || Generation != g_tick_generation; })) {
+			Lock.unlock();
+			if (!g_pending_tick.exchange(true))
+				g_info.AdvControlAsync(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+			Lock.lock();
+			continue;
+		}
 		if (g_tick_stopping)
 			break;
 		Generation = g_tick_generation;
@@ -885,14 +879,13 @@ static void BuildMarksFromDiff(const std::string &diff, EditorState &st)
 			const bool added = (old_count == 0 && new_count > 0);
 			const bool deleted = (new_count == 0 && old_count > 0);
 
-			const Settings::ColorPair *pair = &g_settings.color_modified;
+			const uint32_t *color = &g_settings.color_modified;
 			if (added) {
-				pair = &g_settings.color_added;
+				color = &g_settings.color_added;
 			} else if (deleted) {
-				pair = &g_settings.color_deleted;
+				color = &g_settings.color_deleted;
 			}
-			hunk_color = MakeTrueColor(pair->fg);
-			hunk_color |= MakeTrueColorBack(pair->bg);
+			hunk_color = MakeTrueColor(*color);
 
 			if (new_count > 0) {
 				hunk_start = std::max(0, new_start - 1);
@@ -938,6 +931,37 @@ static bool GetRepoRoot(const std::string &file_path, std::string &repo_root)
 	}
 	repo_root = TrimLineEnd(out);
 	return !repo_root.empty();
+}
+
+static bool RepoStateChanged(EditorState &st)
+{
+	if (st.repo_root.empty()) {
+		return false;
+	}
+	if (st.repo_watch_paths.empty()) {
+		std::string root_arg = st.repo_root;
+		QuoteCmdArgIfNeed(root_arg);
+		std::string out;
+		if (!RunCommand("git -C " + root_arg
+				+ " rev-parse --git-path HEAD --git-path logs/HEAD --git-path index --git-path packed-refs", out)) {
+			return false;
+		}
+		SplitLines(out, st.repo_watch_paths);
+		for (std::string &path : st.repo_watch_paths) {
+			if (!path.empty() && path[0] != '/')
+				path = st.repo_root + "/" + path;
+		}
+	}
+
+	uint64_t state = 0;
+	for (const std::string &path : st.repo_watch_paths) {
+		struct stat stbuf {};
+		if (stat(path.c_str(), &stbuf) == 0)
+			state = state * 33 + stbuf.st_ino + stbuf.st_size + stbuf.st_mtime;
+	}
+	const bool changed = st.repo_watch_state && state != st.repo_watch_state;
+	st.repo_watch_state = state;
+	return changed;
 }
 
 static std::string MakeDiffCommandBaseline(const std::string &repo_root, const std::string &file_path, const std::string &baseline)
@@ -1063,6 +1087,8 @@ static void UpdateEditorState(EditorState &st)
 		st.file_w = file_w;
 		st.file = Wide2MB(file_w.c_str());
 		st.repo_root.clear();
+		st.repo_watch_paths.clear();
+		st.repo_watch_state = 0;
 		st.rel_path.clear();
 	}
 
@@ -1074,6 +1100,10 @@ static void UpdateEditorState(EditorState &st)
 		if (!GetRepoRoot(st.file, st.repo_root)) {
 			return;
 		}
+		RepoStateChanged(st);
+	}
+	if (!show_gutter) {
+		st.gutter_request = 1;
 	}
 
 	std::string out;
@@ -1096,20 +1126,12 @@ static void UpdateEditorState(EditorState &st)
 	if (out.empty()) {
 		st.marks.clear();
 		st.hunks.clear();
-		if (show_gutter) {
-			ApplyMarksToEditor(st);
-			if (st.gutter_forced) {
-				st.gutter_request = 0;
-			}
-		}
+		ApplyMarksToEditor(st);
 		st.dirty = false;
 		return;
 	}
 
 	BuildMarksFromDiff(out, st);
-	if (!st.marks.empty() && !show_gutter) {
-		st.gutter_request = 1;
-	}
 	ApplyMarksToEditor(st);
 	st.dirty = false;
 }
@@ -1119,11 +1141,6 @@ static std::wstring FormatColorHex(uint32_t value)
 	wchar_t buf[16];
 	swprintf_ws2ls(buf, sizeof(buf) / sizeof(buf[0]), L"0x%06x", value & 0x00ffffff);
 	return std::wstring(buf);
-}
-
-static std::wstring FormatColorPair(const Settings::ColorPair &value)
-{
-	return FormatColorHex(value.fg) + L"," + FormatColorHex(value.bg);
 }
 
 static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
@@ -1139,37 +1156,33 @@ static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
 	return static_cast<uint32_t>(val & 0x00ffffff);
 }
 
-static Settings::ColorPair ParseColorPair(const wchar_t *s, const Settings::ColorPair &def)
+static bool GetGutterBackground(uint64_t &background)
 {
-	if (!s || !*s) {
-		return def;
+	uint64_t color = 0;
+	if (!g_info.AdvControl(g_info.ModuleNumber, ACTL_GETCOLOR,
+				reinterpret_cast<void *>(static_cast<intptr_t>(COL_EDITORLINENUMBER)),
+				&color)) {
+		return false;
 	}
-	const wchar_t *sep = std::wcschr(s, L',');
-	if (!sep) {
-		sep = std::wcschr(s, L';');
-	}
-	if (!sep) {
-		return def;
-	}
-	Settings::ColorPair out{};
-	out.fg = ParseColorHex(s, def.fg);
-	out.bg = ParseColorHex(sep + 1, def.bg);
-	return out;
+	background = color & (0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR);
+	return true;
 }
 
-static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, const Settings::ColorPair &color)
+static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, uint32_t color)
 {
 	uint64_t colors[DLG_ITEM_MAX_CUST_COLORS]{};
 	g_info.SendDlgMessage(hdlg, DM_GETDEFAULTCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
-	const uint64_t bg_mask = 0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR;
-	for (size_t i = 0; i < DLG_ITEM_MAX_CUST_COLORS; ++i) {
-		colors[i] &= ~bg_mask;
-		colors[i] |= MakeTrueColorBack(color.bg);
+	uint64_t background = 0;
+	if (GetGutterBackground(background)) {
+		const uint64_t bg_mask = 0xFFFFFF00000000F0ull | BACKGROUND_TRUECOLOR;
+		for (uint64_t &item_color : colors) {
+			item_color = (item_color & ~bg_mask) | background;
+		}
 	}
 	const uint64_t fg_mask = 0x000000FFFFFF000Full | FOREGROUND_TRUECOLOR;
 	for (size_t i = 0; i < DLG_ITEM_MAX_CUST_COLORS; ++i) {
 		colors[i] &= ~fg_mask;
-		colors[i] |= MakeTrueColor(color.fg);
+		colors[i] |= MakeTrueColor(color);
 	}
 	g_info.SendDlgMessage(hdlg, DM_SETCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
 }
@@ -1497,9 +1510,6 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 {
 	memset(Info, 0, sizeof(*Info));
 	Info->StructSize = sizeof(*Info);
-	if (!g_git_available) {
-		return;
-	}
 	g_plugin_menu_strings[0] = GetMsg(MPluginTitle);
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS | PF_PRELOAD;
 	Info->PluginConfigStringsNumber = 1;
@@ -1508,11 +1518,12 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->PluginMenuStrings = g_plugin_menu_strings;
 }
 
-static int ShowConfigDialog()
+static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::string *repo_root = nullptr)
 {
 	enum
 	{
 		CD_BOX,
+		CD_GIT_ROOT,
 		CD_ENABLED,
 		CD_BASELINE_TEXT,
 		CD_BASELINE,
@@ -1534,9 +1545,9 @@ static int ShowConfigDialog()
 	};
 
 	std::wstring interval_w = std::to_wstring(g_settings.interval_ms);
-	std::wstring color_added_w = FormatColorPair(g_settings.color_added);
-	std::wstring color_modified_w = FormatColorPair(g_settings.color_modified);
-	std::wstring color_deleted_w = FormatColorPair(g_settings.color_deleted);
+	std::wstring color_added_w = FormatColorHex(g_settings.color_added);
+	std::wstring color_modified_w = FormatColorHex(g_settings.color_modified);
+	std::wstring color_deleted_w = FormatColorHex(g_settings.color_deleted);
 
 	std::vector<std::string> baseline_values;
 	std::vector<std::wstring> baseline_labels;
@@ -1550,15 +1561,19 @@ static int ShowConfigDialog()
 	add_baseline("unstaged");
 
 	std::string branches_out;
-	if (RunCommand("git branch --format='%(refname:short)'", branches_out)) {
-		std::vector<std::string> lines;
-		SplitLines(branches_out, lines);
-		for (const auto &line : lines) {
-			const std::string name = TrimLineEnd(line);
-			if (name.empty())
-				continue;
-			if (std::find(baseline_values.begin(), baseline_values.end(), name) == baseline_values.end()) {
-				add_baseline(name);
+	if (repo_root && !repo_root->empty()) {
+		std::string root_arg = *repo_root;
+		QuoteCmdArgIfNeed(root_arg);
+		if (RunCommand("git -C " + root_arg + " branch --format='%(refname:short)'", branches_out)) {
+			std::vector<std::string> lines;
+			SplitLines(branches_out, lines);
+			for (const auto &line : lines) {
+				const std::string name = TrimLineEnd(line);
+				if (name.empty())
+					continue;
+				if (std::find(baseline_values.begin(), baseline_values.end(), name) == baseline_values.end()) {
+					add_baseline(name);
+				}
 			}
 		}
 	}
@@ -1601,6 +1616,24 @@ static int ShowConfigDialog()
 			3 + msg_cells(MConfigTitle) + 4
 	});
 	const int DialogWidth = DialogX2 + 4;
+	constexpr int ContextRows = 2;
+	constexpr int DialogBottomMargin = 2;
+	const bool show_context = git_info != nullptr;
+	const bool have_repo_root = repo_root && !repo_root->empty();
+	const int ContextGitY = 2;
+	const std::wstring git_value = show_context && git_info ? *git_info : L"";
+	const int ContextWidth = DialogX2 - LabelX - 1;
+	std::wstring root_text = git_value;
+	if (show_context) {
+		if (have_repo_root) {
+			const std::wstring label = std::wstring(GetMsg(MGitRoot)) + L": ";
+			g_fsf.TruncPathStr(&root_text[0], std::max(0, ContextWidth
+					- static_cast<int>(g_fsf.StrCellsCount(label.c_str(), label.size()))));
+			root_text = label + root_text;
+		} else {
+			g_fsf.TruncPathStr(&root_text[0], ContextWidth);
+		}
+	}
 
 	FarDialogItem items[CD_COUNT]{};
 	items[CD_BOX].Type = DI_DOUBLEBOX;
@@ -1609,6 +1642,12 @@ static int ShowConfigDialog()
 	items[CD_BOX].X2 = DialogX2;
 	items[CD_BOX].Y2 = 14;
 	items[CD_BOX].PtrData = GetMsg(MConfigTitle);
+
+	items[CD_GIT_ROOT].Type = DI_TEXT;
+	items[CD_GIT_ROOT].X1 = LabelX;
+	items[CD_GIT_ROOT].Y1 = ContextGitY;
+	items[CD_GIT_ROOT].X2 = DialogX2 - 2;
+	items[CD_GIT_ROOT].PtrData = root_text.c_str();
 
 	items[CD_ENABLED].Type = DI_CHECKBOX;
 	items[CD_ENABLED].X1 = LabelX;
@@ -1725,6 +1764,17 @@ static int ShowConfigDialog()
 	items[CD_CANCEL].Flags = DIF_CENTERGROUP;
 	items[CD_CANCEL].PtrData = GetMsg(MCancel);
 
+	if (show_context) {
+		for (int id = CD_ENABLED; id < CD_COUNT; ++id) {
+			items[id].Y1 += ContextRows;
+			if (items[id].Y2) {
+				items[id].Y2 += ContextRows;
+			}
+		}
+		items[CD_BOX].Y2 += ContextRows;
+	}
+	const int DialogBottomY = items[CD_BOX].Y2 + DialogBottomMargin;
+
 	auto dlg_proc = [](HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) -> LONG_PTR
 	{
 		if (Msg == DN_INITDIALOG) {
@@ -1746,7 +1796,7 @@ static int ShowConfigDialog()
 			if (edit_id != -1) {
 				const wchar_t *ptr = reinterpret_cast<const wchar_t *>(
 						g_info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, edit_id, 0));
-				Settings::ColorPair color = ParseColorPair(ptr, Settings::ColorPair{0, 0});
+				uint32_t color = ParseColorHex(ptr, 0);
 				ApplyDialogEditColor(hDlg, edit_id, color);
 			}
 		}
@@ -1768,18 +1818,18 @@ static int ShowConfigDialog()
 			if (edit_id != -1) {
 				const wchar_t *ptr = reinterpret_cast<const wchar_t *>(
 						g_info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, edit_id, 0));
-				Settings::ColorPair color = ParseColorPair(ptr, Settings::ColorPair{0, 0});
-				uint64_t dlg_color = MakeTrueColor(color.fg) | MakeTrueColorBack(color.bg);
+				uint32_t color = ParseColorHex(ptr, 0);
+				uint64_t dlg_color = MakeTrueColor(color);
+				uint64_t background = 0;
+				if (GetGutterBackground(background)) {
+					dlg_color |= background;
+				}
 				if (g_info.ColorDialog(0, &dlg_color)) {
 					if (dlg_color & FOREGROUND_TRUECOLOR) {
 						const uint32_t fg = static_cast<uint32_t>((dlg_color >> 16) & 0x00FFFFFF);
-						color.fg = SwapRB(fg);
+						color = SwapRB(fg);
 					}
-					if (dlg_color & BACKGROUND_TRUECOLOR) {
-						const uint32_t bg = static_cast<uint32_t>((dlg_color >> 40) & 0x00FFFFFF);
-						color.bg = SwapRB(bg);
-					}
-					const std::wstring text = FormatColorPair(color);
+					const std::wstring text = FormatColorHex(color);
 					g_info.SendDlgMessage(hDlg, DM_SETTEXTPTR, edit_id, reinterpret_cast<LONG_PTR>(text.c_str()));
 					ApplyDialogEditColor(hDlg, edit_id, color);
 				}
@@ -1789,7 +1839,7 @@ static int ShowConfigDialog()
 	};
 
 	HANDLE hdlg = g_info.DialogInit(
-			g_info.ModuleNumber, -1, -1, DialogWidth, 16, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
+			g_info.ModuleNumber, -1, -1, DialogWidth, DialogBottomY, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
 			dlg_proc, 0);
 	if (hdlg == INVALID_HANDLE_VALUE) {
 		return 0;
@@ -1809,11 +1859,11 @@ static int ShowConfigDialog()
 			const long interval_val = std::wcstol(interval_ptr, nullptr, 10);
 			g_settings.interval_ms = std::max(50, static_cast<int>(interval_val));
 		}
-		g_settings.color_added = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_added = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_ADDED, 0)), g_settings.color_added);
-		g_settings.color_modified = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_modified = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_MODIFIED, 0)), g_settings.color_modified);
-		g_settings.color_deleted = ParseColorPair(reinterpret_cast<const wchar_t *>(
+		g_settings.color_deleted = ParseColorHex(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_DELETED, 0)), g_settings.color_deleted);
 		if (!g_settings.enabled) {
 			g_pending_tick = false;
@@ -1854,9 +1904,6 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	(void)ItemNumber;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
-	if (!g_git_available) {
-		return 0;
-	}
 	return ShowConfigDialog();
 }
 
@@ -1866,10 +1913,19 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	(void)Item;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
+	std::wstring file_w;
+	std::string repo_root;
+	std::wstring git_info;
 	if (!g_git_available) {
-		return INVALID_HANDLE_VALUE;
+		git_info = GetMsg(MGitUnavailable);
+	} else if (!GetEditorFileName(file_w) || file_w.empty()) {
+		git_info = GetMsg(MRepositoryUnavailable);
+	} else if (GetRepoRoot(Wide2MB(file_w.c_str()), repo_root)) {
+		git_info = StrMB2Wide(repo_root.c_str());
+	} else {
+		git_info = GetMsg(MRepositoryUnavailable);
 	}
-	ShowConfigDialog();
+	ShowConfigDialog(&git_info, repo_root.empty() ? nullptr : &repo_root);
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -1901,17 +1957,24 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
 			}
 			g_editors.erase(ei.EditorID);
 		}
+		g_watch_active = !g_editors.empty();
+		g_tick_cv.notify_one();
 		return 0;
 	}
 
 	EditorState &st = g_editors[ei.EditorID];
 	st.editor_id = ei.EditorID;
+	g_watch_active = true;
+	g_tick_cv.notify_one();
 
 	const bool content_change_event =
 			Event == EE_READ || Event == EE_SAVE || (Event == EE_REDRAW && Param == EEREDRAW_CHANGE);
 
-	if (content_change_event) {
+	if (content_change_event || Event == EE_GOTFOCUS) {
 		st.dirty = true;
+		if (Event == EE_GOTFOCUS) {
+			st.last_update_ms = 0;
+		}
 		UpdateEditorState(st);
 		if (st.dirty) {
 			MaybeScheduleTick();
@@ -1958,6 +2021,10 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		if (GetEditorInfo(ei)) {
 			EditorState &st = g_editors[ei.EditorID];
 			st.editor_id = ei.EditorID;
+			if (RepoStateChanged(st)) {
+				st.dirty = true;
+				st.last_update_ms = 0;
+			}
 			if (st.dirty) {
 				UpdateEditorState(st);
 				did_work = true;
@@ -2018,4 +2085,5 @@ SHAREDSYMBOL void WINAPI ExitFARW()
 {
 	StopTickThread();
 	g_editors.clear();
+	g_watch_active = false;
 }

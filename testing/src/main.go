@@ -300,7 +300,10 @@ func aux_Panic(message string) {
 	log.Println("------------------- SNAPSHOT -------------------")
 	fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
 	log.Println("------------------------------------------------")
-	panic("\x1b[1;31m" + message + "\x1b[39;22m")
+	log.Println("\x1b[1;31m" + message + "\x1b[39;22m")
+//	log.Println("Backtrace:", g_vm.CaptureCallStack(-1, []goja.StackFrame{}))
+	g_vm.Interrupt(message)
+//	panic("\x1b[1;31m" + message + "\x1b[39;22m")
 }
 
 
@@ -370,6 +373,7 @@ func initVM() {
 	setVMFunction("ExpectString", far2l_ReqRecvExpectString)
 	setVMFunction("ExpectNoStrings", far2l_ReqRecvExpectNoStrings)
 	setVMFunction("ExpectNoString", far2l_ReqRecvExpectNoString)
+	setVMFunction("SetDefaultExpectTimeout", far2l_SetDefaultExpectTimeout)
 
 	setVMFunction("ExpectAppExit", far2l_ExpectExit)
 
@@ -511,10 +515,14 @@ func runTest(file string) {
 	g_calm = false
 	g_last_error = ""
 	data, err := ioutil.ReadFile(file)
-	if err != nil { aux_Panic(err.Error()) }
+	if err != nil {
+		panic("[FAILED] Error '" + err.Error() + "' reading test" + file)
+	}
 	src := string(data)
 	rv, err := g_vm.RunString(src)
-	if err != nil { aux_Panic(err.Error()) }
+	if err != nil {
+		panic("[FAILED] Error '" + err.Error() + "' running test" + file)
+	}
 	if code := rv.Export().(int64); code != 0 {
 		log.Println("[FAILED] Error", code, "from test", file)
 	}

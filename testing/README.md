@@ -15,7 +15,10 @@ In general test must:
  * send close command to far2l, e.g. by pressing F10 using TypeFKey(10) and then wait for its shutdown by `ExpectAppExit()`
  * test may also start far2l again to do some other actions withing same test-case, buts this needed rarely
 
-Note that by default many functions that perform validations, like `ExpectString()`, `ExpectAppExit()` etc - abort execution in case of unexpected results. This can be changed by BeCalm() function (see below) if need. But typically its behavior you exactly want.
+Extra notes:
+ * By default many functions that perform validations, like `ExpectString()`, `ExpectAppExit()` etc - abort execution in case of unexpected results. This can be changed by BeCalm() function (see below) if need. But typically its behavior you exactly want.
+ * Function call invokations may omit tail arguments causing them to be treated as zeroes (which in many cases handled specifically)
+
 
 ## Functions list goes below
 
@@ -141,8 +144,9 @@ CheckCellChar returns cell character. But if no character matched then aborts ex
 `ExpectString("string", x, y, w, h, timeout_ms)`  
 `ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
 Waits given amount of milliseconds for given string/any of given strings will appear in provided rectangular area.  
-if x/y < 0 (negative) - then they treated as offsets from right/bottom screen edges
-if w/h <= 0 (zero or negative) - then they treated as offsets from right/bottom screen edges - x/y
+if x/y < 0 (negative) - then they treated as offsets from right/bottom screen edges  
+if w/h <= 0 (zero or negative) - then they treated as offsets from right/bottom screen edges - x/y  
+if timeout_ms == 0 then default timeout is used (see SetDefaultExpectTimeout)  
 Aborts execution in case no string found before timeout reached unless in calm mode, otherwise:  
 Returns result as structure of following fields, that defines index of found string and its coordinates or -1 if no string found:
  * I uint32
@@ -159,7 +163,14 @@ Returns result as structure of following fields, that defines index of found str
 
 `ExpectAppExit(code, timeout_ms) string`  
 Expects that far2l will exit with specified exit code within given milliseconds of timeout.  
+if timeout_ms == 0 then default timeout is used (see SetDefaultExpectTimeout)  
 Aborts execution if app not exited during timeout or exited with wrong code (unless in calm mode).
+
+---------------------------------------------------------
+
+`SetDefaultExpectTimeout(timeout_ms uint32)`  
+Uses given timeout in all subsequent Expect* functions that have timeout missing or specific as zero  
+By default it is set to 10000 msec
 
 ---------------------------------------------------------
 
@@ -336,6 +347,5 @@ Performs mouse left button/right button/left double click at specified position
 `RClickWhereFound(where)`  
 `DblClickWhereFound(where)`  
 Performs mouse left button/right button/left double click at location returned by any ExpectString-like function
-
 
 ---------------------------------------------------------

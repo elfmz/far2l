@@ -15,6 +15,26 @@ type far2l_FoundString struct {
 	Y uint32
 }
 
+var g_default_expect_tmout uint32 = 10000
+
+func prepareXYWH(x int32, y int32, w int32, h int32, what string) (int32, int32, int32, int32) {
+	if x < 0 || y < 0 || w <= 0 || h <= 0 {
+		far2l_ReqRecvStatus()
+	}
+	saved_x:= x
+	saved_y:= y
+	saved_w:= w
+	saved_h:= h
+	if x < 0 { x = int32(g_status.Width) + x; }
+	if y < 0 { y = int32(g_status.Height) + y; }
+	if w <= 0 { w = int32(g_status.Width) + w; }
+	if h <= 0 { h = int32(g_status.Height) + h; }
+	if x < 0 { x = 0; aux_Warn(fmt.Sprintf("%s - underflow: x=%d width=%d", what, saved_x, g_status.Width)); }
+	if y < 0 { y = 0; aux_Warn(fmt.Sprintf("%s - underflow: y=%d height=%d", what, saved_y, g_status.Height)); }
+	if w < 0 { w = 0; aux_Warn(fmt.Sprintf("%s - underflow: w=%d width=%d", what, saved_w, g_status.Width)); }
+	if h < 0 { h = 0; aux_Warn(fmt.Sprintf("%s - underflow: h=%d height=%d", what, saved_h, g_status.Height)); }
+	return x, y, w, h
+}
 
 func far2l_ReqRecvExpectString(str string, x int32, y int32, w int32, h int32, tmout uint32) far2l_FoundString {
 	return far2l_ReqRecvExpectXStrings([]string{str}, x, y, w, h, tmout, true)
@@ -33,22 +53,15 @@ func far2l_ReqRecvExpectNoStrings(str_vec []string, x int32, y int32, w int32, h
 }
 
 func far2l_ReqRecvExpectXStrings(str_vec []string, x int32, y int32, w int32, h int32, tmout uint32, need_presence bool) far2l_FoundString {
+	if tmout == 0 {
+		tmout = g_default_expect_tmout
+	}
 	performAutoSync()
 	if x < 0 || y < 0 || w <= 0 || h <= 0 {
 		far2l_ReqRecvStatus()
 	}
-	saved_x:= x
-	saved_y:= y
-	saved_w:= w
-	saved_h:= h
-	if x < 0 { x = int32(g_status.Width) + x; }
-	if y < 0 { y = int32(g_status.Height) + y; }
-	if w <= 0 { w = int32(g_status.Width) + w; }
-	if h <= 0 { h = int32(g_status.Height) + w; }
-	if x < 0 { x = 0; aux_Warn(fmt.Sprintf("Underflow: x=%d width=%d", saved_x, g_status.Width)); }
-	if y < 0 { y = 0; aux_Warn(fmt.Sprintf("Underflow: y=%d height=%d", saved_y, g_status.Height)); }
-	if w < 0 { w = 0; aux_Warn(fmt.Sprintf("Underflow: w=%d width=%d", saved_w, g_status.Width)); }
-	if h < 0 { h = 0; aux_Warn(fmt.Sprintf("Underflow: h=%d height=%d", saved_h, g_status.Height)); }
+	x, y, w, h = prepareXYWH(x, y, w, h, "ReqRecvExpectXStrings")
+
 	if (need_presence) {
 		binary.LittleEndian.PutUint32(g_buf[0:], 3) //TEST_CMD_WAIT_STRING
 	} else {
@@ -103,11 +116,11 @@ func far2l_ReqRecvExpectXStrings(str_vec []string, x int32, y int32, w int32, h 
 	return out
 }
 
-func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
+func far2l_ReqRecvReadCellRaw(x, y int32) far2l_CellRaw {
 	performAutoSync()
 	binary.LittleEndian.PutUint32(g_buf[0:], 2) // TEST_CMD_READ_CELL
-	binary.LittleEndian.PutUint32(g_buf[4:], x) // left
-	binary.LittleEndian.PutUint32(g_buf[8:], y) // top
+	binary.LittleEndian.PutUint32(g_buf[4:], uint32(x)) // left
+	binary.LittleEndian.PutUint32(g_buf[8:], uint32(y)) // top
 	far2l_WriteToPeer(g_buf[0:12])
 	far2l_ReadSocket(far2lReadCellPacketSize, 0)
 	return far2l_CellRaw {
@@ -116,7 +129,7 @@ func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
 	}
 }
 
-func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
+func far2l_ReqRecvReadCell(x, y int32) far2l_Cell {
 	raw_cell := far2l_ReqRecvReadCellRaw(x, y)
 	return far2l_Cell {
 		Text:         raw_cell.Text,
@@ -140,7 +153,7 @@ func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
 	}
 }
 
-func far2l_CheckBoundedLine(expected string, left uint32, top uint32, width uint32, trim_chars string) string {
+func far2l_CheckBoundedLine(expected string, left, top, width int32, trim_chars string) string {
 	line:= far2l_BoundedLine(left, top, width, trim_chars)
 	if line != expected {
 		setErrorString(fmt.Sprintf("Line at [%d +%d : %d] not expected: '%v'", left, width, top, line))
@@ -148,19 +161,19 @@ func far2l_CheckBoundedLine(expected string, left uint32, top uint32, width uint
 	return line
 }
 
-func far2l_BoundedLine(left uint32, top uint32, width uint32, trim_chars string) string {
+func far2l_BoundedLine(left, top, width int32, trim_chars string) string {
 	lines:= far2l_BoundedLines(left, top, width, 1, trim_chars)
 	return lines[0]
 }
 
-func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, trim_chars string) []string {
+func far2l_BoundedLines(left, top, width, height int32, trim_chars string) []string {
+	left, top, width, height = prepareXYWH(left, top, width, height, "BoundedLines")
+	return far2l_GetBoundedLines(left, top, width, height, trim_chars)
+}
+
+func far2l_GetBoundedLines(left, top, width, height int32, trim_chars string) []string {
+	performAutoSync()
 	lines:= []string{}
-	if width == 0xffffffff {
-		width = g_status.Width
-	}
-	if height == 0xffffffff {
-		height = g_status.Height
-	}
 	for y := top; y < top + height; y++ {
 		line:= ""
 		for x := left; x < left + width; x++ {
@@ -173,17 +186,18 @@ func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, tr
 			lines = append(lines, line)
 		}
 	}
+	log.Printf("Got %d lines at [%d:%d] - [%d:%d]\n", len(lines), left, top, left + width - 1, top + height - 1)
 	return lines
 }
 
-func far2l_SurroundedLines(x uint32, y uint32, boundary_chars string, trim_chars string) []string {
-	var left, top, width, height uint32
+func far2l_SurroundedLines(x, y int32, boundary_chars string, trim_chars string) []string {
+	var left, top, width, height int32
 	far2l_ReqRecvStatus()
 
 	for left = x; left > 0 && !far2l_CellCharMatches(left - 1, y, boundary_chars); left-- {
 	}
 
-	for width = 1; left + width < g_status.Width && !far2l_CellCharMatches(left + width, y, boundary_chars); width++ {
+	for width = 1; left + width < int32(g_status.Width) && !far2l_CellCharMatches(left + width, y, boundary_chars); width++ {
 	}
 
 	// top & bottom edges has some quirks due to they may contains caption, hints, time etc..
@@ -193,21 +207,21 @@ func far2l_SurroundedLines(x uint32, y uint32, boundary_chars string, trim_chars
 		!far2l_CellCharMatches(left + width - 1, top - 1, boundary_chars); top-- {
 	}
 
-	for height = 1; top + height < g_status.Height &&
+	for height = 1; top + height < int32(g_status.Height) &&
 		!far2l_CellCharMatches(left, top + height, boundary_chars) &&
 		!far2l_CellCharMatches(left + width / 2, top + height, boundary_chars) &&
 		!far2l_CellCharMatches(left + width - 1, top + height, boundary_chars); height++ {
 	}
 
-	return far2l_BoundedLines(left, top, width, height, trim_chars)
+	return far2l_GetBoundedLines(left, top, width, height, trim_chars)
 }
 
-func far2l_CellCharMatches(x uint32, y uint32, chars string) bool {
+func far2l_CellCharMatches(x, y int32, chars string) bool {
 	cell := far2l_ReqRecvReadCellRaw(x, y)
 	return cell.Text != "" && strings.Contains(chars, cell.Text)
 }
 
-func far2l_CheckCellChar(x uint32, y uint32, chars string) string {
+func far2l_CheckCellChar(x, y int32, chars string) string {
 	cell := far2l_ReqRecvReadCellRaw(x, y)
 	if cell.Text == "" || !strings.Contains(chars, cell.Text) {
 		setErrorString(fmt.Sprintf("Cell at %d:%d = '%s' doesnt represent any of: '%s'", x, y, cell.Text, chars))
@@ -215,7 +229,7 @@ func far2l_CheckCellChar(x uint32, y uint32, chars string) string {
 	return cell.Text
 }
 
-func far2l_BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool {
+func far2l_BoundedLinesMatchTextFile(left, top, width, height int32, fpath string) bool {
 	screen_lines:= far2l_BoundedLines(left, top, width, height, "")
 	file_lines:= aux_LoadTextFile(fpath)
 	for i:= 0; i != len(screen_lines) && i != len(file_lines); i++ {
@@ -235,16 +249,19 @@ func far2l_BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, heig
 	return true
 }
 
-func far2l_BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) {
+func far2l_BoundedLinesSaveAsTextFile(left, top, width, height int32, fpath string) {
 	screen_lines:= far2l_BoundedLines(left, top, width, height, "")
 	aux_SaveTextFile(fpath, screen_lines)
 }
 
 
-func far2l_ExpectExit(code int, timeout_ms int) string {
+func far2l_ExpectExit(code int, tmout int) string {
+	if tmout == 0 {
+		tmout = int(g_default_expect_tmout)
+	}
 	far2l_ReqBye()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout_ms) * time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(tmout) * time.Millisecond)
 	defer cancel() 
 	select {
 		case result:= <-g_channel:
@@ -260,4 +277,8 @@ func far2l_ExpectExit(code int, timeout_ms int) string {
 	}
 	far2l_Close()
 	return ""
+}
+
+func far2l_SetDefaultExpectTimeout(tmout uint32) {
+	g_default_expect_tmout = tmout
 }

@@ -3,9 +3,9 @@ profile=mydir + "/profile"
 paneldir=mydir + "/test-paneldir"
 MkdirsAll([profile, paneldir], 0700)
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", paneldir, "-cd", paneldir]);
-ExpectString("Help - FAR2L", 0, 0, 0, 0, 10000);
+ExpectString("Help - FAR2L");
 TypeEscape(10)
-ExpectString("OSC52", 0, 0, -1, -1, 10000);
+ExpectString("OSC52");
 TypeEscape(10)
 status = AppStatus();
 
@@ -14,7 +14,7 @@ TypeFKey(9)
 TypeText("o")
 TypeEnter()
 
-ExpectString("═ System settings ═", 0, 0, 0, 0, 10000)
+ExpectString("═ System settings ═")
 /*	══════════════════ System settings ═══════════════════╗
 	[x] Enable sudo privileges elevation                  ║
 	    Password expiration (sec): 900                    ║
@@ -42,19 +42,19 @@ ExpectString("═ System settings ═", 0, 0, 0, 0, 10000)
 	──────────────────────────────────────────────────────╢
 	                  { OK } [ Cancel ]                   ║ */
 
-LClickWhereFound(ExpectString("[x] Enable sudo", 0, 0, 0, 0, 1000))
-LClickWhereFound(ExpectString("[ ] Delete to Trash", 0, 0, 0, 0, 1000))
-LClickWhereFound(ExpectString("[x] Scan symbolic links", 0, 0, 0, 0, 1000))
-LClickWhereFound(ExpectString("[ ] Use only files size in estimation", 0, 0, 0, 0, 1000))
-LClickWhereFound(ExpectString("[ ] Inactivity time", 0, 0, 0, 0, 1000))
-LClickWhereFound(ExpectString("[ ] Auto save setup", 0, 0, 0, 0, 1000))
+LClickWhereFound(ExpectString("[x] Enable sudo"))
+LClickWhereFound(ExpectString("[ ] Delete to Trash"))
+LClickWhereFound(ExpectString("[x] Scan symbolic links"))
+LClickWhereFound(ExpectString("[ ] Use only files size in estimation"))
+LClickWhereFound(ExpectString("[ ] Inactivity time"))
+LClickWhereFound(ExpectString("[ ] Auto save setup"))
 LClickWhereFound(ExpectString("15 minutes"))
 TypeText("42")
 LClickWhereFound(ExpectString("{ OK }"))
 TypeFKey(10)
-ExpectString("Do you want to quit FAR?", 0, 0, 0, 0, 10000)
+ExpectString("Do you want to quit FAR?")
 TypeEnter()
-ExpectAppExit(0, 10000)
+ExpectAppExit(0)
 
 // start again and check settings changes really saved
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", paneldir, "-cd", paneldir]);
@@ -65,13 +65,13 @@ TypeFKey(9)
 TypeText("o")
 TypeEnter()
 
-ExpectString("═ System settings ═", 0, 0, 0, 0, 10000)
-ExpectString("[ ] Enable sudo", 0, 0, 0, 0, 1000)
-ExpectString("[x] Delete to Trash", 0, 0, 0, 0, 1000)
-ExpectString("[ ] Scan symbolic links", 0, 0, 0, 0, 1000)
-ExpectString("[x] Use only files size in estimation", 0, 0, 0, 0, 1000)
-ExpectString("[x] Inactivity time", 0, 0, 0, 0, 1000)
-ExpectString("[x] Auto save setup", 0, 0, 0, 0, 1000)
+ExpectString("═ System settings ═")
+ExpectString("[ ] Enable sudo")
+ExpectString("[x] Delete to Trash")
+ExpectString("[ ] Scan symbolic links")
+ExpectString("[x] Use only files size in estimation")
+ExpectString("[x] Inactivity time")
+ExpectString("[x] Auto save setup")
 
 ExpectString("42 minutes")
 

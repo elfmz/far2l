@@ -284,11 +284,13 @@ enum PopupItemId
 	POPUP_PREV = 1,
 	POPUP_NEXT = 2,
 	POPUP_REVERT = 3,
-	POPUP_BASELINE = 4,
+	POPUP_SETTINGS = 4,
+	POPUP_HEADER = 5,
 	POPUP_COUNT
 };
 
 static bool GetEditorInfo(EditorInfo &ei);
+static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::string *repo_root = nullptr);
 
 static void MoveEditorToHunk(const Hunk &h)
 {
@@ -1246,12 +1248,11 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 			const int screen_w = static_cast<int>(fr.Right) - static_cast<int>(fr.Left) + 1;
 			max_w = std::max(min_w, (screen_w * 2) / 3);
 		}
-		const int baseline_header_cells = st.baseline_label.empty()
-				? 0
-				: static_cast<int>(g_fsf.StrCellsCount(st.baseline_label.c_str(), st.baseline_label.size()));
-		const int baseline_header_x = 19;
+		const std::wstring popup_header = st.baseline_label + L"  GitGutter";
+		const int header_cells = static_cast<int>(g_fsf.StrCellsCount(popup_header.c_str(), popup_header.size()));
+		const int header_x = 24;
 		const int dlg_w = std::min(max_w,
-				std::max({min_w, max_line + 4, baseline_header_x + baseline_header_cells + 2}));
+				std::max({min_w, max_line + 4, header_x + header_cells + 2}));
 		const int dlg_h = std::min(30, std::max(min_h, lines + 2));
 
 		FarDialogItem items[POPUP_COUNT]{};
@@ -1288,12 +1289,20 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 		items[POPUP_REVERT].Flags = 0;
 		items[POPUP_REVERT].PtrData = L"\x21A9";
 
-		items[POPUP_BASELINE].Type = DI_TEXT;
-		items[POPUP_BASELINE].X1 = baseline_header_x;
-		items[POPUP_BASELINE].Y1 = 0;
-		items[POPUP_BASELINE].X2 = dlg_w - 1;
-		items[POPUP_BASELINE].Y2 = 0;
-		items[POPUP_BASELINE].PtrData = st.baseline_label.c_str();
+		items[POPUP_SETTINGS].Type = DI_BUTTON;
+		items[POPUP_SETTINGS].X1 = 17;
+		items[POPUP_SETTINGS].Y1 = 0;
+		items[POPUP_SETTINGS].X2 = 19;
+		items[POPUP_SETTINGS].Y2 = 0;
+		items[POPUP_SETTINGS].Flags = 0;
+		items[POPUP_SETTINGS].PtrData = L"\x2699";
+
+		items[POPUP_HEADER].Type = DI_TEXT;
+		items[POPUP_HEADER].X1 = header_x;
+		items[POPUP_HEADER].Y1 = 0;
+		items[POPUP_HEADER].X2 = dlg_w - 1;
+		items[POPUP_HEADER].Y2 = 0;
+		items[POPUP_HEADER].PtrData = popup_header.c_str();
 
 		if (focus_item != POPUP_PREV && focus_item != POPUP_NEXT) {
 			focus_item = POPUP_MEMO;
@@ -1349,6 +1358,10 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
 			}
+		} else if (rc == POPUP_SETTINGS) {
+			const std::wstring git_info = StrMB2Wide(st.repo_root.c_str());
+			ShowConfigDialog(&git_info, &st.repo_root);
+			return;
 		} else if (rc == POPUP_REVERT) {
 			const Hunk old_hunk = st.hunks[index];
 			RevertHunkInEditor(st.hunks[index]);
@@ -1461,7 +1474,8 @@ static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
 		line = h.start;
 		return true;
 	}
-	return false;
+	line = st.hunks.front().start;
+	return true;
 }
 
 static bool HandleCtrlG(const INPUT_RECORD *ir)
@@ -1518,7 +1532,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->PluginMenuStrings = g_plugin_menu_strings;
 }
 
-static int ShowConfigDialog(const std::wstring *git_info = nullptr, const std::string *repo_root = nullptr)
+static int ShowConfigDialog(const std::wstring *git_info, const std::string *repo_root)
 {
 	enum
 	{

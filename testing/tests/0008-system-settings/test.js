@@ -15,7 +15,7 @@ TypeText("o")
 TypeEnter()
 
 ExpectString("═ System settings ═")
-/*	══════════════════ System settings ═══════════════════╗
+/** ══════════════════ System settings ═══════════════════╗
 	[x] Enable sudo privileges elevation                  ║
 	    Password expiration (sec): 900                    ║
 	    [x] Always confirm modify operations              ║

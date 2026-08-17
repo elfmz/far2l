@@ -1,7 +1,7 @@
-#include <unordered_set>
-#include "Common.h"
 #include "ToolExec.h"
+#include "Common.h"
 #include "Settings.h"
+#include <unordered_set>
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300
@@ -38,25 +38,32 @@ void ToolExec::ErrorDialog(const char *pkg, int err)
 		ws_tool = StrMB2Wide(args.front());
 	}
 	if (s_warned_tools.insert(ws_tool).second) {
-		const auto &ws_pkg = MB2Wide(pkg);
-		const wchar_t *MsgItems[] = { g_settings.Msg(M_TITLE),
-			L"Failed to run tool:", ws_tool.c_str(),
-			L"Please install package:", ws_pkg.c_str(),
-			L"Ok"
-		};
+		const std::wstring ws_pkg = (pkg && *pkg) ? MB2Wide(pkg) : std::wstring();
+		std::vector<const wchar_t *> items;
+		items.push_back(g_settings.Msg(M_TITLE));
+		items.push_back(g_settings.Msg(M_FAILED_TO_RUN_TOOL));
+		items.push_back(ws_tool.c_str());
+		if (!ws_pkg.empty()) {
+			items.push_back(g_settings.Msg(M_PLEASE_INSTALL_PACKAGE));
+			items.push_back(ws_pkg.c_str());
+		}
 		errno = err;
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_OK, nullptr,
+					  items.data(), items.size(), 0);
 	}
 }
 
 void ToolExec::InfoDialog(const char *pkg)
 {
 	std::wstring tmp = g_settings.Msg(M_TITLE);
-	tmp+= L" - operation details\n";
-	tmp+= L"Package: ";
-	tmp+= MB2Wide(pkg);
-	tmp+= L'\n';
-	tmp+= L"Command:";
+	tmp += g_settings.Msg(M_OPERATION_DETAILS);
+	tmp += L'\n';
+	if (pkg && *pkg) {
+		tmp += g_settings.Msg(M_PACKAGE);
+		tmp += MB2Wide(pkg);
+		tmp += L'\n';
+	}
+	tmp += g_settings.Msg(M_COMMAND);
 	for (const auto &a : GetArguments()) {
 		tmp+= L" \"";
 		StrMB2Wide(a, tmp, true);
@@ -65,26 +72,42 @@ void ToolExec::InfoDialog(const char *pkg)
 	g_far.Message(g_far.ModuleNumber, FMSG_MB_OK | FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 }
 
-void ToolExec::ProgressDialog(const std::string &file, const std::string &size_str, const char *pkg, const std::string &info)
+bool ToolExec::ProgressDialog(const std::string &file, const std::string &size_str, const char *pkg, const std::string &info)
 {
 	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 
 	std::wstring tmp = g_settings.Msg(M_TITLE);
 	tmp+= L'\n';
-	wchar_t buf[0x100]{}; swprintf(buf, ARRAYSIZE(buf) - 1, L"File of %s:", size_str.c_str());
+	wchar_t buf[0x100]{}; swprintf(buf, ARRAYSIZE(buf) - 1, g_settings.Msg(M_FILE_OF), size_str.c_str());
 	tmp+= buf;
 	StrMB2Wide(file, tmp, true);
 	tmp+= L'\n';
 	StrMB2Wide(info, tmp, true);
 	tmp+= L'\n';
-	tmp+= L"\n&Skip";
-	tmp+= L"\n&Info";
+	tmp+= L'\n';
+	tmp+= g_settings.Msg(M_SKIP);
+	tmp+= L'\n';
+	tmp+= g_settings.Msg(M_INFO);
 	++s_in_progress_dialog;
-	while (!_exited && g_far.Message(g_far.ModuleNumber,
-			FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 2) == 1) {
-		InfoDialog(pkg);
+	bool user_cancelled = false;
+	while (!_exited) {
+		int result = g_far.Message(g_far.ModuleNumber,
+				FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 2);
+		if (result == 1) {
+			InfoDialog(pkg);
+		} else if (result == 0) {
+			// "Skip" button pressed by user
+			user_cancelled = true;
+			break;
+		} else {
+			// result == -1: Esc key or sCallback-injected ESC
+			// if _exited is already true, this ESC came from sCallback - not a user action
+			user_cancelled = !_exited;
+			break;
+		}
 	}
 	--s_in_progress_dialog;
+	return user_cancelled;
 }
 
 VOID ToolExec::sCallback(VOID *Context)
@@ -123,14 +146,17 @@ bool FN_PRINTF_ARGS(5) ToolExec::Run(const std::string &file, const std::string 
 		va_start(args, info_fmt);
 		const std::string &info = StrPrintfV(info_fmt, args);
 		va_end(args);
-		ProgressDialog(file, size_str, pkg, info);
-		if (_exited) {
-			Wait();
-		} else {
+		const bool user_cancelled = ProgressDialog(file, size_str, pkg, info);
+		if (user_cancelled) {
 			KillAndWait();
+		} else {
+			Wait();
 		}
 		// purge injected escape that could remain or anything else user could press
 		PurgeAccumulatedInputEvents();
+		if (user_cancelled) {
+			return false;
+		}
 	}
 	if (ExecError() != 0) {
 		ErrorDialog(pkg, ExecError());

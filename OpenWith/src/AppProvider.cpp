@@ -1,25 +1,41 @@
 #include "AppProvider.hpp"
-
-#include "XDGBasedAppProvider.hpp"
 #include "MacOSAppProvider.hpp"
-#include "DummyAppProvider.hpp"
+#include "XDGBasedAppProvider.hpp"
 
-std::unique_ptr<AppProvider> AppProvider::CreateAppProvider(TMsgGetter msg_getter)
+namespace openwith
 {
-	std::unique_ptr<AppProvider> provider;
-#ifdef __linux__
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+	std::unique_ptr<AppProvider> AppProvider::CreateAppProvider()
+	{
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+		return std::make_unique<XDGBasedAppProvider>();
 #elif defined(__APPLE__)
-	provider = std::make_unique<MacOSAppProvider>(msg_getter);
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+		return std::make_unique<MacOSAppProvider>();
 #else
-	provider = std::make_unique<DummyAppProvider>(msg_getter);
+		return nullptr;
 #endif
-
-	if (provider) {
-		provider->LoadPlatformSettings();
 	}
 
-	return provider;
-}
+
+	AppProvider* AppProvider::GetInstance()
+	{
+		static const std::unique_ptr<AppProvider> instance = CreateAppProvider();
+		return instance.get();
+	}
+
+
+	void AppProvider::CheckCancellation() const
+	{
+		if (_cancel_flag && _cancel_flag->load()) {
+			throw OperationCancelledException{};
+		}
+	}
+
+
+	void AppProvider::ReportProgress(const ProgressUpdate& update) const
+	{
+		if (_progress_cb) {
+			_progress_cb(update);
+		}
+	}
+
+} // namespace openwith

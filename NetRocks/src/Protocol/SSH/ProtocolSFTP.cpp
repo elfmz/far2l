@@ -161,6 +161,13 @@ ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
 {
 	StringConfig protocol_options(options);
 	_conn = std::make_shared<SFTPConnection>(host, port, username, password, protocol_options);
+
+	// resolve absolute home dir once; leave empty (best effort) if server refuses
+	char *resolved = sftp_canonicalize_path(_conn->sftp, ".");
+	if (resolved != NULL) {
+		_home = resolved;
+		ssh_string_free_char(resolved);
+	}
 }
 
 ProtocolSFTP::~ProtocolSFTP()
@@ -369,6 +376,11 @@ void ProtocolSFTP::SymlinkQuery(const std::string &link_path, std::string &link_
 
 	link_target = target;
 	ssh_string_free_char(target);
+}
+
+std::string ProtocolSFTP::RealPath(const std::string &path)
+{
+	return RealPathFromHome(_home, path);
 }
 
 class SFTPDirectoryEnumer : public IDirectoryEnumer

@@ -119,7 +119,7 @@ struct Param
 
 static bool is_param(const std::wstring &param_str)
 {
-	return !param_str.empty() && (param_str[0] == L'-' || param_str[0] == L'/');
+	return !param_str.empty() && (param_str[0] == L'-'/* || param_str[0] == L'/'*/);
 }
 
 static Param parse_param(const std::wstring &param_str)

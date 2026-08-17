@@ -69,29 +69,47 @@ struct ConfigOpt
 		void *p;
 	} const def;
 
-	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_, WORD size_, BYTE *data_bin_, const BYTE *def_bin_)
+	const wchar_t *help_topic;
+	const wchar_t *description;
+
+	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_,
+						WORD size_, BYTE *data_bin_, const BYTE *def_bin_,
+						const wchar_t *help_topic_ = nullptr, const wchar_t *description_ = nullptr)
 		: section{section_}, key{key_}, bin_size{size_}, save{save_},
-		type{T_BIN}, value{.bin = data_bin_}, def{.bin = def_bin_}
+		type{T_BIN}, value{.bin = data_bin_}, def{.bin = def_bin_},
+		help_topic{help_topic_}, description{description_}
 	{ }
 
-	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_, FARString *data_str_, const wchar_t *def_str_)
+	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_,
+						FARString *data_str_, const wchar_t *def_str_,
+						const wchar_t *help_topic_ = nullptr, const wchar_t *description_ = nullptr)
 		: section{section_}, key{key_}, bin_size{0}, save{save_},
-		type{T_STR}, value{.str = data_str_}, def{.str = def_str_}
+		type{T_STR}, value{.str = data_str_}, def{.str = def_str_},
+		help_topic{help_topic_}, description{description_}
 	{ }
 
-	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_, DWORD *data_dw_, DWORD def_dw_)
+	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_,
+						DWORD *data_dw_, DWORD def_dw_,
+						const wchar_t *help_topic_ = nullptr, const wchar_t *description_ = nullptr)
 		: section{section_}, key{key_}, bin_size{0}, save{save_},
-		type{T_DWORD}, value{.dw = data_dw_}, def{.dw = def_dw_}
+		type{T_DWORD}, value{.dw = data_dw_}, def{.dw = def_dw_},
+		help_topic{help_topic_}, description{description_}
 	{ }
 
-	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_, int *data_i_, int def_i_)
+	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_,
+						int *data_i_, int def_i_,
+						const wchar_t *help_topic_ = nullptr, const wchar_t *description_ = nullptr)
 		: section{section_}, key{key_}, bin_size{0}, save{save_},
-		type{T_INT}, value{.i = data_i_}, def{.i = def_i_}
+		type{T_INT}, value{.i = data_i_}, def{.i = def_i_},
+		help_topic{help_topic_}, description{description_}
 	{ }
 
-	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_, bool *data_b_, bool def_b_)
+	constexpr ConfigOpt(unsigned save_, const char *section_, const char *key_,
+						bool *data_b_, bool def_b_,
+						const wchar_t *help_topic_ = nullptr, const wchar_t *description_ = nullptr)
 		: section{section_}, key{key_}, bin_size{0}, save{save_},
-		type{T_BOOL}, value{.b = data_b_}, def{.b = def_b_}
+		type{T_BOOL}, value{.b = data_b_}, def{.b = def_b_},
+		help_topic{help_topic_}, description{description_}
 	{ }
 };
 

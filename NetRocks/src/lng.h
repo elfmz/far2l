@@ -315,6 +315,7 @@ enum LanguageID
 	MSHELLOptionsTitle,
 	MSHELLWay,
 	MSHELLWaySettings,
+	MFISHPLUSOptionsTitle,
 
 	MProxySettingsTitle,
 	MProxySettingsDisabled,
@@ -324,6 +325,8 @@ enum LanguageID
 	MAWSOprionTitle,
 	MAWSUserAgent,
 	MAWSRegion,
+	MAWSUsePathStyle,
+	MAWSUseUntrustedSSL,
 	MAWSUseProxy,
 	MAWSProxyHost,
 	MAWSProxyPort,

@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 class PluginBase:
     # private
     name = ""
-    number = 0
     # public
     USERHOME = ""  # ~/.config/far2l/plugins/python
     label = ""
@@ -62,7 +61,7 @@ class PluginBase:
         log.debug("Plugin.HandleCommandLine({})".format(line))
         return False
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         log.debug("Plugin.OpenPlugin({}) #{}".format(OpenFrom, self.label))
 
     def Close(self):

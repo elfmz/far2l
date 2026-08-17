@@ -16,7 +16,9 @@ right_items = [right + "/file1", right + "/file2", right + "/file3", right + "/s
 left_hash = HashPathes(left_items, true, true, true, true, true)
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
-ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+ExpectString("Help - FAR2L");
+TypeEscape(10)
+ExpectString("OSC52");
 
 status = AppStatus();
 
@@ -28,11 +30,11 @@ TypeIns()
 TypeIns()
 TypeIns()
 TypeFKey(6)
-ExpectString("════ Rename/Move ═════", 0, 0, -1, -1, 10000)
+ExpectString("════ Rename/Move ═════")
 TypeEnter()
 for (i = 0; ; ++i) {
 	Sleep(100)
-	ExpectNoString("════ Rename/Move ═════", 0, 0, -1, -1, 10000)
+	ExpectNoString("════ Rename/Move ═════")
 	right_hash = HashPathes(right_items, true, true, true, true, true)
 	if (right_hash == left_hash) {
 		break
@@ -50,8 +52,8 @@ if (CountExisting(left_items) != 0) {
 
 TypeFKey(10)
 //TTYWrite("\x1b[21~");
-ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
+ExpectString("Do you want to quit FAR?")
 //TTYWrite("\r\n");
 TypeEnter()
-ExpectAppExit(0, 10000)
+ExpectAppExit(0)
 0;

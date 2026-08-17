@@ -23,7 +23,7 @@ class Plugin(PluginBase):
             )
         self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         symbols = []
         for i in range(256):
             symbols.append(chr(i))

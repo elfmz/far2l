@@ -16,7 +16,9 @@ void DebugLog(const char *format, ...);
 }
 #endif
 
-// Debug macros - completely absent from release builds; enable with -DDEBUG
+// In release DBG(...) discards its arguments at the preprocessor level, so
+// DBG-only variables can be guarded with `#if defined(DEBUG) || defined(_DEBUG)`
+// at the call site without wrapping the DBG call itself.
 #if defined(DEBUG) || defined(_DEBUG)
 #define DBG(fmt, ...) DebugLog("[%s] " fmt, __FUNCTION__, ##__VA_ARGS__)
 #else

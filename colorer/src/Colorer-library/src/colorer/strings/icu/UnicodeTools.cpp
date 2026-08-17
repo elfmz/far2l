@@ -14,14 +14,16 @@ int UnicodeTools::getHex(UChar c)
   return c;
 }
 
-int UnicodeTools::getHexNumber(const UnicodeString* pstr)
+int UnicodeTools::getHexNumber(const UnicodeString* pstr, int ofs, int len)
 {
   int r = 0;
   int num = 0;
   if (pstr == nullptr) {
     return -1;
   }
-  for (int i = (*pstr).length() - 1; i >= 0; i--) {
+  if (len < 0)
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     int d = getHex((*pstr)[i]);
     if (d == -1) {
       return -1;
@@ -32,13 +34,15 @@ int UnicodeTools::getHexNumber(const UnicodeString* pstr)
   return num;
 }
 
-int UnicodeTools::getNumber(const UnicodeString* pstr)
+int UnicodeTools::getNumber(const UnicodeString* pstr, int ofs, int len)
 {
   int r = 1, num = 0;
   if (pstr == nullptr) {
     return -1;
   }
-  for (int i = pstr->length() - 1; i >= 0; i--) {
+  if (len < 0)
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     if ((*pstr)[i] > '9' || (*pstr)[i] < '0') {
       return -1;
     }

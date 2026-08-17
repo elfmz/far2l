@@ -4,10 +4,13 @@
 #include "FarEditorSet.h"
 
 FarEditorSet* editorSet = nullptr;
-bool inEventProcess = false;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString* PluginPath = nullptr;
+
+static bool inEventProcess = false;
+static bool inInputProcess = false;
+static bool isSynchroPending = false;
 
 std::unique_ptr<CerrLogger> logger;
 
@@ -55,7 +58,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo* fei)
   Info.FSF = &FSF;
 
   editorSet = nullptr;
-  inEventProcess = false;
+  inEventProcess = 0;
 }
 
 /**
@@ -135,20 +138,42 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
 {
-  if (inEventProcess) {
+  if (inEventProcess || inInputProcess) {
     return 0;
   }
 
-  inEventProcess = true;
+  inInputProcess = true;
   if (!editorSet) {
     editorSet = new FarEditorSet();
   }
 
   int result = editorSet->editorInput(ir);
 
-  inEventProcess = false;
+  inInputProcess = false;
+
   return result;
 }
+
+void colorerRequestSynchro()
+{
+  if (!isSynchroPending) {
+    isSynchroPending = true;
+    Info.AdvControl(Info.ModuleNumber, ACTL_SYNCHRO, nullptr, (void *)(LONG_PTR)FCTL_SYNCHRO_IDLE);
+  }
+}
+
+SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void* Param)
+{
+  (void) Param;
+  if (Event == SE_COMMONSYNCHRO) {
+    isSynchroPending = false;
+    if (editorSet) {
+      editorSet->onSynchroTick();
+    }
+  }
+  return 0;
+}
+
 
 /* ***** BEGIN LICENSE BLOCK *****
  * Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.

@@ -10,7 +10,7 @@ class Character
   static bool isLowerCase(UChar c);
   static bool isUpperCase(UChar c);
   static bool isLetter(UChar c);
-  static bool isLetterOrDigit(UChar c);
+  static bool isLetterOrDigitOrUnderscore(UChar c);
   static bool isDigit(UChar c);
 
   static UChar toLowerCase(UChar c);

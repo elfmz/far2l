@@ -118,6 +118,7 @@ limit {}, {}
         py_kbt_normal = [wcn]*12
         py_kbt_ctrl = [wcn]*12
         py_kbt_alt = [wcn]*12
+        py_kbt_shift = [wcn]*12
         py_kbt_ctrl_shift = [wcn]*12
         py_kbt_alt_shift = [wcn]*12
         py_kbt_ctrl_alt = [wcn]*12
@@ -130,6 +131,7 @@ limit {}, {}
             py_kbt_normal,
             py_kbt_ctrl,
             py_kbt_alt,
+            py_kbt_shift,
             py_kbt_ctrl_shift,
             py_kbt_alt_shift,
             py_kbt_ctrl_alt
@@ -153,7 +155,7 @@ limit {}, {}
         #InfoLinesNumber
         Info.PanelModesArray = self.pm
         Info.PanelModesNumber = 1
-        Info.StartPanelMode = PanelModeDetailed
+        Info.StartPanelMode = PanelModeAlternative
         Info.StartSortMode = self.ffic.SM_UNSORTED
         #Info.StartSortOrder
         Info.KeyBar = self.kbt
@@ -205,7 +207,7 @@ limit {}, {}
 
     def SetDirectory(self, dirname):
         if dirname == '..':
-            self.parent.dbhandler = SqlMetadataHandler(self.parent, self.parent.dbconn)
+            self.parent.HandlerPop()
             return 1
         return 0
 
@@ -302,13 +304,11 @@ limit {}, {}
 class SqlMetadataHandler(SqlData):
     def GetOpenPluginInfo(self, OpenInfo):
         #log.debug("usqlite.SqlMetadataHandler.GetOpenPluginInfo")
-        py_pm_py_titles = [
-            self.s2f("name"),
-            self.s2f("type"),
-            self.s2f("count"),
-        ]
-        self.py_pm_titles = self.ffi.new("wchar_t *[]", py_pm_py_titles)
-        py_pm = [
+        self.paneltitle = self.parent.label+': '+self.parent.dbname.split('/')[-1]
+        self.py_titles = ["name", "type", "size"]
+        self.py_titles_c = [self.s2f(n) for n in self.py_titles]
+        self.py_pm_titles = self.ffi.new("wchar_t *[]", self.py_titles_c)
+        self.py_pm = [
             self.s2f("N,C0,C1"),    # ColumnTypes
             self.s2f("0,5,6"),      # ColumnWidths
             self.py_pm_titles,      # ColumnTitles
@@ -320,22 +320,25 @@ class SqlMetadataHandler(SqlData):
             self.ffi.NULL,          # StatusColumnWidths
             [0,0],                  # Reserved
         ]
-        self.pm = self.ffi.new("struct PanelMode *", py_pm)
+        self.pm = self.ffi.new("struct PanelMode *", self.py_pm)
 
         wcn = self.ffi.cast("wchar_t *", self.ffi.NULL)
         py_kbt_normal = [wcn]*12
         py_kbt_ctrl = [wcn]*12
         py_kbt_alt = [wcn]*12
+        py_kbt_shift = [wcn]*12
         py_kbt_ctrl_shift = [wcn]*12
         py_kbt_alt_shift = [wcn]*12
         py_kbt_ctrl_alt = [wcn]*12
 
         py_kbt_normal[4-1]=self.s2f("DDL")
+        py_kbt_ctrl[4-1]=self.s2f("Pragma")
 
         self.py_kbt = [
             py_kbt_normal,
             py_kbt_ctrl,
             py_kbt_alt,
+            py_kbt_shift,
             py_kbt_ctrl_shift,
             py_kbt_alt_shift,
             py_kbt_ctrl_alt
@@ -343,7 +346,7 @@ class SqlMetadataHandler(SqlData):
         self.kbt = self.ffi.new("struct KeyBarTitles *", self.py_kbt)
 
         self.py_curdir = self.s2f(self.parent.dbname.split('/')[-1])
-        self.py_paneltitle = self.s2f(self.parent.label)
+        self.py_paneltitle = self.s2f(self.paneltitle)
 
         Info = self.ffi.cast("struct OpenPluginInfo *", OpenInfo)
         Info.Flags = (
@@ -358,8 +361,8 @@ class SqlMetadataHandler(SqlData):
         #InfoLines
         #InfoLinesNumber
         Info.PanelModesArray = self.pm
-        Info.PanelModesNumber = 1
-        Info.StartPanelMode = PanelModeDetailed
+        Info.PanelModesNumber = len(self.py_pm)
+        Info.StartPanelMode = PanelModeAlternative
         Info.StartSortMode = self.ffic.SM_UNSORTED
         #Info.StartSortOrder
         Info.KeyBar = self.kbt
@@ -373,6 +376,8 @@ class SqlMetadataHandler(SqlData):
 select
     name, type, sql
 from sqlite_master
+order by
+    type, name
 '''
         cur = self.conn.cursor()
         res = cur.execute(stmt)
@@ -384,6 +389,7 @@ from sqlite_master
             items = self.ffi.new("struct PluginPanelItem []", len(rows))
             for no in range(len(rows)):
                 rec = rows[no]
+                #log.debug(f'row[{no}] = {rec}')
                 names.append(self.s2f(rec[0])) # name
                 items[no].FindData.lpwszFileName = names[-1]
                 if rec[1] in ('table', 'view'):
@@ -398,10 +404,10 @@ from sqlite_master
                 names.append([self.s2f(rec[1]), self.s2f(names[-1])]) # type, size
                 names.append(self.ffi.new("wchar_t *[]", names[-1]))
                 items[no].CustomColumnData = names[-1]
-                items[no].CustomColumnNumber = 2
+                items[no].CustomColumnNumber = len(names[-2])
             self.Items = items
             self.names = names
-            self.rows = rows
+        self.rows = rows
 
         PanelItem = self.ffi.cast("struct PluginPanelItem **", PanelItem)
         ItemsNumber = self.ffi.cast("int *", ItemsNumber)
@@ -419,13 +425,31 @@ from sqlite_master
 
     def SetDirectory(self, dirname):
         if dirname == '..':
-            self.parent.info.Control(self.parent.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
+            self.parent.HandlerPop()
             return 1
         for rec in self.rows:
             if rec[0] == dirname and rec[1] in ('table', 'view'):
-                self.parent.dbhandler = SqlDataHandler(self.parent, self.parent.dbconn, dirname)
+                self.parent.HandlerPush(SqlDataHandler(self.parent, self.parent.dbconn, dirname))
                 return 1
         return 0
+
+    def EditData(self, data):
+        if data is None:
+            return
+        fd, fname = tempfile.mkstemp(suffix='.sql', prefix=None, dir='/tmp', text=True)
+        os.close(fd)
+        with open(fname, 'wt') as fp:
+            fp.write(data)
+        self.parent.info.Editor(
+            fname,
+            fname,
+            0, 0, -1, -1,
+            self.ffic.EF_DISABLEHISTORY,#|self.ffic.EF_DELETEONCLOSE,
+            0,
+            0,
+            0xFFFFFFFF,  # =-1=self.ffic.CP_AUTODETECT
+        )
+        os.unlink(fname)
 
     def ProcessKey(self, Key, ControlState):
         #log.debug('usqlite.SqlMetadataHandler.ProcessKey: key:{:x} state:{:x} f4:{}'.format(Key, ControlState, Key == self.ffic.VK_F4))
@@ -437,30 +461,70 @@ from sqlite_master
                     #log.debug('F4: rc={} {}'.format(rc, name))
                     for rec in self.rows:
                         if rec[0] == name:
-                            fd, fname = tempfile.mkstemp(suffix='.sql', prefix=None, dir='/tmp', text=True)
-                            os.close(fd)
-                            with open(fname, 'wt') as fp:
-                                fp.write(rec[2])
-                            self.parent.info.Editor(
-                                fname,
-                                fname,
-                                0, 0, -1, -1,
-                                self.ffic.EF_DISABLEHISTORY,#|self.ffic.EF_DELETEONCLOSE,
-                                0,
-                                0,
-                                0xFFFFFFFF,  # =-1=self.ffic.CP_AUTODETECT
-                            )
-                            os.unlink(fname)
+                            self.EditData(rec[2])
                             break
                 return True
-            #elif ControlState & self.ffic.PKF_SHIFT:
+            elif ControlState & self.ffic.PKF_CONTROL:
+                data = []
+                rec = self.conn.execute("select sqlite_version()").fetchone()
+                data.append("/*")
+                data.append(f"SQLite version: {rec[0]}")
+                data.append("SQLite compile options:")
+                for r in self.conn.execute("pragma compile_options").fetchall():
+                    data.append(f"    {r[0]}")
+                data.append('')
+                data.append("Pragmas:")
+                data.append("*/")
+                for pragma in (
+                    "auto_vacuum",
+                    "automatic_index",
+                    "busy_timeout",
+                    "cache_size",
+                    "checkpoint_fullfsync",
+                    "defer_foreign_keys",
+                    "encoding",
+                    "foreign_keys",
+                    "freelist_count",
+                    "fullfsync",
+                    "ignore_check_constraints",
+                    "integrity_check",
+                    "journal_mode",
+                    "journal_size_limit",
+                    "legacy_alter_table",
+                    "legacy_file_format",
+                    "locking_mode",
+                    "max_page_count",
+                    "page_count",
+                    "page_size",
+                    "quick_check",
+                    "read_uncommitted",
+                    "recursive_triggers",
+                    "reverse_unordered_selects",
+                    "schema_version",
+                    "secure_delete",
+                    "synchronous",
+                    "temp_store",
+                    "user_version",
+                    "wal_autocheckpoint",
+                    "wal_checkpoint",
+                    "writable_schema",
+                ):
+                    rec = self.conn.execute("pragma %s" % pragma).fetchone()
+                    if rec:
+                        data.append(f"pragma {pragma} = {rec[0]}")
+                    else:
+                        data.append(f"-- pragma {pragma} = --unset--")
+                data.append('')
+                self.EditData('\n'.join(data))
+            return True
+
         return False
 
 
 
 class Plugin(PluginVFS):
     label = "Python usqlite"
-    openFrom = ["PLUGINSMENU", "DISKMENU"]
+    openFrom = ["PLUGINSMENU"]
 
     dbname = ''
 
@@ -468,7 +532,9 @@ class Plugin(PluginVFS):
         super().__init__(parent, info, ffi, ffic)
         self.dbname = name
         self.dbconn = conn
-        self.dbhandler = SqlMetadataHandler(self, self.dbconn)
+        self.dbhandlers = []
+        self.dbhandler = None
+        self.HandlerPush(SqlMetadataHandler(self, self.dbconn))
 
     def Close(self):
         if self.dbhandler:
@@ -478,6 +544,26 @@ class Plugin(PluginVFS):
         self.dbconn = None
         self.dbhandler = None
         super().Close()
+
+    def HandlerPush(self, handler):
+        if self.dbhandler:
+            pnl = self.panel.GetPanelInfo()
+            data = pnl.TopPanelItem, pnl.CurrentItem
+            self.dbhandlers.append((self.dbhandler, data))
+
+        self.dbhandler = handler
+
+    def HandlerPop(self):
+        if self.dbhandlers:
+            self.dbhandler, data = self.dbhandlers.pop()
+            redraw = self.ffi.new('struct PanelRedrawInfo *')
+            redraw.TopPanelItem = data[0]
+            redraw.CurrentItem = data[1]
+            self.panel.UpdatePanel()
+            self.panel.RedrawPanel(redraw)
+        else:
+            self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
+            self.dbhandler = None
 
     @staticmethod
     def OpenFilePlugin(parent, info, ffi, ffic, Name, Data, DataSize, OpMode):

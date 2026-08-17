@@ -9,14 +9,10 @@
 
 CharacterClass::CharacterClass()
 {
-  infoIndex = new BitArray*[256];
-  memset(infoIndex, 0, 256 * sizeof(*infoIndex));
 }
 
 CharacterClass::~CharacterClass()
 {
-  clear();
-  delete[] infoIndex;
 }
 
 /**
@@ -192,12 +188,7 @@ std::unique_ptr<CharacterClass> CharacterClass::createCharClass(const UnicodeStr
 
 void CharacterClass::addChar(wchar c)
 {
-  BitArray* tablePos = infoIndex[(c >> 8) & 0xFF];
-  if (!tablePos) {
-    tablePos = new BitArray();
-    infoIndex[(c >> 8) & 0xFF] = tablePos;
-  }
-  tablePos->setBit(c & 0xFF);
+  infoIndex[(c >> 8) & 0xFF].setBit(c & 0xFF);
 }
 
 void CharacterClass::add(wchar c)
@@ -207,24 +198,20 @@ void CharacterClass::add(wchar c)
 
 void CharacterClass::clearChar(wchar c)
 {
-  BitArray* tablePos = infoIndex[(c >> 8) & 0xFF];
-  if (!tablePos) return;
-  tablePos->clearBit(c & 0xFF);
+  infoIndex[(c >> 8) & 0xFF].clearBit(c & 0xFF);
 }
 
 void CharacterClass::addRange(wchar s, wchar e)
 {
   for (int ti = (int)(s >> 8) & 0xFF; ti <= (int)((e >> 8) & 0xFF); ti++) {
-    if (!infoIndex[ti]) infoIndex[ti] = new BitArray();
-    infoIndex[ti]->addRange((ti == (int)(s >> 8)) ? s & 0xFF : 0, (ti == (int)(e >> 8)) ? e & 0xFF : 0xFF);
+    infoIndex[ti].addRange((ti == (int)(s >> 8)) ? s & 0xFF : 0, (ti == (int)(e >> 8)) ? e & 0xFF : 0xFF);
   }
 }
 
 void CharacterClass::clearRange(wchar s, wchar e)
 {
   for (int ti = (s >> 8) & 0xFF; ti <= (int)((e >> 8) & 0xFF); ti++) {
-    if (!infoIndex[ti]) infoIndex[ti] = new BitArray();
-    infoIndex[ti]->clearRange(ti == (int)(s >> 8) ? s & 0xFF : 0, ti == (int)(e >> 8) ? e & 0xFF : 0xFF);
+    infoIndex[ti].clearRange(ti == (int)(s >> 8) ? s & 0xFF : 0, ti == (int)(e >> 8) ? e & 0xFF : 0xFF);
   }
 }
 
@@ -234,12 +221,7 @@ void CharacterClass::addCategory(ECharCategory cat)
   for (int i = 0; i < 0x100; i++) {
     unsigned short pos = arr_idxCharCategoryIdx[(int(cat) - 1) * 0x100 + i];
     if (!pos) continue;
-    BitArray* tablePos = infoIndex[i];
-    if (!tablePos) {
-      tablePos = new BitArray();
-      infoIndex[i] = tablePos;
-    }
-    tablePos->addBitArray((char*)(arr_idxCharCategory + pos), 8 * 4);
+    infoIndex[i].addBitArray((char*)(arr_idxCharCategory + pos), 8 * 4);
   }
 }
 
@@ -263,12 +245,7 @@ void CharacterClass::clearCategory(ECharCategory cat)
   for (int i = 0; i < 0x100; i++) {
     unsigned short pos = arr_idxCharCategoryIdx[(int(cat) - 1) * 0x100 + i];
     if (!pos) continue;
-    BitArray* tablePos = infoIndex[i];
-    if (!tablePos) {
-      tablePos = new BitArray();
-      infoIndex[i] = tablePos;
-    }
-    tablePos->clearBitArray((char*)(arr_idxCharCategory + pos), 8 * 4);
+    infoIndex[i].clearBitArray((char*)(arr_idxCharCategory + pos), 8 * 4);
   }
 }
 
@@ -289,53 +266,37 @@ void CharacterClass::clearCategory(const char* cat)
 void CharacterClass::addClass(const CharacterClass &cclass)
 {
   for (int p = 0; p < 256; p++) {
-    if (!infoIndex[p]) infoIndex[p] = new BitArray();
-    infoIndex[p]->addBitArray(cclass.infoIndex[p]);
+    infoIndex[p].addBitArray(&cclass.infoIndex[p]);
   }
 }
 
 void CharacterClass::intersectClass(const CharacterClass &cclass)
 {
   for (int p = 0; p < 256; p++) {
-    if (infoIndex[p])
-      infoIndex[p]->intersectBitArray(cclass.infoIndex[p]);
+    infoIndex[p].intersectBitArray(&cclass.infoIndex[p]);
   }
 }
 
 void CharacterClass::clearClass(const CharacterClass &cclass)
 {
   for (int p = 0; p < 256; p++)
-    if (infoIndex[p])
-      infoIndex[p]->clearBitArray(cclass.infoIndex[p]);
+    infoIndex[p].clearBitArray(&cclass.infoIndex[p]);
 }
 
 void CharacterClass::clear()
 {
   for (int i = 0; i < 256; i++)
-    if (infoIndex[i]) {
-      delete infoIndex[i];
-      infoIndex[i] = nullptr;
-    }
+    infoIndex[i].clearAll();
 }
 
 void CharacterClass::fill()
 {
   for (int i = 0; i < 256; i++) {
-    if (!infoIndex[i]) infoIndex[i] = new BitArray();
-    infoIndex[i]->addRange(0, 0xFF);
+    infoIndex[i].setAll();
   }
 }
 
-bool CharacterClass::inClass(wchar c) const
+void CharacterClass::freeze()
 {
-  BitArray* tablePos = infoIndex[(c >> 8) & 0xFF];
-  if (!tablePos) return false;
-  return tablePos->getBit(c & 0xFF);
 }
 
-bool CharacterClass::contains(wchar c) const
-{
-  return inClass(c);
-}
-
-void CharacterClass::freeze() {}

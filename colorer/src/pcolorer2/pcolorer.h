@@ -8,6 +8,11 @@ extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
 extern UnicodeString* PluginPath;
 
+// Requests a synchro event to continue background parsing almost
+// immediately (without waiting for the next KEY_IDLE). Collapses
+// repeated requests until the pending one is delivered.
+void colorerRequestSynchro();
+
 /** FAR .lng file identifiers. */
 enum {
   mName,

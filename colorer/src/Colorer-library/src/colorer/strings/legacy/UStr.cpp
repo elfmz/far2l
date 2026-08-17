@@ -33,6 +33,11 @@ int8_t UStr::caseCompare(const UnicodeString& str1, const UnicodeString& str2)
   return str1.caseCompare(str2);
 }
 
+int8_t UStr::caseCompare(const UnicodeString& str1, int str1_pos, int str1_len, const UnicodeString& str2)
+{
+  return str1.caseCompare(str1_pos, str1_len, str2);
+}
+
 UnicodeString UStr::to_unistr(int number)
 {
   return {number};

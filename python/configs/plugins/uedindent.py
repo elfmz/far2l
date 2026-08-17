@@ -12,7 +12,7 @@ class Plugin(PluginBase):
     label = "Python ED Indent"
     openFrom = ["PLUGINSMENU", "EDITOR"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         return 0
 
     def ProcessEditorInput(self, Rec):

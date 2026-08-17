@@ -38,9 +38,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "bitflags.hpp"
 #include "config.hpp"
+#include <unordered_map>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
+#include "EcoPool.hpp"
+#include "edit.hpp"
 
 class FileEditor;
 class KeyBar;
@@ -78,17 +81,16 @@ struct EditorCacheParams
 
 struct EditorUndoData
 {
-	int Type {0};
+	EcoString Str;
+	char EOL[4]{0};
 	int StrPos {0};
 	int StrNum {0};
-	wchar_t EOL[10]{0};
-	int Length {0};
-	wchar_t *Str {nullptr};
+	short Type {0};
+	bool HasStr{false};
 
 	EditorUndoData() = default;
 	~EditorUndoData()
 	{
-	    delete[] Str;
 	}
 	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
 	{
@@ -96,32 +98,45 @@ struct EditorUndoData
 	}
 	EditorUndoData& operator=(const EditorUndoData &src)
 	{
-		if (this != &src)
-		{
-			SetData(src.Type, src.Str, src.EOL, src.StrNum, src.StrPos, src.Length);
+		if (this != &src) {
+			Type = src.Type;
+			StrPos = src.StrPos;
+			StrNum = src.StrNum;
+			CharArrayCpyZ(EOL, src.EOL);
+			HasStr = src.HasStr;
+			Str = src.Str;
 		}
 		return *this;
 	}
-	void SetData(int Type, const wchar_t *Str, const wchar_t *Eol, int StrNum, int StrPos, int Length = -1)
+	void SetAttributes(short SetType, int SetStrNum, int SetStrPos)
 	{
-		if (Length == -1 && Str)
-			Length = (int)StrLength(Str);
-
-		this->Type = Type;
-		this->StrPos = StrPos;
-		this->StrNum = StrNum;
-		this->Length = Length;
-		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
-
-	    delete[] this->Str;
-
-		if (Str) {
-			this->Str = new (std::nothrow) wchar_t[Length + 1];
-
-			if (this->Str)
-				wmemmove(this->Str, Str, Length);
-		} else
-			this->Str = nullptr;
+		Type = SetType;
+		StrNum = SetStrNum;
+		StrPos = SetStrPos;
+	}
+	void SetData(const wchar_t *SetStr, const wchar_t *Eol, int Length = -1)
+	{
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
+		if (SetStr) {
+			Str.Assign(SetStr, (Length < 0) ? StrLength(SetStr) : Length);
+			HasStr = true;
+		} else {
+			Str.Truncate();
+			HasStr = false;
+		}
+	}
+	void SetData(Edit *Line)
+	{
+		const wchar_t *Eol = nullptr;
+		Line->GetString(this->Str, &Eol);
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
+		HasStr = true;
+	}
+	void ToEdit(Edit *Line)
+	{
+		Line->SetString(Str.CPtr(), Str.Size());
+		Line->SetEOL(EOL);	// необходимо дополнительно выставлять, т.к. SetString вызывает Edit::SetBinaryString и... дальше по тексту
+		Str.Compact();
 	}
 };
 
@@ -147,10 +162,9 @@ enum FLAGS_CLASS_EDITOR
 	FEDITOR_DIALOGMEMOEDIT   = 0x80000000,		// Editor используется в диалоге в качестве DI_MEMOEDIT
 };
 
-class Edit;
-
 class Editor : public ScreenObject
 {
+	friend class Edit;
 	friend class DlgEdit;
 	friend class FileEditor;
 
@@ -179,6 +193,7 @@ private:
 		}
 	};
 
+	EcoPool<Edit> EPool;
 	DList<EditorUndoData> UndoData;
 	EditorUndoData *UndoPos;
 	EditorUndoData *UndoSavePos;
@@ -214,15 +229,19 @@ private:
 
 	int XX2;	// scrollbar
 
+	std::wstring strTmp, strGet;
 	FARString strLastSearchStr;
 	/*
 		$ 30.07.2000 KM
 		Новая переменная для поиска "Whole words"
 	*/
 	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
-	int m_WordWrapMaxRightPos;
+	int m_WordWrapPreferredCellPos;
 
 	UINT m_codepage;	// BUGBUG
+	uint64_t m_Color;
+	uint64_t m_SelColor;
+	uint64_t m_ColorUnChanged;
 
 	int StartLine;
 	int StartChar;
@@ -238,17 +257,21 @@ private:
 	Edit *TopList;
 	Edit *EndList;
 	Edit *TopScreen;
-	int m_CurVisualLineInLogicalLine;
-	Edit *m_TopScreenLogicalLine;
 	int m_TopScreenVisualLine;
+	int m_CachedTotalVisualLines;
+	int m_CachedTopVisualLine;
+	Edit *m_CachedScrollbarTopScreen;
+	int m_CachedScrollbarTopScreenVisualLine;
+	bool m_VisualScrollbarDirty;
 	Edit *CurLine;
 	Edit *LastGetLine;
 	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
-	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
+
+	std::unordered_map<int, uint64_t> m_gutterMarks;
 	
 	// Line number caching for performance
 	int m_CachedTotalLines;
@@ -256,6 +279,7 @@ private:
 	bool m_LineCountDirty;
 	bool m_BulkLoadMode;  // Skip expensive operations during file loading
 	bool m_showCursor;
+	clock_t m_BulkLoadStartTime;
 	FARString m_virtualFileName;
 
 private:
@@ -266,10 +290,11 @@ private:
 		int visual_line{0};
 	};
 
-	int FindVisualLine(Edit* line, int Pos);
+	int GetCurVisualLine() const;
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
+	int GetWordWrapVisibleMaxLineLength() const;
 	int GetTopScreenLineNumber();
 	void EnsureTopScreenVisual();
 	bool DecTopVisualLine();
@@ -278,7 +303,10 @@ private:
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
 	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection);
 	virtual void DisplayObject();
-	void UpdateCursorPosition(int horizontal_cell_pos);
+	void SetCursorByVisualLineCellOffset(int VisualLine, int horizontal_cell_pos);
+	void RestoreWordWrapPreferredCellPos();
+	void SetWordWrapCursorPosition(int NewPos);
+	void SetWordWrapCursorPosition(int NewPos, int VisualLine);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -288,7 +316,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
-void GoToVisualLine(int VisualLine);
+	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 
@@ -306,14 +334,20 @@ void GoToVisualLine(int VisualLine);
 
 	void ProcessPasteEvent();
 
-	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
-			int StrPos = 0, int Length = -1);
+	void AddUndoData(short Type, int StrNum, int StrPos, Edit *Line);
+	void AddUndoData(short Type, int StrNum = 0, int StrPos = 0, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int Length = -1);
+	EditorUndoData *BeginAddingUndoData(short Type, int StrNum, int StrPos);
+
 	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	int CalculateTotalLines();  // Helper to count total lines
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
+	int CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar);  // Helper for text viewport width
+	void RecalculateAllWordWraps(bool SyncWordWrapState);
+	void RememberWordWrapPreferredCellPos();
+	void DrawGutterMark(int logical_line, int y, int line_num_x1);
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -321,6 +355,8 @@ void GoToVisualLine(int VisualLine);
 	void VCopy(int Append);
 	void VPaste(wchar_t *ClipText);
 	void VBlockShift(int Left);
+	bool IsVerticalBlockEditMode() const;
+	bool ProcessVerticalBlockEditKey(FarKey Key);
 	Edit *GetStringByNumber(int DestLine);
 	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent);
 
@@ -376,6 +412,7 @@ public:
 	void SetStartPos(int LineNum, int CharNum);
 	BOOL IsFileModified() const;
 	BOOL IsFileChanged() const;
+	void MarkSaved();
 	void SetTitle(const wchar_t *Title);
 	long GetCurPos();
 	int EditorControl(int Command, void *Param);
@@ -428,6 +465,8 @@ public:
 
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);
+	int GetShowGutterMarks() const { return EdOpt.ShowGutterMarks; }
+	void SetShowGutterMarks(int NewMode);
 
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
@@ -437,7 +476,7 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	void BeginVBlockMarking();
+	bool BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 
 	void Xlat();
@@ -454,8 +493,8 @@ public:
 	int GetReadOnly() { return Flags.Check(FEDITOR_LOCKMODE); };
 
 	// Bulk load mode - skips expensive per-line operations during file loading
-	void BeginBulkLoad() { m_BulkLoadMode = true; }
-	void EndBulkLoad() { m_BulkLoadMode = false; m_LineCountDirty = true; };
+	void BeginBulkLoad();
+	void EndBulkLoad();
 	void SetOvertypeMode(int Mode);
 	int GetOvertypeMode();
 	void SetEditBeyondEnd(int Mode);
@@ -468,6 +507,14 @@ public:
 	void SetCursorType(bool Visible, DWORD Size);
 	void GetCursorType(bool &Visible, DWORD &Size);
 	void SetShowCursor(bool Enable) { m_showCursor = Enable; }
+	void SetTopScreenLine(int LineNumber, int VisualLine = 0);
+	void SetCursorByVisualLineCellOffset(int LineNumber, int VisualLine, int CellOffset);
+	int GetCursorLine() const { return NumLine; }
+	int GetCursorVisualLine() const { return GetCurVisualLine(); }
+	int GetVisualLineCount(int LineNumber);
+	bool GetVisualLineHighlightCells(int LineNumber, int VisualLine, int RangeStart, int RangeEnd,
+			int DrawX1, int &CellX1, int &CellX2);
+	bool RenderVisualLine(int LineNumber, int VisualLine, int X1, int Y, int X2);
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
 

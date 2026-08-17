@@ -4,52 +4,45 @@ left=mydir + "/left"
 right=mydir + "/right"
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
-ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+ExpectString("Help - FAR2L");
+TypeEscape(10)
+ExpectString("OSC52");
 status = AppStatus();
 
 TypeEscape()
 TypeDown()
 TypeFKey(3)
-ExpectString("left/viewme.txt", 0, 0, -1, -1, 10000)
-
-Sync(10000)
+ExpectString("left/viewme.txt")
 
 TypePageDown()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test1.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test1.txt')
 
 TypePageDown()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test2.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test2.txt')
 
 TypeDown()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test3.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test3.txt')
 
 TypeHome()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test4.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test4.txt')
 
 TypeFKey(7)
-ExpectString("═══ Search ═══", 0, 0, -1, -1, 10000)
+ExpectString("═══ Search ═══")
 TypeText("::setselectpos")
 TypeEnter()
 
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test5.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test5.txt')
 
 TypeUp()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test6.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test6.txt')
 
 TypeUp()
-Sync(10000)
-BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test7.txt')
+BoundedLinesMatchTextFile(0, 1, 0, -2, mydir + '/test7.txt')
 
 TypeEscape()
 
 TypeFKey(10)
-ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
+ExpectString("Do you want to quit FAR?")
 TypeEnter()
-ExpectAppExit(0, 10000)
+ExpectAppExit(0)
 0;

@@ -116,7 +116,8 @@ class Plugin(PluginBase):
                     dlg.SetCheck(dlg.ID_f_rx, self.f_rx)
                     dlg.SetCheck(dlg.ID_f_select, self.f_select)
                     dlg.SetText(dlg.ID_f_search, self.f_search)
-                    dlg.SetText(dlg.ID_f_replace, self.f_replace)
+                    if not self.f_is_search:
+                        dlg.SetText(dlg.ID_f_replace, self.f_replace)
                 except:
                     log.exception("bang")
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
@@ -333,7 +334,7 @@ class Plugin(PluginBase):
             eur.Command = self.ffic.EUR_BEGIN
             self.info.EditorControl(self.ffic.ECTL_UNDOREDO, eur)
 
-        worker = Worker(IO(), ei.CurLine, ei.CurPos, ei.TotalLines, prog, f_replace)
+        worker = Worker(IO(), ei.CurLine, ei.CurPos+1, ei.TotalLines, prog, f_replace)
         worker.forward()
 
         if not self.f_is_search:

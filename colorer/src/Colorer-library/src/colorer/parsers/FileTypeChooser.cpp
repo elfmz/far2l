@@ -27,7 +27,7 @@ CRegExp* FileTypeChooser::getRE() const
 
 double FileTypeChooser::calcPriority(const UnicodeString* string) const
 {
-  SMatches match {};
+  SMatches match;
   if (string != nullptr && m_reg_matcher->parse(string, &match)) {
     return m_priority;
   }

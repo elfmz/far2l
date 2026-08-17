@@ -677,7 +677,7 @@ void Viewer::ShowHex()
 	int X, Y, TextPos;
 	int SelStart, SelEnd;
 	bool bSelStartFound = false, bSelEndFound = false;
-	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth) ? Max(80 - ObjWidth, 0) : LeftPos);
+	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth()) ? Max(80 - ObjWidth(), 0) : LeftPos);
 
 	for (EndFile = 0, Y = Y1; Y <= Y2; Y++) {
 		bSelStartFound = false;
@@ -687,7 +687,7 @@ void Viewer::ShowHex()
 		GotoXY(X1, Y);
 
 		if (EndFile) {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 			continue;
 		}
 
@@ -858,10 +858,10 @@ void Viewer::ShowHex()
 #endif
 
 		if (StrLength(OutStr) > HexLeftPos) {
-			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth)
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth())
 				<< OutStr + static_cast<size_t>(HexLeftPos);
 		} else {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 		}
 
 		if (bSelStartFound && bSelEndFound) {
@@ -1166,7 +1166,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				break;
 		}	// TODO: ???
 
-		OutPtr = vread(piece, len);
+		OutPtr = vread(piece, len, true);
 		piece[OutPtr] = 0;
 		rString.SetChars(0, piece, (size_t)(OutPtr + 1));
 	} else {
@@ -2275,7 +2275,7 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseY == (Y1 - 1) && (HostFileViewer && HostFileViewer->IsTitleBarVisible()))		// Status line
 	{
 		int XCodePage, XPos, NameLength;
-		NameLength = ObjWidth - 40;
+		NameLength = ObjWidth() - 40;
 
 		if (Opt.ViewerEditorClock && HostFileViewer && HostFileViewer->IsFullScreen())
 			NameLength-= 6;
@@ -2573,7 +2573,9 @@ LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 {
 	switch (Msg) {
 		case DN_CLOSE:
-			if (Param1 >= 0) {
+			if (Param1 >= 0
+					&& ((unsigned)(Param1) + 1) != reinterpret_cast<Dialog*>(hDlg)->GetAllItemCount()) // button Cancel is the last element
+			{
 				int Pos = SendDlgMessage(hDlg, DM_SHOWITEM, SD_EDIT_TEXT, -1) ? SD_EDIT_TEXT : SD_EDIT_HEX;
 				const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, Pos, 0);
 				bool IsEmpty;
@@ -2815,8 +2817,8 @@ void Viewer::Search(int Next, int FirstChar)
 		SetCursorType(FALSE, 0);
 		strMsgStr = strSearchStr;
 
-		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth))
-			TruncStrFromEnd(strMsgStr, ObjWidth - 18);
+		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth()))
+			TruncStrFromEnd(strMsgStr, ObjWidth() - 18);
 
 		InsertQuote(strMsgStr);
 
@@ -3729,8 +3731,8 @@ int Viewer::ViewerControl(int Command, void *Param)
 				memset(&Info->ViewerID, 0, Info->StructSize - sizeof(Info->StructSize));
 				Info->ViewerID = ViewerID;
 				Info->FileName = strFullFileName;
-				Info->WindowSizeX = ObjWidth;
-				Info->WindowSizeY = Y2 - Y1 + 1;
+				Info->WindowSizeX = ObjWidth();
+				Info->WindowSizeY = ObjHeight();
 				Info->FilePos = FilePos;
 				Info->FileSize = FileSize;
 				Info->CurMode = VM;

@@ -53,6 +53,6 @@ class Plugin(PluginBase):
         self.info.EditorControl(self.ffic.ECTL_UNDOREDO, eur)
         log.debug('vtinsert end')
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.Perform()
         return -1

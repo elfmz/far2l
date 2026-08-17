@@ -107,7 +107,7 @@ class Plugin(PluginBase):
         self.info.EditorControl(self.ffic.ECTL_UNDOREDO, eur)
 
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         if OpenFrom == 5:
             # EDITOR
             self.Perform()

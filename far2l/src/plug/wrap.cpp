@@ -3755,6 +3755,8 @@ int WINAPI FarEditorControlA(int Command, void *Param)
 				oei->TabSize = ei.TabSize;
 				oei->BookMarkCount = ei.BookMarkCount;
 				oei->CurState = ei.CurState;
+				oei->WindowX = ei.WindowX;
+				oei->WindowY = ei.WindowY;
 				return TRUE;
 			}
 

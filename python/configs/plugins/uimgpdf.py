@@ -1,6 +1,5 @@
 import os
 import logging
-import debugpy
 
 from far2l.plugin import PluginBase
 from far2l.fardialogbuilder import (
@@ -103,7 +102,7 @@ class Plugin(PluginBase):
         finally:
             return False
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         if OpenFrom == 5:
             fqname = Editor(self).GetFileName()
         elif OpenFrom == 6:
@@ -177,7 +176,6 @@ class Plugin(PluginBase):
             log.error('Error: %s [%s]', ex.errno, ex.args)
             return
 
-        #debugpy.breakpoint()
         area = self.GetFarRect()
         imgarea = self.ffi.new("SMALL_RECT *", (0, 0, area.Right, area.Bottom-1))
         canvas_w = imgarea.Right * wgi.PixPerCell.X

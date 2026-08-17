@@ -3,23 +3,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <mutex>
 #include <string>
 
 #if defined(DEBUG) || defined(_DEBUG)
 
-// Compute debug log path once: $TMPDIR/adb_plugin_debug_<uid>.log, fallback /tmp.
-// Per-uid suffix avoids permission collisions on multi-user hosts; a single path
-// per process keeps writes appending to one file across the session.
+// Log next to the plugin's own .so/.dylib; falls back to $TMPDIR if dladdr fails.
 static const char *DebugLogPath() {
     static std::string path = []() {
+        Dl_info info;
+        if (dladdr((const void *)&DebugLogPath, &info) && info.dli_fname) {
+            std::string p = info.dli_fname;
+            auto slash = p.find_last_of('/');
+            if (slash != std::string::npos) {
+                return p.substr(0, slash) + "/adb_plugin.log";
+            }
+        }
         const char *base = getenv("TMPDIR");
         if (!base || !*base) base = "/tmp";
         std::string p = base;
         if (!p.empty() && p.back() == '/') p.pop_back();
-        p += "/adb_plugin_debug_";
-        p += std::to_string((unsigned long)getuid());
-        p += ".log";
+        p += "/adb_plugin.log";
         return p;
     }();
     return path.c_str();

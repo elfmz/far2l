@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filepanels.hpp"
 #include "help.hpp"
 #include "fileedit.hpp"
+#include "fileholder.hpp"
 #include "namelist.hpp"
 #include "savescr.hpp"
 #include "fileview.hpp"
@@ -806,74 +807,6 @@ int64_t FileList::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
-class FileList_TempFileHolder : public TempFileUploadHolder
-{
-	HANDLE hPlugin;
-
-	virtual bool UploadTempFile()
-	{
-		FARString strSaveDir;
-		apiGetCurrentDirectory(strSaveDir);
-
-		FARString strPath = _file_path_name;
-
-		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES) {
-			FARString strFindName;
-			CutToSlash(strPath, false);
-			strFindName = strPath + L"*";
-			FAR_FIND_DATA_EX FindData;
-			::FindFile Find(strFindName);
-			while (Find.Get(FindData)) {
-				if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-					strPath+= FindData.strFileName;
-					break;
-				}
-			}
-		}
-
-		bool out = false;
-
-		PluginPanelItem PanelItem;
-		if (FileList::FileNameToPluginItem(strPath, &PanelItem)) {
-			PutCode = CtrlObject->Plugins.PutFiles(hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
-
-			if (PutCode == 0) {
-				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, strPath.CPtr(),
-						Msg::Ok);
-			} else
-				out = true;
-		}
-
-		FarChDir(strSaveDir);
-
-		if (out) {
-			CheckPanelUpdate(CtrlObject->Cp()->LeftPanel);
-			CheckPanelUpdate(CtrlObject->Cp()->RightPanel);
-		}
-
-		return out;
-	}
-
-	void CheckPanelUpdate(Panel *panel)
-	{
-		if (panel && panel->GetPluginHandle() == hPlugin) {
-			ShellUpdatePanels(panel, FALSE);
-		}
-	}
-
-public:
-	int PutCode = -1;
-
-	FileList_TempFileHolder(const FARString &strTempFileName_, HANDLE hPlugin_)
-		:
-		TempFileUploadHolder(strTempFileName_), hPlugin(hPlugin_)
-	{
-		CtrlObject->Plugins.RetainPlugin(hPlugin);
-	}
-
-	virtual ~FileList_TempFileHolder() { CtrlObject->Plugins.ClosePlugin(hPlugin); }
-};
-
 int FileList::ProcessKey(FarKey Key)
 {
 
@@ -1097,60 +1030,30 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_CTRLJ:
 		case KEY_CTRLF:
 		case KEY_CTRLALTF:		// 29.01.2001 VVM + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
-		{
-			if (!ListData.IsEmpty() && SetCurPath()) {
-				FARString strFileName;
-				bool localPath = true;
-
-				if (Key == KEY_CTRLSHIFTENTER || Key == KEY_CTRLSHIFTNUMENTER) {
-					_MakePath1(Key, strFileName, L" ");
-				} else {
-					int CurrentPath = FALSE;
-					ASSERT(CurFile < ListData.Count());
-					CurPtr = ListData[CurFile];
-
-					strFileName = CurPtr->strName;
-
-					if (TestParentFolderName(strFileName)) {
-						if (PanelMode == PLUGIN_PANEL) {
-							strFileName.Clear();
-						} else {
-							strFileName.Truncate(1);	// ".."->"."
-						}
-
-						if (Key != KEY_CTRLALTF)
-							Key = KEY_CTRLF;
-
-						CurrentPath = TRUE;
+		{	// 29.01.2001 VVM + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
+			// vk: if list have selected files, thety are pasted one-by-one; otherwise the file-under-cursor is being used as before
+			bool hasSelected = false;
+			FARString strFileName;
+			if (Opt.CmdLine.CtrlEnterMultipleItems && Key != KEY_CTRLSHIFTENTER && Key != KEY_CTRLSHIFTNUMENTER) {
+				for (auto &item : ListData) {
+					if(item->Selected) {
+						hasSelected = true;
+						Process_PlaceOnCmdLine(item, Key);
 					}
-
-					if (Key == KEY_CTRLF || Key == KEY_CTRLALTF) {
-						// full paths aren't needed to be prefixed with ./
-						localPath = false;
-						if (PanelMode != PLUGIN_PANEL) {
-							CreateFullPathName(strFileName, strFileName, Key == KEY_CTRLALTF);
-						} else {
-							PluginGetURL(strFileName, strFileName);
-						}
-					}
-
-					if (CurrentPath)
-						AddEndSlash(strFileName);
-
-					if (Opt.QuotedName & QUOTEDNAME_INSERT)
-						EscapeSpace(strFileName);
-
-					if (localPath) {
-						EnsurePathHasParentPrefix(strFileName);
-					}
-
-					strFileName+= L" ";
 				}
-
-				CtrlObject->CmdLine->InsertString(strFileName);
 			}
 
-			return TRUE;
+			if (!hasSelected && !ListData.IsEmpty() && SetCurPath()) {
+				if (Key == KEY_CTRLSHIFTENTER || Key == KEY_CTRLSHIFTNUMENTER) {
+					_MakePath1(Key, strFileName, L" ");
+				}
+				else {
+					ASSERT(CurFile < ListData.Count());
+					CurPtr = ListData[CurFile];
+					Process_PlaceOnCmdLine(CurPtr, Key);
+				}
+			}
+    		return TRUE;
 		}
 		case KEY_CTRLALTBRACKET:			// Вставить реальный (разрешенный) путь из левой панели
 		case KEY_CTRLALTBACKBRACKET:		// Вставить реальный (разрешенный) путь из правой панели
@@ -1430,8 +1333,8 @@ int FileList::ProcessKey(FarKey Key)
 				FARString strInfoCurDir = Info.CurDir;
 				bool PluginMode = PanelMode == PLUGIN_PANEL
 						&& !CtrlObject->Plugins.UseFarCommand(hPlugin, PLUGIN_FARGETFILE);
-				FileHolderPtr FHP; // std::shared_ptr<FileList_TempFileHolder>
-				std::shared_ptr<FileList_TempFileHolder> TFHP;
+				FileHolderPtr FHP;
+				std::shared_ptr<PluginTempFileHolder> TFHP;
 
 				if (PluginMode) {
 					if (Info.Flags & OPIF_REALNAMES)
@@ -1543,7 +1446,7 @@ int FileList::ProcessKey(FarKey Key)
 					}
 
 					// TFHP will upload edited file when user will press F2 and will delete it whenever it will not be needed
-					TFHP = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
+					TFHP = std::make_shared<PluginTempFileHolder>(strTempName, hPlugin);
 					FHP = TFHP;
 				} else if (!strFileName.IsEmpty()) {
 					FHP = std::make_shared<FileHolder>(strFileName);
@@ -2461,12 +2364,19 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 	SudoClientRegion sdc_rgn;
 
 	Panel *AnotherPanel;
-
-	if (PanelMode != PLUGIN_PANEL && !IsAbsolutePath(NewDir) && !TestCurrentDirectory(strCurDir))
-		FarChDir(strCurDir);
-
 	FARString strFindDir, strSetDir = NewDir;
 	bool dot2Present = !StrCmp(strSetDir, L"..");
+
+	if (PanelMode != PLUGIN_PANEL && !dot2Present && !IsAbsolutePath(NewDir) && !TestCurrentDirectory(strCurDir))
+		FarChDir(strCurDir);
+
+	if (PanelMode != PLUGIN_PANEL && dot2Present && !TestCurrentDirectory(strCurDir)) {
+		FARString strParentDir = strCurDir;
+		CutToFolderNameIfFolder(strParentDir);
+		if (!strParentDir.IsEmpty() && StrCmp(strParentDir, strCurDir))
+			strSetDir = strParentDir;
+	}
+
 	fprintf(stderr, "NewDir=%ls strCurDir=%ls dot2Present=%u\n", NewDir, strCurDir.CPtr(), dot2Present);
 
 	if (!dot2Present && StrCmp(strSetDir, L"."))
@@ -3796,22 +3706,28 @@ void FileList::CopyNames(bool FullPathName, bool RealName)
 	free(CopyData);
 }
 
-FARString &FileList::PluginGetURL(const wchar_t *Name, FARString &strDest)
+FARString &FileList::PluginGetURL(const wchar_t *Name, FARString &strDest, bool as_url)
 {
 	OpenPluginInfo Info = {0};
 	CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
-	if (Info.CurURL && Info.CurURL[0]) {
-		strDest = Info.CurURL;
+	FARString result;
+	// Ctrl-Alt-F pastes the portable URL (CurURL); Ctrl-F pastes the bare path (CurPath).
+	// Fall back to less specific fields for plugins that don't provide them.
+	if (!as_url && Info.CurPath && Info.CurPath[0]) {
+		result = Info.CurPath;
+	} else if (Info.CurURL && Info.CurURL[0]) {
+		result = Info.CurURL;
 	} else if (Info.CurDir && Info.CurDir[0]) {
-		strDest = Info.CurDir;
+		result = Info.CurDir;
 	} else {
-		//fprintf(stderr, "Both CurDir and CurURL are empty or null\n");
+		//fprintf(stderr, "CurPath, CurURL and CurDir are all empty or null\n");
 	}
 
-	if (!strDest.IsEmpty())
-		AddEndSlash(strDest);
+	if (!result.IsEmpty())
+		AddEndSlash(result);
 
-	strDest += Name;
+	result += Name;
+	strDest = result;
 	return strDest;
 }
 
@@ -4640,4 +4556,53 @@ void FileList::ClearAllItem()
 #endif
 
 	SymlinksCache.clear();
+}
+
+void FileList::Process_PlaceOnCmdLine(FileListItem* item, FarKey Key) 
+{
+	bool localPath = true;
+	FARString strFileName;
+
+	int CurrentPath = FALSE;
+	ASSERT(CurFile < ListData.Count());
+	auto CurPtr = item;
+
+	strFileName = CurPtr->strName;
+
+	if (TestParentFolderName(strFileName)) {
+		if (PanelMode == PLUGIN_PANEL) {
+			strFileName.Clear();
+		} else {
+			strFileName.Truncate(1);	// ".."->"."
+		}
+
+		if (Key != KEY_CTRLALTF)
+			Key = KEY_CTRLF;
+
+		CurrentPath = TRUE;
+	}
+
+	if (Key == KEY_CTRLF || Key == KEY_CTRLALTF) {
+		// full paths aren't needed to be prefixed with ./
+		localPath = false;
+		if (PanelMode != PLUGIN_PANEL) {
+			CreateFullPathName(strFileName, strFileName, Key == KEY_CTRLALTF);
+		} else {
+			PluginGetURL(strFileName, strFileName, Key == KEY_CTRLALTF);
+		}
+	}
+
+	if (CurrentPath)
+		AddEndSlash(strFileName);
+
+	if (Opt.QuotedName & QUOTEDNAME_INSERT)
+		EscapeSpace(strFileName);
+
+	if (localPath) {
+		EnsurePathHasParentPrefix(strFileName);
+	}
+
+	strFileName+= L" ";
+
+	CtrlObject->CmdLine->InsertString(strFileName);
 }

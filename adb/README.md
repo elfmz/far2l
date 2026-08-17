@@ -1,27 +1,31 @@
-# ADB Plugin for far2l
+# far2l ADB plugin — version 1.2
 
-Browse and manage files on Android devices over ADB from far2l.
+Browse and manage files on Android devices over ADB.
 
 ## Features
 
-- Auto-detect connected devices; enumerate serial, friendly name, model, USB port
-- Navigate the device filesystem with standard far2l panel operations
-- F3/F5/F6/F7/F8 — view, copy, move, mkdir, delete, with progress and abort
-- On-device copy/move when both panels point to the same device (no host roundtrip)
-- Shell commands from the far2l command line — each command gets its stdout, stderr,
-  and exit code; device `cwd` is synchronized via persistent `adb shell -T`
-- Ctrl+O shows command output history (far2l's user screen)
+- Auto-detect devices; pick from the list when more than one is connected
+- F3/F5/F6/F7/F8 — view, copy, move, mkdir, delete (progress + Esc-abort)
+- Unified destination parser for F5/F6 and Shift+F5/F6:
+  - `adb:/abs/path` — on-device absolute
+  - `/abs/path` — local FS (host pull/push)
+  - `rel/path` — on-device relative
+  - single leaf — rename intent
+- Overwrite dialog — `Overwrite` / `Skip` / `Newer` (mtime gate) / `Rename` (auto `name(2)`) / `Cancel`; `Remember choice` checkbox makes the action sticky for the batch; `New` / `Existing` rows show size + mtime and open the corresponding file in the viewer when clicked
+- Same-device cross-panel: in-device `cp -a` / `mv` (no host roundtrip); host-mediated fallback if the device refuses
+- Atomic-aside-rename overwrite — push failures leave the original intact
+- Auto-mkdir of intermediate destination dirs
+- Shell commands from the far2l command line; output to user screen (Ctrl+O)
 
 ## Build
 
-Part of the far2l tree:
+From the far2l build directory:
 
 ```bash
-# from the far2l build directory
 cmake --build . --target adb
 ```
 
-Output: `install/Plugins/adb/plug/adb.far-plug-wide` + language/help files.
+Output: `install/Plugins/adb/plug/adb.far-plug-wide` plus language and help files.
 
 ## Install
 
@@ -31,85 +35,72 @@ Copy `install/Plugins/adb/` into far2l's Plugins folder:
 - Linux (system): `/usr/lib/far2l/Plugins/`
 - Linux (user): `~/.local/lib/far2l/Plugins/`
 
-Restart far2l. The plugin appears in **F11 → ADB Plugin** and in the drives menu
-**Alt+F1 / Alt+F2 → ADB**.
+Restart far2l. The plugin appears in **F11 → ADB Plugin** and in **Alt+F1 / Alt+F2 → ADB**.
 
 ## Prerequisites
 
-The `adb` binary must be installed and in one of:
+`adb` in `PATH`, or one of: `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin`, `$ANDROID_HOME/platform-tools`, `$ANDROID_SDK_ROOT/platform-tools`, `~/Library/Android/sdk/platform-tools` (macOS), `~/Android/sdk/platform-tools` (Linux).
 
-1. `PATH`
-2. `/opt/homebrew/bin/adb`, `/usr/local/bin/adb`, `/usr/bin/adb`
-3. `$ANDROID_HOME/platform-tools/adb`, `$ANDROID_SDK_ROOT/platform-tools/adb`
-4. `~/Library/Android/sdk/platform-tools/adb` (macOS)
-5. `~/Android/sdk/platform-tools/adb` (Linux)
+Install: `brew install android-platform-tools` / `apt install adb` / `dnf install android-tools` / `pacman -S android-tools`, or [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools).
 
-Install via: `brew install android-platform-tools` (macOS) /
-`apt install adb` (Debian) / `dnf install android-tools` (Fedora) /
-`pacman -S android-tools` (Arch), or download from
-[SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools).
-
-Enable USB debugging on the device (Settings → Developer options → USB debugging),
-connect via USB, accept the RSA fingerprint. Verify with `adb devices`.
+Enable USB debugging on the device, accept the RSA fingerprint, verify with `adb devices`.
 
 ## Usage
 
-1. Open from F11 menu or Alt+F1/F2 → ADB
-2. If one device — auto-connects; if multiple — pick one and press Enter
-3. Navigate and copy/move/delete as usual
+1. Open from the F11 menu or **Alt+F1 / Alt+F2 → ADB**.
+2. One device — auto-connects; multiple — pick one and press Enter.
+3. Navigate and copy/move/delete as usual.
 4. Type shell commands in the command line:
    ```
    ls -la /sdcard
    ps -A | grep system
    getprop ro.build.version.release
    ```
-   Output appears in far2l's user screen (Ctrl+O to revisit). Non-zero exit
-   with no output is surfaced as `->[Exit code: N]`.
+   Output appears in far2l's user screen (Ctrl+O to revisit). A non-zero exit with no stdout is surfaced as `->[Exit code: N]`.
 
 ## Key bindings
 
-| Key      | Action                                 |
-|----------|----------------------------------------|
-| Enter    | Enter directory / connect to device    |
-| F3       | View file (pulled to a temp location)  |
-| F5 / F6  | Copy / Move (ADB↔host or same-device)  |
-| F7       | Make directory                         |
-| F8       | Delete                                 |
-| F10      | Close plugin                           |
-| Ctrl+\\   | Go to `/`                              |
+| Key | Action |
+|---|---|
+| Enter | Enter directory / connect to device |
+| `..` | Up; on device root → device selector; on selector → close plugin |
+| F3 | View file (pulled to temp, chmod 0644) |
+| F5 / F6 | Copy / Move (single dialog, parser-driven) |
+| Shift+F5 | Duplicate (default `<name>.copy`) |
+| Shift+F6 | Rename file under cursor |
+| F7 | Make directory |
+| F8 | Delete |
+| Esc | Abort current transfer |
+| F10 | Close plugin |
+| Ctrl+\ | Go to root |
+| Ctrl+R | Refresh panel |
+| Ctrl+O | Show command output history |
 
 ## Localization
 
-UI strings are currently hardcoded in English. `adbEng.lng` / `adbRus.lng` are
-shipped as placeholders for a future pass that wires up `GetMsg()` lookups;
-help files (`.hlf`) are properly localized — `F1` in the plugin shows Russian
-help when far2l runs with the Russian language.
+All user-visible strings (panel titles, column headers, dialog titles, buttons, progress labels, error pop-ups, confirmations) go through `GetMsg()` and ship in English (`adbEng.lng`) and Russian (`adbRus.lng`); the active language follows far2l's UI language. Help files (`.hlf`) are also localized — pressing **F1** in the plugin shows Russian help under Russian far2l. To add a language: copy `adbEng.lng` to `adb<XX>.lng`, translate the strings, keep the line order; same for the `.hlf`.
 
-## Notes & limitations
+## Notes
 
-- **Transparency**: every command on an ADB panel is forwarded to the device shell
-  (no host fallback). `git`, `vim`, etc. run on the device if installed there.
-- **Interactive tools** (`vi`, `less`, `top`) don't work — the plugin uses a
-  non-PTY `adb shell -T` session for deterministic marker-based IPC.
-- **Command timeout** is 30 s. A long-running command (e.g., `find /`) will block
-  subsequent plugin ops until it finishes or you close the plugin.
-- **Command-line prompt lag**: after `cd`, the far2l prompt text shows the new
-  path only on the next command (a far2l core issue — the panel title and command
-  echo are updated immediately).
-- **External changes** (another `adb` session modifying the device) are not
-  watched; press **Ctrl+R** to refresh.
-- **Sort mode** is remembered within a session; closing the plugin resets it
-  (standard far2l plugin-panel behavior).
+- All commands typed on an ADB panel are forwarded to the device shell — no host fallback.
+- Interactive tools (`vi`, `less`, `top`) are not supported (non-PTY session).
+- Per-command timeout: 30 s. Long commands block subsequent plugin ops.
+- External device-side changes are not watched — Ctrl+R to refresh.
+- Sort mode resets on plugin close (standard far2l behavior).
 
 ## Troubleshooting
 
 | Symptom | Check |
-|---------|-------|
-| No devices found | `adb devices` in a terminal; USB debugging enabled; RSA prompt accepted |
+|---|---|
+| No devices found | `adb devices`; USB debugging enabled; RSA fingerprint accepted |
 | Permission denied | Some paths require root — try `adb root` (dev images only) |
-| Slow transfers | Prefer USB 3.0 over Wi-Fi; many small files are slower than few big ones |
+| Slow transfers | Prefer USB 3.0 over Wi-Fi; many small files transfer slower than few large |
 | `adb not found` | Install platform-tools and verify with `adb version` |
-| Command hangs | 30 s timeout will clear it; if the plugin stays stuck, reopen it |
+| Plugin hangs | 30 s timeout will release; otherwise reopen the plugin |
+
+## Debug logging
+
+Debug builds (`-DCMAKE_BUILD_TYPE=Debug`) write `adb_plugin.log` next to the plugin. Release builds compile out `DBG()` entirely.
 
 ## License
 

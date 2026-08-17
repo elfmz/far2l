@@ -46,3 +46,9 @@
         <hrd class="rgb" name="violet" description="Violet by Kate tempergate">
             <location link="&hrd;/rgb/violet.hrd"/>
         </hrd>
+        <hrd class="rgb" name="Fallout Red" description="Fallout Red by Kate tempergate">
+            <location link="&hrd;/rgb/FalloutRed.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="Catpuccin Macchiato" description="Catpuccin Macchiato by voidterm">
+            <location link="&hrd;/rgb/catppuccin-macchiato.hrd"/>
+        </hrd>

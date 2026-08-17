@@ -329,7 +329,7 @@ class Plugin(PluginVFS):
         super().__init__(parent, info, ffi, ffic)
         self.config = Config(self.USERHOME)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.names = []
         self.Items = []
         self.clt = AdbClient()

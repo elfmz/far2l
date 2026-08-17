@@ -1,62 +1,96 @@
 #pragma once
 
-enum LanguageID
+namespace openwith
 {
-	MPluginTitle,
-	MChooseApplication,
+	enum class MsgID : int
+	{
+		PluginTitle,
+		ChooseApplication,
+		OpenWithFor,
+		File_s,
 
-	MOk,
-	MCancel,
-	MError,
-	MNotRealNames,
-	MSaveConfigError,
-	MNoAppsFound,
-	MCannotExecute,
+		Error,
+		NotRealNames,
+		SaveConfigError,
+		NoAppsFound,
+		CannotExecute,
+		UnsupportedPlatform,
 
-	MConfigTitle,
+		ConfigTitle,
+		Ok,
+		Cancel,
 
-	MUseExternalTerminal,
-	MNoWaitForCommandCompletion,
-	MClearSelection,
-	MConfirmLaunchOption,
+		UseExternalTerminal,
+		NoWaitForCommandCompletion,
+		ClearSelection,
+		ConfirmLaunchOption,
+		DisplayFilename,
 
-	MUseXdgMimeTool,
-	MUseFileTool,
-	MUseMagikaTool,
-	MUseGlobRules,
-	MUseExtensionBasedFallback,
-	MLoadMimeTypeAliases,
-	MLoadMimeTypeSubclasses,
-	MResolveStructuredSuffixes,
-	MUseGenericMimeFallbacks,
-	MShowUniversalHandlers,
-	MUseMimeinfoCache,
-	MFilterByShowIn,
-	MValidateTryExec,
-	MSortAlphabetically,
-	MTreatUrlsAsPaths,
+		UseXdgMimeTool,
+		UseFileTool,
+		UseMagikaTool,
+		UseGlobRules,
+		UseExtensionBasedFallback,
+		LoadMimeTypeAliases,
+		LoadMimeTypeSubclasses,
+		ResolveStructuredSuffixes,
+		UseGenericMimeFallbacks,
+		ShowUniversalHandlers,
+		QueryXdgMimeDefault,
+		IgnoreRemovedAssociations,
+		UseMimeinfoCache,
+		FilterByShowIn,
+		ValidateTryExec,
+		TreatUrlsAsPaths,
+		ShowPackageTags,
 
-	MDetails,
+		ShowUtiInsteadOfMime,
+		RespectSystemRanking,
 
-	MPathname,
-	MFilesSelected,
-	MMimeProfile,
-	MLaunchCommand,
-	MClose,
-	MLaunch,
+		SortAlphabetically,
 
-	MDesktopFile,
-	MSource,
-	MFullScanFor,
-	MFor,
-	MIn,
+		Details,
 
-	MAppName,
-	MFullPath,
-	MExecutableFile,
-	MVersion,
-	MBundleVersion,
+		FilesSelected,
+		Filepaths,
+		FileTypes,
+		LaunchCommand,
+		Close,
+		Launch,
 
-	MConfirmLaunchTitle,
-	MConfirmLaunchMessage
-};
+		DesktopFile,
+		Source,
+		FullScanFor,
+		For,
+		In,
+		GotoDesktop,
+		GotoTryExec,
+		GotoSource,
+
+		Location,
+		BundleDisplayName,
+		BundleName,
+		BundleShortVersionString,
+		BundleVersion,
+		BundleExecutable,
+		BundleIdentifier,
+		GoToBundle,
+
+		Working,
+		PleaseWait,
+		ProcessingFiles,
+
+		IdentifyingMimes,
+		DiscoveringApplications,
+		MatchingFilteringRanking,
+
+		IdentifyingUTIsDiscoveringApps,
+		FilteringSortingResults,
+
+		ConfirmLaunchTitle,
+		ConfirmLaunchMessage,
+	};
+
+	const wchar_t* GetMsg(MsgID msg_id);
+
+} // namespace openwith

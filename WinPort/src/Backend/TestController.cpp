@@ -47,6 +47,7 @@ void *TestController::ThreadProc()
 void TestController::ClientLoop(const std::string &ipc_client)
 {
 	LocalSocketClient sock(LocalSocket::DATAGRAM, _ipc_server, ipc_client);
+	sock.SetBufferSize(1024 * 1024);
 	sock.Send(&_buf, ClientDispatchStatus());
 	for (;;) {
 		size_t len = sock.Recv(&_buf, sizeof(_buf));
@@ -78,6 +79,10 @@ void TestController::ClientLoop(const std::string &ipc_client)
 
 			case TEST_CMD_SYNC:
 				len = ClientDispatchSync(len);
+				break;
+
+			case TEST_CMD_SEND_MOUSE:
+				len = ClientDispatchSendMouse(len);
 				break;
 
 			default:
@@ -261,6 +266,22 @@ public:
 		}
 	}
 };
+
+size_t TestController::ClientDispatchSendMouse(size_t len)
+{
+	if (len < sizeof(TestRequestSendMouse)) {
+		throw std::runtime_error(StrPrintf("len=%lu < sizeof(TestRequestSendMouse)", (unsigned long)len));
+	}
+	INPUT_RECORD ir{};
+	ir.EventType = MOUSE_EVENT;
+	ir.Event.MouseEvent.dwMousePosition.X = _buf.req_send_mouse.x;
+	ir.Event.MouseEvent.dwMousePosition.Y = _buf.req_send_mouse.y;
+	ir.Event.MouseEvent.dwButtonState = _buf.req_send_mouse.buttons;
+	ir.Event.MouseEvent.dwControlKeyState = _buf.req_send_mouse.controls;
+	ir.Event.MouseEvent.dwEventFlags = _buf.req_send_mouse.flags;
+	g_winport_con_in->Enqueue(&ir, 1);
+	return 0;
+}
 
 static VOID TestSyncCallback(VOID *ctx)
 {

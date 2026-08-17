@@ -900,6 +900,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (spec)
 				return spec;
 		}
+		// For plain text characters (VK==0) there is no terminal-level key-release
+		// representation. Writing the same raw char on UP would double every character
+		// in bracketed paste and in any mode that forwards key-up events (win32/kitty).
+		if (!KeyEvent.bKeyDown)
+			return std::string();
 
 		wchar_t wz[3] = {KeyEvent.uChar.UnicodeChar, 0};
 		if (_slavename.empty() && wz[0] == '\r') //pipes fallback

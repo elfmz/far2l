@@ -5,6 +5,7 @@
 #include <colorer/editor/Outliner.h>
 #include <colorer/handlers/StyledRegion.h>
 #include "pcolorer.h"
+#include <chrono>
 
 struct color
 {
@@ -132,6 +133,7 @@ class FarEditor : public LineSource
   int editorEvent(int event, void* param);
   /** Dispatch editor input event */
   int editorInput(const INPUT_RECORD* ir);
+  bool backgroundParseTick();
 
   void cleanEditor();
 
@@ -160,7 +162,6 @@ class FarEditor : public LineSource
   int WindowSizeX = 0;
   int WindowSizeY = 0;
   bool inRedraw = false;
-  int idleCount = 0;
 
   int prevLinePosition = 0;
   int blockTopPosition = -1;
@@ -173,9 +174,13 @@ class FarEditor : public LineSource
   std::unique_ptr<LineRegion> cursorRegion;
 
   int visibleLevel = 100;
+  std::chrono::time_point<std::chrono::steady_clock> parseStartTime{};
+  std::chrono::time_point<std::chrono::steady_clock> lastAllDoneTime{};
+  bool backgroundMode{false};
   std::unique_ptr<Outliner> structOutliner;
   std::unique_ptr<Outliner> errorOutliner;
 
+  bool progressParse(int msBudget);
   void reloadTypeSettings();
   EditorInfo getEditorInfo() const;
   color convert(const StyledRegion* rd) const;

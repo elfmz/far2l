@@ -578,6 +578,17 @@ void HostRemote::Rename(const std::string &path_old, const std::string &path_new
 }
 
 
+void HostRemote::FileCopy(const std::string &path_src, const std::string &path_dst)
+{
+	CheckReady();
+
+	SendCommand(IPC_FILE_COPY);
+	SendString(CodepageLocal2Remote(path_src));
+	SendString(CodepageLocal2Remote(path_dst));
+	RecvReply(IPC_FILE_COPY);
+}
+
+
 void HostRemote::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	CheckReady();
@@ -618,6 +629,19 @@ void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_ta
 	RecvReply(IPC_SYMLINK_QUERY);
 	RecvString(link_target);
 	CodepageRemote2Local(link_target);
+}
+
+std::string HostRemote::RealPath(const std::string &path)
+{
+	CheckReady();
+
+	SendCommand(IPC_GET_REAL_PATH);
+	SendString(CodepageLocal2Remote(path));
+	RecvReply(IPC_GET_REAL_PATH);
+	std::string out;
+	RecvString(out);
+	CodepageRemote2Local(out);
+	return out;
 }
 
 ////////////////////////////////////////

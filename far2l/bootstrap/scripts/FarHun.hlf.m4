@@ -39,6 +39,7 @@ $^(help file last translated for build 882)
    ~Parancs elözmények~@History@
    ~Mappakeresés~@FindFolder@
    ~Mappák összehasonlítása~@CompFolders@
+   ~Fájlok összehasonlítása~@FileDiff@
    ~Felhasználói menü~@UserMenu@
    ~Meghajtóváltás (Meghajtók menü)~@DriveDlg@
 
@@ -1323,7 +1324,7 @@ kiválasztás után a lista aljára kerülnek. Ezt elkerülhetjük, ha Enter hel
 témakör részletezi a funkciót.
 
    #Felhasználói menü#    Fő vagy helyi ~felhasználói menüt~@UserMenu@
-   #szerkesztése#         szerkeszthetünk. Az #Ins# billentyű beszúrja,
+   #szerkesztése#         szerkeszthetünk. Az #Ins# vagy #Ctrl+N# billentyű beszúrja,
                         a #Del# törli, az #F4# pedig szerkeszti a menü
                         elemeit.
 
@@ -1926,7 +1927,7 @@ menük között #Shift-F2#-vel váltogathatunk. A #BackSpace#-szel a helyi menü
 visszafelé haladhatunk a főmenü felé.
 
     A felhasználói menü parancsai vagy almenüi közé választóvonalat is
-tehetünk: az #Ins# billentyűvel szúrjunk be egy új parancsot vagy menüt,
+tehetünk: az #Ins# vagy a #Ctrl+N# billentyűvel szúrjunk be egy új parancsot vagy menüt,
 adjunk #-# értéket a gyorsbillentyűnek és a többi mezőt hagyjuk üresen. A
 létrehozott választóvonalakat törölhetjük, ha az #Ctrl-F4#-gyel fájl módba
 kapcsolunk és a szerkesztőben eltávolítjuk a felesleges #-:# sorokat.
@@ -1935,7 +1936,7 @@ kapcsolunk és a szerkesztőben eltávolítjuk a felesleges #-:# sorokat.
 kurzorvezérlő billentyűvel és #Enter#-t ütünk rajta, vagy a hozzárendelt
 gyorsbillentyű segítségével.
 
-    Az #Ins# billentyűvel új menüelemeket, almenüket hozhatunk létre, az #F4#
+    Az #Ins# vagy a #Ctrl+N# billentyűvel új menüelemeket, almenüket hozhatunk létre, az #F4#
 bilentyűvel szerkeszthetjük a jellemzőiket, a #Del#-lel pedig törölhetjük a
 menü elemeit. #Ctrl-F4#-gyel a menüket szövegfájl formátumban szerkeszthetjük.
 
@@ -2444,6 +2445,8 @@ shell does not meet far2l's internal requirements, #bash# will be used as a fall
   Be aware that, currently, full support is available only for #bash#, and working with other
 command shells may have significant limitations or errors.
 
+  #Show startup banner in built-in terminal#
+  Display a text block containing the far2l version, copyright notices, and keyboard tips under the panels at launch.
 
 @InfoPanelSettings
 $ #Information Panel settings#
@@ -2485,6 +2488,45 @@ az aktuális meghajtó betűjelét és az elérési utat tartalmazza.
    2. ^<wrap>A #[$T$H$H$H]$S$P$G# formátumú promptban az aktuális idő
 (óó:pp) után a meghajtó betűjele és az elérési út áll.
 
+
+@FileDiff
+$ #Fájlok összehasonlítása#
+    A FileDiff az aktív és a passzív fájlpanelen kijelölt fájlokat hasonlítja
+össze. Az aktív panel fájlja bal oldalon, a passzív panel fájlja jobb oldalon
+jelenik meg. A módosult sorok és a sorokon belüli eltérések kiemelve láthatók.
+A középső elválasztón minden módosításblokkhoz egyesítési műveletek tartoznak.
+A nyilak sorokat másolnak a másik panelre, a keresztek pedig törlik a felesleges
+sorokat.
+
+    Mindkét panel szerkeszthető. A sortörés, sorszámozás, szintaxiskiemelés,
+keresés, vágólapműveletek és a szerkesztő szokásos visszavonási és ismétlési
+parancsai használhatók.
+
+    #F1#                 E súgó megjelenítése
+    #F2#                 Az aktív fájl mentése
+    #F5#                 Az aktuális módosításblokk egyesítése
+    #Tab, Shift-Tab#     Fókuszváltás a bal panel, az elválasztó és a jobb panel között
+    #Bal, Jobb#          Az egyesítés irányának kiválasztása az elválasztón
+    #Enter#              A kiválasztott egyesítés alkalmazása
+    #Ctrl-Fel#           Ugrás az előző módosításblokkra
+    #Ctrl-Le#            Ugrás a következő módosításblokkra
+    #F7#                 Keresés az aktív panelen
+    #Shift-F7#           A keresés folytatása
+    #Ctrl-Z#             Visszavonás az aktív panelen
+    #Ctrl-Shift-Z#       Ismétlés az aktív panelen
+    #F11#                A szerkesztő bővítménymenüjének megnyitása
+    #Esc, F10#           A FileDiff bezárása
+
+    Ha egy szövegpanel aktív, az #F5# az aktuális módosításblokkot a másik
+fájlba másolja. Ha az elválasztó aktív, a #Bal# vagy #Jobb# billentyűvel válassza
+ki a műveletet, majd nyomja meg az #Enter# vagy #F5# billentyűt. A nyílra kattintás
+átmásolja a blokkot, a keresztre kattintás pedig törli az adott oldali felesleges
+sorokat. Minden egyesítés egyetlen visszavonható műveletként kerül a célpanel
+előzményeibe.
+
+    A módosított fájlokat #*# jelöli. Bezáráskor a FileDiff felajánlja a
+módosított fájlok mentését. Heurisztikusan felismert kódolás esetén az első
+mentés előtt megerősítést kér.
 
 @Viewer
 $ #Nézőke: vezérlőbillentyűk#
@@ -2799,10 +2841,13 @@ a képernyő alján
     1. ^<wrap>Az #Alt-U#/#Alt-I# a sor behúzását állítja, ha nincs
 kijelölt blokk.
 
-    2. ^<wrap>Lenyomott #Alt#-tal a karaktereket decimális kódjukkal
+    2. ^<wrap>A szöveg beírása vagy a #BS#/#Del# billentyűkombináció
+lenyomása a kijelölt függőleges blokk minden sorára hatással van.
+
+    3. ^<wrap>Lenyomott #Alt#-tal a karaktereket decimális kódjukkal
 írhatjuk be a numerikus billentyűzeten (0-65535).
 
-    3. ^<wrap>Ha nincs kijelölt blokk, a #Ctrl-Ins#/#Ctrl-C# kijelöli
+    4. ^<wrap>Ha nincs kijelölt blokk, a #Ctrl-Ins#/#Ctrl-C# kijelöli
 a teljes aktuális sort és a vágólapra másolja.
 
 @EditorSearch

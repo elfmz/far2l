@@ -35,8 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "frame.hpp"
 #include "keybar.hpp"
-#include "array.hpp"
 #include "chgmmode.hpp"
+#include <vector>
 
 class CallBackStack;
 
@@ -56,6 +56,7 @@ struct StackHelpData
 	FARString strHelpPath;		// путь к хелпам
 	FARString strHelpTopic;		// текущий топик
 	FARString strSelTopic;		// выделенный топик (???)
+	FARString strHelpAnchor;
 
 	void Clear()
 	{
@@ -66,6 +67,7 @@ struct StackHelpData
 		strHelpPath.Clear();
 		strHelpTopic.Clear();
 		strSelTopic.Clear();
+		strHelpAnchor.Clear();
 	}
 };
 
@@ -80,35 +82,6 @@ enum
 	FHELPOBJ_ERRCANNOTOPENHELP = 0x80000000,
 };
 
-class HelpRecord
-{
-public:
-	wchar_t *HelpStr;
-
-	HelpRecord(const wchar_t *HStr = nullptr)
-	{
-		HelpStr = nullptr;
-		if (HStr)
-			HelpStr = wcsdup(HStr);
-	}
-
-	const HelpRecord &operator=(const HelpRecord &rhs)
-	{
-		if (this != &rhs) {
-			free(HelpStr);
-			HelpStr = wcsdup(rhs.HelpStr);
-		}
-
-		return *this;
-	}
-
-	bool operator==(const HelpRecord &rhs) const { return !StrCmpI(HelpStr, rhs.HelpStr); }
-
-	int operator<(const HelpRecord &rhs) const { return StrCmpI(HelpStr, rhs.HelpStr) < 0; }
-
-	~HelpRecord() { free(HelpStr); }
-};
-
 class Help : public Frame
 {
 private:
@@ -120,7 +93,7 @@ private:
 	FARString strFullHelpPathName;
 
 	StackHelpData StackData;
-	TArray<HelpRecord> HelpList;	// "хелп" в памяти.
+	std::vector<FARString> HelpList;	// "хелп" в памяти.
 
 	int StrCount;					// количество строк в теме
 	int FixCount;					// количество строк непрокручиваемой области
@@ -143,6 +116,7 @@ private:
 
 	FARString strLastSearchStr;
 	int LastSearchCase = 0, LastSearchWholeWords = 0, LastSearchRegexp = 0;
+	bool ReformatPending = false;
 
 private:
 	virtual void DisplayObject();
@@ -159,8 +133,10 @@ private:
 	void MoveToReference(int Forward, int CurScreen);
 	void ReadDocumentsHelp(int TypeIndex);
 	void Search(FILE *HelpFile, uintptr_t nCodePage);
+	FARString SanitizeHelpString(const FARString& input) const;
 	int JumpTopic(const wchar_t *JumpTopic = nullptr);
-	const HelpRecord *GetHelpItem(int Pos);
+	const FARString *GetHelpItem(int Pos);
+	void Reformat();
 
 public:
 	Help(const wchar_t *Topic, const wchar_t *Mask = nullptr, DWORD Flags = 0);

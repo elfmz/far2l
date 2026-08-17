@@ -249,6 +249,14 @@ class HostRemoteBroker : protected IPCEndpoint
 		SendCommand(IPC_RENAME);
 	}
 
+	void OnFileCopy()
+	{
+		RecvString(_args.str1);
+		RecvString(_args.str2);
+		_protocol->FileCopy(_args.str1, _args.str2);
+		SendCommand(IPC_FILE_COPY);
+	}
+
 	void OnDirectoryCreate()
 	{
 		RecvString(_args.str1);
@@ -300,6 +308,14 @@ class HostRemoteBroker : protected IPCEndpoint
 		SendCommand(IPC_EXECUTE_COMMAND);
 	}
 
+	void OnRealPath()
+	{
+		RecvString(_args.str1);
+		_args.str2 = _protocol->RealPath(_args.str1);
+		SendCommand(IPC_GET_REAL_PATH);
+		SendString(_args.str2);
+	}
+
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
@@ -310,6 +326,7 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_FILE_DELETE: OnDelete<IPC_FILE_DELETE>(&IProtocol::FileDelete); break;
 			case IPC_DIRECTORY_DELETE: OnDelete<IPC_DIRECTORY_DELETE>(&IProtocol::DirectoryDelete); break;
 			case IPC_RENAME: OnRename(); break;
+			case IPC_FILE_COPY: OnFileCopy(); break;
 			case IPC_DIRECTORY_CREATE: OnDirectoryCreate(); break;
 			case IPC_SET_TIMES: OnSetTimes(); break;
 			case IPC_SET_MODE: OnSetMode(); break;
@@ -319,6 +336,7 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_FILE_GET: OnFileGet(); break;
 			case IPC_FILE_PUT: OnFilePut(); break;
 			case IPC_EXECUTE_COMMAND: OnExecuteCommand(); break;
+			case IPC_GET_REAL_PATH: OnRealPath(); break;
 
 			default:
 				throw PipeIPCError("HostRemoteBroker: bad command", (unsigned int)c);

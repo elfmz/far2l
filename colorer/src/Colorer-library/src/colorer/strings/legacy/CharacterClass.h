@@ -16,7 +16,7 @@
 class CharacterClass
 {
 private:
-  BitArray** infoIndex;
+  BitArray infoIndex[256];
 public:
   CharacterClass();
   ~CharacterClass();
@@ -42,8 +42,15 @@ public:
   void clear();
   void fill();
 
-  bool inClass(wchar c) const;
-  bool contains(wchar c) const;
+  inline bool inClass(wchar c) const
+  {
+    return infoIndex[(c >> 8) & 0xFF].getBit(c & 0xFF);
+  }
+
+  inline bool contains(wchar c) const
+  {
+    return inClass(c);
+  }
 
   void freeze();
 

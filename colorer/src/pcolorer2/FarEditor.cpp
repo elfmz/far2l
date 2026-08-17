@@ -355,10 +355,9 @@ void FarEditor::locateFunction()
   int sword = cpos;
   int eword = cpos;
 
-  while (cpos < curLine.length() &&
-         (Character::isLetterOrDigit(curLine[cpos]) || curLine[cpos] != '_'))
+  while (cpos < curLine.length() && Character::isLetterOrDigitOrUnderscore(curLine[cpos]))
   {
-    while (Character::isLetterOrDigit(curLine[eword]) || curLine[eword] == '_') {
+    while (Character::isLetterOrDigitOrUnderscore(curLine[eword])) {
       if (eword == curLine.length() - 1) {
         break;
       }
@@ -366,7 +365,7 @@ void FarEditor::locateFunction()
       eword++;
     }
 
-    while (Character::isLetterOrDigit(curLine[sword]) || curLine[sword] == '_') {
+    while (Character::isLetterOrDigitOrUnderscore(curLine[sword])) {
       if (sword == 0) {
         break;
       }
@@ -434,33 +433,119 @@ void FarEditor::updateHighlighting()
   baseEditor->validate(ei.TopScreenLine, true);
 }
 
+// Parses pending (invalid) lines for at most msBudget milliseconds and
+// triggers editor redraw once parsed area reaches the visible window.
+// Returns true if there is still work left after the budget is over.
+//
+// Rationale: a single idleJob() call parses at most ~500 lines, while
+// KEY_IDLE arrives roughly twice a second, capping background highlighting
+// at ~1000 lines/sec regardless of CPU speed. Parsing by time budget
+// keeps UI responsive but lets modern CPU parse tens of thousands lines
+// per second; and if work still remains, caller requests a synchro event
+// to continue almost immediately instead of waiting for the next KEY_IDLE.
+static int backgroundBudget = 50;
+bool FarEditor::backgroundParseTick()
+{
+  if (backgroundBudget < 100)
+    backgroundBudget+= 10;
+  return progressParse(backgroundBudget);
+}
+
 int FarEditor::editorInput(const INPUT_RECORD* ir)
 {
-  if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
-    if (baseEditor->haveInvalidLine()) {
-      auto invalid_line1 = baseEditor->getInvalidLine();
-      idleCount++;
-      if (idleCount > 10) {
-        idleCount = 10;
+  if (ir->EventType == KEY_EVENT) {
+    if (ir->Event.KeyEvent.wVirtualKeyCode == 0) {
+      if (progressParse(50)) {
+       auto now = std::chrono::steady_clock::now();
+       const int sinceAllDone = std::chrono::duration_cast<std::chrono::seconds>(now - lastAllDoneTime).count();
+       if (sinceAllDone > 900) { // hardcoded 15 minutes for now, mabe be need to move to the settings
+        if (!backgroundMode) {
+          fprintf(stderr, "* COLORER: background mode activated\n");
+          backgroundMode = true;
+        }
+        backgroundBudget = std::max(backgroundBudget, 20);
+        colorerRequestSynchro();
+       }
       }
-      baseEditor->idleJob(idleCount * 10);
-      auto invalid_line2 = baseEditor->getInvalidLine();
-
-      EditorInfo ei = getEditorInfo();
-      if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
-          (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
-           invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
-      {
-        info->EditorControl(ECTL_REDRAW, nullptr);
-      }
+    } else {
+       backgroundBudget = 10;
     }
-  }
-  else if (ir->EventType == KEY_EVENT) {
-    idleCount = 0;
   }
 
   return 0;
 }
+
+// intentially global variable, so on slow system it will not start from non-optimal value on each file opened
+static int s_idleJobAmount = 100;
+
+bool FarEditor::progressParse(int msBudget)
+{
+  if (!baseEditor->haveInvalidLine()) {
+    parseStartTime = {};
+    return false;
+  }
+  auto deadline = std::chrono::steady_clock::now();
+  if (parseStartTime == std::chrono::time_point<std::chrono::steady_clock>()) {
+    parseStartTime = deadline;
+  }
+  deadline+= std::chrono::milliseconds(msBudget);
+  auto invalid_line1 = baseEditor->getInvalidLine();
+  for (int iterations = 1;; ++iterations) {
+    baseEditor->idleJob(s_idleJobAmount);
+    if (!baseEditor->haveInvalidLine()) {
+      break;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (now >= deadline) {
+      const int overdue = std::chrono::duration_cast<std::chrono::milliseconds>(now - deadline).count();
+      auto news_idleJobAmount = s_idleJobAmount;
+      if (s_idleJobAmount > 1 && overdue > msBudget * 20) {
+        news_idleJobAmount = 1;
+      } else if (s_idleJobAmount > 1 && overdue > msBudget * 10) {
+        news_idleJobAmount/= 2;
+      } else if (s_idleJobAmount > 1 && overdue > msBudget) {
+        news_idleJobAmount = news_idleJobAmount * 3 / 4;
+      } else if (s_idleJobAmount < 10 && overdue < msBudget / 10) {
+          news_idleJobAmount*= 2;
+      } else if (s_idleJobAmount < 30 && overdue < msBudget / 8) {
+          news_idleJobAmount+= s_idleJobAmount / 2;
+      } else if (s_idleJobAmount < 50 && overdue < msBudget / 4) {
+          news_idleJobAmount+= s_idleJobAmount / 4;
+      } else if (s_idleJobAmount < 100 && overdue < msBudget / 2) {
+          news_idleJobAmount++;
+      }
+      if (s_idleJobAmount != news_idleJobAmount) {
+        fprintf(stderr, "COLORER: %d iterations in %d msec + %d overdue, s_idleJobAmount: %d -> %d\n",
+            iterations, msBudget, overdue, s_idleJobAmount, news_idleJobAmount);
+        s_idleJobAmount = news_idleJobAmount;
+      }
+      break;
+    }
+  }
+  auto invalid_line2 = baseEditor->getInvalidLine();
+
+  EditorInfo ei = getEditorInfo();
+  if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
+      (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
+       invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
+  {
+    info->EditorControl(ECTL_REDRAW, nullptr);
+  }
+
+  if (!baseEditor->haveInvalidLine()) {
+    const auto &now = std::chrono::steady_clock::now();
+    int delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - parseStartTime).count();
+    fprintf(stderr, "* COLORER: done in %d msec, s_idleJobAmount=%d %s background mode\n",
+      delta, s_idleJobAmount, backgroundMode ? "with" : "without");
+    backgroundMode = false;
+    lastAllDoneTime = now;
+    parseStartTime = {};
+    return false;
+  }
+
+  return true;
+}
+
 
 int FarEditor::editorEvent(int event, void* param)
 {

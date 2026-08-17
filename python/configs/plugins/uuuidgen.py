@@ -24,6 +24,6 @@ class Plugin(PluginBase):
         log.debug('uuidgen: {}'.format(s))
         self.info.FSF.CopyToClipboard(self.s2f(s))
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.uuidgen()
         return -1

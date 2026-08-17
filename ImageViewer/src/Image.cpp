@@ -1,15 +1,14 @@
+#include "Image.h"
 #include <cmath>
-#include <vector>
-#include <thread>
 #include <functional>
-
+#include <thread>
+#include <vector>
+#include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include <math.h>
 
-#include "Image.h"
 
 Image::Image(int width, int height, unsigned char bytes_per_pixel)
 {
@@ -289,7 +288,7 @@ void Image::ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const
 					if (cnt) {
 						v/= cnt;
 						cnt = 1;
-					}					
+					}
 				}
 //				if (v > 255) {fprintf(stderr, "!!!v=%d\n", v); abort();}
 				*dst.Ptr(dst_x, dst_y, ch) = (unsigned char)v;
@@ -297,4 +296,3 @@ void Image::ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const
 		}
 	}
 }
-

@@ -87,6 +87,9 @@ ueduniq.py
 ugtkhello.py
     The plugin shows how to open a window from the gtk library.
 
+uhashes.py
+    The plugin calculates the hash functions known to Python for the specified file (editor, viewer, plugin selection).
+
 uhexedit.py
     The prototype of the standard hexitor plugin.
 
@@ -126,6 +129,15 @@ usqlite.py
     Activation occurs after CTRL+PGDN on the highlighted file in the
     standard file list. FAR2L calls the OpenFilePlugin method of
     active plugins, and the first one to respond becomes active.
+    Keys:
+        F4 - edit current item - table definition or sigle row data
+        F4+CTRL - at database structure, shows its pragma's
+ustealer.py
+    This plugin allows you to view password fields in dialogues,
+    e.g. open the netrocks host list, select the one with a password,
+    press F11 to open the plugin and enter 15 in the position field.
+    After pressing the read button in the value field, you will see
+    the read password.
 
 utranslate.py
     The plugin allows you to translate and check text for correctness

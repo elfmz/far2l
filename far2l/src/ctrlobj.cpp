@@ -91,8 +91,10 @@ void ControlObject::Init()
 {
 	TreeList::ClearCache(0);
 	SetFarColor(COL_COMMANDLINEUSERSCREEN);
-	GotoXY(0, ScrY - 3);
-	ShowStartupBanner();
+	if (Opt.ShowStartupBanner) {
+		GotoXY(0, ScrY - 3);
+		ShowStartupBanner();
+	}
 	GotoXY(0, ScrY - 2);
 	MoveCursor(0, ScrY - 1);
 	FPanels = new FilePanels();
@@ -114,15 +116,20 @@ void ControlObject::Init()
 	FrameManager->InsertFrame(FPanels);
 	FrameManager->PluginCommit();
 
-	Cp()->LeftPanel->Update(0);
-	Cp()->RightPanel->Update(0);
+	{
+		// A cancelled elevation applies to both startup panel reads.  Do not
+		// prompt again for the other panel during the same initialization.
+		SudoClientRegion sdc_rgn;
+		Cp()->LeftPanel->Update(0);
+		Cp()->RightPanel->Update(0);
 
-	Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
-	Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
+		Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
+		Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
 
-	FARString strStartCurDir;
-	Cp()->ActivePanel->GetCurDir(strStartCurDir);
-	FarChDir(strStartCurDir);
+		FARString strStartCurDir;
+		Cp()->ActivePanel->GetCurDir(strStartCurDir);
+		FarChDir(strStartCurDir);
+	}
 	Cp()->ActivePanel->SetFocus();
 	{
 		FARString strOldTitle;

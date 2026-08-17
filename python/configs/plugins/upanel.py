@@ -22,7 +22,7 @@ class Plugin(PluginVFS):
     label = "Python upanel"
     openFrom = ["PLUGINSMENU", "DISKMENU"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         self.Root = "PythonPanel"
         self.names = []
         self.Items = []

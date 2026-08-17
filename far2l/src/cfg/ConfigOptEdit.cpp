@@ -164,51 +164,62 @@ public:
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save == OST_COMMON ? "c" : (_opt.save == OST_PANELS ? "p" : "-"));
-		FormatString out;
+		FormatString out1;
+		FormatString out2;
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL: {
-				out << (*_opt.value.b == _opt.def.b ? L" " : L"*")
+				out1 << (*_opt.value.b == _opt.def.b ? L" " : L"*")
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"  bool"
-					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
-					<< (*_opt.value.b ? L"true" : L"false");
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1];
+				out2 << (*_opt.value.b ? L"true" : L"false");
 				break;
 			}
 			case ConfigOpt::T_INT: {
-				out << (*_opt.value.i == _opt.def.i ? L" " : L"*")
+				out1 << (*_opt.value.i == _opt.def.i ? L" " : L"*")
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"   int"
-					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
-					<< *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1];
+				out2 << *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
 				break;
 			}
 			case ConfigOpt::T_DWORD: {
-				out << (*_opt.value.dw == _opt.def.dw ? L" " : L"*")
+				out1 << (*_opt.value.dw == _opt.def.dw ? L" " : L"*")
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L" dword"
-					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
-					<< *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1];
+				out2 << *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
 				break;
 			}
 			case ConfigOpt::T_STR: {
-				out << (_opt.def.str == nullptr ? L"?"
+				out1 << (_opt.def.str == nullptr ? L"?"
 						: (*_opt.value.str == _opt.def.str ? L" " : L"*"))
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"string"
-					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
-					<< _opt.value.str->CPtr();
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1];
+				out2 << _opt.value.str->CPtr();
 				break;
 			}
 			case ConfigOpt::T_BIN: {
-				out << (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? L"?"
+				out1 << (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? L"?"
 						: (memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? L" " : L"*"))
 					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"binary"
-					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
-					<< L"(binary has length " << static_cast<unsigned int>(_opt.bin_size) << L" bytes)";
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1];
+				out2 << L"(binary has length " << static_cast<unsigned int>(_opt.bin_size) << L" bytes)";
 				break;
 			}
 			default: {
-				out << L"? " << fsn << L' ' << BoxSymbols[BS_V1] << L"unknown type ???";
+				out1 << L"? " << fsn << L' ' << BoxSymbols[BS_V1];
+				out2 << L"unknown type ???";
 			}
 		}
-		mi.strName = out.strValue();
+		const size_t n_value_witdh = 30;
+		mi.strName = out1.strValue();
+		if (_opt.description && _opt.description[0]) {
+			out2.strValue().TruncateByCells(n_value_witdh);
+			for(size_t n = out2.strValue().CellsCount(); n < n_value_witdh; n++)
+				out2 << L' ';
+			out2 << BoxSymbols[BS_V1];
+			out2 << _opt.description;
+		}
+		mi.strName += out2.strValue();
 		if (update_id < 0) {
 			if (hide_unchanged && mi.strName.At(0)==L' ') // no hide after change item to default value
 				mi.Flags |= LIF_HIDDEN;
@@ -271,8 +282,12 @@ public:
 		em.AddFormat(L"           Type: %s", type_psz);
 		em.AddDup(def_str.strValue());
 		em.AddDup(val_str.strValue());
+		if (_opt.description && _opt.description[0]) {
+			em.AddDup(L"");
+			em.AddDup(_opt.description);
+		}
 		if (IsNotDefault()==1) {
-			em.Add(L"");
+			em.AddDup(L"");
 			em.Add(L"Note: some parameters after update/reset");
 			em.Add(L"      not applied immediately in FAR2L");
 			em.Add(L"      and need relaunch feature");
@@ -289,15 +304,32 @@ public:
 
 	static LONG_PTR WINAPI EditDlgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 	{
-		if (Msg == DN_BTNCLICK) {
-			if ( Param1 == 32 && !SendDlgMessage(hDlg, DM_ENABLE, 29, -1) ) { // to decimal
-				SendDlgMessage(hDlg, DM_ENABLE, 29, TRUE);
-				SendDlgMessage(hDlg, DM_ENABLE, 31, FALSE);
-			}
-			else if ( Param1 == 33 && !SendDlgMessage(hDlg, DM_ENABLE, 31, -1) ) { // to hex
-				SendDlgMessage(hDlg, DM_ENABLE, 29, FALSE);
-				SendDlgMessage(hDlg, DM_ENABLE, 31, TRUE);
-			}
+		switch (Msg) {
+			case DN_INITDIALOG: {
+					COORD coord{0,0};
+					SendDlgMessage(hDlg, DM_SETCURSORPOS, 35, reinterpret_cast<LONG_PTR>(&coord) ); // for clear selection and position to 1st symbol
+				}
+				break;
+			case DN_BTNCLICK:
+				if ( Param1 == 32 && !SendDlgMessage(hDlg, DM_ENABLE, 29, -1) ) { // to decimal
+					SendDlgMessage(hDlg, DM_ENABLE, 29, TRUE);
+					SendDlgMessage(hDlg, DM_ENABLE, 31, FALSE);
+					SendDlgMessage(hDlg, DM_SETFOCUS, 29, TRUE);
+				}
+				else if ( Param1 == 33 && !SendDlgMessage(hDlg, DM_ENABLE, 31, -1) ) { // to hex
+					SendDlgMessage(hDlg, DM_ENABLE, 29, FALSE);
+					SendDlgMessage(hDlg, DM_ENABLE, 31, TRUE);
+					SendDlgMessage(hDlg, DM_SETFOCUS, 31, TRUE);
+				}
+				else if (Param1 == 44) {
+					const wchar_t *help_topic = reinterpret_cast<const wchar_t *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+					if (help_topic && help_topic[0])
+						Help::Present(help_topic);
+					return TRUE;
+				}
+				break;
+			default:
+				break;
 		}
 
 		return DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -363,7 +395,7 @@ public:
 				new_str	<< L"(can not process unknown type)";
 		}
 
-		const short DLG_HEIGHT = 20, DLG_WIDTH = 76;
+		const short DLG_HEIGHT = 22, DLG_WIDTH = 76;
 		const wchar_t *mask_int = L"#9999999999";
 		const wchar_t *mask_dword = L"9999999999";
 		const wchar_t *HexMask = L"HHHHHHHH";
@@ -394,22 +426,25 @@ public:
 			/*  23 */ {DI_EDIT,			41,  8, 49,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.strValue()},
 			/*  24 */ {DI_TEXT,			 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
 			/*  25 */ {DI_TEXT,			 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
-			/*  26 */ {DI_RADIOBUTTON,	14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
-			/*  27 */ {DI_RADIOBUTTON,	29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
+			/*  26 */ {DI_RADIOBUTTON,	14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"&false"},
+			/*  27 */ {DI_RADIOBUTTON,	29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"t&rue"},
 			/*  28 */ {DI_TEXT,			14, 10, 21,            10, {}, 0, L"Decimal="},
 			/*  29 */ {DI_EDIT,			22, 10, 32,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.strValue()},
 			/*  30 */ {DI_TEXT,			35, 10, 40,            10, {}, 0, L"Hex=0x"},
 			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.strValue()},
-			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
-			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
-			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
-			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
-			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediately in FAR2L"},
-			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
-			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
-			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
-			/*  40 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
-			/*  41 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
+			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"&dec"},
+			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"&hex"},
+			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L" Description "},
+			/*  35 */ {DI_EDIT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_READONLY, L"(no description)"},
+			/*  36 */ {DI_TEXT,		3, 13, 20,            13, {}, DIF_SEPARATOR, L""},
+			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
+			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      not applied immediately in FAR2L"},
+			/*  39 */ {DI_TEXT,		5, 16, DLG_WIDTH - 6, 16, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
+			/*  40 */ {DI_TEXT,		5, 17, DLG_WIDTH - 6, 17, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
+			/*  41 */ {DI_TEXT,		3, 18, 20, 18, {}, DIF_SEPARATOR, L""},
+			/*  42 */ {DI_BUTTON,	0, 19, 0,  19, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
+			/*  43 */ {DI_BUTTON,	0, 19, 0,  19, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel},
+			/*  44 */ {DI_BUTTON,	0, 19, 0,  19, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, L"Closest Help &Topic"}
 		};
 		if (!is_def) {
 			AdvancedConfigDlgData[10].Flags	|= DIF_DISABLE;
@@ -472,8 +507,12 @@ public:
 				AdvancedConfigDlgData[33].Flags = DIF_HIDDEN;
 			}
 		}
+		if (_opt.description && _opt.description[0])
+			AdvancedConfigDlgData[35].Data = _opt.description;
+		if (!_opt.help_topic || !_opt.help_topic[0])
+			AdvancedConfigDlgData[44].Flags |= DIF_DISABLE;
 		MakeDialogItemsEx(AdvancedConfigDlgData, AdvancedConfigDlg);
-		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg), EditDlgDlgProc);
+		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg), EditDlgDlgProc, (LONG_PTR)_opt.help_topic);
 		Dlg.SetPosition(-1, -1, DLG_WIDTH, DLG_HEIGHT);
 		Dlg.SetHelp(L"FarConfig");
 		Dlg.Process();

@@ -1,24 +1,21 @@
 #include "ProtocolAWS.h"
-#include <fstream>
+#include "AWSFileReader.h"
+#include "AWSFileWriter.h"
 #include <vector>
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
 {
+	(void)fd_ipc_recv;
 	return std::make_shared<ProtocolAWS>(host, port, username, password, options);
 }
 
-// Initialize the AWS SDK
 ProtocolAWS::ProtocolAWS(const std::string &host, unsigned int port,
                          const std::string &username, const std::string &password,
                          const std::string &protocol_options)
 {
     _repository = std::make_shared<S3Repository>(host, port, username, password, protocol_options);
-}
-
-ProtocolAWS::~ProtocolAWS()
-{
 }
 
 std::string ProtocolAWS::RootedPath(const std::string &path1)
@@ -64,7 +61,7 @@ void ProtocolAWS::FileDelete(const std::string &path)
 void ProtocolAWS::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	auto rooted_path = RootedPath(path);
-	if (rooted_path.find('/') < 0) {
+	if (rooted_path.find('/') == std::string::npos) {
 		_repository->CreateBucket(rooted_path);
 	} else {
 		_repository->CreateDirectory(rooted_path);
@@ -87,11 +84,9 @@ public:
 		}
 	}
 
-	virtual ~AWSDirectoryEnumer()
-	{
-	}
+	~AWSDirectoryEnumer() override = default;
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
 	{
 		if (ls.empty()) return false;
 
@@ -162,10 +157,12 @@ void ProtocolAWS::Rename(const std::string &path_old, const std::string &path_ne
 
 void ProtocolAWS::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
+	// S3 does not support setting file modification times
 }
 
 void ProtocolAWS::SetMode(const std::string &path, mode_t mode)
 {
+	// S3 does not support POSIX file permission modes
 }
 
 void ProtocolAWS::SymlinkCreate(const std::string &link_path, const std::string &link_target)

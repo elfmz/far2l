@@ -1,6 +1,14 @@
 #include "Common.h"
 #include "ImageView.h"
+#include "lng.h"
 #include "Settings.h"
+#include "ToolExec.h"
+#include <cmath>
+#include <iomanip>
+#include <locale>
+#include <sstream>
+#include <string>
+#include <string_view>
 
 class ImageViewAtFull : public ImageView
 {
@@ -66,13 +74,14 @@ public:
 	bool may_select{false};
 	bool full_size{false};
 	bool _first_draw{true};
+	using ImageView::CurFile;
 
 	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 		: ImageView(initial_file, all_files)
 	{
 	}
 
-	bool Setup(SMALL_RECT &rc, HANDLE dlg)
+	ImageOpResult Setup(SMALL_RECT &rc, HANDLE dlg)
 	{
 		_dlg = dlg;
 		_first_draw = true;
@@ -115,6 +124,9 @@ public:
 			DraggingApplyMoves();
 		}
 	}
+
+	bool ShowExifInfo();
+	void ShowGpsInfo();
 };
 
 static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
@@ -152,10 +164,12 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			if (!iv->full_size) {
 				RectReduce(rc);
 			}
-			if (iv->Setup(rc, hDlg)) {
+			const auto result = iv->Setup(rc, hDlg);
+			if (result == ImageOpResult::OK) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
-				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
+				const auto exit_code = (result == ImageOpResult::CANCELLED) ? EXITED_DUE_CANCELLED : EXITED_DUE_ERROR;
+				g_far.SendDlgMessage(hDlg, DM_CLOSE, exit_code, 0);
 			}
 		}
 		return TRUE;
@@ -231,6 +245,17 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				case KEY_F4:
 					iv->RunProcessingCommand();
 					break;
+				case 'i': case 'I': case KEY_F3:
+					if (iv->ShowExifInfo()) {
+						g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
+					}
+					break;
+				case 'g': case 'G': case KEY_ALTF8:
+					iv->ShowGpsInfo();
+					break;
+				case 't': case 'T': case KEY_CTRLF10:
+					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_GOTO_CURFILE, 0);
+					break;
 			}
 		}
 		return TRUE;
@@ -248,7 +273,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			// over the now-definitely-drawn background, and it remains visible.
 			//
 			// See #3201 and #3209 for details.
-			
+
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			if (iv && iv->_first_draw) {
 				iv->_first_draw = false;
@@ -268,7 +293,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error)
+static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error, std::string *goto_file = nullptr)
 {
 	ImageViewAtFull iv(initial_file, all_files);
 	if (selection) {
@@ -313,34 +338,275 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 			g_far.DialogFree(dlg);
 		}
 
-		if (exit_code != EXITED_DUE_RESIZE) {
-			if (exit_code == EXITED_DUE_ENTER) {
+		switch (exit_code) {
+			case EXITED_DUE_RESIZE:
+				continue;
+			case EXITED_DUE_ENTER:
 				if (selection) {
-					*selection = std::move(iv.GetSelection());
+					*selection = iv.GetSelection();
 				}
-			} else if (exit_code == EXITED_DUE_ERROR && !silent_exit_on_error) {
-				std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
-				std::wstring werr_str = StrMB2Wide(iv.ErrorString());
-				const wchar_t *MsgItems[] = {g_settings.Msg(M_TITLE),
-					L"Failed to load image file:",
-					ws_cur_file.c_str(),
-					werr_str.c_str(),
-					L"Ok"
-				};
-				g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+				break;
+			case EXITED_DUE_GOTO_CURFILE:
+				if (goto_file) {
+					*goto_file = iv.CurFile();
+				}
+				break;
+			case EXITED_DUE_ERROR:
+				if (!silent_exit_on_error) {
+					std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
+					std::wstring werr_str = StrMB2Wide(iv.ErrorString());
+					ShowError({g_settings.Msg(M_FAILED_TO_LOAD_IMAGE), ws_cur_file, werr_str});
+				}
+				break;
+			case EXITED_DUE_CANCELLED:
+			case EXITED_DUE_ESCAPE:
+				break;
+		}
+		return exit_code;
+	}
+}
+
+EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file)
+{
+	return ShowImageAtFullInternal(initial_file, all_files, &selection, silent_exit_on_error, goto_file);
+}
+
+EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error, std::string *goto_file)
+{
+	std::vector<std::pair<std::string, bool>> all_files{{file, false}};
+	return ShowImageAtFullInternal(0, all_files, nullptr, silent_exit_on_error, goto_file);
+}
+
+namespace
+{
+	void ReplaceAll(std::string& str, std::string_view from, std::string_view to)
+	{
+		if (from.empty()) {
+			return;
+		}
+
+		for (std::size_t pos = 0; (pos = str.find(from, pos)) != std::string::npos; pos += to.length()) {
+			str.replace(pos, from.length(), to);
+		}
+	}
+
+	struct ScopedImageHider
+	{
+		ImageView* viewer;
+		explicit ScopedImageHider(ImageView* v) : viewer(v)
+		{
+			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+		}
+		ScopedImageHider(const ScopedImageHider&) = delete;
+		ScopedImageHider& operator=(const ScopedImageHider&) = delete;
+		~ScopedImageHider()
+		{
+			if (viewer) {
+				viewer->ForceShow();
 			}
-			return exit_code;
+		}
+		void dismiss() {
+			viewer = nullptr;
+		}
+	};
+
+	enum ExifDlgItem
+	{
+		EXIF_DOUBLEBOX_IDX,
+		EXIF_MEMO_IDX,
+	};
+
+	void SetExifDlgItemPositions(HANDLE hDlg, int dlg_width, int dlg_height)
+	{
+		SMALL_RECT doublebox_rect  = {0, 0, (SHORT)(dlg_width - 1), (SHORT)(dlg_height - 1)};
+		SMALL_RECT memo_rect       = {1, 1, (SHORT)(dlg_width - 2), (SHORT)(dlg_height - 2)};
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_DOUBLEBOX_IDX, reinterpret_cast<LONG_PTR>(&doublebox_rect));
+		g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, EXIF_MEMO_IDX,      reinterpret_cast<LONG_PTR>(&memo_rect));
+	}
+
+	LONG_PTR WINAPI ExifDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+	{
+		switch (Msg) {
+			case DN_INITDIALOG: {
+				SMALL_RECT dlg_rect{};
+				if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, reinterpret_cast<LONG_PTR>(&dlg_rect))) {
+					SetExifDlgItemPositions(hDlg, dlg_rect.Right - dlg_rect.Left + 1, dlg_rect.Bottom - dlg_rect.Top + 1);
+				}
+				return TRUE;
+			}
+			case DN_DRAGGED: {
+				return FALSE;
+			}
+			case DN_RESIZECONSOLE: {
+				const COORD *console_size = reinterpret_cast<const COORD *>(Param2);
+				g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, reinterpret_cast<LONG_PTR>(console_size));
+				SetExifDlgItemPositions(hDlg, console_size->X, console_size->Y);
+				if (bool *resized = reinterpret_cast<bool *>(g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0))) {
+					*resized = true;
+				}
+				return TRUE;
+			}
+			default: {
+				return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
+			}
 		}
 	}
 }
 
-EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error)
+bool ImageViewAtFull::ShowExifInfo()
 {
-	return ShowImageAtFullInternal(initial_file, all_files, &selection, silent_exit_on_error);
+	ScopedImageHider guard(this);
+
+	ToolExec exiftool(CancelFlag());
+	exiftool.AddArguments("exiftool", "-charset", "UTF8", "-g", "--", CurFile());
+	if (!exiftool.Run(CurFile(), CurFileSizeStr(), "exiftool", "Reading EXIF metadata...")) {
+		return false;
+	}
+	if (exiftool.ExecError() != 0) {
+		return false;
+	}
+
+	const std::wstring exiftool_output = StrMB2Wide(exiftool.FetchStdout());
+	if (exiftool_output.empty()) {
+		ShowError({g_settings.Msg(M_NO_EXIF_OR_UNSUPPORTED_FORMAT)});
+		return false;
+	}
+
+	SMALL_RECT far_rect{};
+	if (!g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &far_rect, 0)) {
+		return false;
+	}
+
+	std::wstring dlg_title = g_settings.Msg(M_TITLE);
+	dlg_title += g_settings.Msg(M_MEDIA_METADATA);
+
+	FarDialogItem items[2]{};
+	items[EXIF_DOUBLEBOX_IDX].Type    = DI_DOUBLEBOX;
+	items[EXIF_DOUBLEBOX_IDX].PtrData = dlg_title.c_str();
+	items[EXIF_MEMO_IDX].Type         = DI_MEMOEDIT;
+	items[EXIF_MEMO_IDX].Flags        = DIF_READONLY | DIF_FOCUS;
+	items[EXIF_MEMO_IDX].PtrData      = exiftool_output.c_str();
+
+	bool resized = false;
+	HANDLE hdlg = g_far.DialogInit(g_far.ModuleNumber, far_rect.Left, far_rect.Top, far_rect.Right, far_rect.Bottom, nullptr, items, ARRAYSIZE(items), 0, 0, ExifDlgProc, reinterpret_cast<LONG_PTR>(&resized));
+	if (hdlg != INVALID_HANDLE_VALUE) {
+		g_far.DialogRun(hdlg);
+		g_far.DialogFree(hdlg);
+	}
+	if (resized) {
+		guard.dismiss();
+	}
+	return resized;
 }
 
-EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error)
+void ImageViewAtFull::ShowGpsInfo()
 {
-	std::vector<std::pair<std::string, bool> > all_files{{file, false}};
-	return ShowImageAtFullInternal(0, all_files, nullptr, silent_exit_on_error);
+	ScopedImageHider guard(this);
+
+	ToolExec exiftool(CancelFlag());
+	exiftool.AddArguments("exiftool", "-n", "-T", "-GPSLatitude", "-GPSLongitude", "--", CurFile());
+
+	if (!exiftool.Run(CurFile(), CurFileSizeStr(), "exiftool", "Reading GPS metadata...")) {
+		return;
+	}
+	if (exiftool.ExecError() != 0) {
+		return;
+	}
+
+	double latitude = 0.0, longitude = 0.0;
+	std::istringstream stream(exiftool.FetchStdout());
+	stream.imbue(std::locale::classic());
+
+	if (!(stream >> latitude >> longitude)) {
+		ShowError({g_settings.Msg(M_NO_GPS_METADATA_FOUND)});
+		return;
+	}
+
+	auto format_coords = [](double val) {
+		std::ostringstream oss;
+		oss.imbue(std::locale::classic());
+		oss << std::fixed << std::setprecision(6) << val;
+		return oss.str();
+	};
+
+	const std::string lat     = format_coords(latitude);
+	const std::string lon     = format_coords(longitude);
+	const std::string abs_lat = format_coords(std::abs(latitude));
+	const std::string abs_lon = format_coords(std::abs(longitude));
+	const std::string lat_dir = (latitude >= 0) ? "N" : "S";
+	const std::string lon_dir = (longitude >= 0) ? "E" : "W";
+
+	struct MapProvider
+	{
+		std::wstring name;
+		std::string url_template;
+	};
+
+	static const std::vector<MapProvider> providers = {
+		{ L"2gis",          "https://2gis.ru/geo/{lon},{lat}" },
+		{ L"Apple Maps",    "https://maps.apple.com/?q=loc:{lat},{lon}"},
+		{ L"Bing Maps",     "https://www.bing.com/maps?where1={lat},{lon}&lvl=15" },
+		{ L"GeoHack",       "https://geohack.toolforge.org/geohack.php?params={abs_lat}_{lat_dir}_{abs_lon}_{lon_dir}_" },
+		{ L"Google Maps",   "https://www.google.com/maps/search/?api=1&query={lat},{lon}"},
+		{ L"OpenStreetMap", "https://www.openstreetmap.org/?mlat={lat}&mlon={lon}"},
+		{ L"Organic Maps",  "https://omaps.app/{lat},{lon}"},
+		{ L"Wikimapia",     "https://wikimapia.org/#lat={lat}&lon={lon}&z=11&m=w"},
+		{ L"Yandex Maps",   "https://yandex.com/maps?whatshere%5Bpoint%5D={lon},{lat}"},
+	};
+	static int s_last_provider_idx = 0;
+
+	auto build_url = [&](int idx) {
+		std::string url = providers[static_cast<size_t>(idx)].url_template;
+		const std::pair<std::string_view, std::string_view> replacements[] = {
+			{"{lat}", lat},
+			{"{lon}", lon},
+			{"{abs_lat}", abs_lat},
+			{"{abs_lon}", abs_lon},
+			{"{lat_dir}", lat_dir},
+			{"{lon_dir}", lon_dir}
+		};
+		for (const auto& [gps_tag, gps_val] : replacements) {
+			ReplaceAll(url, gps_tag, gps_val);
+		}
+		return StrMB2Wide(url);
+	};
+
+	std::vector<FarMenuItem> menu_items(providers.size());
+	for (size_t i = 0; i < providers.size(); ++i) {
+		menu_items[i].Text = providers[i].name.c_str();
+	}
+
+	const std::wstring ws_coords = StrMB2Wide(abs_lat) + L"\u00B0" + StrMB2Wide(lat_dir) + L", "
+			+ StrMB2Wide(abs_lon) + L"\u00B0" + StrMB2Wide(lon_dir);
+	wchar_t menu_title[256];
+	swprintf(menu_title, ARRAYSIZE(menu_title), g_settings.Msg(M_OPEN_GPS_COORDINATES_IN), ws_coords.c_str());
+
+	constexpr int BREAK_KEYS[] = { MAKELONG('C', PKF_CONTROL), 0 };
+
+	int active_menu_idx = s_last_provider_idx;
+	for (;;) {
+		int break_code = -1;
+		menu_items[active_menu_idx].Selected = 1;
+		const int selected_menu_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE, menu_title,
+									  L"Enter Ctrl+C", nullptr, BREAK_KEYS, &break_code, menu_items.data(), menu_items.size());
+		menu_items[active_menu_idx].Selected = 0;
+
+		if (selected_menu_idx < 0) {
+			return; // Esc/F10
+		}
+
+		active_menu_idx = selected_menu_idx;
+		const std::wstring url = build_url(active_menu_idx);
+
+		if (break_code == 0) { // Ctrl+C
+			// Copy URL of currently highlighted item, keep menu open.
+			g_fsf.CopyToClipboard(url.c_str());
+			continue;
+		}
+
+		s_last_provider_idx = active_menu_idx;
+		const std::wstring url_quoted = L"'" + url + L"'";
+		g_fsf.Execute(url_quoted.c_str(), EF_OPEN | EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT);
+		return;
+	}
 }

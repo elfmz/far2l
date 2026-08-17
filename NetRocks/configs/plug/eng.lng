@@ -312,6 +312,7 @@
 "SHELL Protocol Options"
 "&Way to access shell"
 "Shell access way settings"
+"FISH+ Protocol Options"
 
 "Proxy settings"
 "Not using proxifier"
@@ -321,6 +322,8 @@
 "AWS S3 Storage"
 "User agent"
 "Region"
+"Use path-style"
+"Use untrusted SSL"
 "Use proxy"
 "Proxy host"
 "Proxy port"

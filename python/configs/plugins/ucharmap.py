@@ -1,3 +1,4 @@
+import os
 import logging
 from far2l.plugin import PluginBase
 from far2l.fardialogbuilder import (
@@ -19,9 +20,9 @@ class Plugin(PluginBase):
     label = "Python Character Map"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER", "DIALOG"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         try:
-            return self._OpenPlugin(OpenFrom)
+            return self._OpenPlugin(OpenFrom, Item)
         except Exception as ex:
             log.exception('run')
 
@@ -34,7 +35,7 @@ class Plugin(PluginBase):
         cpos = self.ffi.new("COORD *", dict(X=col, Y=row))
         self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
 
-    def _OpenPlugin(self, OpenFrom):
+    def _OpenPlugin(self, OpenFrom, Item):
         def GetColor(no):
             data = self.ffi.new("DWORD *")
             rc = self.info.AdvControl(
@@ -159,6 +160,13 @@ class Plugin(PluginBase):
                     return 0
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
+                elif Param2 == self.ffic.KEY_F1:
+                    fn = os.path.normpath(__file__)
+                    dn = os.path.dirname(fn)
+                    bn = os.path.splitext(os.path.basename(fn))[0]
+                    nn = os.path.join(dn, 'help', bn, bn)+'.hlp'
+                    self.info.ShowHelp(self.s2f(nn), self.ffi.NULL, 0)
+                    return 1
                 else:
                     return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
                 if col == self.max_col:

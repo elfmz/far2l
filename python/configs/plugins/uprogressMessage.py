@@ -9,7 +9,7 @@ class Plugin(PluginBase):
     label = "Python Progress Message"
     openFrom = ["PLUGINSMENU"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         t = ProgressMessage(self, "Progress demo", "Please wait ... working", 100)
         t.show()
         time.sleep(2)

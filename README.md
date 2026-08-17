@@ -2,15 +2,15 @@
 
 # far2l [![tag](https://img.shields.io/github/tag/elfmz/far2l.svg)](https://github.com/elfmz/far2l/tags)
 Linux fork of FAR Manager v2 (http://farmanager.com/)   
-Works also on macOS and BSD (but latter not tested on regular manner)
+Works also on macOS and BSD (but latter is not regularly tested)
 BETA VERSION.   
-**Use on your own risk!**
+**Use at your own risk!**
 
 Plug-ins that are currently working:
-ADB <sub>(the external adb binary is required to work, see [README](https://github.com/elfmz/far2l/blob/master/adb/README.md))</sub>,
+ADB <sub>(the external adb binary is required to work, see: [README](https://github.com/elfmz/far2l/blob/master/adb/README.md))</sub>,
 Advanced compare,
 align,
-arclite <sub>(now as experimental version which partially more effective then multiarc;
+arclite <sub>(now as experimental version which partially more effective than multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>,
 autowrap,
@@ -21,17 +21,20 @@ editcase,
 editorcomp,
 edsort,
 filecase,
+gitgutter,
 hexitor,
 ImageViewer,
 incsrch,
 inside,
 memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/memo/README.md))</sub>,
+MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/mtp/README.md))</sub>,
 multiarc,
-NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3 <sub>optional compilation if AWSSDK installed</sub>),
+NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3),
 OpenWith,
 Python <sub>(optional scripting support, see [readme](python/configs/plugins/read-en.txt) and [info](python/configs/plugins/readme-plugins.txt))</sub>,
 SimpleIndent,
 tmppanel,
+Transformer <sub>(generic external-command text transformations for the editor and file panels)</sub>,
 truncate.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
@@ -78,7 +81,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 <a name="gstarted"></a>
 ## Getting Started
 
-<sub><a name="keyshells"></a>_Note_: Far2l uses keyboard shortcurts in the tradition of the Far Manager for Windows,
+<sub><a name="keyshells"></a>_Note_: Far2l uses keyboard shortcuts in the tradition of the Far Manager for Windows,
 but some of them (**Alt**+**F1**, **Alt**+**F2**, **Alt**+**F7**, **Ctrl**+arrows, etc.)
 usually exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. and in terminal emulators.
 To work with these keys in far2l you need to _release keyboard shortcuts globally_
@@ -87,10 +90,10 @@ in the environment settings (see [#2326](https://github.com/elfmz/far2l/issues/2
 under GNOME you can use `dconf-editor org.gnome.desktop.wm.keybindings` to view and change global keybindings)
 or use far2l lifehacks:
 _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively handle hotkeys option in the Input settings_
-(see details in buil-in far2l help).</sub>
+(see details in built-in far2l help).</sub>
 
 ### UI Backends
-  FAR2L has base UI Backends (see details in build-in help section **UI backends**):
+  FAR2L has base UI Backends (see details in built-in help section **UI backends**):
 
 - **GUI|WX** (uses wxWidgets) or **GUI|SDL**: works in graphics mode, **ideal UX**
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
@@ -101,7 +104,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 - **TTY|X**: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
 
 - **TTY**: plain terminal mode, no X11 dependencies, **UX with some restrictions** (works fully when running in the
-[terminal emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
+[terminal emulators](#terminals), which provide clipboard access and have their advanced keyboard protocols).
 
 
 | Mode<br>(UI Backends) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY<br>(plain far2l) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|X | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|Xi | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l-wx.svg) GUI\|WX | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l-wx.svg) GUI\|SDL<br><sup>_Experimental_</sup> |
@@ -115,7 +118,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 | [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | Install `far2l` with<br><sup>`--no-install-recommends`<br>and use `far2l` due to<br>[auto downgrade](#downgrade)<br>(since _2.6.5~ds-3_ /<br>Ubuntu 25.10+)</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> | _not yet_ |
 | Community [PPA](#community_bins)<br><sup>(packages names):</sup> | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` | _not yet_ |
 
-<sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
+<sub><a name="downgrade"></a>_Note_: When running, far2l automatically downgrades
 if its components are not installed (or system libs are not available):
 **GUI** ⇒ **TTY|Xi** ⇒ **TTY|X** ⇒ **TTY**.
 To force run only specific backend use in command line:
@@ -124,19 +127,19 @@ for **TTY|Xi** use in command line: `far2l --tty`;
 for **TTY|X**: `far2l --tty --nodetect=xi`;
 for plain **TTY**: `far2l --tty --nodetect=x`
 (see details via `far2l --help`).
-If your far2l compiled with SDL you can run `far2l --SDL` also.</sub>
+If your far2l is compiled with SDL you can run `far2l --SDL` also.</sub>
 
 <sub>_Note_: Using OSC 52 in TTY/TTY|X_:
 to interact with the system clipboard you must **not forget to enable OSC 52**
 in both the **FAR2L settings** (`Options`⇒`Interface settings`⇒`Use OSC52 to set clipboard data`,
-which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
-you can run `far2l --tty --nodetect` to force not use others clipboard options),
+which is shown in the dialog only if far2l runs in TTY/TTY|X mode and all other options for clipboard access are unavailable;
+you can run `far2l --tty --nodetect` to force it not to use other clipboard options),
 and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
 OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
 <sub>_Note_: Using **TTY** under **Wayland** and **OSC 52** under Wayland:
-**TTY X|Xi** in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
-you need to run `far2l --tty --nodetect=x`, than OSC 52 setting option will appear in `Interface Settings`, and you could enable it, as it described in a chapter above.
+**TTY X|Xi** in `--tty` works incorrectly. You need to fully disable it to use OSC 52 for proper clipboard integration;
+you need to run `far2l --tty --nodetect=x`, then OSC 52 setting option will appear in `Interface Settings`, and you can enable it, as described in a chapter above.
 Clipboard in `wx-gui` is working correctly. </sub>
 
 <a name="inst_run"></a>
@@ -188,15 +191,75 @@ debuild
 
 </details>
 
+#### Homebrew binaries or source (macOS and Linux)
 
-#### macOS binaries
+Homebrew is a package manager with some [benefits](https://brew.sh/#:~:text=What%20Does%20Homebrew%20Do) over traditional approaches.
+
+First, install Homebrew if not yet installed:
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+##### TTY only, latest compact version
+
+You can install 25MB "compact", slightly limited far2l TTY version via official [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
+
+It has no support for plugins in Python and no SMB protocol in NetRocks due to huge dependency size.
+
+For the far2l binary version run
+```sh
+brew install far2l-tty
+```
+For the built from source version run
+```sh
+brew install far2l-tty --build-from-source
+```
+
+
+##### macOS GUI version
+
+**_⚠ Warning! This approach is deprecated_**
+
+Apple requires registering as a developer (100$/year) to sign app binaries. If nobody will register till **2026-09-01**, cask will be removed from the homebrew.
 
 You can install prebuilt package for x86_64 platform via [Homebrew Cask](https://formulae.brew.sh/cask/far2l), by command:
 ```sh
 brew install --cask far2l
 ```
 
-You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
+
+####  TTY only, latest full version via unofficial brew tap
+
+Supports Python plugins and all NetRocks protocols. 
+
+_⚠ Note: third-party tap, please verify [formula](https://github.com/Vladekk/homebrew-far2l/blob/main/Formula/far2l-tty-full.rb) before using_
+
+```sh
+brew install Vladekk/far2l/far2l-tty-full
+```
+
+##### Latest far2l Git master via unofficial brew tap
+
+<a href="#homebrew_from_git_master"></a>
+This is useful for development.
+
+_⚠ Note: third-party tap, please verify [formula](https://github.com/yurikoles/homebrew-yurikoles/blob/master/Formula/far2l.rb) before using_
+
+ * With GUI/TTY backends:
+```sh
+brew install --HEAD yurikoles/yurikoles/far2l
+```
+ * With TTY backend only:
+```sh
+brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
+```
+ * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
+
+
+#### macOS GUI version (direct download)
+
+You can manually download and install prebuilt package from Releases page: <https://github.com/elfmz/far2l/releases>
+
 
 #### Docker
 
@@ -205,8 +268,6 @@ You can use containers to try `far2l` without installing anything.
 docker build . -l far2l
 docker run -it far2l
 ```
-
-See also [Community packages & binaries](#community_bins)
 
 
 <a name="building"></a>
@@ -220,24 +281,27 @@ See also [Community packages & binaries](#community_bins)
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
 * `libuchardet-dev` (_optional_ - needed for **auto charset detection**, not needed with `-DUSEUCD=no`)
 * `libssh-dev` (_optional_ - needed for **NetRocks/SFTP**)
-* `libssl-dev` (_optional_ - needed for **NetRocks/FTPS**)
+* `libssl-dev` (_optional_ - needed for **NetRocks/FTPS** and **NetRocks/AWS S3**)
 * `libsmbclient-dev` (_optional_ - needed for **NetRocks/SMB**)
 * `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
-* `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
-* [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS S3**)
+* `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV** and **NetRocks/AWS S3**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
 * `7zip` or `p7zip-full` in old distributions (_optional_ - not needed for building, but dynamically used for archives processing via **multiarc** and **arclite**)
-* `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
+* `libicu-dev` (_optional_ - needed if using non-default ICU_MODE, see `-DICU_MODE` command line option)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
-* `cmake` ( >= 3.2.2 )
+* `cmake` ( >= 3.5.0 )
 * `pkg-config`
 * `g++`
 * `git` (needed for downloading source code)
 
 or simply on **Debian/Ubuntu** (without SDL-dependencies):
 ``` sh
+# For Debian 13+ / Ubuntu 23.04+ (using wxWidgets 3.2):
+apt-get install libwxgtk3.2-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+
+# For older distributions (using wxWidgets 3.0):
 apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
@@ -282,7 +346,7 @@ cmake --build .
 
 ##### Additional build configuration options:
 
-To build without GUI|WX backend (console version only): change `-DUSEWX=yes` to `-DUSEWX=no` also in this case dont need to install `libwxgtk*-dev` package.
+To build without GUI|WX backend (console version only): change `-DUSEWX=yes` to `-DUSEWX=no`; also in this case you don't need to install `libwxgtk*-dev` package.
 
 To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`.
 
@@ -292,7 +356,7 @@ or `-DUSESDL=YES -DUSEWX=NO` to compile only SDL.
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`.
 
 By default far2l uses pre-generated "hardcoded" UNICODE characters properties. But this can be changed by specifying `-DICU_MODE` when configuring cmake:
- `-DICU_MODE=prebuilt` - is a described above default implementaion. Most dependency-less option.
+ `-DICU_MODE=prebuilt` - is a described above default implementation. Most dependency-less option.
  `-DICU_MODE=build` - re-generate characters properties during build by using libicu available on build system, but it still not required to be present on target.
  `-DICU_MODE=runtime` - obtain properties at runtime (that can be bit slower) using libicu that required to be present on target system.
 
@@ -307,7 +371,7 @@ but you must have installed additional packages within yours system:
 To control how RAR archives will be handled in multiarc:
  `-DUNRAR=bundled` (default) use bundled sources found in multiarc/src/formats/rar/unrar
  `-DUNRAR=lib` use libunrar and unrar utility, also build requires libunrar-dev to be installed
- `-DUNRAR=NO` dont use special unrar code, rar archives will be handled by libarchive unless its also disabled.
+ `-DUNRAR=NO` don't use special unrar code, rar archives will be handled by libarchive unless it's also disabled.
 
 There're also options to toggle other plugins build in same way:
 `-DADB=no`, `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`,
@@ -315,13 +379,16 @@ There're also options to toggle other plugins build in same way:
 `-DDRAWLINE=no`,
 `-DEDITCASE=no`, `-DEDITORCOMP=no`, `-DEDSORT=no`,
 `-DFARFTP=yes` <sub>(by default it is disabled)</sub>, `-DFILECASE=no`,
+`-DGITGUTTER=no`,
 `-DHEXITOR=no`,
 `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`,
-`-DMEMO=no`, `-DMULTIARC=no`,
+`-DMEMO=no`,
+`-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/mtp/README.md)),
+`-DMULTIARC=no`,
 `-DNETROCKS=no`,
 `-DOPENWITH=no`,
 `-DSIMPLEINDENT=no`,
-`-DTMPPANEL=no`, `-DTRUNCATE=no`
+`-DTMPPANEL=no`, `-DTRANSFORMER=no`, `-DTRUNCATE=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
 #### macOS build
@@ -332,20 +399,8 @@ To make custom/recent build use brew or MacPorts.
  ```sh
  clang++ -v
  ```
- * If you want to build using Homebrew - first visit <https://brew.sh/> for installation instructions. Note that there're reported problems with Homebrew-based build under MacOS Big Sur.
+ * If you want to build using Homebrew, read [homebrew from Git master](#latest-far2l-git-master-via-unofficial-brew-tap)
  * If you want to build using MacPorts - first visit <https://www.macports.org/install.php> for installation instructions.
-
-##### One line macOS install latest far2l git master via unofficial brew tap
-
- * With GUI/TTY backends:
-```sh
-brew install --HEAD yurikoles/yurikoles/far2l
-```
- * With TTY backend only:
-```sh
-brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
-```
- * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
 
 ##### Full macOS build from sources (harder):
 Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependencies.
@@ -382,7 +437,7 @@ cmake --build .
 ```
  * Then you may create .dmg package by running: `cpack` command.
 Note that this step sometimes fails and may succeed from not very first attempt.
-Its recommended not to do anything on machine while cpack is in progress.
+It's recommended not to do anything on machine while cpack is in progress.
 After .dmg successfully created, you may install it by running `open ...path/to/created/far2l-*.dmg`
 
 ##### macOS workaround if far2l in macOS regularly asks permission to folders
@@ -408,6 +463,9 @@ Additionally, for NetRocks you will need:
 emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
+
+#### Building on FreeBSD
+See [`.cirrus.yml`](.cirrus.yml) `install_script` for the dependency list. The **MTP plugin** uses FreeBSD's base-system `libusb-1.0` (no extra package needed); if pkg-config can't locate it the plugin is silently skipped, like other optional NetRocks backends.
 
 #### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
@@ -435,8 +493,8 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 ## Compatible Terminals and SSH clients
 
 _Note_: to full transfer extended keyboard shortcuts and the clipboard to/from the **remote far2l**
-one of the best way to initiate the connection **inside local far2l-GUI**
-(see details about _TTY|F backend_ in build-in help section **UI backends**).
+one of the best ways to initiate the connection **inside local far2l-GUI**
+(see details about _TTY|F backend_ in built-in help section **UI backends**).
 
 Terminals/SSH clients with support extended far2l keyboard shortcuts and clipboard access:
 
@@ -450,6 +508,7 @@ Terminals/SSH clients with support extended far2l keyboard shortcuts and clipboa
  * **Windows Terminal** (_TTY|w backend_: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
 
  * _Original PuTTY_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
+    + **Putty-Zeroes-Mod** (Windows ssh-client): https://github.com/Zeroes1/Putty-Zeroes-Mod (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     + **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     + **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     + **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
@@ -479,14 +538,14 @@ but vanilla PuTTY can not transfer clipboard.
 <a name="community_bins"></a>
 ## Community packages & binaries
 
- _They are mainteined by enthusiasts and may be not exact with master: sometimes has extra plugins, sometimes has tweak, etc._
+ _They are maintained by enthusiasts and may not be exactly in sync with master: sometimes they have extra plugins, sometimes they have tweaks, etc._
 
  * **Portable** (_with TTY X/Xi backend_) | **AppImage** (_with GUI|WX and some extra plugins_): https://github.com/spvkgn/far2l-portable/releases
  * **Ubuntu** and **Mint** from PPA with fresh far2l: https://launchpad.net/~far2l-team/+archive/ubuntu/ppa
 
     - <details><summary>tips for toggle between repositories PPA and official Ubuntu <sub>[<i>click to expand/collapse</i>]</sub></summary>
 
-        - **Tranfser to binaries from PPA repository**
+        - **Transfer to binaries from PPA repository**
 
             ```shell
             sudo apt remove far2l*                      # required if any far2l was installed
@@ -523,4 +582,4 @@ but vanilla PuTTY can not transfer clipboard.
  * See [HACKING.md](HACKING.md)
 
 ## Known issues:
-* Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.
+* Only valid translations are English, Russian, Ukrainian and Belarusian (interface only), all other languages require deep correction.

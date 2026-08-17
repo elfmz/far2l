@@ -10,6 +10,7 @@ class ExecAsync : Threaded
 	std::vector<std::string> _args;
 
 	std::vector<char> _stdin, _stdout, _stderr;
+	size_t _stdin_offset{0};
 	std::mutex _mtx;
 	bool _dont_care{false};
 	bool _started{false};

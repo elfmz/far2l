@@ -27,7 +27,7 @@ class Plugin(PluginBase):
     label = "Python Dialog Demo"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom, Item):
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:

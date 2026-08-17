@@ -81,6 +81,19 @@ add_executable (NetRocks-SHELL
     src/Protocol/ShellParseUtils.cpp
 )
 
+add_executable (NetRocks-FISHPLUS
+    ${PROTOCOL_SOURCES}
+    src/Protocol/FISHPLUS/ProtocolFISHPLUS.cpp
+    src/Protocol/FISHPLUS/FishPlusSession.cpp
+    src/Protocol/FISHPLUS/FishPlusScript.cpp
+    src/Protocol/FISHPLUS/FishPlusListing.cpp
+    src/Protocol/SHELL/WayToShellConfig.cpp
+    src/Protocol/SHELL/WayToShell.cpp
+    src/Protocol/SHELL/Request.cpp
+    src/Protocol/SHELL/Parse.cpp
+    src/Protocol/ShellParseUtils.cpp
+)
+
 target_link_libraries(NetRocks-FILE utils)
 target_include_directories(NetRocks-FILE PRIVATE src)
 set_target_properties(NetRocks-FILE
@@ -99,6 +112,15 @@ set_target_properties(NetRocks-SHELL
     SUFFIX ".broker")
 target_compile_options(NetRocks-SHELL PUBLIC -DNETROCKS_PROTOCOL)
 
+target_link_libraries(NetRocks-FISHPLUS utils)
+target_include_directories(NetRocks-FISHPLUS PRIVATE src)
+set_target_properties(NetRocks-FISHPLUS
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+    PREFIX ""
+    SUFFIX ".broker")
+target_compile_options(NetRocks-FISHPLUS PUBLIC -DNETROCKS_PROTOCOL)
+
 # copy resource files
 set(CURRENT_TARGET "NetRocks-SHELL")
 file(GLOB_RECURSE RESOURCE_FILES
@@ -111,6 +133,21 @@ setup_target_auxiliary_files(${CURRENT_TARGET}
         "${INSTALL_DIR}/Plugins/NetRocks/plug/SHELL/"
 )
 add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})
+
+# copy FISH+ resource files (helper.sh is a verbatim copy from f4 - see
+# src/Protocol/FISHPLUS/Helpers/UPSTREAM.md before touching it)
+set(CURRENT_TARGET "NetRocks-FISHPLUS")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/FISHPLUS/Helpers
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/FISHPLUS/Helpers/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/FISHPLUS/Helpers
+        "${INSTALL_DIR}/Plugins/NetRocks/plug/FISHPLUS/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})
+
 
 if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
@@ -185,7 +222,7 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
         SUFFIX ".broker")
 endif ()
 
-if (AWSSDK_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
+if (LIBNEON_FOUND AND OPENSSL_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_AWS")
     add_executable (NetRocks-AWS
         ${PROTOCOL_SOURCES}
@@ -193,10 +230,11 @@ if (AWSSDK_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
         src/Protocol/AWS/AWSFileWriter.cpp
         src/Protocol/AWS/AWSFileReader.cpp
         src/Protocol/AWS/S3Repository.cpp
+        src/Protocol/AWS/S3Auth.cpp
         src/Protocol/AWS/ProtocolAWS.cpp
     )
-    target_include_directories(NetRocks-AWS PRIVATE src ${AWSSDK_INCLUDE_DIR})
-    target_link_libraries(NetRocks-AWS utils ${AWSSDK_LINK_LIBRARIES})
+    target_include_directories(NetRocks-AWS PRIVATE src ${LIBNEON_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries(NetRocks-AWS utils ${LIBNEON_LIBRARIES} ${OPENSSL_LIBRARIES})
 
     set_target_properties(NetRocks-AWS
         PROPERTIES

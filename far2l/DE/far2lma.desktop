@@ -1,0 +1,22 @@
+[Desktop Entry]
+Type=Application
+Name=Multiarc Far2l (WX GUI)
+Name[ru]=Multiarc Far2l (WX GUI)
+Comment=Archiving Tool
+Comment[ru]=Средство архивации
+Exec=far2l --notty ma:%f
+Terminal=false
+NoDisplay=true
+MimeType=application/x-deb;application/x-cd-image;application/x-bcpio;application/x-cpio;application/x-cpio-compressed;application/x-sv4cpio;application/x-sv4crc;application/x-rpm;application/x-compress;application/gzip;application/x-bzip;application/x-bzip2;application/x-lzma;application/x-xz;application/zlib;application/zstd;application/x-lz4;application/x-lzip;application/x-lrzip;application/x-lzop;application/x-source-rpm;application/vnd.debian.binary-package;application/vnd.efi.iso;application/vnd.ms-cab-compressed;application/x-xar;application/x-iso9660-appimage;application/x-archive;application/x-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-bzip2-compressed-tar;application/x-tarz;application/x-xz-compressed-tar;application/x-lzma-compressed-tar;application/x-lzip-compressed-tar;application/x-tzo;application/x-lrzip-compressed-tar;application/x-lz4-compressed-tar;application/x-zstd-compressed-tar;application/x-7z-compressed;application/vnd.rar;application/zip;application/x-java-archive;application/x-lha;application/x-stuffit;application/x-arj;application/arj;
+Categories=Utility;Archiving;Compression;
+Icon=far2l-wx
+Keywords=Categories=Utility;Archiving;Compression;
+Actions=new-window;
+
+[Desktop Action new-window]
+Name=New Window
+Name[ru]=Новое окно
+Name[en_GB]=New Window
+Name[uk]=Нове вікно
+Name[hu]=Új ablak
+Exec=far2l --notty ma:%f

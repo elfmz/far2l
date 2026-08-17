@@ -1012,6 +1012,12 @@ void PluginA::FreeOpenPluginInfo()
 	if (OPI.PanelTitle)
 		free((void *)OPI.PanelTitle);
 
+	if (OPI.CurURL)
+		free((void *)OPI.CurURL);
+
+	if (OPI.CurPath)
+		free((void *)OPI.CurPath);
+
 	if (OPI.InfoLines && OPI.InfoLinesNumber) {
 		FreeUnicodeInfoPanelLines((InfoPanelLine *)OPI.InfoLines, OPI.InfoLinesNumber);
 	}
@@ -1052,6 +1058,12 @@ void PluginA::ConvertOpenPluginInfo(oldfar::OpenPluginInfo &Src, OpenPluginInfo 
 
 	if (Src.PanelTitle)
 		OPI.PanelTitle = AnsiToUnicode(Src.PanelTitle);
+
+	if (Src.CurURL)
+		OPI.CurURL = AnsiToUnicode(Src.CurURL);
+
+	if (Src.CurPath)
+		OPI.CurPath = AnsiToUnicode(Src.CurPath);
 
 	if (Src.InfoLines && Src.InfoLinesNumber) {
 		ConvertInfoPanelLinesA(Src.InfoLines, (InfoPanelLine **)&OPI.InfoLines, Src.InfoLinesNumber);

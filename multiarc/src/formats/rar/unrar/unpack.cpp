@@ -241,8 +241,8 @@ void Unpack::UnpInitData(bool Solid)
 
 
 // LengthTable contains the length in bits for every element of alphabet.
-// Dec is the structure to decode Huffman code/
-// Size is size of length table and DecodeNum field in Dec structure,
+// Dec is the structure to decode Huffman code.
+// Size is size of length table and DecodeNum field in Dec structure.
 void Unpack::MakeDecodeTables(byte *LengthTable,DecodeTable *Dec,uint Size)
 {
   // Size of alphabet and DecodePos array.

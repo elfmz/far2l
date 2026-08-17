@@ -16,11 +16,14 @@ right_items = [right + "/file1", right + "/file2", right + "/file3", right + "/s
 left_hash = HashPathes(left_items, true, true, true, true, true)
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
-ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
+ExpectString("Help - FAR2L");
+Snapshot("start")
+TypeEscape(10)
+ExpectString("OSC52");
+TypeEscape(10)
 
 status = AppStatus();
 
-TypeEscape(10)
 TypeDown()
 TypeIns()
 TypeIns()
@@ -28,16 +31,16 @@ TypeIns()
 TypeIns()
 TypeIns()
 TypeFKey(5)
-ExpectString("════ Copy ═════", 0, 0, -1, -1, 10000)
+ExpectString("════ Copy ═════")
 TypeEnter()
 for (i = 0; ; ++i) {
 	Sleep(100)
-	ExpectNoString("════ Copy ═════", 0, 0, -1, -1, 10000)
+	ExpectNoString("════ Copy ═════")
 	right_hash = HashPathes(right_items, true, true, true, true, true)
 	if (right_hash == left_hash) {
 		break
 	}
-	if (i == 100) {
+	if (i == 10000) {
 		Log("Lhash: " + left_hash)
 		Log("Rhash: " + right_hash)
 		Panic("Hashes mismatched")
@@ -51,7 +54,7 @@ if (left_hash != recent_left_hash) {
 }
 
 TypeFKey(10)
-ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
+ExpectString("Do you want to quit FAR?")
 TypeEnter()
-ExpectAppExit(0, 10000)
+ExpectAppExit(0)
 0;

@@ -1,5 +1,8 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
+
+#include <functional>
 #include <memory>
+#include <unordered_map>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
 #include "colorer/xml/XmlReader.h"
@@ -774,7 +777,6 @@ void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const XMLNode& el
   loopSchemeKeywords(elem, scheme, scheme_node.get(), region);
   scheme_node->kwList->firstChar->freeze();
 
-  // TODO unique keywords in list
   scheme_node->kwList->sortList();
   scheme_node->kwList->substrIndex();
   scheme->nodes.push_back(std::move(scheme_node));
@@ -875,17 +877,16 @@ void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* s
     rgn = getNCRegion(&elem, hrcWordAttrRegion);
   }
 
+  auto keyword = std::make_unique<UnicodeString>(keyword_value);
+  if (!scheme_node->kwList->matchCase) {
+      keyword->toLower();
+  }
   KeywordInfo& list = scheme_node->kwList->kwList[scheme_node->kwList->count];
-  list.keyword = std::make_unique<UnicodeString>(keyword_value);
+  list.keyword = std::move(keyword);
   list.region = rgn;
   list.isSymbol = keyword_type == KeywordInfo::KeywordType::KT_SYMB;
   auto* first_char = scheme_node->kwList->firstChar.get();
-  first_char->add(keyword_value[0]);
-  if (!scheme_node->kwList->matchCase) {
-    first_char->add(Character::toLowerCase(keyword_value[0]));
-    first_char->add(Character::toUpperCase(keyword_value[0]));
-    first_char->add(Character::toTitleCase(keyword_value[0]));
-  }
+  first_char->add((*list.keyword)[0]);
   scheme_node->kwList->count++;
   scheme_node->kwList->minKeywordLength = std::min(scheme_node->kwList->minKeywordLength, list.keyword->length());
 }
@@ -1013,6 +1014,9 @@ void HrcLibrary::Impl::updateLinks()
           updateSchemeLink(snode_inherit->schemeName, &snode_inherit->scheme, 1, scheme);
           for (auto* vt : snode_inherit->virtualEntryVector) {
             updateSchemeLink(vt->virtSchemeName, &vt->virtScheme, 2, scheme);
+            if (vt->virtScheme) {
+              vt->virtScheme->virtualTarget = true;
+            }
             updateSchemeLink(vt->substSchemeName, &vt->substScheme, 3, scheme);
           }
         }
@@ -1020,6 +1024,106 @@ void HrcLibrary::Impl::updateLinks()
       current_parse_type = old_parseType;
       if (structureChanged) {
         break;
+      }
+    }
+  }
+
+  std::unordered_map<const SchemeImpl*, std::vector<const SchemeImpl*>> virtualSubstitutions;
+  for (const auto& [key, scheme] : schemeHash) {
+    for (const auto& node : scheme->nodes) {
+      if (node->type != SchemeNode::SchemeNodeType::SNT_INHERIT) {
+        continue;
+      }
+      const auto* inherit = static_cast<const SchemeNodeInherit*>(node.get());
+      for (const auto* entry : inherit->virtualEntryVector) {
+        if (entry->virtScheme && entry->substScheme) {
+          virtualSubstitutions[entry->virtScheme].push_back(entry->substScheme);
+        }
+      }
+    }
+  }
+
+  for (const auto& [key, scheme] : schemeHash) {
+    scheme->searchNodes.clear();
+    for (const auto& node : scheme->nodes) {
+      if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
+        auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
+        if (inherit->scheme && inherit->virtualEntryVector.empty() && !inherit->scheme->virtualTarget) {
+          for (const auto& inheritedNode : inherit->scheme->nodes) {
+            scheme->searchNodes.push_back(inheritedNode.get());
+          }
+          continue;
+        }
+      }
+      scheme->searchNodes.push_back(node.get());
+    }
+  }
+
+  std::unordered_map<const SchemeImpl*, std::array<uint8_t, 128>> startCache;
+  std::function<bool(const SchemeImpl*, wchar)> schemeCanStartWith;
+  const auto nodeCanStartWith = [&schemeCanStartWith](const SchemeNode* node, wchar ch) {
+    switch (node->type) {
+      case SchemeNode::SchemeNodeType::SNT_RE:
+        return static_cast<const SchemeNodeRegexp*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_BLOCK:
+        return static_cast<const SchemeNodeBlock*>(node)->start->canStartWith(ch);
+      case SchemeNode::SchemeNodeType::SNT_KEYWORDS: {
+        const auto* keywords = static_cast<const SchemeNodeKeywords*>(node)->kwList.get();
+        return keywords->count != 0 && keywords->firstChar->contains(
+          keywords->matchCase ? ch : Character::toLowerCase(ch));
+      }
+      case SchemeNode::SchemeNodeType::SNT_INHERIT: {
+        const auto* inherit = static_cast<const SchemeNodeInherit*>(node);
+        return !inherit->scheme || schemeCanStartWith(inherit->scheme, ch);
+      }
+    }
+    return true;
+  };
+
+  schemeCanStartWith = [&startCache, &virtualSubstitutions, &nodeCanStartWith, &schemeCanStartWith](
+                         const SchemeImpl* scheme, wchar ch) {
+    auto& state = startCache[scheme][static_cast<uint32_t>(ch)];
+    if (state != 0) {
+      return state == 1 || state == 3;
+    }
+    state = 1;
+    bool result = false;
+    for (const auto* node : scheme->searchNodes) {
+      if (nodeCanStartWith(node, ch)) {
+        result = true;
+        break;
+      }
+    }
+    if (!result) {
+      const auto substitutions = virtualSubstitutions.find(scheme);
+      if (substitutions != virtualSubstitutions.end()) {
+        for (const auto* substitution : substitutions->second) {
+          if (schemeCanStartWith(substitution, ch)) {
+            result = true;
+            break;
+          }
+        }
+      }
+    }
+    state = result ? 3 : 2;
+    return result;
+  };
+
+  for (const auto& [key, scheme] : schemeHash) {
+    scheme->searchDispatch.reset();
+    if (scheme->searchNodes.size() >= 2 && scheme->searchNodes.size() <= UINT16_MAX) {
+      auto dispatch = std::make_unique<SchemeImpl::SearchDispatch>();
+      for (uint32_t ch = 0; ch < 128; ch++) {
+        dispatch->offsets[ch] = static_cast<uint32_t>(dispatch->nodeIndexes.size());
+        for (uint32_t i = 0; i < scheme->searchNodes.size(); i++) {
+          if (nodeCanStartWith(scheme->searchNodes[i], static_cast<wchar>(ch))) {
+            dispatch->nodeIndexes.push_back(i);
+          }
+        }
+      }
+      dispatch->offsets[128] = static_cast<uint32_t>(dispatch->nodeIndexes.size());
+      if (dispatch->nodeIndexes.size() * 4 <= scheme->searchNodes.size() * 128 * 3) {
+        scheme->searchDispatch = std::move(dispatch);
       }
     }
   }

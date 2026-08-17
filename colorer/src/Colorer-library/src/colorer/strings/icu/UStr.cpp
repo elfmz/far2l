@@ -245,6 +245,11 @@ int8_t UStr::caseCompare(const UnicodeString& str1, const UnicodeString& str2)
   return str1.caseCompare(str2, U_FOLD_CASE_DEFAULT);
 }
 
+int8_t UStr::caseCompare(const UnicodeString& str1, int str1_pos, int str1_len, const UnicodeString& str2);
+{
+  return str1.caseCompare(str1_pos, str1_len, str2, U_FOLD_CASE_DEFAULT);
+}
+
 int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos)
 {
   auto tmp_str1 = str1;

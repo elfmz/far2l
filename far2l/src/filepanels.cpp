@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "infolist.hpp"
 #include "help.hpp"
 #include "filefilter.hpp"
+#include "filediff.hpp"
 #include "findfile.hpp"
 #include "savescr.hpp"
 #include "manager.hpp"
@@ -75,19 +76,13 @@ FilePanels::FilePanels()
 	//_D(SysLog(L"MainKeyBar=0x%p",&MainKeyBar));
 }
 
-static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
+static void PrepareOptFolder(FARString &strSrc)
 {
 	if (strSrc.IsEmpty()) {
 		strSrc = DefaultPanelInitialDirectory();
 	} else {
 		apiExpandEnvironmentStrings(strSrc, strSrc);
 	}
-
-	if (strSrc != WGOOD_SLASH) {
-		CheckShortcutFolder(strSrc, false, true);
-	}
-
-	// ConvertNameToFull(strSrc,strSrc);
 }
 
 void FilePanels::Init()
@@ -127,44 +122,34 @@ void FilePanels::Init()
 	}
 
 	ActivePanel->SetFocus();
-	// пытаемся избавится от зависания при запуске
-	int IsLocalPath_FarPath = IsLocalPath(g_strFarPath);
-	PrepareOptFolder(Opt.strLeftFolder, IsLocalPath_FarPath);
-	PrepareOptFolder(Opt.strRightFolder, IsLocalPath_FarPath);
+	PrepareOptFolder(Opt.strLeftFolder);
+	PrepareOptFolder(Opt.strRightFolder);
 
 	if (Opt.AutoSaveSetup || !Opt.SetupArgv) {
-		if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-			LeftPanel->InitCurDir(Opt.strLeftFolder);
-
-		if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-			RightPanel->InitCurDir(Opt.strRightFolder);
+		LeftPanel->InitCurDir(Opt.strLeftFolder);
+		RightPanel->InitCurDir(Opt.strRightFolder);
 	}
 
 	if (!Opt.AutoSaveSetup) {
 		if (Opt.SetupArgv >= 1) {
 			if (ActivePanel == RightPanel) {
-				if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-					RightPanel->InitCurDir(Opt.strRightFolder);
+				RightPanel->InitCurDir(Opt.strRightFolder);
 			} else {
-				if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-					LeftPanel->InitCurDir(Opt.strLeftFolder);
+				LeftPanel->InitCurDir(Opt.strLeftFolder);
 			}
 
 			if (Opt.SetupArgv == 2) {
 				if (ActivePanel == LeftPanel) {
-					if (apiGetFileAttributes(Opt.strRightFolder) != INVALID_FILE_ATTRIBUTES)
-						RightPanel->InitCurDir(Opt.strRightFolder);
+					RightPanel->InitCurDir(Opt.strRightFolder);
 				} else {
-					if (apiGetFileAttributes(Opt.strLeftFolder) != INVALID_FILE_ATTRIBUTES)
-						LeftPanel->InitCurDir(Opt.strLeftFolder);
+					LeftPanel->InitCurDir(Opt.strLeftFolder);
 				}
 			}
 		}
 
 		const wchar_t *PassiveFolder = PassiveIsLeftFlag ? Opt.strLeftFolder : Opt.strRightFolder;
 
-		if (Opt.SetupArgv < 2 && *PassiveFolder
-				&& (apiGetFileAttributes(PassiveFolder) != INVALID_FILE_ATTRIBUTES)) {
+		if (Opt.SetupArgv < 2 && *PassiveFolder) {
 			PassivePanel->InitCurDir(PassiveFolder);
 		}
 	}
@@ -221,12 +206,12 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 {
 	int left_x1, left_x2, left_y1, left_y2;
 	int right_x1, right_x2, right_y1, right_y2;
-	int cl_x1, cl_x2, cl_y;
+	int cl_x1, cl_x2, cl_y1, cl_y2;
 	bool cl_visible = CtrlObject->CmdLine->IsVisible(), new_cl_visible;
 
 	LeftPanel->GetPosition(left_x1, left_y1, left_x2, left_y2);
 	RightPanel->GetPosition(right_x1, right_y1, right_x2, right_y2);
-	CtrlObject->CmdLine->GetPosition(cl_x1, cl_y, cl_x2, cl_y);
+	CtrlObject->CmdLine->GetPosition(cl_x1, cl_y1, cl_x2, cl_y2);
 
 	const bool left_overlap = LeftPanel->IsVisible() && left_y2 + Opt.ShowKeyBar >= ScrY;
 	const bool right_overlap = RightPanel->IsVisible() && right_y2 + Opt.ShowKeyBar >= ScrY;
@@ -236,7 +221,10 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 	else
 		new_cl_visible = !left_overlap && !right_overlap;
 
-	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1, new_cl_y = ScrY - (Opt.ShowKeyBar);
+	const int extra = CtrlObject->CmdLine->GetExtraLines();
+	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1;
+	int new_cl_y2 = ScrY - (Opt.ShowKeyBar);
+	int new_cl_y1 = new_cl_y2 - extra;
 	if (new_cl_visible) {
 		if (left_overlap) {
 			new_cl_x1 = right_x1;
@@ -244,12 +232,12 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 			new_cl_x2 = left_x2 - 1;
 		}
 	}
-	bool cl_repos = (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y);
+	bool cl_repos = (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y1 != cl_y1 || new_cl_y2 != cl_y2);
 	if (cl_visible != new_cl_visible) {
 		CtrlObject->CmdLine->SetVisible(new_cl_visible);
 	}
 	if (cl_repos || repos) {
-		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y, new_cl_x2, new_cl_y);
+		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y1, new_cl_x2, new_cl_y2);
 	}
 
 	if (cl_visible != new_cl_visible || cl_repos || repos) {
@@ -280,8 +268,9 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 		if (Opt.WidthDecrement > (ScrX / 2 - 10))
 			Opt.WidthDecrement = (ScrX / 2 - 10);
 
-		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement;
-		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement;
+		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
+		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement - extra;
+		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement - extra;
 
 		if (LeftFullScreen) {
 			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
@@ -333,8 +322,9 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 			Opt.WidthDecrement = ((ScrY - Opt.LeftHeightDecrement) / 2 - 6);
 #endif
 
+		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
 		const int LeftY2 = (ScrY - Opt.ShowMenuBar) / 2 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement / 2;
-		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement;
+		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement - extra;
 
 #if 0
 		if (LeftFullScreen) {
@@ -479,10 +469,23 @@ int64_t FilePanels::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return ActivePanel->VMProcess(OpCode, vParam, iParam);
 }
 
+void FilePanels::RetryActivePanelRead()
+{
+	if (ActivePanel->GetType() == FILE_PANEL)
+		static_cast<FileList *>(ActivePanel)->RetryFailedRead();
+}
+
 int FilePanels::ProcessKey(FarKey Key)
 {
 	if (!Key)
 		return TRUE;
+
+	if (CtrlObject->CmdLine->IsMultiline()
+			&& (Key == KEY_UP || Key == KEY_NUMPAD8 || Key == KEY_DOWN || Key == KEY_NUMPAD2
+					|| Key == KEY_LEFT || Key == KEY_NUMPAD4 || Key == KEY_RIGHT || Key == KEY_NUMPAD6)) {
+		CtrlObject->CmdLine->ProcessKey(Key);
+		return TRUE;
+	}
 
 	if ((Key == KEY_CTRLLEFT || Key == KEY_CTRLRIGHT || Key == KEY_CTRLNUMPAD4 || Key == KEY_CTRLNUMPAD6
 				/* || Key==KEY_CTRLUP || Key==KEY_CTRLDOWN || Key==KEY_CTRLNUMPAD8 || Key==KEY_CTRLNUMPAD2 */)
@@ -692,6 +695,14 @@ int FilePanels::ProcessKey(FarKey Key)
 			FindFiles::Present();
 			break;
 		}
+		case KEY_CTRLD: {
+			if (!CtrlObject->CmdLine->IsNotEmpty()) 
+				PresentFileDiff();
+			else
+				CtrlObject->CmdLine->ProcessKey(Key);
+
+			break;
+		}
 		case KEY_CTRLUP:
 		case KEY_CTRLNUMPAD8: {
 			bool Set = false;
@@ -819,6 +830,7 @@ int FilePanels::ProcessKey(FarKey Key)
 		}
 	}
 
+	RetryActivePanelRead();
 	return TRUE;
 }
 

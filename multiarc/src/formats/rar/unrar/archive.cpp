@@ -152,7 +152,9 @@ bool Archive::IsArchive(bool EnableBroken)
   else
   {
     std::vector<char> Buffer(MAXSFXSIZE);
-    long CurPos=(long)Tell();
+    const long CurPos=1;
+    // Seek back in case SFX module is shorter than SIZEOF_MARKHEAD3.
+    Seek(CurPos,SEEK_SET);
     int ReadSize=Read(Buffer.data(),Buffer.size()-16);
     for (int I=0;I<ReadSize;I++)
       if (Buffer[I]==0x52 && (Type=IsSignature((byte *)&Buffer[I],ReadSize-I))!=RARFMT_NONE)

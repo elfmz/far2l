@@ -21,7 +21,7 @@ class Plugin(FarPlugin):
     label = 'Jump Between Selected Files'
     openFrom = ['PLUGINSMENU', 'FILEPANEL']
 
-    def OpenPlugin(self, _):
+    def OpenPlugin(self, OpenFrom, Item):
         panel = self.get_panel()
         option = self.menu(('Jump to &Previous Selected File',
                             'Jump to &Next Selected File'), self.label)

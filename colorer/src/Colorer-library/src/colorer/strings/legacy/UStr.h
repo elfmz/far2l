@@ -18,8 +18,8 @@ class UStr
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString& str);
 
   static std::unique_ptr<CharacterClass> createCharClass(const UnicodeString& ccs, int pos, int* retPos, bool ignore_case);
-
   static int8_t caseCompare(const UnicodeString& str1, const UnicodeString& str2);
+  static int8_t caseCompare(const UnicodeString& str1, int str1_pos, int str1_len, const UnicodeString& str2);
   static bool HexToUInt(const UnicodeString& str_hex, unsigned int* result);
   static int32_t indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos = 0);
 };

@@ -495,6 +495,17 @@ MultilinePaste
 "Вставка багаторядкового тексту"
 "Устаўка шматрадковага тэксту"
 
+CtrlEnterMultipleItems
+"Ctrl+Ввод вставляет все выделенные объекты"
+"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+
 F1
 l:
 l://functional keys - 6 characters max
@@ -3479,6 +3490,17 @@ upd:"Use shell"
 "Використовувати &шелл"
 "Ужываць &shell"
 
+ConfigShowStartupBanner
+"Показывать стартовый баннер во встроенном терминале"
+"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+
 ConfigCmdlineUsePromptFormat
 "Установить &формат командной строки"
 "Set &command line prompt format"
@@ -5315,7 +5337,7 @@ upd:"Type full file &name                 Ctrl+F"
 upd:"Type full file &name                 Ctrl+F"
 
 EditorMenuEditLeftPaneName
-"Встапвить путь из левой панели      Ctrl+Alt+("
+"Вставить путь из левой панели       Ctrl+Alt+("
 "Insert path from left panel         Ctrl+Alt+("
 upd:"Insert path from left panel         Ctrl+Alt+("
 upd:"Insert path from left panel         Ctrl+Alt+("
@@ -5359,29 +5381,29 @@ upd:"Insert path from passive panel      Alt+Shift+)"
 upd:"Insert path from passive panel      Alt+Shift+)"
 
 EditorMenuEditBlockIndent
-"Сдвинуть блок вправо                Alt+U"
-"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
-upd:"Block inden&t                        Alt+U"
+"Сдвинуть блок влево                 Alt+U"
+"Block uninden&t                      Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
+upd:"Block uninden&t                     Alt+U"
 
 EditorMenuEditBlockUnindent
-"Сдвинуть блок влево                 Alt+I"
-"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
-upd:"Bloc&k unindent                      Alt+I"
+"Сдвинуть блок вправо                Alt+I"
+"Bloc&k indent                        Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
+upd:"Bloc&k indent                       Alt+I"
 
 EditorMenuNavigateGoToLine
-"Перейти на строку...                Alt+F8"
+"Перейти на строку...                 Alt+F8"
 "Go to &line...                       Alt+F8"
 upd:"Go to &line...                       Alt+F8"
 upd:"Go to &line...                       Alt+F8"
@@ -5414,7 +5436,7 @@ upd:"Go to &bottom                        Ctrl+E"
 upd:"Go to &bottom                        Ctrl+E"
 
 EditorMenuNavigateBegin
-"Перенйти в н&ачало файла             Ctrl+Home"
+"Перейти в н&ачало файла              Ctrl+Home"
 "Go to begin of f&ile                 Ctrl+Home"
 upd:"Go to begin of f&ile                 Ctrl+Home"
 upd:"Go to begin of f&ile                 Ctrl+Home"
@@ -5975,6 +5997,39 @@ SaveSetupAsk2
 "actual de FAR?"
 "Поточну конфігурацію?"
 "бягучыя налады?"
+
+SaveSetupCommon
+"Общие &настройки"
+"Common &settings"
+"Běžná &nastavení"
+"Allgemeine &Einstellungen"
+"Általános b&eállítások"
+"&Ustawienia wspólne"
+"&Configuración común"
+"Загальні &налаштування"
+"Агульныя &налады"
+
+SaveSetupPanels
+"Состояния &панелей"
+"&Panels state"
+"Stav &panelů"
+"&Panelzustand"
+"&Panelek állapot"
+"Stanu &paneli"
+"Estado de &paneles"
+"Cтану &панелей"
+"Cтану &панэлей"
+
+SaveSetupMacros
+"&Макрокоманды"
+"&Macro"
+"&Makro"
+"&Makro"
+"&Makró"
+"&Makro"
+"&Macro"
+"&Макрокоманди"
+"&Макракаманды"
 
 SaveSetup
 "Сохранить"
@@ -16662,6 +16717,314 @@ MenuCompareFolders
 "&Порівняння тек"
 "Пара&ўнанне каталогаў"
 
+MenuCompareFiles
+"Сравнение фа&йлов         Ctrl+D"
+"File &diff           Ctrl+D"
+"Porovnat &soubory               Ctrl+D"
+"D&ateien vergleichen  Ctrl+D"
+"Fájl &diff           Ctrl+D"
+"P&orównaj pliki            Ctrl+D"
+"C&omparar archivos     Ctrl+D"
+"Порівняння фа&йлів         Ctrl+D"
+"Параўнанне фа&йлаў         Ctrl+D"
+
+FileDiffTitle
+"Сравнение файлов"
+"Compare files"
+"Porovnání souborů"
+"Dateien vergleichen"
+"Fájlok összehasonlítása"
+"Porównanie plików"
+"Comparar archivos"
+"Порівняння файлів"
+"Параўнанне файлаў"
+
+FileDiffHeuristicEncoding
+"Кодировка была эвристически определена как %ls. Сохранить в ней?"
+"The encoding was detected heuristically as %ls. Save using it?"
+"Kódování bylo heuristicky rozpoznáno jako %ls. Uložit v něm?"
+"Die Kodierung wurde heuristisch als %ls erkannt. Damit speichern?"
+"A kódolás heurisztikusan %ls értékűnek lett felismerve. Mentés ezzel?"
+"Kodowanie zostało heurystycznie rozpoznane jako %ls. Zapisać w nim?"
+"La codificación se detectó heurísticamente como %ls. ¿Guardar con ella?"
+"Кодування було евристично визначено як %ls. Зберегти в ньому?"
+"Кадзіроўка была эўрыстычна вызначана як %ls. Захаваць у ёй?"
+
+FileDiffFile
+"Файл: "
+"File: "
+"Soubor: "
+"Datei: "
+"Fájl: "
+"Plik: "
+"Archivo: "
+"Файл: "
+"Файл: "
+
+FileDiffCannotOpen
+"Не удаётся открыть один из выбранных файлов."
+"Cannot open one of the selected files."
+"Jeden z vybraných souborů nelze otevřít."
+"Eine der ausgewählten Dateien kann nicht geöffnet werden."
+"Az egyik kijelölt fájl nem nyitható meg."
+"Nie można otworzyć jednego z wybranych plików."
+"No se puede abrir uno de los archivos seleccionados."
+"Не вдається відкрити один із вибраних файлів."
+"Не ўдаецца адкрыць адзін з выбраных файлаў."
+
+FileDiffCannotMerge
+"Не удаётся объединить блок изменений."
+"Cannot merge hunk."
+"Blok změn nelze sloučit."
+"Änderungsblock kann nicht übernommen werden."
+"A módosításblokk nem egyesíthető."
+"Nie można scalić bloku zmian."
+"No se puede fusionar el bloque de cambios."
+"Не вдається об'єднати блок змін."
+"Не ўдаецца аб'яднаць блок змен."
+
+FileDiffLeftFile
+"Левый файл: "
+"Left file: "
+"Levý soubor: "
+"Linke Datei: "
+"Bal oldali fájl: "
+"Lewy plik: "
+"Archivo izquierdo: "
+"Лівий файл: "
+"Левы файл: "
+
+FileDiffRightFile
+"Правый файл: "
+"Right file: "
+"Pravý soubor: "
+"Rechte Datei: "
+"Jobb oldali fájl: "
+"Prawy plik: "
+"Archivo derecho: "
+"Правий файл: "
+"Правы файл: "
+
+FileDiffSaveFile
+"Сохранить файл?"
+"Save file?"
+"Uložit soubor?"
+"Datei speichern?"
+"Menti a fájlt?"
+"Zapisać plik?"
+"¿Guardar el archivo?"
+"Зберегти файл?"
+"Захаваць файл?"
+
+FileDiffCannotSave
+"Не удаётся сохранить файл."
+"Cannot save file."
+"Soubor nelze uložit."
+"Datei kann nicht gespeichert werden."
+"A fájl nem menthető."
+"Nie można zapisać pliku."
+"No se puede guardar el archivo."
+"Не вдається зберегти файл."
+"Не ўдаецца захаваць файл."
+
+FileDiffHunkCurrent
+"Блок: %u/%u"
+"Hunk: %u/%u"
+"Blok: %u/%u"
+"Block: %u/%u"
+"Blokk: %u/%u"
+"Blok: %u/%u"
+"Bloque: %u/%u"
+"Блок: %u/%u"
+"Блок: %u/%u"
+
+FileDiffHunksTotal
+"Блоков: %u"
+"Hunks: %u"
+"Bloků: %u"
+"Blöcke: %u"
+"Blokkok: %u"
+"Bloki: %u"
+"Bloques: %u"
+"Блоків: %u"
+"Блокаў: %u"
+
+FileDiffActive
+"Активно: "
+"Active: "
+"Aktivní: "
+"Aktiv: "
+"Aktív: "
+"Aktywne: "
+"Activo: "
+"Активне: "
+"Актыўна: "
+
+FileDiffGutter
+"разделитель"
+"gutter"
+"oddělovač"
+"Trennbereich"
+"elválasztó"
+"separator"
+"separador"
+"роздільник"
+"раздзяляльнік"
+
+FileDiffLeft
+"слева"
+"left"
+"vlevo"
+"links"
+"bal"
+"lewy"
+"izquierdo"
+"ліворуч"
+"злева"
+
+FileDiffRight
+"справа"
+"right"
+"vpravo"
+"rechts"
+"jobb"
+"prawy"
+"derecho"
+"праворуч"
+"справа"
+
+FileDiffModified
+"Изменено: "
+"Modified: "
+"Změněno: "
+"Geändert: "
+"Módosítva: "
+"Zmienione: "
+"Modificado: "
+"Змінено: "
+"Зменена: "
+
+FileDiffLines
+"Строки: "
+"Lines: "
+"Řádky: "
+"Zeilen: "
+"Sorok: "
+"Wiersze: "
+"Líneas: "
+"Рядки: "
+"Радкі: "
+
+FileDiffRows
+"Строки сравнения: "
+"Diff rows: "
+"Řádky rozdílů: "
+"Vergleichszeilen: "
+"Eltérő sorok: "
+"Wiersze różnic: "
+"Filas de diferencias: "
+"Рядки порівняння: "
+"Радкі параўнання: "
+
+FileDiffSaveChanged
+"Сохранить изменённые файлы перед закрытием?"
+"Save changed files before closing?"
+"Uložit změněné soubory před zavřením?"
+"Geänderte Dateien vor dem Schließen speichern?"
+"Menti a módosított fájlokat bezárás előtt?"
+"Zapisać zmienione pliki przed zamknięciem?"
+"¿Guardar los archivos modificados antes de cerrar?"
+"Зберегти змінені файли перед закриттям?"
+"Захаваць змененыя файлы перад закрыццём?"
+
+FileDiffStatusHelp
+"F1 Справка"
+"F1 Help"
+"F1 Nápověda"
+"F1 Hilfe"
+"F1 Súgó"
+"F1 Pomoc"
+"F1 Ayuda"
+"F1 Довідка"
+"F1 Даведка"
+
+FileDiffStatusSave
+"F2 Сохранить"
+"F2 Save"
+"F2 Uložit"
+"F2 Speichern"
+"F2 Mentés"
+"F2 Zapisz"
+"F2 Guardar"
+"F2 Зберегти"
+"F2 Захаваць"
+
+FileDiffStatusMerge
+"F5 Объединить"
+"F5 Merge"
+"F5 Sloučit"
+"F5 Übernehmen"
+"F5 Egyesítés"
+"F5 Scal"
+"F5 Fusionar"
+"F5 Об'єднати"
+"F5 Аб'яднаць"
+
+FileDiffStatusPrev
+"Ctrl-^ Пред."
+"Ctrl-^ Prev"
+"Ctrl-^ Předch."
+"Ctrl-^ Vorh."
+"Ctrl-^ Előző"
+"Ctrl-^ Poprz."
+"Ctrl-^ Anterior"
+"Ctrl-^ Попер."
+"Ctrl-^ Папяр."
+
+FileDiffStatusNext
+"Ctrl-v След."
+"Ctrl-v Next"
+"Ctrl-v Další"
+"Ctrl-v Nächster"
+"Ctrl-v Következő"
+"Ctrl-v Nast."
+"Ctrl-v Siguiente"
+"Ctrl-v Наст."
+"Ctrl-v Наст."
+
+FileDiffStatusFocus
+"Tab Фокус"
+"Tab Focus"
+"Tab Zaměření"
+"Tab Fokus"
+"Tab Fókusz"
+"Tab Fokus"
+"Tab Foco"
+"Tab Фокус"
+"Tab Фокус"
+
+FileDiffSelectBoth
+"Выберите файлы на обеих файловых панелях."
+"Select files on both file panels."
+"Vyberte soubory na obou souborových panelech."
+"Wählen Sie Dateien in beiden Dateifenstern aus."
+"Jelöljön ki fájlt mindkét fájlpanelen."
+"Wybierz pliki w obu panelach plików."
+"Seleccione archivos en ambos paneles."
+"Виберіть файли на обох файлових панелях."
+"Выберыце файлы на абедзвюх файлавых панэлях."
+
+FileDiffCannotAllocate
+"Не удаётся создать окно сравнения."
+"Cannot allocate compare view."
+"Okno porovnání nelze vytvořit."
+"Vergleichsansicht kann nicht erstellt werden."
+"Az összehasonlító nézet nem hozható létre."
+"Nie można utworzyć widoku porównania."
+"No se puede crear la vista de comparación."
+"Не вдається створити вікно порівняння."
+"Не ўдаецца стварыць акно параўнання."
+
 MenuUserMenu
 "Меню пользовател&я"
 "Edit user &menu"
@@ -16686,7 +17049,7 @@ MenuFileAssociations
 
 MenuBookmarks
 "Зак&ладки на папки"
-"Fol&der bookmarks"
+"Folder boo&kmarks"
 "A&dresářové zkratky"
 "Or&dnerschnellzugriff"
 "Mappa gyorsbillent&yűk"
@@ -21310,15 +21673,15 @@ LocalMenuTitle
 "Мясцовае меню"
 
 MainMenuBottomTitle
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins Ctrl+N F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
 
 AskDeleteMenuItem
 "Вы хотите удалить пункт меню"
@@ -29113,6 +29476,17 @@ upd:"Word wrap"
 upd:"Word wrap"
 upd:"Word wrap"
 upd:"Word wrap"
+
+EnforceColorCorrection
+"Выравнивать контрастность цветов автоматически"
+"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
 
 #Must be the last
 NewFileName

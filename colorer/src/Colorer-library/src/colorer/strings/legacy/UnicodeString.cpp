@@ -94,9 +94,12 @@ UnicodeString::UnicodeString(int no)
   construct(&dtext, 0, npos);
 }
 
-int32_t UnicodeString::length() const
+UnicodeString& UnicodeString::toLower()
 {
-  return len;
+  for (auto i = length(); i--;) {
+    wstr[i] = Character::toLowerCase(wstr[i]);
+  }
+  return *this;
 }
 
 UnicodeString& UnicodeString::trim()
@@ -118,11 +121,6 @@ UnicodeString& UnicodeString::trim()
   len = newLength;
   alloc = newLength;
   return *this;
-}
-
-wchar UnicodeString::operator[](int32_t i) const
-{
-  return wstr[i];
 }
 
 UnicodeString::UnicodeString(UnicodeString&& cstring) noexcept
@@ -209,22 +207,21 @@ UnicodeString& UnicodeString::operator=(UnicodeString const& cstring)
   return *this;
 }
 
-int8_t UnicodeString::compare(const UnicodeString& str) const
+int8_t UnicodeString::compare(int sp, int sl, const UnicodeString& str) const
 {
+  auto l = std::min(str.length(), sl);
   int32_t i;
-  auto sl = str.length();
-  auto l = length();
-  for (i = 0; i < sl && i < l; i++) {
-    int cmp = str[i] - this->wstr[i];
+  for (i = 0; i < l; i++) {
+    int cmp = (str[i]) - ((*this)[i + sp]);
     if (cmp > 0)
       return -1;
     if (cmp < 0)
       return 1;
   }
   if (i < sl)
-    return -1;
-  if (i < l)
     return 1;
+  if (i < str.length())
+    return -1;
   return 0;
 }
 
@@ -266,22 +263,21 @@ bool UnicodeString::equalsIgnoreCase(const UnicodeString* str) const
   return true;
 }
 
-int8_t UnicodeString::caseCompare(const UnicodeString& str) const
+int8_t UnicodeString::caseCompare(int sp, int sl, const UnicodeString& str) const
 {
+  auto l = std::min(str.length(), sl);
   int32_t i;
-  auto sl = str.length();
-  auto l = length();
-  for (i = 0; i < sl && i < l; i++) {
-    int cmp = Character::toLowerCase(str[i]) - Character::toLowerCase((*this)[i]);
+  for (i = 0; i < l; i++) {
+    int cmp = Character::toLowerCase(str[i]) - Character::toLowerCase((*this)[i + sp]);
     if (cmp > 0)
       return -1;
     if (cmp < 0)
       return 1;
   }
   if (i < sl)
-    return -1;
-  if (i < l)
     return 1;
+  if (i < str.length())
+    return -1;
   return 0;
 }
 
@@ -474,11 +470,6 @@ UnicodeString& UnicodeString::findAndReplace(const UnicodeString& pattern, const
 
   *this = *newname;
   return *this;
-}
-
-bool UnicodeString::isEmpty() const
-{
-  return len == 0;
 }
 
 UnicodeString::UnicodeString(const UnicodeString& cstring)

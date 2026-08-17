@@ -28,3 +28,39 @@ To add additional protocol:
 + Define protocol name, broker name and other protocol properties in s_protocols array in Protocol/Protocol.cpp
 * Dont forget to add new protocol broker related-files into NetRocks/CMakeLists.txt
 * Keep in mind that protocol implementation hosted in separate process, so it cannot interchange any data via global variables etc
+
+
+Absolute paths, CurURL/CurPath and the paste keys:
+
+The panel path (_location) is kept in its logical form: home-relative unless the
+user navigated by an absolute path. It is exported unchanged as OpenPluginInfo.CurDir
+(round-trippable, e.g. "sftp:user@host/~/docs" or "sftp:user@host/etc") and drives the
+panel title and save-state. The '~' marks a home-relative path in the URL form; a single
+slash after the authority means absolute (legacy double-slash "//abs" is still accepted
+as absolute on read). See Location::ToString / PathFromString and SplitLocationSpecification.
+
+To also expose real absolute paths, IProtocol has:
+    virtual std::string RealPath(const std::string &path);
+Default returns the path unchanged (fine for protocols whose paths are already absolute
+from the server root: SMB, NFS, WebDAV, S3). SFTP/SCP/SHELL/FTP override it. To avoid a
+per-call server round-trip and symlink surprises, each resolves the absolute home dir ONCE
+at connect (sftp_canonicalize_path("."), "pwd", the "HOME" line in remote.sh feats, or the
+existing FTP _cwd.home) and composes locally via RealPathFromHome() (Protocol/Protocol.h).
+RealPath crosses the broker boundary via IPC_GET_REAL_PATH (Host/IPC.h, HostRemote::RealPath,
+HostRemoteBroker::OnRealPath) - a fast pipe hop, not a network round-trip.
+
+PluginImpl::UpdatePathInfo fills two more OpenPluginInfo fields from the resolved path:
+    CurPath - bare absolute server path (e.g. "/home/user/docs"), pasted on Ctrl+F
+    CurURL  - portable form, pasted on Ctrl+Alt+F
+CurURL formatting (FormatPasteURL) honors optional env vars:
+    NETROCKS_SSH_PASTE = url (default) | scp | rsync   (sftp/scp/shell)
+        url   -> sftp://user@host/path
+        scp   -> user@host:/path
+        rsync -> user@host:/path
+    NETROCKS_SMB_PASTE = url (default) | unc           (smb)
+        url -> smb://host/share/path
+        unc -> //host/share/path
+
+Ctrl+S (on a connected ssh-family panel) copies to clipboard an ssh command that opens an
+interactive terminal in the current remote directory (or enters the directory under the
+cursor / lists the file under the cursor): see PluginImpl::ByKey_CopySSHCommand.

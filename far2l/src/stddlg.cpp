@@ -47,7 +47,8 @@ static int PosCheckBoxRegexp;
 
 static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	if (Msg == DN_CLOSE && Param1 >= 0)
+	if (Msg == DN_CLOSE && Param1 >= 0
+			&& ((unsigned)(Param1) + 1) != reinterpret_cast<Dialog*>(hDlg)->GetAllItemCount()) // button Cancel is the last element
 	{
 		const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, PosSearchText, 0);
 		if (*Txt == 0)
@@ -61,7 +62,9 @@ static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 				&& SendDlgMessage(hDlg, DM_GETCHECK, PosCheckBoxRegexp, 0) == BSTATE_CHECKED)
 		{
 			RegExp Re;
-			if (!Re.Compile(Txt, OP_PERLSTYLE | OP_OPTIMIZE)) {
+			FARString strSlash(Txt);
+			InsertRegexpQuote(strSlash);
+			if (!Re.Compile(strSlash, OP_PERLSTYLE | OP_OPTIMIZE)) {
 				SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
 				FARString strMsg(Txt);
 				InsertQuote(strMsg);
@@ -115,7 +118,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			{DI_TEXT,      5,  2,  0,  2,  {}, 0, Msg::EditSearchFor},
 			{DI_EDIT,      5,  3,  70, 3,  {}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY, L""},
 			{DI_TEXT,      5,  4,  0,  4,  {}, 0, Msg::EditReplaceWith},
-			{DI_EDIT,      5,  5,  70, 5,  {}, DIF_HISTORY | DIF_USELASTHISTORY, L""},
+			{DI_EDIT,      5,  5,  70, 5,  {}, DIF_HISTORY, L""},
 			{DI_TEXT,      3,  6,  0,  6,  {}, DIF_SEPARATOR,                                L""},
 			{DI_CHECKBOX,  5,  7,  0,  7,  {}, 0, Msg::EditSearchCase},
 			{DI_CHECKBOX,  5,  8,  0,  8,  {}, 0, Msg::EditSearchWholeWords},

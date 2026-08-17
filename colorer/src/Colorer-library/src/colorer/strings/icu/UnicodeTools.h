@@ -7,8 +7,8 @@ class UnicodeTools
 {
  public:
   static int getHex(UChar c);
-  static int getHexNumber(const UnicodeString* pstr);
-  static int getNumber(const UnicodeString* pstr);
+  static int getHexNumber(const UnicodeString* pstr, int ofs = 0, int len = -1);
+  static int getNumber(const UnicodeString* pstr, int ofs = 0, int len = -1);
 
   /** \\x{2028} \\x23 \\c  - into wchar
   @param str String to parse Escape sequence.

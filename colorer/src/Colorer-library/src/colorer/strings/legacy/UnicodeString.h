@@ -40,12 +40,18 @@ class UnicodeString
 
   UnicodeString& append(const UnicodeString& string);
   UnicodeString& append(const UnicodeString& string, int32_t start, int32_t maxlen);
-  /** Compares two strings.
-    @return -1 if this < str;
-            0  if this == str;
-            1  if this > str;
+  /** Compares this[sp, sp + sl] against  whole another str.
+    @return -1 if this[sp, sp + sl] < str;
+            0  if this[sp, sp + sl] == str;
+            1  if this[sp, sp + sl] > str;
   */
-  int8_t compare(const UnicodeString& str) const;
+  int8_t compare(int sp, int sl, const UnicodeString& str) const;
+
+  /** Same compare but as as whole string */
+  int8_t compare(const UnicodeString& str) const
+  {
+    return compare(0, length(), str);
+  }
 
   ~UnicodeString();
 
@@ -73,20 +79,39 @@ class UnicodeString
   bool equalsIgnoreCase(const UnicodeString* str) const;
 
 
-  /** Compares two strings ignoring case
-    @return -1 if this < str;
-            0  if this == str;
-            1  if this > str;
+  /** Compares ignoring case this[sp, sp + sl] against whole another str
+    @return -1 if this[sp, sp + sl] < str;
+            0  if this[sp, sp + sl] == str;
+            1  if this[sp, sp + sl] > str;
   */
-  int8_t caseCompare(const UnicodeString& str) const;
+  int8_t caseCompare(int sp, int sl, const UnicodeString& str) const;
+
+  /** Same ignoring case compare but as as whole string */
+  inline int8_t caseCompare(const UnicodeString& str) const
+  {
+    return caseCompare(0, length(), str);
+  }
 
   bool operator<(const UnicodeString & text) const;
 
-  wchar operator[](int32_t i) const;
+  inline wchar operator[](int32_t i) const
+  {
+    return wstr[i];
+  }
+
   /** String length in unicode characters */
-  int32_t length() const;
+  inline int32_t length() const
+  {
+    return len;
+  }
+
+  inline bool isEmpty() const
+  {
+    return len == 0;
+  }
 
   UnicodeString& trim();
+  UnicodeString& toLower();
 
   /** Searches first index of substring @c str, starting from @c pos */
   int32_t indexOf(const UnicodeString& str, int32_t pos = 0) const;
@@ -124,7 +149,6 @@ class UnicodeString
   /** Returns string content in internally supported character array */
   const char* getChars(int encoding = -1) const;
 
-  bool isEmpty() const;
   static const int32_t npos = -1;
 
  private:

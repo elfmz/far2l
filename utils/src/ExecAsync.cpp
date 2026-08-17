@@ -170,7 +170,7 @@ void *ExecAsync::ThreadProc()
 	std::string print_str;
 	if (!_program.empty()) {
 		print_str = '[';
-		print_str = _program;
+		print_str+= _program;
 		print_str+= ']';
 	}
 	std::vector<char *> argv(_args.size() + 1);
@@ -265,13 +265,22 @@ void *ExecAsync::ThreadProc()
 			fprintf(stderr, "ExecAsync: select timeout???\n");
 			continue;
 		}
-        if (in.fd[1] != -1 && FD_ISSET(in.fd[1], &write_fds)) {
-			if (_stdin.empty()) {
+		if (in.fd[1] != -1 && FD_ISSET(in.fd[1], &write_fds)) {
+			if (_stdin_offset >= _stdin.size()) {
 				CheckedCloseFD(in.fd[1]);
 			} else {
-				ssize_t r = write(in.fd[1], _stdin.data(), _stdin.size());
-				if (r > 0) {
-					_stdin.erase(_stdin.begin(), _stdin.begin() + r);
+				ssize_t nw = write(in.fd[1],
+								  _stdin.data() + _stdin_offset,
+								  _stdin.size() - _stdin_offset);
+				if (nw > 0) {
+					_stdin_offset += static_cast<size_t>(nw);
+					if (_stdin_offset >= _stdin.size()) {
+						std::vector<char>().swap(_stdin);
+						_stdin_offset = 0;
+						CheckedCloseFD(in.fd[1]);
+					}
+				} else if (nw < 0 && errno != EAGAIN && errno != EINTR) {
+					CheckedCloseFD(in.fd[1]);
 				}
 			}
 		}

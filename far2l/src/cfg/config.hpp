@@ -228,6 +228,7 @@ struct EditorOptions
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
 	int ShowLineNumbers;
+	int ShowGutterMarks;
 
 	int WordWrap;
 	FARString strWordDiv;
@@ -276,6 +277,7 @@ struct DialogsOptions
 	int DelRemovesBlocks;
 	int CBoxMaxHeight;		// максимальный размер открываемого списка (по умолчанию=8)
 	bool ShowArrowsInEdit;	// show arrows on text overflow in edit controls
+	bool EnforceColorCorrection; // for default themes, update colors to make it more contrast
 };
 
 struct VMenuOptions
@@ -299,6 +301,7 @@ struct CommandLineOptions
 	FARString strPromptFormat;
 	FARString strShell;
 	bool AskOnMultilinePaste;
+	BOOL CtrlEnterMultipleItems;
 };
 
 struct NowellOptions
@@ -515,6 +518,7 @@ struct Options
 	int ShowScreensNumber;
 	int ShowSortMode;
 	int ShowMenuBar;
+	int ShowStartupBanner;
 	int FormatNumberSeparators;
 	int CleanAscii;
 	int NoGraphics;

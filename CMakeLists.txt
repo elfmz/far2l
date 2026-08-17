@@ -366,6 +366,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED GITGUTTER OR GITGUTTER)
+    message(STATUS "GITGUTTER plugin enabled")
+    add_subdirectory (gitgutter)
+else()
+    message(STATUS "${ColorRed}GITGUTTER plugin disabled due to GITGUTTER=${GITGUTTER}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/gitgutter/plug/gitgutter.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED EDITORCOMP OR EDITORCOMP)
     message(STATUS "EDITORCOMP plugin enabled")
     add_subdirectory (editorcomp)
@@ -501,13 +511,6 @@ if (NOT DEFINED NETROCKS OR NETROCKS)
         message(WARNING "${ColorRed}libneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${ColorNormal}")
     endif(LIBNEON_FOUND)
 
-    find_package(AWSSDK QUIET COMPONENTS s3)
-    if(AWSSDK_FOUND)
-        message(STATUS "aws-sdk-cpp found -> enjoy AWS s3 support in NetRocks")
-    else()
-        message(WARNING "${ColorRed}aws-sdk-cpp not found, NetRocks will not have AWS S3 protocol support. Install aws-sdk-cpp if you want AWS S3 protocol available in NetRocks.${ColorNormal}")
-    endif(AWSSDK_FOUND)
-
     add_subdirectory (NetRocks)
 else()
     message(STATUS "${ColorRed}NETROCKS plugin disabled due to NETROCKS=${NETROCKS}${ColorNormal}")
@@ -571,6 +574,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED TRANSFORMER OR TRANSFORMER)
+    message(STATUS "TRANSFORMER plugin enabled")
+    add_subdirectory (transformer)
+else()
+    message(STATUS "${ColorRed}TRANSFORMER plugin disabled due to TRANSFORMER=${TRANSFORMER}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/transformer/plug/transformer.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED IMAGEVIEWER OR IMAGEVIEWER)
     message(STATUS "IMAGEVIEWER plugin enabled")
     add_subdirectory (ImageViewer)
@@ -608,6 +621,76 @@ else()
     message(STATUS "${ColorRed}ADB plugin disabled due to ADB=${ADB}${ColorNormal}")
     install(CODE "
         execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/adb/plug/adb.far-plug-wide)
+        " COMPONENT system)
+endif()
+
+if (NOT DEFINED MTP OR MTP)
+    # Default: system libusb (matches Debian/Ubuntu packaging guidelines), vendored libmtp (we use its internal
+    # PTP layer for fast depth-1 listings — not part of libmtp's public API).
+    if (NOT DEFINED MTP_SYSTEM_LIBUSB)
+        set(MTP_SYSTEM_LIBUSB ON)
+    endif()
+    if (NOT DEFINED MTP_SYSTEM_LIBMTP)
+        set(MTP_SYSTEM_LIBMTP OFF)
+    endif()
+
+    set(_mtp_skip_reason "")
+
+    # System libmtp transitively pulls system libusb; mixing with vendored libusb would load two libusb
+    # instances in the same process.
+    if (MTP_SYSTEM_LIBMTP AND NOT MTP_SYSTEM_LIBUSB)
+        set(_mtp_skip_reason "MTP_SYSTEM_LIBMTP=ON requires MTP_SYSTEM_LIBUSB=ON (system libmtp links against system libusb)")
+    endif()
+
+    # Vendored libusb backend covers Linux + macOS only.
+    if (NOT _mtp_skip_reason AND NOT MTP_SYSTEM_LIBUSB AND NOT (APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+        set(_mtp_skip_reason "${CMAKE_SYSTEM_NAME}: vendored libusb backend not available — set -DMTP_SYSTEM_LIBUSB=ON")
+    endif()
+
+    if (NOT _mtp_skip_reason AND (MTP_SYSTEM_LIBUSB OR MTP_SYSTEM_LIBMTP))
+        find_package(PkgConfig QUIET)
+        if (NOT PkgConfig_FOUND)
+            set(_mtp_skip_reason "pkg-config not found (needed to locate system libusb/libmtp)")
+        endif()
+    endif()
+
+    if (NOT _mtp_skip_reason AND MTP_SYSTEM_LIBUSB)
+        pkg_check_modules(MTP_LIBUSB QUIET libusb-1.0)
+        if (NOT MTP_LIBUSB_FOUND)
+            set(_mtp_skip_reason "libusb-1.0 not found via pkg-config — install libusb-1.0-0-dev, or set -DMTP_SYSTEM_LIBUSB=OFF to use the vendored static build")
+        endif()
+    endif()
+
+    if (NOT _mtp_skip_reason AND MTP_SYSTEM_LIBMTP)
+        # IMPORTED_TARGET creates PkgConfig::MTP_LIBMTP; needed because the bare lib name "mtp" returned by
+        # pkg-config collides with our plugin target name "mtp", which makes target_link_libraries() drop it.
+        pkg_check_modules(MTP_LIBMTP QUIET IMPORTED_TARGET libmtp)
+        if (NOT MTP_LIBMTP_FOUND)
+            set(_mtp_skip_reason "libmtp not found via pkg-config — install libmtp-dev, or drop -DMTP_SYSTEM_LIBMTP=ON to use the vendored static build")
+        endif()
+    endif()
+
+    if (_mtp_skip_reason)
+        message(WARNING "${ColorRed}MTP plugin disabled: ${_mtp_skip_reason}${ColorNormal}")
+    else()
+        if (MTP_SYSTEM_LIBUSB)
+            set(_mtp_libusb_kind "system ${MTP_LIBUSB_VERSION}")
+        else()
+            set(_mtp_libusb_kind "vendored static")
+        endif()
+        if (MTP_SYSTEM_LIBMTP)
+            # External libmtp hides its internal PTP symbols via libmtp.sym, so ListChildrenFast falls back to the per-handle slow path.
+            set(_mtp_libmtp_kind "system ${MTP_LIBMTP_VERSION} (slow enumeration)")
+        else()
+            set(_mtp_libmtp_kind "vendored static")
+        endif()
+        message(STATUS "MTP plugin enabled (libusb: ${_mtp_libusb_kind}; libmtp: ${_mtp_libmtp_kind})")
+        add_subdirectory (mtp)
+    endif()
+else()
+    message(STATUS "${ColorRed}MTP plugin disabled due to MTP=${MTP}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/mtp/plug/mtp.far-plug-wide)
         " COMPONENT system)
 endif()
 

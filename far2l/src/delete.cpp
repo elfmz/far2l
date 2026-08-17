@@ -380,6 +380,7 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 	SudoClientRegion scr;
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
 	DeleteAllFolders = !Opt.Confirm.DeleteFolder;
+	FARString restoreDir;
 
 	const bool UpdateDiz = (Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS
 			|| (SrcPanel->IsDizDisplayed() && Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED));
@@ -402,8 +403,12 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 	LockCurrentFrame LCF;
 	LCF.RefreshOnUnlock();
 	wakeful W;
-	if (SrcPanel->GetType() == TREE_PANEL)
+	if (SrcPanel->GetType() == TREE_PANEL) {
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(SrcPanel);
+		if (AnotherPanel)
+			AnotherPanel->GetCurDir(restoreDir);
 		FarChDir(WGOOD_SLASH);
+	}
 	// SaveScreen SaveScr;
 	SetCursorType(FALSE, 0);
 	ReadOnlyDeleteMode = -1;
@@ -457,6 +462,13 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 
 	if (UpdateDiz && DizPresent == (!strDizName.IsEmpty() && apiPathExists(strDizName)))
 		SrcPanel->FlushDiz();
+
+	if (!restoreDir.IsEmpty()) {
+		while (!FarChDir(restoreDir, FALSE)) {
+			if (!CutToSlash(restoreDir, true))
+				break;
+		}
+	}
 
 	ShellUpdatePanels(SrcPanel, NeedSetUpADir);
 }

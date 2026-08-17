@@ -1481,6 +1481,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 		& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
 
+	DWORD activeMods = dwMods;
+	if (_key_tracker.RightAlt() && !_key_tracker.LeftControl()) {
+		activeMods &= ~LEFT_CTRL_PRESSED;
+	}
+
 	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED
 		&& (_prev_key_code == WXK_ALT || _prev_key_code == WXK_RETURN)) {
 
@@ -1511,11 +1516,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
 	// so let's fall back to OnChar value for such key combinations.
 
-	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
+	if ( (activeMods != 0 && event.GetUnicodeKey() < 32 && !_key_tracker.RightAlt())
+		|| ((activeMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) // workaround is still needed at least in wx 3.2.6, see wx issue #24772
 
-			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
+			&& (/*g_wayland ||*/ (!event.AltDown() || _key_tracker.RightAlt()) || !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif
 			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1740,7 +1745,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
-		if (event.AltDown() && isLayoutDependentKey(event)) {
+		if (event.AltDown() && !_key_tracker.RightAlt() && isLayoutDependentKey(event)) {
 
 			// workaround for wx issue #23421
 

@@ -93,6 +93,7 @@ public:
 	virtual const wchar_t *GetTypeName() { return L"[FarModal]"; };
 	virtual int GetTypeAndName(FARString &strType, FARString &strName) { return (MODALTYPE_VIRTUAL); };
 	virtual int GetType() { return MODALTYPE_VIRTUAL; }
+	virtual bool ProcessPluginMenu() { return false; }
 
 	virtual void OnDestroy();						// вызывается перед уничтожением окна
 	virtual void OnCreate(){}						// вызывается перед созданием окна

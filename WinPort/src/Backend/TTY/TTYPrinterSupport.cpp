@@ -4,11 +4,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-ttyPrinterSupportBackend::ttyPrinterSupportBackend() {
-	fprintf(stderr, "print:: initialized\n");
+ttyPrinterSupportBackend::ttyPrinterSupportBackend()
+{
+	fprintf(stderr, "ttyPrinter: initialized\n");
 }
 
 ttyPrinterSupportBackend::~ttyPrinterSupportBackend() {}
+
+static void ttyPrinterRun(const std::string &cmd)
+{
+	fprintf(stderr, "ttyPrinter: cmd='%s'\n", cmd.c_str());
+	int r = system(cmd.c_str());
+	fprintf(stderr, "ttyPrinter: r=%d\n", r);
+}
 
 void ttyPrinterSupportBackend::PrintText(const wchar_t* jobName, const wchar_t* text)
 {
@@ -19,18 +27,12 @@ void ttyPrinterSupportBackend::PrintText(const wchar_t* jobName, const wchar_t* 
 	fprintf(fp, "%ls\n", text);
 	fclose(fp);
 
-	char buf[MAX_PATH];
-	sprintf(buf, "lp -s -t \"%ls\" %s", jobName, tmpl);
-	fprintf(stderr, "print:: `%s`\n", buf);
-	system(buf);
+	ttyPrinterRun(StrPrintf("lp -s -t \"%ls\" %s", jobName, tmpl));
 }
 
 void ttyPrinterSupportBackend::PrintTextFile(const wchar_t* fileName)
 {
-	char buf[MAX_PATH];
-	sprintf(buf, "lp -s %ls", fileName);
-	fprintf(stderr, "print:: `%s`\n", buf);
-	system(buf);
+	ttyPrinterRun(StrPrintf("lp -s %ls", fileName));
 }
 
 // The rest is not implemented

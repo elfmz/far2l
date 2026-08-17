@@ -46,6 +46,7 @@ struct TMacroKeywords
 	const wchar_t *Name;	// Наименование
 	DWORD Value;			// Значение
 	DWORD Reserved;
+	const wchar_t  *Description;
 };
 
 // в plugin.hpp это FARMACROPARSEERRORCODE

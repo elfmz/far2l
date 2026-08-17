@@ -224,13 +224,15 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	if (ctrl)  modifiers |= 4;
 	modifiers++; // bit mask + 1 as spec requres
 
-	if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
-		modifiers |= 64;
-		nolegacy = true;
-	}
-	if (KeyEvent.dwControlKeyState & NUMLOCK_ON) {
-		modifiers |= 128;
-		nolegacy = true;
+	if (flags & (4 | 8)) {
+		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
+			modifiers |= 64;
+			nolegacy = true;
+		}
+		if (KeyEvent.dwControlKeyState & NUMLOCK_ON) {
+			modifiers |= 128;
+			nolegacy = true;
+		}
 	}
 
 	setlocale(LC_CTYPE, "");
@@ -321,47 +323,47 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		// non-CSIu keys: keycode is not an unicode code point
 
 		case VK_INSERT:
-			if (enhanced) { keycode = 2; suffix = '~'; }
-			else          { keycode = 57425; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 2; suffix = '~'; }
+			else                          { keycode = 57425; suffix = 'u'; }
 			break;
 		case VK_DELETE:
-			if (enhanced) { keycode = 3; suffix = '~'; }
-			else          { keycode = 57426; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 3; suffix = '~'; }
+			else                          { keycode = 57426; suffix = 'u'; }
 			break;
 
 		case VK_LEFT:
-			if (enhanced) { keycode = 1; suffix = 'D'; }
-			else          { keycode = 57417; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'D'; }
+			else                          { keycode = 57417; suffix = 'u'; }
 			break;
 		case VK_RIGHT:
-			if (enhanced) { keycode = 1; suffix = 'C'; }
-			else          { keycode = 57418; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'C'; }
+			else                          { keycode = 57418; suffix = 'u'; }
 			break;
 		case VK_UP:
-			if (enhanced) { keycode = 1; suffix = 'A'; }
-			else          { keycode = 57419; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'A'; }
+			else                          { keycode = 57419; suffix = 'u'; }
 			break;
 		case VK_DOWN:
-			if (enhanced) { keycode = 1; suffix = 'B'; }
-			else          { keycode = 57420; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'B'; }
+			else                          { keycode = 57420; suffix = 'u'; }
 			break;
 
 		case VK_PRIOR: // Page Up
-			if (enhanced) { keycode = 5; suffix = '~'; }
-			else          { keycode = 57421; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 5; suffix = '~'; }
+			else                          { keycode = 57421; suffix = 'u'; }
 			break;
 		case VK_NEXT:  // Page Down
-			if (enhanced) { keycode = 6; suffix = '~'; }
-			else          { keycode = 57422; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 6; suffix = '~'; }
+			else                          { keycode = 57422; suffix = 'u'; }
 			break;
 
 		case VK_HOME:
-			if (enhanced) { keycode = 1; suffix = 'H'; }
-			else          { keycode = 57423; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'H'; }
+			else                          { keycode = 57423; suffix = 'u'; }
 			break;
 		case VK_END:
-			if (enhanced) { keycode = 1; suffix = 'F'; }
-			else          { keycode = 57424; suffix = 'u'; }
+			if (enhanced || !(flags & 8)) { keycode = 1; suffix = 'F'; }
+			else                          { keycode = 57424; suffix = 'u'; }
 			break;
 
 		case VK_F1:

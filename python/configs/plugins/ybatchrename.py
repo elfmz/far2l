@@ -23,7 +23,7 @@ class Plugin(FarPlugin):
     label = 'Batch Rename Files and Directories'
     openFrom = ['PLUGINSMENU', 'FILEPANEL']
 
-    def OpenPlugin(self, _):
+    def OpenPlugin(self, OpenFrom, Item):
         panel = self.get_panel()
 
         dir = panel.directory

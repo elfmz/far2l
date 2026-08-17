@@ -35,7 +35,7 @@ public:
   static bool isUpperCase(wchar c);
   static bool isTitleCase(wchar c);
   static bool isLetter(wchar c);
-  static bool isLetterOrDigit(wchar c);
+  static bool isLetterOrDigitOrUnderscore(wchar c);
   static bool isDigit(wchar c);
   static bool isAssigned(wchar c);
   static bool isSpaceChar(wchar c);

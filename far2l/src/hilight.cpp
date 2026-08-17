@@ -54,9 +54,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <atomic>
 #include <mutex>
+#include <unordered_map>
 #include <unordered_set>
 #include "color.hpp"
 #include "MaskGroups.hpp"
+#include "Colorspace.h"
 
 struct HighlightStrings
 {
@@ -459,6 +461,50 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	}
 }
 
+static uint64_t CorrectHighlightColorContrast(uint64_t color)
+{
+	const uint32_t foreground_color = color & FOREGROUND_TRUECOLOR
+			? (color >> 16) & 0x00FFFFFF : Palette::FARPalette[16 + (color & F_MASK)];
+	const uint32_t background_color = color & BACKGROUND_TRUECOLOR
+			? (color >> 40) & 0x00FFFFFF : Palette::FARPalette[(color >> 4) & 0x0F];
+	const RGB foreground = toRGB(GetRValue(foreground_color), GetGValue(foreground_color), GetBValue(foreground_color));
+	const RGB background = toRGB(GetRValue(background_color), GetGValue(background_color), GetBValue(background_color));
+
+	const bool inverted = (color & COMMON_LVB_REVERSE_VIDEO) != 0;
+	const RGB &displayed_foreground = inverted ? background : foreground;
+	const RGB &displayed_background = inverted ? foreground : background;
+	RGB corrected_foreground;
+	ComputeContrast(displayed_foreground, displayed_background, corrected_foreground);
+
+	const iRGB corrected = toIRGB(corrected_foreground);
+	const uint32_t corrected_color = RGB(corrected.r, corrected.g, corrected.b);
+	if ((inverted ? background_color : foreground_color) == corrected_color)
+		return color;
+
+	if (inverted)
+		SET_RGB_BACK(color, corrected_color);
+	else
+		SET_RGB_FORE(color, corrected_color);
+	return color;
+}
+
+static void CorrectHighlightContrast(HighlightDataColor *highlight,
+		std::unordered_map<uint64_t, uint64_t> &corrected_colors)
+{
+	if (!Opt.Dialogs.EnforceColorCorrection)
+		return;
+
+	for (int type = HIGHLIGHTCOLORTYPE_FILE; type <= HIGHLIGHTCOLORTYPE_MARKSTR; ++type) {
+		for (int state = HIGHLIGHTCOLOR_NORMAL; state <= HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR; ++state) {
+			uint64_t &color = highlight->Color[type][state];
+			const auto [it, inserted] = corrected_colors.emplace(color, color);
+			if (inserted)
+				it->second = CorrectHighlightColorContrast(color);
+			color = it->second;
+		}
+	}
+}
+
 void HighlightFiles::UpdateCurrentTime()
 {
 	SYSTEMTIME cst;
@@ -502,6 +548,7 @@ public:
 
 	void *DoNow()
 	{
+		std::unordered_map<uint64_t, uint64_t> corrected_colors;
 		for (size_t FCnt = 0; FCnt < _FileCount; ++FCnt) {
 		    if (!_FileItem[FCnt])   // проверка на null
 		        continue;
@@ -530,6 +577,8 @@ public:
 		                break;
 		        }
 		    }
+
+		    CorrectHighlightContrast(&Colors, corrected_colors);
 
 		    if (Colors.MarkLen) {
 		        size_t ncells = StrCellsCount(Colors.Mark, Colors.MarkLen);

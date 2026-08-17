@@ -13,9 +13,9 @@ class UnicodeTools
  public:
   /// sometimes need it...
 
-  static int getNumber(const UnicodeString* pstr);
+  static int getNumber(const UnicodeString* pstr, int ofs = 0, int len = -1);
   static int getHex(wchar c);
-  static int getHexNumber(const UnicodeString* pstr);
+  static int getHexNumber(const UnicodeString* pstr, int ofs = 0, int len = -1);
 
   /** For '{name}'  returns 'name'
       Removes brackets and returns new dynamic string,

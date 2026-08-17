@@ -1,0 +1,148 @@
+.Language=English,English
+.PluginContents=MTP Plugin
+
+@Contents
+$ #MTP Plugin#
+ Browse and manage files on MTP-class devices (Android,
+cameras, media players) over USB. Backed by libmtp.
+
+   ~Device list~@DeviceList@
+   ~File operations~@FileOps@
+   ~Keyboard shortcuts~@Shortcuts@
+   ~Limitations~@Limitations@
+   ~Troubleshooting~@Troubleshooting@
+
+@DeviceList
+$ #Device list#
+ The plugin lists connected MTP devices on open. With one
+storage on the device — the file view opens directly; with
+several storages — pick one and #Enter#.
+
+   #..#               close plugin
+   #Manufacturer#     vendor name
+   #Product#          device model
+   #Serial#           serial number
+
+ No devices? Unlock the device, switch USB mode to
+#File transfer (MTP)#, accept the on-device "Allow file
+transfer" prompt the first time. Until accepted, listings
+may be empty and uploads may fail with #0x2002#.
+
+ ~Contents~@Contents@
+
+@FileOps
+$ #File operations#
+
+   #F3#         View (downloaded to temp, chmod 0644)
+   #F5# / #F6#  Copy / Move
+   #Shift+F5#   In-place copy with prompt (rename or relocate)
+   #Shift+F6#   Rename / move with prompt
+   #F7#         Make directory
+   #F8#         Delete
+   #Enter#      Enter directory
+
+ Cross-panel #F5#/#F6# between two MTP panels on the same
+device uses libmtp's #Copy_Object# / #Move_Object# directly
+— no host roundtrip. Falls back to host-mediated
+#download → upload# if the responder rejects the call.
+
+ The destination prompt accepts: a basename, a relative
+path (#./sub/#, #../#), or a storage-relative path
+(#Internal/Temp/foo#). Trailing #/# means "into folder"
+(auto-mkdir intermediate dirs).
+
+ Progress dialog (delay-shown after 300 ms): current file,
+percentage, total bytes, elapsed/remaining, speed. #Esc#
+aborts (with confirmation).
+
+ ~Contents~@Contents@
+
+@Shortcuts
+$ #Keyboard shortcuts#
+
+   #Enter#      Enter directory / connect to device
+   #..#         Up; on root — device selector; on selector — close
+   #F3#         View file
+   #F5# / #F6#  Copy / Move
+   #Shift+F5#   In-place copy with prompt
+   #Shift+F6#   Rename / move with prompt
+   #F7#         Make directory
+   #F8#         Delete
+   #Esc#        Abort current transfer
+   #F10#        Close plugin
+
+ ~Contents~@Contents@
+
+@Limitations
+$ #Limitations#
+  - Some devices reject the #Undefined# upload type; the
+    plugin queries #Get_Supported_Filetypes# per session
+    and routes uploads to a neutral advertised type.
+  - Some Galaxy devices return blank filenames for newly
+    created objects; the plugin patches this via a
+    session-wide handle→name cache.
+  - On macOS, the system #icdd# / #ptpcamerad# can claim
+    MTP devices on plug-in. The plugin issues an
+    automatic bypass — set #MTP_NO_ICDD_BYPASS=1# to
+    disable it (useful for diagnosis).
+
+ ~Contents~@Contents@
+
+@Troubleshooting
+$ #Troubleshooting#
+ #Device not detected#
+   Unlock device; switch USB mode to #File transfer (MTP)#;
+   accept the "Allow file transfer" prompt; replug if needed.
+
+ #Empty listing or 0x2002 on upload#
+   Device locked or MTP permission not granted yet — the
+   plugin retries #Get_Storage# for a few seconds.
+
+ #Upload rejected (0x200B / "Invalid ObjectFormatCode")#
+   Reopen the plugin so #Get_Supported_Filetypes# reruns;
+   if it persists, the responder rejects all advertised
+   types — file a libmtp report.
+
+ #macOS: open fails with kIOUSBExclusiveAccess#
+   #icdd# / #ptpcamerad# is holding the device. The plugin's
+   automatic bypass should handle this; if it doesn't,
+   unset #MTP_NO_ICDD_BYPASS#.
+
+ ~Contents~@Contents@
+
+@MTPAbortConfirm
+$ #Abort operation#
+ Confirm aborting the current file transfer.
+
+   #Abort operation#  stop immediately
+   #Continue#         resume the transfer
+
+ ~Contents~@Contents@
+
+@MTPOverwrite
+$ #Overwrite confirmation#
+ The destination already exists. The dialog shows source and
+destination size + mtime on the #New# / #Existing# rows; click
+either row to view that file before deciding.
+
+   #Overwrite#  replace the destination
+   #Skip#       leave the destination untouched
+   #Newer#      copy only if source mtime > destination mtime
+   #Rename#     write under an auto-incremented name (#name(2)#, …)
+   #Cancel#     abort the operation
+
+ #Remember choice# (checkbox) — apply the chosen action to
+the rest of the batch without prompting again. Pairs with
+#Overwrite# (= overwrite all) and #Skip# (= skip all).
+
+ ~Contents~@Contents@
+
+@MTPProgress
+$ #Transfer progress#
+ Shows source and destination paths, per-file percentage,
+aggregate bytes (multi-item only), elapsed/remaining time,
+speed, and #Files processed: X of Y#.
+
+ #Esc# aborts (with confirmation).
+
+ ~Contents~@Contents@

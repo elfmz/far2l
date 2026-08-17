@@ -2,13 +2,15 @@
 #include "colorer/strings/legacy/UnicodeTools.h"
 #include "colorer/strings/legacy/UnicodeString.h"
 
-int UnicodeTools::getNumber(const UnicodeString* pstr)
+int UnicodeTools::getNumber(const UnicodeString* pstr, int ofs, int len)
 {
   int r = 1;
   int num = 0;
   if (pstr == nullptr)
     return -1;
-  for (int i = pstr->length() - 1; i >= 0; i--) {
+  if (len < 0)
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     if ((*pstr)[i] > '9' || (*pstr)[i] < '0')
       return -1;
     num += ((*pstr)[i] - 0x30) * r;
@@ -19,21 +21,27 @@ int UnicodeTools::getNumber(const UnicodeString* pstr)
 
 int UnicodeTools::getHex(wchar c)
 {
-  c = Character::toLowerCase(c);
-  c -= '0';
-  if (c >= 'a' - '0' && c <= 'f' - '0')
-    c -= 0x27;
-  else if (c > 9)
-    return -1;
-  return c;
+  if (c >= '0' && c <= '9') {
+    return c - '0';
+  }
+//  c = Character::toLowerCase(c);
+  if (c >= 'a' && c <= 'f') {
+    return 10 + (c - 'a');
+  }
+  if (c >= 'A' && c <= 'F') {
+    return 10 + (c - 'A');
+  }
+  return -1;
 }
 
-int UnicodeTools::getHexNumber(const UnicodeString* pstr)
+int UnicodeTools::getHexNumber(const UnicodeString* pstr, int ofs, int len)
 {
   int r = 0, num = 0;
   if (pstr == nullptr)
     return -1;
-  for (int i = (*pstr).length() - 1; i >= 0; i--) {
+  if (len < 0)
+    len = pstr->length() - ofs;
+  for (int i = ofs + len - 1; i >= ofs; i--) {
     int d = getHex((*pstr)[i]);
     if (d == -1)
       return -1;

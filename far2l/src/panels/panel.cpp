@@ -837,7 +837,7 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 bool Panel::SetLocation_Directory(const wchar_t *path)
 {
 	if (!FarChDir(path)) {
-		if (CtrlObject->Plugins.ProcessCommandLine(path)) {
+		if (CtrlObject->Plugins.ProcessCommandLine(path, nullptr, true)) {
 			fprintf(stderr, "SetLocation_Directory('%ls') PLUGIN\n", path);
 			return true;
 		}
@@ -890,14 +890,13 @@ int Panel::OnFCtlSetLocation(const FarPanelLocation *location)
 	return SetLocation_Plugin(false, pPlugin, location->Path, nullptr, location->Item);
 }
 
-void Panel::FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &strLastName,
-		FARString &strName)
+void Panel::FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &strLastName, FARString &strName)
 {
-	wchar_t *Ptr =
-			(wchar_t *)malloc((StrLength(Src) + StrLength(FindEdit->GetStringAddr()) + 32) * sizeof(wchar_t));
+	const auto &e = FindEdit->GetString();
+	wchar_t *Ptr = (wchar_t *)malloc((StrLength(Src) + e.size() + 32) * sizeof(wchar_t));
 
 	if (Ptr) {
-		wcscpy(Ptr, FindEdit->GetStringAddr());
+		wcscpy(Ptr, e.c_str());
 		wchar_t *EndPtr = Ptr + StrLength(Ptr);
 		wcscat(Ptr, Src);
 		Unquote(EndPtr);
@@ -1403,7 +1402,7 @@ int Panel::SetCurPath()
 	}
 
 	if (!FarChDir(strCurDir)) {
-		while (!FarChDir(strCurDir)) {
+		for (;;) {
 			int Result = TestFolder(strCurDir);
 
 			if (Result == TSTFLD_NOTFOUND) {

@@ -105,7 +105,8 @@ ExpectString("[ ] Show startup banner")
 LClickWhereFound(ExpectString("[ Cancel ]"))
 
 // exit
-TypeText("exit far")
+TypeFKey(10)
+ExpectString("Do you want to quit FAR?")
 TypeEnter()
 ExpectAppExit(0)
 

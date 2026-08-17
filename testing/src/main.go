@@ -272,7 +272,7 @@ func performAutoSync() {
 		return
 	}
 	g_autosync_needed = false
-	if g_autosync == 0 {
+	if g_autosync == 0 || g_app == nil {
 		return
 	}
 	if ! far2l_ReqRecvSync(g_autosync) {
@@ -336,7 +336,7 @@ func aux_WorkDir() string {
 
 func aux_Snapshot(name string) {
 	if g_app != nil {
-		aux_Sleep(1000)
+		aux_Sleep(100)
 		if g_app != nil {
 			f, err := os.Create(g_test_workdir + "/snapshot-" + name + ".txt")
 			defer f.Close()

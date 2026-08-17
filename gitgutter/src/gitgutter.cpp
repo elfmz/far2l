@@ -1248,7 +1248,8 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 			const int screen_w = static_cast<int>(fr.Right) - static_cast<int>(fr.Left) + 1;
 			max_w = std::max(min_w, (screen_w * 2) / 3);
 		}
-		const std::wstring popup_header = st.baseline_label + L"  GitGutter";
+		const std::wstring popup_header = st.baseline_label + L"  "
+				+ std::to_wstring(index + 1) + L"/" + std::to_wstring(st.hunks.size()) + L"  GitGutter";
 		const int header_cells = static_cast<int>(g_fsf.StrCellsCount(popup_header.c_str(), popup_header.size()));
 		const int header_x = 24;
 		const int dlg_w = std::min(max_w,

@@ -257,6 +257,9 @@ func far2l_ReqRecvSync(tmout uint32) bool {
 }
 
 func far2l_Sync(tmout uint32) bool {
+	if tmout == 0 {
+		tmout = g_autosync
+	}
 	log.Println("Sync:", tmout)
 	g_autosync_needed = false
 	return far2l_ReqRecvSync(tmout)

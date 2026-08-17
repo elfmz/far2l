@@ -26,9 +26,10 @@ $^#Hunk popup#
 
  Click a GitGutter mark in the editor gutter to open a popup with the diff hunk
 for that change. The popup is positioned near the clicked mark when possible.
+Its header shows the current hunk and total count, for example #3/12#.
 
  Press #Ctrl+G# in the editor to open the nearest hunk at or below the current
-line and center it on screen.
+line and center it on screen. After the last hunk, it wraps to the first one.
 
  Buttons:
 
@@ -40,6 +41,9 @@ line and center it on screen.
 
  #-# #↩#
    Revert the current hunk in the editor buffer.
+
+ #-# #⚙#
+   Open GitGutter settings.
 
  The revert command verifies that the current editor text still matches the hunk
 before applying the change. If the text no longer matches, the hunk is not

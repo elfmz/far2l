@@ -186,7 +186,7 @@ func far2l_GetBoundedLines(left, top, width, height int32, trim_chars string) []
 			lines = append(lines, line)
 		}
 	}
-	log.Printf("Got %d lines at [%d:%d] - [%d:%d]\n", len(lines), left, top, left + width - 1, top + height - 1)
+	log.Printf("Got %d lines at [%d +%d : %d +%d]\n", len(lines), left, width, top, height)
 	return lines
 }
 

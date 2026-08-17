@@ -299,9 +299,12 @@ func aux_Warn(warn string) {
 
 func aux_Panic(message string) {
 	if (g_app != nil) {
-		log.Println("------------------- SNAPSHOT -------------------")
-		fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
-		log.Println("------------------------------------------------")
+		aux_Sleep(100)
+		if (g_app != nil) {
+			log.Println("------------------- SNAPSHOT -------------------")
+			fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
+			log.Println("------------------------------------------------")
+		}
 	}
 	log.Println("\x1b[1;31m" + message + "\x1b[39;22m")
 //	log.Println("Backtrace:", g_vm.CaptureCallStack(-1, []goja.StackFrame{}))
@@ -333,9 +336,13 @@ func aux_WorkDir() string {
 
 func aux_Snapshot(name string) {
 	if g_app != nil {
-		f, err := os.Create(g_test_workdir + "/snapshot-" + name + ".txt")
-		if err == nil {
-			f.WriteString(g_app.Snapshot())
+		aux_Sleep(1000)
+		if g_app != nil {
+			f, err := os.Create(g_test_workdir + "/snapshot-" + name + ".txt")
+			defer f.Close()
+			if err == nil {
+				f.WriteString(g_app.Snapshot())
+			}
 		}
 	}
 }
@@ -409,6 +416,7 @@ func initVM() {
 	setVMFunction("TypeIns", far2l_TypeIns)
 	setVMFunction("TypeDel", far2l_TypeDel)
 	setVMFunction("TypeBack", far2l_TypeBack)
+	setVMFunction("TypeTab", far2l_TypeTab)
 
 	setVMFunction("LClickWhereFound", far2l_LClickWhereFound)
 	setVMFunction("RClickWhereFound", far2l_RClickWhereFound)
@@ -448,6 +456,7 @@ func initVM() {
 	setVMFunction("Mkfiles", aux_Mkfiles)
 	setVMFunction("HashPath", aux_HashPath)
 	setVMFunction("HashPathes", aux_HashPathes)
+	setVMFunction("CheckFilesDataSame", aux_CheckFilesDataSame)
 	setVMFunction("Exists", aux_Exists)
 	setVMFunction("CountExisting", aux_CountExisting)
 	setVMFunction("LoadTextFile", aux_LoadTextFile)

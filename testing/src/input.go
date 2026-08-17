@@ -89,6 +89,7 @@ func far2l_TypeHome()     { far2l_TypeVK(0x24, 1) }
 func far2l_TypeIns()      { far2l_TypeVK(0x2D, 1) }
 func far2l_TypeDel()      { far2l_TypeVK(0x2E, 1) }
 func far2l_TypeEnter()    { far2l_TypeVK(0x0D, 1) }
+func far2l_TypeTab(count int)      { far2l_TypeVK(0x09, count) }
 func far2l_TypeBack(count int)     { far2l_TypeVK(0x08, count) }
 func far2l_TypePageUp(count int)   { far2l_TypeVK(0x21, count) }
 func far2l_TypePageDown(count int) { far2l_TypeVK(0x22, count) }

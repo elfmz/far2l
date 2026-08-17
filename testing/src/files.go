@@ -15,22 +15,27 @@ import (
 )
 
 func aux_Chmod(name string, mode os.FileMode) bool {
+	performAutoSync()
 	return assertNoError(os.Chmod(name, mode))
 }
 
 func aux_Chown(name string, uid, gid int) bool {
+	performAutoSync()
 	return assertNoError(os.Chown(name, uid, gid))
 }
 
 func aux_Chtimes(name string, atime time.Time, mtime time.Time) bool {
+	performAutoSync()
 	return assertNoError(os.Chtimes(name, atime, mtime))
 }
 
 func aux_Mkdir(name string, perm os.FileMode) bool {
+	performAutoSync()
 	return assertNoError(os.Mkdir(name, perm))
 }
 
 func aux_MkdirTemp(dir, pattern string) string {
+	performAutoSync()
 	out, err:= os.MkdirTemp(dir, pattern)
 	if !assertNoError(err) {
 		return ""
@@ -39,18 +44,22 @@ func aux_MkdirTemp(dir, pattern string) string {
 }
 
 func aux_Remove(name string) bool {
+	performAutoSync()
 	return assertNoError(os.Remove(name))
 }
 
 func aux_RemoveAll(name string) bool {
+	performAutoSync()
 	return assertNoError(os.RemoveAll(name))
 }
 
 func aux_Rename(oldpath, newpath string) bool {
+	performAutoSync()
 	return assertNoError(os.Rename(oldpath, newpath))
 }
 
 func aux_ReadFile(name string) []byte {
+	performAutoSync()
 	out, err:= os.ReadFile(name)
 	if !assertNoError(err) {
 		return []byte{}
@@ -59,14 +68,17 @@ func aux_ReadFile(name string) []byte {
 }
 
 func aux_WriteFile(name string, data []byte, perm os.FileMode) bool {
+	performAutoSync()
 	return assertNoError(os.WriteFile(name, data, perm))
 }
 
 func aux_Truncate(name string, size int64) bool {
+	performAutoSync()
 	return assertNoError(os.Truncate(name, size))
 }
 
 func aux_ReadDir(name string) []os.DirEntry {
+	performAutoSync()
 	out, err := os.ReadDir(name)
 	if !assertNoError(err) {
 		return []os.DirEntry{}
@@ -75,10 +87,12 @@ func aux_ReadDir(name string) []os.DirEntry {
 }
 
 func aux_Symlink(oldname, newname string) bool {
+	performAutoSync()
 	return assertNoError(os.Symlink(oldname, newname))
 }
 
 func aux_Readlink(name string) string {
+	performAutoSync()
 	out, err:= os.Readlink(name)
 	if !assertNoError(err) {
 		return ""
@@ -87,10 +101,12 @@ func aux_Readlink(name string) string {
 }
 
 func aux_MkdirAll(path string, perm os.FileMode) bool {
+	performAutoSync()
 	return assertNoError(os.MkdirAll(path, perm))
 }
 
 func aux_MkdirsAll(pathes []string, perm os.FileMode) bool {
+	performAutoSync()
 	out:= true
 	for _, path := range pathes {
 		if !aux_MkdirAll(path, perm) {
@@ -128,6 +144,7 @@ func (r *LimitedRandomReader) Read(p []byte) (n int, err error) {
 }
 
 func aux_Mkfile(path string, mode os.FileMode, min_size uint64, max_size uint64) bool {
+	performAutoSync()
 	f, err := os.OpenFile(path, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, mode)
 	if err != nil {
 		setErrorString(fmt.Sprintf("Error %v creating %v", err, path))
@@ -226,11 +243,22 @@ func walkHash(path string, de fs.DirEntry, err error) error {
 	return nil
 }
 
+func aux_CheckFilesDataSame(path1, path2 string) bool {
+	hash1:= aux_HashPath(path1, true, false, false, false, false)
+	hash2:= aux_HashPath(path2, true, false, false, false, false)
+	if (hash1 != hash2) {
+		setErrorString("Files data differs: " + path1 + ":" + hash1 + " vs " + path2 + ":" + hash2)
+		return false
+	}
+	return true
+}
+
 func aux_HashPath(path string, hash_data bool, hash_name bool, hash_link bool, hash_mode bool, hash_times bool) string {
 	return aux_HashPathes([]string{path}, hash_data, hash_name, hash_link, hash_mode, hash_times)
 }
 
 func aux_HashPathes(pathes []string, hash_data bool, hash_name bool, hash_link bool, hash_mode bool, hash_times bool) string {
+	performAutoSync()
 	g_hash_data = hash_data
 	g_hash_name = hash_name
 	g_hash_link = hash_link
@@ -247,11 +275,13 @@ func aux_HashPathes(pathes []string, hash_data bool, hash_name bool, hash_link b
 }
 
 func aux_Exists(path string) bool {
+	performAutoSync()
 	_, err := os.Lstat(path)
 	return err == nil
 }
 
 func aux_CountExisting(pathes []string) int {
+	performAutoSync()
 	out:= 0
 	for _, path := range pathes {
 		if aux_Exists(path) {
@@ -263,6 +293,7 @@ func aux_CountExisting(pathes []string) int {
 
 
 func aux_SaveTextFile(fpath string, lines []string) {
+	performAutoSync()
 	file, err := os.Create(fpath)
 	if err != nil {
 		setErrorString(err.Error())

@@ -225,6 +225,7 @@ Simulate changing state of specific named control key. Changed state affects all
 `TypeHome()`  
 `TypeIns()`  
 `TypeDel()`  
+`TypeTab(count int)`  
 `TypeBack(count int)`  
 `TypePageUp(count int)`  
 `TypePageDown(count int)`  
@@ -314,6 +315,12 @@ Thus this function allows to easily check if there're changes in file(s)
 In case of any IO error - error text included into hashing result.
 
 ---------------------------------------------------------
+`CheckFilesDataSame(path1 string, path2 string) bool`
+
+Compares data of two given files, returns true if they matches, raises error and returns false in calm mode if not  
+
+---------------------------------------------------------
+
 
 `SaveTextFile(fpath string, lines []string)`  
 Saves given array of strings as LF-separated text file.

@@ -44,6 +44,37 @@ ExpectNoString("Hello, world! 🌍✨")
 TypeFKey(10)
 ExpectNoString("left/left.txt")
 
+TypeTab()
+TypeDown()
+TypeFKey(4)
+ExpectString("right/right.txt")
+TypeDown(2)
+ToggleShift(true)
+TypeDown(2)
+TypeRight(3)
+ToggleShift(false)
+
+ToggleLCtrl(true)
+TypeText("X")
+ToggleLCtrl(false)
+
+TypeFKey(2)
+
+CheckFilesDataSame(right + "/right.txt", right + "/right-edit1.txt")
+
+TypeRight(6)
+ToggleLCtrl(true)
+TypeText("V")
+ToggleLCtrl(false)
+
+TypeFKey(2)
+
+CheckFilesDataSame(right + "/right.txt", right + "/right-edit2.txt")
+
+TypeFKey(10)
+ExpectNoString("right/right.txt")
+
+
 TypeFKey(10)
 ExpectString("Do you want to quit FAR?")
 TypeEnter()

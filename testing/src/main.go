@@ -205,12 +205,12 @@ func termTask(args []string, cols int, rows int) {
 	var err error
     g_app, err = termtest.New(opts)
 	if err != nil {
-		aux_Panic(err.Error())
+		aux_Warn(err.Error())
+	} else {
+		g_app.Wait()
+		code:= g_app.Cmd().ProcessState.ExitCode()
+		g_channel <- code
 	}
-	g_app.Wait()
-	code:= g_app.Cmd().ProcessState.ExitCode()
-	//g_app.Close()
-	g_channel <- code
 }
 
 func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
@@ -298,9 +298,11 @@ func aux_Warn(warn string) {
 }
 
 func aux_Panic(message string) {
-	log.Println("------------------- SNAPSHOT -------------------")
-	fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
-	log.Println("------------------------------------------------")
+	if (g_app != nil) {
+		log.Println("------------------- SNAPSHOT -------------------")
+		fmt.Println(strings.TrimLeft(g_app.Snapshot(), " \r\n"))
+		log.Println("------------------------------------------------")
+	}
 	log.Println("\x1b[1;31m" + message + "\x1b[39;22m")
 //	log.Println("Backtrace:", g_vm.CaptureCallStack(-1, []goja.StackFrame{}))
 	g_vm.Interrupt(message)

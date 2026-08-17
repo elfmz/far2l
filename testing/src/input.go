@@ -73,35 +73,42 @@ func far2l_ToggleRAlt(pressed bool) {
 	far2l_SendKeyEvent(0, 0x12, pressed)
 }
 
-func far2l_TypeFKey(n uint32) { far2l_TypeVK(0x6F + n) }
-func far2l_TypeDigit(n uint32) { far2l_TypeVK(0x60 + n) }
+func far2l_TypeFKey(n uint32) { far2l_TypeVK(0x6F + n, 1) }
+func far2l_TypeDigit(n uint32) { far2l_TypeVK(0x60 + n, 1) }
 
-func far2l_TypeAdd()      { far2l_TypeVK(0x6B) }
-func far2l_TypeSub()      { far2l_TypeVK(0x6D) }
-func far2l_TypeMul()      { far2l_TypeVK(0x6A) }
-func far2l_TypeDiv()      { far2l_TypeVK(0x6F) }
-func far2l_TypeSeparator(){ far2l_TypeVK(0x6C) }
-func far2l_TypeDecimal()  { far2l_TypeVK(0x6E) }
+func far2l_TypeAdd()      { far2l_TypeVK(0x6B, 1) }
+func far2l_TypeSub()      { far2l_TypeVK(0x6D, 1) }
+func far2l_TypeMul()      { far2l_TypeVK(0x6A, 1) }
+func far2l_TypeDiv()      { far2l_TypeVK(0x6F, 1) }
+func far2l_TypeSeparator(){ far2l_TypeVK(0x6C, 1) }
+func far2l_TypeDecimal()  { far2l_TypeVK(0x6E, 1) }
 
-func far2l_TypeBack()     { far2l_TypeVK(0x08) }
-func far2l_TypeEnter()    { far2l_TypeVK(0x0D) }
-func far2l_TypeEscape()   { far2l_TypeVK(0x1B) }
-func far2l_TypePageUp()   { far2l_TypeVK(0x21) }
-func far2l_TypePageDown() { far2l_TypeVK(0x22) }
-func far2l_TypeEnd()      { far2l_TypeVK(0x23) }
-func far2l_TypeHome()     { far2l_TypeVK(0x24) }
-func far2l_TypeLeft()     { far2l_TypeVK(0x25) }
-func far2l_TypeUp()       { far2l_TypeVK(0x26) }
-func far2l_TypeRight()    { far2l_TypeVK(0x27) }
-func far2l_TypeDown()     { far2l_TypeVK(0x28) }
-func far2l_TypeIns()      { far2l_TypeVK(0x2D) }
-func far2l_TypeDel()      { far2l_TypeVK(0x2E) }
+func far2l_TypeEscape()   { far2l_TypeVK(0x1B, 1) }
+func far2l_TypeEnd()      { far2l_TypeVK(0x23, 1) }
+func far2l_TypeHome()     { far2l_TypeVK(0x24, 1) }
+func far2l_TypeIns()      { far2l_TypeVK(0x2D, 1) }
+func far2l_TypeDel()      { far2l_TypeVK(0x2E, 1) }
+func far2l_TypeEnter()    { far2l_TypeVK(0x0D, 1) }
+func far2l_TypeBack(count int)     { far2l_TypeVK(0x08, count) }
+func far2l_TypePageUp(count int)   { far2l_TypeVK(0x21, count) }
+func far2l_TypePageDown(count int) { far2l_TypeVK(0x22, count) }
+func far2l_TypeLeft(count int)     { far2l_TypeVK(0x25, count) }
+func far2l_TypeUp(count int)       { far2l_TypeVK(0x26, count) }
+func far2l_TypeRight(count int)    { far2l_TypeVK(0x27, count) }
+func far2l_TypeDown(count int)     { far2l_TypeVK(0x28, count) }
 
 
-func far2l_TypeVK(key_code uint32) {
-	log.Println("TypeVK:", key_code)
-	far2l_SendKeyEvent(0, key_code, true)
-	far2l_SendKeyEvent(0, key_code, false)
+func far2l_TypeVK(key_code uint32, count int) {
+	if count <= 1 {
+		count = 1;
+		log.Println("TypeVK:", key_code)
+	} else {
+		log.Println("TypeVK:", key_code, "(", count, "times)")
+	}
+	for ;count > 0; count-- {
+		far2l_SendKeyEvent(0, key_code, true)
+		far2l_SendKeyEvent(0, key_code, false)
+	}
 }
 
 func far2l_TypeText(text string) {

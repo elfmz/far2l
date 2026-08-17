@@ -219,20 +219,20 @@ Simulate changing state of specific named control key. Changed state affects all
 
 ---------------------------------------------------------
 
-`TypeBack()`  
 `TypeEnter()`  
 `TypeEscape()`  
-`TypePageUp()`  
-`TypePageDown()`  
 `TypeEnd()`  
 `TypeHome()`  
-`TypeLeft()`  
-`TypeUp()`  
-`TypeRight()`  
-`TypeDown()`  
 `TypeIns()`  
 `TypeDel()`  
-Simulate typing of specific named key
+`TypeBack(count int)`  
+`TypePageUp(count int)`  
+`TypePageDown(count int)`  
+`TypeLeft(count int)`  
+`TypeUp(count int)`  
+`TypeRight(count int)`  
+`TypeDown(count int)`  
+Simulate typing of specific named key. Those with cnt specified - typed cnt times, but at least 1 time.  
 
 ---------------------------------------------------------
 

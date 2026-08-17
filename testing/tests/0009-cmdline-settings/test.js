@@ -23,7 +23,7 @@ ExpectString("Text selected with mouse automatically copied to clipboard");
 // Command line settings
 TypeFKey(9)
 TypeText("o")
-for (i = 0; i < 9; ++i) TypeDown()
+TypeDown(9) // 9 times
 TypeEnter()
 
 ExpectString("═ Command line settings ═")
@@ -89,7 +89,7 @@ ExpectNoString("Text selected with mouse automatically copied to clipboard");
 // Command line settings
 TypeFKey(9)
 TypeText("o")
-for (i = 0; i < 9; ++i) TypeDown()
+TypeDown(9) // 9 times
 TypeEnter()
 
 ExpectString("═ Command line settings ═")

@@ -123,8 +123,8 @@ private:
 	ArcItemNode ArcData;
 	size_t ArcDataCount = 0;
 	struct stat ArcStat {};
-	int ArcPluginNumber;
-	int ArcPluginType;
+	int ArcPluginNumber{0};
+	int ArcPluginType{0};
 	int LastTestState, LastWithoutPathsState;
 	struct ArcItemInfo ItemsInfo;
 	struct ArcInfo CurArcInfo;

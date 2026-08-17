@@ -273,12 +273,28 @@ void ProtocolFISHPLUS::PerformLogin()
 bool ProtocolFISHPLUS::LooksLikeWrongFlavor(const std::exception &e)
 {
 	// Handshake errors that could equally mean "the remote spoke a shell we
-	// were not expecting". POSIX bootstrap sent to PowerShell yields parse
-	// noise (unexpected banner); PowerShell bootstrap sent to POSIX yields
-	// a parse error printed to stdout (handshake refused) or nothing at all
-	// (never got the ready marker). An unsupported protocol version also
-	// falls in here: a wrong-flavor helper often prints a number that is
-	// not ours.
+	// were not expecting":
+	//
+	//   POSIX bootstrap sent to a cmd.exe login shell parses as
+	//   syntactically invalid commands (single quotes are literal chars,
+	//   `exec` is not a builtin); cmd exits, ssh drops the pty and the
+	//   WayToShell polling loop reports "pty disrupted".
+	//
+	//   POSIX bootstrap sent to a PowerShell login shell parses to a
+	//   greeting Write-Output plus an error - "exec sh" is not a PS
+	//   cmdlet. Depending on how the error surfaces the client sees
+	//   either "unexpected handshake banner" (PS printed its parse
+	//   error where the banner should have gone) or "never reported
+	//   being ready" (the marker never came through the noise).
+	//
+	//   PowerShell bootstrap sent to a POSIX shell parses as garbage
+	//   (`$F4B=` sh reads as an env assignment then a stray hex blob),
+	//   the shell errors out, the marker never comes: "never reported
+	//   being ready", or the child exits: "pty disrupted".
+	//
+	//   An "unsupported protocol version" is the low-probability case
+	//   where a wrong-flavor helper still manages to print a number that
+	//   is not ours; kept in the list for symmetry.
 	//
 	// A working helper that answers with a real diagnostic (permission
 	// denied on the tempdir, missing dependency, etc.) never carries any
@@ -292,6 +308,7 @@ bool ProtocolFISHPLUS::LooksLikeWrongFlavor(const std::exception &e)
 		"handshake refused by remote host",
 		"unexpected handshake banner",
 		"unsupported protocol version",
+		"pty disrupted",
 	};
 	for (const char *p : phrases) {
 		if (strstr(msg, p) != nullptr) {
@@ -354,13 +371,38 @@ void ProtocolFISHPLUS::Initialize()
 		// ControlMaster set up this is a round trip, not a re-auth.
 		try {
 			AttemptFlavor(false);
-		} catch (std::exception &e) {
-			if (!LooksLikeWrongFlavor(e)) {
+		} catch (std::exception &e1) {
+			if (!LooksLikeWrongFlavor(e1)) {
 				throw;
 			}
-			fprintf(stderr, "[FISH+] POSIX handshake failed as '%s'; retrying as PowerShell\n",
-				e.what());
-			AttemptFlavor(true);
+			fprintf(stderr, "[FISH+] POSIX handshake in way '%s' failed as '%s';"
+				" retrying as PowerShell in same way\n",
+				_way_name.c_str(), e1.what());
+			try {
+				AttemptFlavor(true);
+			} catch (std::exception &e2) {
+				// The way itself may not land in a PowerShell prompt
+				// (e.g. [SSH] runs 'exec sh' under cmd.exe, which dies
+				// before either helper flavor gets a chance). If a
+				// PowerShell-oriented way exists and we are not already
+				// on it, jump there and try once more.
+				if (!LooksLikeWrongFlavor(e2) || _way_name == "SSH_PWSH") {
+					throw;
+				}
+				WaysToShell all_ways(FISHPLUS_WAYS_INI);
+				bool has_ssh_pwsh = false;
+				for (const auto &n : all_ways) {
+					if (n == "SSH_PWSH") { has_ssh_pwsh = true; break; }
+				}
+				if (!has_ssh_pwsh) {
+					throw;
+				}
+				fprintf(stderr, "[FISH+] way '%s' also failed as '%s';"
+					" retrying via way 'SSH_PWSH'\n",
+					_way_name.c_str(), e2.what());
+				_way_name = "SSH_PWSH";
+				AttemptFlavor(true);
+			}
 		}
 	}
 

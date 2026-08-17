@@ -184,9 +184,11 @@ func far2l_WriteToPeer(data []byte) {
 
 func far2l_Close() {
 	if g_app != nil {
-		log.Println("Closing application")
-		g_app.Stop()
-		g_app.Close()
+		app:= g_app
+		log.Println("Stopping application due to ExpectExit wasnt called")
+		app.Stop()
+		_ = <-g_channel
+		app.Close()
 		g_app = nil
 	}
 }
@@ -499,6 +501,7 @@ func main() {
 
 	for i := arg_ofs + 1; i < len(os.Args); i++ {
 		name := filepath.Base(os.Args[i])
+		fmt.Println() // empty line witout timestamp
 		log.Println("\x1b[1;32m---> Running test: " + name + "\x1b[39;22m")
 		testdir, err := filepath.Abs(os.Args[i])
 		if err != nil { log.Fatal(err) }
@@ -524,5 +527,7 @@ func runTest(file string) {
 	}
 	if code := rv.Export().(int64); code != 0 {
 		log.Println("[FAILED] Error", code, "from test", file)
+	} else {
+		log.Println("[DONE]", file)
 	}
 }

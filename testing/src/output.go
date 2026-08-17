@@ -262,21 +262,25 @@ func far2l_ExpectExit(code int, tmout int) string {
 	far2l_ReqBye()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(tmout) * time.Millisecond)
-	defer cancel() 
+	defer func() {
+		if (g_app != nil) {
+			app:= g_app
+			g_app = nil
+			app.Close()
+		}
+		cancel() 
+	}()
 	select {
 		case result:= <-g_channel:
 			if result != 0 {
 				setErrorString(fmt.Sprintf("ExpectExit: ERROR %d", result))
-				far2l_Close()
 				return fmt.Sprintf("ERROR: %d", result)
 			}
 		case <-ctx.Done():
 			setErrorString(fmt.Sprintf("ExpectExit: TIMEOUT"))
-			far2l_Close()
 			return "ERROR: TIMEOUT"
 	}
 	log.Println("ExpectExit: DONE")
-	far2l_Close()
 	return ""
 }
 

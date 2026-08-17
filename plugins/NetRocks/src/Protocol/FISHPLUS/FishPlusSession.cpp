@@ -104,9 +104,26 @@ namespace FishPlus
 
 	void Session::Handshake(const char *helper_path, bool tty_transport)
 	{
-		const std::string script = LoadHelperScript(helper_path, _token);
+		HandshakeOptions opts;
+		opts.helper_path = helper_path;
+		opts.tty_transport = tty_transport;
+		Handshake(opts);
+	}
 
-		SendRaw(BootstrapLine(_token));
+	void Session::Handshake(const HandshakeOptions &opts)
+	{
+		if (opts.helper_path == nullptr) {
+			throw ProtocolError("FISH+ handshake: helper_path not set");
+		}
+		const std::string script = LoadHelperScript(opts.helper_path, _token);
+
+		if (opts.base64_pwsh_bootstrap) {
+			// The pwsh bootstrap carries the helper base64-encoded on its
+			// own line: there is nothing further to upload after it.
+			SendRaw(BootstrapLinePwshB64(_token, script));
+		} else {
+			SendRaw(BootstrapLine(_token));
+		}
 
 		// Everything printed before the marker - motd, shell warnings, login
 		// banners - is noise and gets discarded. The marker carries the session
@@ -125,9 +142,12 @@ namespace FishPlus
 			}
 		}
 
-		// Nothing is in flight while the shell's parser is working, so the
-		// script can now be fed in through the bootstrap's read loop.
-		SendRaw(script + HELPER_END_MARKER + "\n");
+		if (!opts.base64_pwsh_bootstrap) {
+			// Nothing is in flight while the shell's parser is working, so
+			// the script can now be fed in through the bootstrap's read loop.
+			// The pwsh path already carries the helper inside the bootstrap.
+			SendRaw(script + HELPER_END_MARKER + "\n");
+		}
 
 		Response resp = ReadResponse(0, false);
 		if (!resp.ok) {
@@ -163,7 +183,7 @@ namespace FishPlus
 		// binary frames. The helper tames such a terminal with POSIX stty and
 		// announces "tty" when it managed to. A terminal backed transport whose
 		// helper did not manage it cannot carry raw payload at all.
-		_raw_payload_safe = (!tty_transport || _feats.Has("tty"));
+		_raw_payload_safe = (!opts.tty_transport || _feats.Has("tty"));
 
 		fprintf(stderr, "[FISH+] connected, proto %d, feats:%s%s\n", proto,
 			_feats.Raw().empty() ? " (none)" : "", _feats.Raw().c_str());

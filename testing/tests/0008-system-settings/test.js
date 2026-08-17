@@ -75,4 +75,12 @@ ExpectString("[x] Auto save setup")
 
 ExpectString("42 minutes")
 
+
+TypeEscape()
+
+TypeFKey(10)
+ExpectString("Do you want to quit FAR?")
+TypeEnter()
+ExpectAppExit(0)
+
 0;

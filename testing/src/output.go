@@ -275,6 +275,7 @@ func far2l_ExpectExit(code int, tmout int) string {
 			far2l_Close()
 			return "ERROR: TIMEOUT"
 	}
+	log.Println("ExpectExit: DONE")
 	far2l_Close()
 	return ""
 }

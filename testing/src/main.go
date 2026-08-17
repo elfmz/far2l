@@ -64,7 +64,6 @@ var g_app *termtest.ConsoleProcess
 var g_channel chan int
 var g_vm *goja.Runtime
 var g_status far2l_Status
-var g_far2l_running bool = false
 var g_recv_timeout uint32 = 30
 var g_test_workdir string
 var g_calm bool = false
@@ -184,9 +183,11 @@ func far2l_WriteToPeer(data []byte) {
 }
 
 func far2l_Close() {
-	if g_far2l_running {
-		g_far2l_running = false
+	if g_app != nil {
+		log.Println("Closing application")
+		g_app.Stop()
 		g_app.Close()
+		g_app = nil
 	}
 }
 
@@ -208,14 +209,12 @@ func termTask(args []string, cols int, rows int) {
 	code:= g_app.Cmd().ProcessState.ExitCode()
 	//g_app.Close()
 	g_channel <- code
-	g_far2l_running = false
 }
 
 func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
-	if g_far2l_running {
+	if g_app != nil {
 		aux_Panic("far2l already running")
 	}
-	g_far2l_running = true
 	g_channel = make(chan int)
 	go termTask(args, cols, rows)
 	return far2l_RecvStatus()

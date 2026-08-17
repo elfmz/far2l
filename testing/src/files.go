@@ -250,6 +250,7 @@ func aux_CheckFilesDataSame(path1, path2 string) bool {
 		setErrorString("Files data differs: " + path1 + ":" + hash1 + " vs " + path2 + ":" + hash2)
 		return false
 	}
+	log.Println("Files are same: " + path1 + " vs " + path2 + " " + hash2)
 	return true
 }
 

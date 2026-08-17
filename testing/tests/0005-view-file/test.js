@@ -14,22 +14,16 @@ TypeDown()
 TypeFKey(3)
 ExpectString("left/viewme.txt", 0, 0, 0, 0, 10000)
 
-Sync(10000)
-
 TypePageDown()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test1.txt')
 
 TypePageDown()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test2.txt')
 
 TypeDown()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test3.txt')
 
 TypeHome()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test4.txt')
 
 TypeFKey(7)
@@ -37,15 +31,12 @@ ExpectString("═══ Search ═══", 0, 0, 0, 0, 10000)
 TypeText("::setselectpos")
 TypeEnter()
 
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test5.txt')
 
 TypeUp()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test6.txt')
 
 TypeUp()
-Sync(10000)
 BoundedLinesMatchTextFile(0, 1, -1, status.Height - 2, mydir + '/test7.txt')
 
 TypeEscape()

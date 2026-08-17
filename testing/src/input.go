@@ -151,6 +151,7 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 	binary.LittleEndian.PutUint32(g_buf[20:], 0)
 	if pressed { g_buf[20] = 1 }
 	far2l_WriteToPeer(g_buf[0:24])
+	scheduleAutoSync()
 }
 
 /////////////
@@ -187,7 +188,6 @@ func far2l_DblClick(x, y uint32) {
 
 
 func far2l_SendMouseEvent(x, y, btn, flags uint32) {
-
 	binary.LittleEndian.PutUint32(g_buf[0:], 7) // TEST_CMD_SEND_MOUSE
 	binary.LittleEndian.PutUint32(g_buf[4:], flags)
 	binary.LittleEndian.PutUint32(g_buf[8:], g_controls)
@@ -195,4 +195,5 @@ func far2l_SendMouseEvent(x, y, btn, flags uint32) {
 	binary.LittleEndian.PutUint32(g_buf[16:], x)
 	binary.LittleEndian.PutUint32(g_buf[20:], y)
 	far2l_WriteToPeer(g_buf[0:24])
+	scheduleAutoSync()
 }

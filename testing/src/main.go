@@ -69,6 +69,8 @@ var g_recv_timeout uint32 = 30
 var g_test_workdir string
 var g_calm bool = false
 var g_last_error string
+var g_autosync uint32 = 10000
+var g_autosync_needed bool = false
 
 const far2lTestTextMax = 2048
 const far2lStatusPacketSize = 20 + far2lTestTextMax
@@ -115,10 +117,6 @@ func aux_Inspect() string {
 	out:= g_last_error
 	g_last_error = ""
 	return out
-}
-
-func warning(warn string) {
-	log.Print("\x1b[1;33mWARN: " + warn + "\x1b[39;22m")
 }
 
 func setErrorString(err string) {
@@ -245,7 +243,6 @@ func far2l_RecvStatus() far2l_Status {
 	return g_status
 }
 
-
 func far2l_ReqRecvSync(tmout uint32) bool {
 	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SYNC
 	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
@@ -258,6 +255,34 @@ func far2l_ReqRecvSync(tmout uint32) bool {
 	return true
 }
 
+func far2l_Sync(tmout uint32) bool {
+	log.Println("Sync:", tmout)
+	g_autosync_needed = false
+	return far2l_ReqRecvSync(tmout)
+}
+
+func far2l_AutoSync(tmout uint32) {
+	log.Println("AutoSync:", tmout)
+	g_autosync = tmout
+}
+
+func performAutoSync() {
+	if !g_autosync_needed {
+		return
+	}
+	g_autosync_needed = false
+	if g_autosync == 0 {
+		return
+	}
+	if ! far2l_ReqRecvSync(g_autosync) {
+		aux_Warn("failed to perform autosync")
+	}
+}
+
+func scheduleAutoSync() {
+	g_autosync_needed = true
+}
+
 func far2l_ReqBye() {
 	binary.LittleEndian.PutUint32(g_buf[0:], 0)
 	far2l_WriteToPeer(g_buf[0:4])
@@ -265,6 +290,10 @@ func far2l_ReqBye() {
 
 func aux_Log(message string) {
 	log.Print(message)
+}
+
+func aux_Warn(warn string) {
+	log.Print("\x1b[1;33mWARN: " + warn + "\x1b[39;22m")
 }
 
 func aux_Panic(message string) {
@@ -324,7 +353,8 @@ func initVM() {
 	setVMFunction("CloseApp", far2l_Close)
 
 	setVMFunction("AppStatus", far2l_ReqRecvStatus)
-	setVMFunction("Sync", far2l_ReqRecvSync)
+	setVMFunction("Sync", far2l_Sync)
+	setVMFunction("AutoSync", far2l_AutoSync)
 
 	setVMFunction("ReadCellRaw", far2l_ReqRecvReadCellRaw)
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
@@ -384,6 +414,7 @@ func initVM() {
 	setVMFunction("TTYCtrlC", tty_CtrlC)
 
 	setVMFunction("Log", aux_Log)
+	setVMFunction("Warn", aux_Warn)
 	setVMFunction("Panic", aux_Panic)
 
 	setVMFunction("RunCmd", aux_RunCmd)

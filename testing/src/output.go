@@ -33,6 +33,7 @@ func far2l_ReqRecvExpectNoStrings(str_vec []string, x int32, y int32, w int32, h
 }
 
 func far2l_ReqRecvExpectXStrings(str_vec []string, x int32, y int32, w int32, h int32, tmout uint32, need_presence bool) far2l_FoundString {
+	performAutoSync()
 	if x < 0 || y < 0 || w <= 0 || h <= 0 {
 		far2l_ReqRecvStatus()
 	}
@@ -44,10 +45,10 @@ func far2l_ReqRecvExpectXStrings(str_vec []string, x int32, y int32, w int32, h 
 	if y < 0 { y = int32(g_status.Height) + y; }
 	if w <= 0 { w = int32(g_status.Width) + w; }
 	if h <= 0 { h = int32(g_status.Height) + w; }
-	if x < 0 { x = 0; warning(fmt.Sprintf("Underflow: x=%d width=%d", saved_x, g_status.Width)); }
-	if y < 0 { y = 0; warning(fmt.Sprintf("Underflow: y=%d height=%d", saved_y, g_status.Height)); }
-	if w < 0 { w = 0; warning(fmt.Sprintf("Underflow: w=%d width=%d", saved_w, g_status.Width)); }
-	if h < 0 { h = 0; warning(fmt.Sprintf("Underflow: h=%d height=%d", saved_h, g_status.Height)); }
+	if x < 0 { x = 0; aux_Warn(fmt.Sprintf("Underflow: x=%d width=%d", saved_x, g_status.Width)); }
+	if y < 0 { y = 0; aux_Warn(fmt.Sprintf("Underflow: y=%d height=%d", saved_y, g_status.Height)); }
+	if w < 0 { w = 0; aux_Warn(fmt.Sprintf("Underflow: w=%d width=%d", saved_w, g_status.Width)); }
+	if h < 0 { h = 0; aux_Warn(fmt.Sprintf("Underflow: h=%d height=%d", saved_h, g_status.Height)); }
 	if (need_presence) {
 		binary.LittleEndian.PutUint32(g_buf[0:], 3) //TEST_CMD_WAIT_STRING
 	} else {
@@ -103,6 +104,7 @@ func far2l_ReqRecvExpectXStrings(str_vec []string, x int32, y int32, w int32, h 
 }
 
 func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
+	performAutoSync()
 	binary.LittleEndian.PutUint32(g_buf[0:], 2) // TEST_CMD_READ_CELL
 	binary.LittleEndian.PutUint32(g_buf[4:], x) // left
 	binary.LittleEndian.PutUint32(g_buf[8:], y) // top

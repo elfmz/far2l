@@ -64,6 +64,12 @@ Waits (with given msec timeout) for all input events being processed.
 Fails/Returns false if wait timed out.
 
 ---------------------------------------------------------
+`AutoSync(tmout uint32)`  
+if tmout is non-zero - enables autosync mode, when Sync with given timeout invoked automatically between simulated input and output control functions  
+if tmout is zero - then autosync is not performed  
+By default AutoSync is enabled with 10000 msec timeout
+
+---------------------------------------------------------
 
 `ReadCellRaw(x, y)`  
 Reads screen cell at specified coordinates.  
@@ -159,6 +165,11 @@ Aborts execution if app not exited during timeout or exited with wrong code (unl
 
 `Log("string")`  
 Writes given string to test output.
+
+---------------------------------------------------------
+
+`Warn("string")`  
+Writes given string to test output with need-attention attribution.
 
 ---------------------------------------------------------
 

@@ -1,4 +1,3 @@
-// verifies https://github.com/elfmz/far2l/commit/4c719ba0dc9bb5770af90f2be0a11bb7f1181524
 mydir=WorkDir()
 profile=mydir + "/profile"
 paneldir=mydir + "/test-paneldir"
@@ -49,13 +48,9 @@ LClickWhereFound(ExpectString("[x] Scan symbolic links", 0, 0, 0, 0, 1000))
 LClickWhereFound(ExpectString("[ ] Use only files size in estimation", 0, 0, 0, 0, 1000))
 LClickWhereFound(ExpectString("[ ] Inactivity time", 0, 0, 0, 0, 1000))
 LClickWhereFound(ExpectString("[ ] Auto save setup", 0, 0, 0, 0, 1000))
-Sync(10000)
 LClickWhereFound(ExpectString("15 minutes"))
-Sync(10000)
 TypeText("42")
-Sync(10000)
 LClickWhereFound(ExpectString("{ OK }"))
-Sync(10000)
 TypeFKey(10)
 ExpectString("Do you want to quit FAR?", 0, 0, 0, 0, 10000)
 TypeEnter()

@@ -81,6 +81,10 @@ void TestController::ClientLoop(const std::string &ipc_client)
 				len = ClientDispatchSync(len);
 				break;
 
+			case TEST_CMD_SEND_MOUSE:
+				len = ClientDispatchSendMouse(len);
+				break;
+
 			default:
 				throw std::runtime_error(StrPrintf("bad command %u", _buf.cmd));
 		}

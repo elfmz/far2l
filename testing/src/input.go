@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"log"
 )
 
 const RIGHT_ALT_PRESSED     = 0x0001 // the right alt key is pressed.
@@ -98,11 +99,13 @@ func far2l_TypeDel()      { far2l_TypeVK(0x2E) }
 
 
 func far2l_TypeVK(key_code uint32) {
+	log.Println("TypeVK:", key_code)
 	far2l_SendKeyEvent(0, key_code, true)
 	far2l_SendKeyEvent(0, key_code, false)
 }
 
 func far2l_TypeText(text string) {
+	log.Println("TypeText:", text)
     for _, r := range text {
 		far2l_SendKeyEvent(uint32(r), 0, true)
 		far2l_SendKeyEvent(uint32(r), 0, false)
@@ -165,16 +168,19 @@ func far2l_DblClickWhereFound(where far2l_FoundString) {
 }
 
 func far2l_LClick(x, y uint32) {
+	log.Println("LClick at", x, y)
 	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, 0)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }
 
 func far2l_RClick(x, y uint32) {
+	log.Println("RClick at", x, y)
 	far2l_SendMouseEvent(x, y, RIGHTMOST_BUTTON_PRESSED, 0)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }
 
 func far2l_DblClick(x, y uint32) {
+	log.Println("DblClick at", x, y)
 	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, DOUBLE_CLICK)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }
@@ -182,7 +188,7 @@ func far2l_DblClick(x, y uint32) {
 
 func far2l_SendMouseEvent(x, y, btn, flags uint32) {
 
-	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SEND_MOUSE
+	binary.LittleEndian.PutUint32(g_buf[0:], 7) // TEST_CMD_SEND_MOUSE
 	binary.LittleEndian.PutUint32(g_buf[4:], flags)
 	binary.LittleEndian.PutUint32(g_buf[8:], g_controls)
 	binary.LittleEndian.PutUint32(g_buf[12:], btn)

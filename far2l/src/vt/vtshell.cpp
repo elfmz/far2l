@@ -990,7 +990,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	bool ExecuteCommandBegin(const char *cd, const char *cmd, bool force_sudo) // return false on failure
 	{
-		_cce.reset(new VT_ComposeCommandExec(cd, cmd, force_sudo, _start_marker));
+		_cce.reset(new VT_ComposeCommandExec(cd, cmd, force_sudo, _start_marker, _exit_marker));
 		if (!_cce->Created()) {
 			const std::string &error_str =
 				StrPrintf("Far2l::VT: error %u creating: '%s'\n",
@@ -1025,7 +1025,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		cmd_str+= EscapeCmdStr(_cce->ScriptFile());
 		cmd_str+= ';';
 		cmd_str+= VT_ComposeMarkerCommand(_exit_marker + "$FARVTRESULT");
-		cmd_str+= '\n';
+		cmd_str+= ";PS1=''\n"; // set PS1 to empty
+
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
 			const std::string &error_str =
 				StrPrintf("\nFar2l::VT: terminal write error %u\n", errno);

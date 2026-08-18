@@ -265,9 +265,11 @@ func far2l_Sync(tmout uint32) bool {
 	return far2l_ReqRecvSync(tmout)
 }
 
-func far2l_AutoSync(tmout uint32) {
-	log.Println("AutoSync:", tmout)
+func far2l_AutoSync(tmout uint32) uint32 {
+	prev:= g_autosync
 	g_autosync = tmout
+	log.Println("AutoSync:", prev, "->", tmout)
+	return prev
 }
 
 func performAutoSync() {
@@ -528,6 +530,7 @@ func runTest(file string) {
 	defer far2l_Close()
 	defer aux_Snapshot("exit")
 	typingReset()
+	g_autosync = 10000
 	g_calm = false
 	g_last_error = ""
 	data, err := ioutil.ReadFile(file)

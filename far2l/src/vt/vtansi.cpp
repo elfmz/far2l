@@ -299,7 +299,6 @@ struct VTAnsiContext
 	std::mutex title_mutex;
 	IVTShell *vt_shell = nullptr;
 	std::string cur_title;
-	std::atomic<bool> output_disabled{false};
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
 	std::optional<VTAnsiKitty> vta_kitty;
 	std::mutex vta_kitty_mtx;
@@ -358,18 +357,12 @@ struct VTAnsiContext
 	void WriteConsoleIfEnabled(const WCHAR *str, DWORD len)
 	{
 		DWORD written;
-		if (!output_disabled) {
-			WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
-		}
+		WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
 	}
 
 	void FlushBuffer( void )
 	{
 		DWORD nWritten;
-
-		if (output_disabled) {
-			chars_in_buffer = 0;
-		}
 
 //fprintf(stderr, "FlushBuffer: %u\n", chars_in_buffer);
 		if (chars_in_buffer <= 0)
@@ -1313,7 +1306,9 @@ struct VTAnsiContext
 				}
 
 			} else {
-				_crds.reset(); // prevent clipboard dialog miss repaints
+				// prevent clipboard dialog miss repaints and discard reference to
+				// console handle which can be invalidated due to start marker arrival
+				_crds.reset();
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}
@@ -1627,19 +1622,6 @@ VTAnsi::~VTAnsi()
 	_ctx->saved_state.ApplyToConsole(con_hnd);
 	WINPORT(FlushConsoleInputBuffer)(con_hnd);
 	_ctx->vt_shell = nullptr;
-}
-
-void VTAnsi::DisableOutput()
-{
-	_ctx->output_disabled = true;
-}
-
-void VTAnsi::EnableOutput()
-{
-	if (_ctx->output_disabled) {
-		_ctx->chars_in_buffer = 0;
-		_ctx->output_disabled = false;
-	}
 }
 
 struct VTAnsiState *VTAnsi::Suspend()

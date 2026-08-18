@@ -103,9 +103,13 @@ const char *GetSystemShell()
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	HANDLE _console_handle = NULL;
+	HANDLE _output_disabled_console_handle = NULL;
+	std::mutex _console_handle_mutex;
+
 	std::atomic<bool> _console_switch_requested{false};
 	std::atomic<bool> _console_kill_requested{false};
 
+	struct winsize _ws{};
 	VTAnsi _vta;
 	VTInputReader _input_reader;
 	VTOutputReader _output_reader;
@@ -165,7 +169,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			 AnsiEsc::ConsoleColorToAnsi(col & 0xf),
 			 AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
 
-		const auto color_bpp = WINPORT(GetConsoleColorPalette)(ConsoleHandle());
+		const auto color_bpp = WINPORT(GetConsoleColorPalette)(_console_handle);
 		std::string askpass_app;
 		if (Opt.SudoEnabled) {
 			askpass_app = GetHelperPathName("far2l_askpass");
@@ -242,28 +246,40 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		HANDLE con = ConsoleHandle();
-		if (WINPORT(GetConsoleScreenBufferInfo)(con, &csbi )
-					&& csbi.dwSize.X && csbi.dwSize.Y) {
+		std::lock_guard<std::mutex> lock(_console_handle_mutex);
+		if (WINPORT(GetConsoleScreenBufferInfo)(_console_handle, &csbi) && csbi.dwSize.X && csbi.dwSize.Y) {
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y,
 				(unsigned short)csbi.dwSize.X, 0, 0};
 
 			WinportGraphicsInfo wgi{};
-			if (WINPORT(GetConsoleImageCaps)(con, sizeof(wgi), &wgi)) {
+			if (WINPORT(GetConsoleImageCaps)(_console_handle, sizeof(wgi), &wgi)) {
 				ws.ws_xpixel = std::min(16384, int(ws.ws_col) * wgi.PixPerCell.X);
 				ws.ws_ypixel = std::min(16384, int(ws.ws_row) * wgi.PixPerCell.Y);
 			}
+			if (ws.ws_xpixel != _ws.ws_xpixel || ws.ws_ypixel != _ws.ws_ypixel
+					|| ws.ws_row != _ws.ws_row || ws.ws_col != _ws.ws_col) {
+				fprintf(stderr, "UpdateTerminalSize: %u x %u cells, %d x %d pixels - APPLY\n",
+					csbi.dwSize.X, csbi.dwSize.Y, ws.ws_xpixel, ws.ws_ypixel);
 
-			fprintf(stderr, "UpdateTerminalSize: %u x %u cells, %d x %d pixels\n",
-				csbi.dwSize.X, csbi.dwSize.Y, ws.ws_xpixel, ws.ws_ypixel);
+				if (_output_disabled_console_handle) {
+					WINPORT(SetConsoleScreenBufferSize)(_output_disabled_console_handle, csbi.dwSize);
+				}
 
-			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
-				perror("VT: ioctl(TIOCSWINSZ)");
+				if (ioctl( fd_term, TIOCSWINSZ, &ws ) == -1) {
+					perror("VT: ioctl(TIOCSWINSZ)");
+				} else {
+					_ws = ws;
+				}
+			} else {
+				fprintf(stderr, "UpdateTerminalSize: %u x %u cells, %d x %d pixels - SKIP\n",
+					csbi.dwSize.X, csbi.dwSize.Y, ws.ws_xpixel, ws.ws_ypixel);
+			}
 		}
 	}
 
 	bool InitTerminal()
 	{
+		_ws = {};
 		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
 		_slavename.clear();
 		if (fd_term!=-1) {
@@ -461,7 +477,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!translated.empty()) {
 			if (_slavename.empty() && KeyEvent.uChar.UnicodeChar) {//pipes fallback
-				WINPORT(WriteConsole)(ConsoleHandle(), &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
+				WINPORT(WriteConsole)(_console_handle, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
 			if (!WriteTerm(translated.c_str(), translated.size())) {
@@ -605,7 +621,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case 1:    return 2; // Cursor keys mode (Reset in far2l)
 				case 7:    {
 					DWORD mode = 0;
-					WINPORT(GetConsoleMode)(ConsoleHandle(), &mode);
+					WINPORT(GetConsoleMode)(_console_handle, &mode);
 					return (mode & ENABLE_WRAP_AT_EOL_OUTPUT) ? 1 : 2;
 				}
 				case 1000: return (_mouse_mode & MODE_VT200_MOUSE) ? 1 : 2;
@@ -691,7 +707,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case '_': { // internal markers control
 					if (!_start_marker.empty() && _start_marker == &str[6]) {
 						_start_marker.clear();
-						_vta.EnableOutput();
+						std::lock_guard<std::mutex> lock(_console_handle_mutex);
+						if (_output_disabled_console_handle) {
+							WINPORT(DiscardConsole)(_output_disabled_console_handle);
+							_output_disabled_console_handle = NULL;
+						} else {
+							fprintf(stderr, "VT: start marked arrived but _output_disabled_console_handle == NULL already\n");
+						}
 					}
 					else if (!_exit_marker.empty()
 						&& strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0)
@@ -966,7 +988,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (_last_window_info_ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 			DWORD dw = 0;
-			WINPORT(WriteConsoleInput)(ConsoleHandle(), &_last_window_info_ir, 1, &dw);
+			WINPORT(WriteConsoleInput)(_console_handle, &_last_window_info_ir, 1, &dw);
 			_last_window_info_ir.EventType = 0;
 		}
 	}
@@ -1034,14 +1056,24 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return false;
 		}
 
-		_vta.DisableOutput(); // will enable on start marker arrival
-
+		// drain output into dummy console until start marker arrived
+		std::lock_guard<std::mutex> lock(_console_handle_mutex);
+		if (_output_disabled_console_handle) {
+			fprintf(stderr, "VT: _output_disabled_console_handle != NULL on command start\n");
+			WINPORT(DiscardConsole)(_output_disabled_console_handle);
+		}
+		_output_disabled_console_handle = WINPORT(ForkConsole)(_console_handle);
 		return true;
 	}
 
 	void ExecuteCommandEnd()
 	{
-		_vta.EnableOutput(); // just in case start marker didnt arrive
+		if (_output_disabled_console_handle) {
+			fprintf(stderr, "VT: start marker never arrived\n");
+			std::lock_guard<std::mutex> lock(_console_handle_mutex);
+			WINPORT(DiscardConsole)(_output_disabled_console_handle);
+			_output_disabled_console_handle = NULL;
+		}
 
 		struct stat s;
 		if (stat(_cce->ScriptFile().c_str(), &s) == -1) {
@@ -1078,9 +1110,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		Shutdown();
 		CheckedCloseFD(_pipes_fallback_in);
 		CheckedCloseFD(_pipes_fallback_out);
+		if (_output_disabled_console_handle) {
+			fprintf(stderr, "VT: _output_disabled_console_handle != NULL in ~VTShell\n");
+			WINPORT(DiscardConsole)(_output_disabled_console_handle);
+		}
 	}
 
 	virtual HANDLE ConsoleHandle()
+	{
+		return _output_disabled_console_handle ? _output_disabled_console_handle : _console_handle;
+	}
+
+	HANDLE RealConsoleHandle()
 	{
 		return _console_handle;
 	}
@@ -1328,7 +1369,7 @@ void VTShell_Enum(VTInfos &vts)
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	for (const auto &vt : g_vts) {
 		auto &vti = vts.emplace_back();
-		vti.con_hnd = vt->ConsoleHandle();
+		vti.con_hnd = vt->RealConsoleHandle();
 		vti.title = vt->GetTitle();
 		vti.exited = vt->IsExited();
 		vti.exit_code = vt->CommandExitCode();
@@ -1349,11 +1390,11 @@ static VTState VTShell_StateOf(VTShell &vt)
 VTState VTShell_LookupState(HANDLE hConsole)
 {
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
-	if (g_vt && hConsole == g_vt->ConsoleHandle()) {
+	if (g_vt && hConsole == g_vt->RealConsoleHandle()) {
 		return VTShell_StateOf(*g_vt);
 	}
 	for (const auto &vt : g_vts) {
-		if (hConsole == vt->ConsoleHandle()) {
+		if (hConsole == vt->RealConsoleHandle()) {
 			return VTShell_StateOf(*vt);
 		}
 	}

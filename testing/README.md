@@ -67,9 +67,10 @@ Waits (with given msec timeout) for all input events being processed.
 Fails/Returns false if wait timed out.
 
 ---------------------------------------------------------
-`AutoSync(tmout uint32)`  
+`AutoSync(tmout uint32) uint32`  
 if tmout is non-zero - enables autosync mode, when Sync with given timeout invoked automatically between simulated input and output control functions  
 if tmout is zero - then autosync is not performed  
+Returns previuos setting value  
 By default AutoSync is enabled with 10000 msec timeout
 
 ---------------------------------------------------------

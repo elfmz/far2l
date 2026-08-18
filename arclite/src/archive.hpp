@@ -526,7 +526,7 @@ public:
 	void create(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
 			UpdateOptions &options, std::shared_ptr<ErrorLog> error_log);
 	void update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
-			const std::wstring &dst_dir, const UpdateOptions &options, std::shared_ptr<ErrorLog> error_log);
+			const std::wstring &dst_dir, UpdateOptions &options, std::shared_ptr<ErrorLog> error_log);
 	void create_dir(const std::wstring &dir_name, const std::wstring &dst_dir);
 
 	// delete files in archive

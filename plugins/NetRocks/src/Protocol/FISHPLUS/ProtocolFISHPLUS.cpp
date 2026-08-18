@@ -364,6 +364,13 @@ void ProtocolFISHPLUS::Initialize()
 		AttemptFlavor(false);
 	} else if (_flavor == "pwsh") {
 		AttemptFlavor(true);
+	} else if (_way_name == "SSH_PWSH") {
+		// The way name itself declares the peer is PowerShell; probing
+		// POSIX first would just hang waiting for a ready marker no
+		// PowerShell peer will ever emit, since PowerShell reads the
+		// POSIX bootstrap as garbage without producing a diagnostic
+		// that would trip WaitReply's error path.
+		AttemptFlavor(true);
 	} else {
 		// Auto: POSIX first (the common case), pwsh on the specific
 		// handshake failures that a wrong-flavor probe produces. The

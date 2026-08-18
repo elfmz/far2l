@@ -136,7 +136,7 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 {
 	std::string content;
 	// set PS1 to marker ensures marker printed in case user stopped complex command like 'while true; ... done' with Ctrl+C
-	content+= "PS1='\\033_far2l_";
+	content+= "PS1='\\033''_far2l_''"; // that '' inside prevent mistreating as control sequence if command accidentally echoed to terminal
 	content+= exit_marker;
 	content+= "$FARVTRESULT\\007'; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
 	if (strcmp(cmd, "exit")!=0) {

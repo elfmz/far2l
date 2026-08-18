@@ -89,6 +89,11 @@ int ReplaceTabsBySpaces(FARString &strStr, size_t TabSize = 1);
 
 const wchar_t *GetCommaWord(const wchar_t *Src, FARString &strWord, wchar_t Separator = L',');
 
+enum FFTMODE
+{
+	FFTM_BREAKLONGWORD = 0x00000001,
+};
+
 FARString &WINAPI
 FarFormatText(const wchar_t *SrcText, int Width, FARString &strDestText, const wchar_t *Break, DWORD Flags);
 
@@ -145,3 +150,8 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
+
+// Wraps text into lines no wider than width display cells and stores up to lines_count of them in lines.
+// Empty text or a non-positive width clears lines and returns 0. Long words are split rather than truncated.
+// The returned number of wrapped lines may exceed lines_count.
+size_t WrapTextToLines(const wchar_t *text, int width, FARString *lines, size_t lines_count);

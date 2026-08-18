@@ -346,6 +346,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED CREST OR CREST)
+    message(STATUS "CREST plugin enabled")
+    add_subdirectory (crest)
+else()
+    message(STATUS "${ColorRed}CREST plugin disabled due to CREST=${CALC}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/crest/plug/crest.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED DRAWLINE OR DRAWLINE)
     message(STATUS "DRAWLINE plugin enabled")
     add_subdirectory (drawline)

@@ -87,18 +87,63 @@ namespace FishPlus
 		}
 	}
 
+	// The wire expects POSIX-shape paths ("/c/Users/foo",
+	// "//srv/share/rest"), but a Windows user's muscle memory produces
+	// "C:\Users\foo" and the site config's Directory field takes that
+	// verbatim. Fold Windows-shape to POSIX-shape once here so the helper
+	// never has to guess and the callers do not have to think about it.
+	//
+	// Only the leading drive letter and separator swap need touching; the
+	// rest is byte-for-byte the same, which keeps every locale-shaped
+	// filename intact. UNC "\\srv\share" is folded to "//srv/share".
+	static std::string NormalizeWirePath(const std::string &p)
+	{
+		if (p.size() >= 3 && (p[0] == '\\' || p[0] == '/')
+			&& (p[1] == '\\' || p[1] == '/')) {
+			// UNC "\\srv\share\rest" -> "//srv/share/rest".
+			std::string out("//");
+			for (size_t i = 2; i < p.size(); ++i) {
+				out+= (p[i] == '\\') ? '/' : p[i];
+			}
+			return out;
+		}
+		if (p.size() >= 2 && p[1] == ':'
+			&& ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z'))) {
+			// "X:\..." or "X:/..." -> "/x/..." matching helper output.
+			std::string out;
+			out.reserve(p.size() + 1);
+			out+= '/';
+			out+= (char)tolower((unsigned char)p[0]);
+			if (p.size() >= 3 && (p[2] == '\\' || p[2] == '/')) {
+				out+= '/';
+				for (size_t i = 3; i < p.size(); ++i) {
+					out+= (p[i] == '\\') ? '/' : p[i];
+				}
+			} else {
+				// "X:relative" - no separator; leave the tail to the far
+				// side. A path shape the panel is unlikely to produce.
+				for (size_t i = 2; i < p.size(); ++i) {
+					out+= (p[i] == '\\') ? '/' : p[i];
+				}
+			}
+			return out;
+		}
+		return p;
+	}
+
 	std::string Session::EncodePathLine(const std::string &path)
 	{
-		bool needs_escape = path.empty() || path[0] == '~';
+		const std::string norm = NormalizeWirePath(path);
+		bool needs_escape = norm.empty() || norm[0] == '~';
 		if (!needs_escape) {
-			needs_escape = (path.find('\n') != std::string::npos
-				|| path.find('\r') != std::string::npos);
+			needs_escape = (norm.find('\n') != std::string::npos
+				|| norm.find('\r') != std::string::npos);
 		}
 		if (!needs_escape) {
-			return path;
+			return norm;
 		}
 		std::string out("~");
-		base64_encode(out, (const unsigned char *)path.c_str(), path.size());
+		base64_encode(out, (const unsigned char *)norm.c_str(), norm.size());
 		return out;
 	}
 

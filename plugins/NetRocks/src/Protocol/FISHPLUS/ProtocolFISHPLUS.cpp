@@ -22,6 +22,7 @@ std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std
 	return std::make_shared<ProtocolFISHPLUS>(host, port, username, password, options, fd_ipc_recv);
 }
 
+
 ////////////////////////////////////////////////////////////////////////////
 
 namespace

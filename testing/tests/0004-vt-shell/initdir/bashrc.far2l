@@ -1,0 +1,9 @@
+if [ -f .bashrc ]; then
+	. ~/.bashrc
+fi
+
+if read -t 1 -r user_input; then
+	echo -e "\n>> Captured Input: $user_input"
+fi
+
+export BASHRC_FAR2L=Repro3171

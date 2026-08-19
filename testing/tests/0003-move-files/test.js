@@ -17,12 +17,12 @@ left_hash = HashPathes(left_items, true, true, true, true, true)
 
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
 ExpectString("Help - FAR2L");
-TypeEscape(10)
+TypeEscape()
 ExpectString("OSC52");
 
 status = AppStatus();
 
-TypeEscape(10)
+TypeEscape()
 TypeDown()
 TypeIns()
 TypeIns()

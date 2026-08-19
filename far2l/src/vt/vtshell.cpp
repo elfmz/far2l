@@ -234,7 +234,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			CheckedCloseFD(_pipes_fallback_in);
 			CheckedCloseFD(_pipes_fallback_out);
 		}
-
 		r = VTShell_Leader(shell_argv.data(), _slavename.c_str());
 		fprintf(stderr, "%s: VTShell_Leader('%s', '%s') returned %d errno %u\n",
 			__FUNCTION__, shell_argv[0], _slavename.c_str(), r, errno);
@@ -374,7 +373,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		_leader_pid = r;
-
 		const auto when_started = GetProcessUptimeMSec();
 		clock_t when_printed_cmd = 0;
 		MakeConsoleDisabled(true);

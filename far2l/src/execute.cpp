@@ -288,9 +288,9 @@ public:
 				ws.insert(pos, 1, '\r');
 				pos += 2;
 			}
+			ws.append(&eol[0], ARRAYSIZE(eol));
 
 			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);
-			WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
 		}
 		WINPORT(SetConsoleFKeyTitles)(NULL, NULL);
 	}

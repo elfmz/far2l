@@ -73,22 +73,22 @@ func far2l_ToggleRAlt(pressed bool) {
 	far2l_SendKeyEvent(0, 0x12, pressed)
 }
 
-func far2l_TypeFKey(n uint32) { far2l_TypeVK(0x6F + n, 1) }
-func far2l_TypeDigit(n uint32) { far2l_TypeVK(0x60 + n, 1) }
+func far2l_TypeFKey(n uint32, count int) { far2l_TypeVK(0x6F + n, count) }
+func far2l_TypeDigit(n uint32, count int) { far2l_TypeVK(0x60 + n, count) }
 
-func far2l_TypeAdd()      { far2l_TypeVK(0x6B, 1) }
-func far2l_TypeSub()      { far2l_TypeVK(0x6D, 1) }
-func far2l_TypeMul()      { far2l_TypeVK(0x6A, 1) }
-func far2l_TypeDiv()      { far2l_TypeVK(0x6F, 1) }
-func far2l_TypeSeparator(){ far2l_TypeVK(0x6C, 1) }
-func far2l_TypeDecimal()  { far2l_TypeVK(0x6E, 1) }
+func far2l_TypeAdd(count int)      { far2l_TypeVK(0x6B, count) }
+func far2l_TypeSub(count int)      { far2l_TypeVK(0x6D, count) }
+func far2l_TypeMul(count int)      { far2l_TypeVK(0x6A, count) }
+func far2l_TypeDiv(count int)      { far2l_TypeVK(0x6F, count) }
+func far2l_TypeSeparator(count int){ far2l_TypeVK(0x6C, count) }
+func far2l_TypeDecimal(count int)  { far2l_TypeVK(0x6E, count) }
 
-func far2l_TypeEscape()   { far2l_TypeVK(0x1B, 1) }
-func far2l_TypeEnd()      { far2l_TypeVK(0x23, 1) }
-func far2l_TypeHome()     { far2l_TypeVK(0x24, 1) }
-func far2l_TypeIns()      { far2l_TypeVK(0x2D, 1) }
-func far2l_TypeDel()      { far2l_TypeVK(0x2E, 1) }
-func far2l_TypeEnter()    { far2l_TypeVK(0x0D, 1) }
+func far2l_TypeEscape(count int)   { far2l_TypeVK(0x1B, count) }
+func far2l_TypeEnd(count int)      { far2l_TypeVK(0x23, count) }
+func far2l_TypeHome(count int)     { far2l_TypeVK(0x24, count) }
+func far2l_TypeIns(count int)      { far2l_TypeVK(0x2D, count) }
+func far2l_TypeDel(count int)      { far2l_TypeVK(0x2E, count) }
+func far2l_TypeEnter(count int)    { far2l_TypeVK(0x0D, count) }
 func far2l_TypeTab(count int)      { far2l_TypeVK(0x09, count) }
 func far2l_TypeBack(count int)     { far2l_TypeVK(0x08, count) }
 func far2l_TypePageUp(count int)   { far2l_TypeVK(0x21, count) }
@@ -146,6 +146,26 @@ func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
 			key_code = 0xDC
 		} else if utf32_code == '\'' || utf32_code == '"' {
 			key_code = 0xDE
+		} else if utf32_code == '!' {
+			key_code = '1'
+		} else if utf32_code == '@' {
+			key_code = '2'
+		} else if utf32_code == '#' {
+			key_code = '3'
+		} else if utf32_code == '$' {
+			key_code = '4'
+		} else if utf32_code == '%' {
+			key_code = '5'
+		} else if utf32_code == '^' {
+			key_code = '6'
+		} else if utf32_code == '&' {
+			key_code = '7'
+		} else if utf32_code == '*' {
+			key_code = '8'
+		} else if utf32_code == '(' {
+			key_code = '9'
+		} else if utf32_code == ')' {
+			key_code = '0'
 		} else if (utf32_code <= 0x7f) {
 			key_code = utf32_code
 		}

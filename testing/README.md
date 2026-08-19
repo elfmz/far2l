@@ -220,12 +220,12 @@ Simulate changing state of specific named control key. Changed state affects all
 
 ---------------------------------------------------------
 
-`TypeEnter()`  
-`TypeEscape()`  
-`TypeEnd()`  
-`TypeHome()`  
-`TypeIns()`  
-`TypeDel()`  
+`TypeEnter(count int)`  
+`TypeEscape(count int)`  
+`TypeEnd(count int)`  
+`TypeHome(count int)`  
+`TypeIns(count int)`  
+`TypeDel(count int)`  
 `TypeTab(count int)`  
 `TypeBack(count int)`  
 `TypePageUp(count int)`  
@@ -234,27 +234,31 @@ Simulate changing state of specific named control key. Changed state affects all
 `TypeUp(count int)`  
 `TypeRight(count int)`  
 `TypeDown(count int)`  
-Simulate typing of specific named key. Those with cnt specified - typed cnt times, but at least 1 time.  
+Simulate typing of specific named key.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeAdd()`  
-`TypeSub()`  
-`TypeMul()`  
-`TypeDiv()`  
-`TypeSeparator()`  
-`TypeDecimal()`  
-Simulate typing of specific named NumPad key
+`TypeAdd(count int)`  
+`TypeSub(count int)`  
+`TypeMul(count int)`  
+`TypeDiv(count int)`  
+`TypeSeparator(count int)`  
+`TypeDecimal(count int)`  
+Simulate typing of specific named NumPad key.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeDigit(n)`  
-Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on
+`TypeDigit(n, count int)`  
+Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeFKey(n)`  
-Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on
+`TypeFKey(n, count int)`  
+Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 

@@ -110,7 +110,7 @@ jobs:
   
       - name: Test
         shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        # Execute the test.
         run: |
           cd testing && ./far2l-smoke-run.sh ../_build/install/far2l
 

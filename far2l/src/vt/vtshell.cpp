@@ -45,6 +45,8 @@
 #define FOCUS_CHANGED_SEQ_ACTIVE   "\x1b[I"
 #define FOCUS_CHANGED_SEQ_INACTIVE "\x1b[O"
 
+#define SHELL_TIMEOUT 5000
+
 #if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 {
@@ -129,7 +131,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::mutex _read_state_mutex, _write_term_mutex;
 	uint32_t _mouse_mode{0};
 
-	std::string _start_marker, _exit_marker;
+	std::string _startup_marker, _start_marker, _exit_marker;
 	std::string _host_id;
 	unsigned int _exit_code;
 	bool _may_notify{false};
@@ -277,6 +279,19 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 	}
 
+	void MakeConsoleDisabled(bool disabled)
+	{
+		std::lock_guard<std::mutex> lock(_console_handle_mutex);
+		if (disabled) {
+			if (!_output_disabled_console_handle) {
+				_output_disabled_console_handle = WINPORT(ForkConsole)(_console_handle);
+			}
+		} else if (_output_disabled_console_handle) {
+			WINPORT(DiscardConsole)(_output_disabled_console_handle);
+			_output_disabled_console_handle = NULL;
+		}
+	}
+
 	bool InitTerminal()
 	{
 		_ws = {};
@@ -347,20 +362,63 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
-	bool Startup()
+	void Startup()
 	{
 		if (!InitTerminal())
-			return false;
+			return;
 
 		int r = ExecLeaderProcess();
 		if (r == -1) {
 			perror("VT: exec leader");
-			return false;
+			return;
 		}
 
 		_leader_pid = r;
-		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
-		return true;
+
+		const auto when_started = GetProcessUptimeMSec();
+		clock_t when_printed_cmd = 0;
+		MakeConsoleDisabled(true);
+		VT_ComposeMarker(_startup_marker);
+		std::string cmd;
+		cmd+= '\n';
+		cmd+= VT_ComposeMarkerCommand(_startup_marker);
+		cmd+= '\n';
+		StartIOReaders();
+		do {
+			const auto now = GetProcessUptimeMSec();
+			if (when_printed_cmd == 0 || now - when_printed_cmd >= 300) {
+				when_printed_cmd = now;
+				InjectInput(cmd.c_str());
+			}
+			DispatchInterThreadCalls();
+			InterThreadLock lock;
+			if (_startup_marker.empty() || _output_reader.IsDeactivated()) {
+				break;
+			}
+			lock.WaitForWake(300);
+		} while (CheckLeaderAlive() && (GetProcessUptimeMSec() - when_started) < SHELL_TIMEOUT);
+		StopIOReaders();
+
+		_console_switch_requested = false;
+
+		if (_startup_marker.empty()) {
+			fprintf(stderr, "%s: startup took %lu msec\n",
+				__FUNCTION__, (unsigned long)(GetProcessUptimeMSec() - when_started));
+		} else {
+			fprintf(stderr, "VT: shell is not talking with us\n");
+			r = _leader_pid;
+			if (r != -1) {
+				kill(r, SIGKILL);
+			}
+			if (_output_disabled_console_handle) {
+				// let user see what it printed so far, and give hint on what is broken
+				std::wstring notice = L"\n FAR2L failed to communicate with shell, please make sure you are using bash \n";
+				DWORD dw;
+				WINPORT(WriteConsole)(_output_disabled_console_handle, notice.c_str(), notice.size(), &dw, NULL);
+				WINPORT(JoinConsole)(_console_handle, _output_disabled_console_handle);
+				_output_disabled_console_handle = NULL;
+			}
+		}
 	}
 
 
@@ -385,7 +443,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		} else {
 			_vta.Write(buf, len);
 		}
-		return !_exit_marker.empty();
+		return !_exit_marker.empty() || !_startup_marker.empty();
 	}
 
 	virtual void OnTerminalResized()
@@ -705,17 +763,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				} break;
 
 				case '_': { // internal markers control
-					if (!_start_marker.empty() && _start_marker == &str[6]) {
+					if (!_startup_marker.empty() && _startup_marker == &str[6]) {
+						// we are in Startup()/EnsureShellTalkative()
+						// clear marker under InterThreadLock so EnsureShellTalkative() will awake immediately after it cleared
+						// dont enable console output cuz its too early - it will be enabled when command will eventually started
+						InterThreadLock itl;
+						_startup_marker.clear();
+					} else if (!_start_marker.empty() && _start_marker == &str[6]) {
 						_start_marker.clear();
-						std::lock_guard<std::mutex> lock(_console_handle_mutex);
-						if (_output_disabled_console_handle) {
-							WINPORT(DiscardConsole)(_output_disabled_console_handle);
-							_output_disabled_console_handle = NULL;
-						} else {
-							fprintf(stderr, "VT: start marked arrived but _output_disabled_console_handle == NULL already\n");
-						}
-					}
-					else if (!_exit_marker.empty()
+						MakeConsoleDisabled(false);
+					} else if (!_exit_marker.empty()
 						&& strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0)
 					{
 						_exit_code = atoi(&str[6 + _exit_marker.size()]);
@@ -728,8 +785,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 //						fprintf(stderr, "_exit_marker=%s _exit_code=%d\n", &str[6], _exit_code);
 					} else {
 						fprintf(stderr,
-							"OnApplicationProtocolCommand - bad marker: '%s' while _start_marker='%s' _exit_marker='%s'\n",
-							&str[6], _start_marker.c_str(), _exit_marker.c_str());
+							"OnApplicationProtocolCommand - bad marker: '%s' while startup='%s' start='%s' exit='%s'\n",
+							&str[6], _startup_marker.c_str(), _start_marker.c_str(), _exit_marker.c_str());
 					}
 				} break;
 
@@ -1057,23 +1114,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		// drain output into dummy console until start marker arrived
-		std::lock_guard<std::mutex> lock(_console_handle_mutex);
-		if (_output_disabled_console_handle) {
-			fprintf(stderr, "VT: _output_disabled_console_handle != NULL on command start\n");
-			WINPORT(DiscardConsole)(_output_disabled_console_handle);
-		}
-		_output_disabled_console_handle = WINPORT(ForkConsole)(_console_handle);
+		MakeConsoleDisabled(true);
 		return true;
 	}
 
 	void ExecuteCommandEnd()
 	{
-		if (_output_disabled_console_handle) {
-			fprintf(stderr, "VT: start marker never arrived\n");
-			std::lock_guard<std::mutex> lock(_console_handle_mutex);
-			WINPORT(DiscardConsole)(_output_disabled_console_handle);
-			_output_disabled_console_handle = NULL;
-		}
+		MakeConsoleDisabled(false);
 
 		struct stat s;
 		if (stat(_cce->ScriptFile().c_str(), &s) == -1) {
@@ -1099,8 +1146,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_leader_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
-		if (!Startup())
-			return;
+		Startup();
 	}
 
 	virtual ~VTShell()
@@ -1113,6 +1159,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (_output_disabled_console_handle) {
 			fprintf(stderr, "VT: _output_disabled_console_handle != NULL in ~VTShell\n");
 			WINPORT(DiscardConsole)(_output_disabled_console_handle);
+			_output_disabled_console_handle = NULL;
 		}
 	}
 

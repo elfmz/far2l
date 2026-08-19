@@ -33,6 +33,41 @@ LineRegion& LineRegion::operator=(const LineRegion& lr)
   return *this;
 }
 
+void LineRegion::replaceRdef(const RegionDefine* rd)
+{
+  if (rd == nullptr) {
+    delete rdef;
+    rdef = nullptr;
+    return;
+  }
+  if (rdef != nullptr && rdef->type == rd->type) {
+    rdef->setValues(rd);
+    return;
+  }
+  delete rdef;
+  rdef = rd->clone();
+}
+
+void LineRegion::adoptFrom(const LineRegion& lr)
+{
+  start = lr.start;
+  end = lr.end;
+  scheme = lr.scheme;
+  region = lr.region;
+  special = lr.special;
+  next = nullptr;
+  prev = nullptr;
+  replaceRdef(lr.rdef);
+}
+
+void LineRegion::applyRegionDefine(const RegionDefine* rd, const RegionDefine* parent)
+{
+  replaceRdef(rd);
+  if (rdef != nullptr && parent != nullptr) {
+    rdef->assignParent(parent);
+  }
+}
+
 LineRegion::LineRegion()
 {
   next = nullptr;

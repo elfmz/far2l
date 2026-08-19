@@ -3,6 +3,7 @@
 #include <colorer/strings/legacy/Encodings.h>
 #include <colorer/strings/legacy/UnicodeString.h>
 #include <cstdlib>
+#include <string>
 #include "colorer/Exception.h"
 
 UnicodeString operator+(const UnicodeString& s1, const UnicodeString& s2)
@@ -90,7 +91,8 @@ UnicodeString::UnicodeString(const UnicodeString& cstring, int32_t s, int32_t l)
 
 UnicodeString::UnicodeString(int no)
 {
-  CString dtext = CString(std::to_string(no).c_str());
+  const std::string number_text = std::to_string(no);
+  CString dtext = CString(number_text.c_str());
   construct(&dtext, 0, npos);
 }
 

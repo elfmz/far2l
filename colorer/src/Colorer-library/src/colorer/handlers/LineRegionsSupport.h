@@ -86,6 +86,11 @@ class LineRegionsSupport : public RegionHandler
   [[nodiscard]] size_t getLineIndex(size_t lno) const;
   [[nodiscard]] bool checkLine(size_t lno) const;
 
+  LineRegion* allocRegion();
+  LineRegion* allocRegion(const LineRegion& src);
+  void freeRegion(LineRegion* lr);
+  void freeRegionChain(LineRegion* head);
+
   std::vector<LineRegion*> lineRegions;
   std::vector<LineRegion*> schemeStack;
 
@@ -96,6 +101,7 @@ class LineRegionsSupport : public RegionHandler
   LineRegion background;
   size_t firstLineNo;
   size_t lineCount;
+  std::vector<LineRegion*> regionPool;
 };
 
 #endif // COLORER_LINEREGIONSSUPPORT_H

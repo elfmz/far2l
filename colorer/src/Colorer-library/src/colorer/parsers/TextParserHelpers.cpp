@@ -57,71 +57,47 @@ ParseCache* ParseCache::searchLine(int ln, ParseCache** cache)
 /////////////////////////////////////////////////////////////////////////
 // Virtual tables list
 
-VTList::~VTList()
-{
-  //  FAULT(next == this);
-  // deletes only from root
-  if (!prev && next) {
-    next->deltree();
-  }
-}
-
-void VTList::deltree()
-{
-  if (next) {
-    next->deltree();
-  }
-  delete this;
-}
-
 bool VTList::push(SchemeNodeInherit* node)
 {
   if (!node || node->virtualEntryVector.empty()) {
     return false;
   }
-  auto newitem = new VTList();
-  if (last->next) {
-    last->next->prev = newitem;
-    newitem->next = last->next;
-  }
-  newitem->prev = last;
-  last->next = newitem;
-  last = last->next;
-  last->vlist = &node->virtualEntryVector;
-  nodesnum++;
+  const int insert_at = last_index + 1;
+  nodes.insert(nodes.begin() + insert_at, Node {&node->virtualEntryVector, -1});
+  last_index = insert_at;
   return true;
 }
 
 bool VTList::pop()
 {
-  //  FAULT(last == this);
-  VTList* ditem = last;
-  if (ditem->next) {
-    ditem->next->prev = ditem->prev;
+  if (last_index < 0) {
+    return false;
   }
-  ditem->prev->next = ditem->next;
-  last = ditem->prev;
-  delete ditem;
-  nodesnum--;
+  nodes.erase(nodes.begin() + last_index);
+  last_index--;
   return true;
 }
 
 SchemeImpl* VTList::pushvirt(SchemeImpl* scheme)
 {
-  SchemeImpl* ret = scheme;
-  VTList* curvl = nullptr;
+  if (last_index < 0) {
+    return nullptr;
+  }
 
-  for (VTList* vl = last; vl && vl->prev; vl = vl->prev) {
-    for (auto ve : *vl->vlist) {
+  SchemeImpl* ret = scheme;
+  int curvl = -1;
+
+  for (int i = last_index; i >= 0; --i) {
+    for (auto* ve : *nodes[static_cast<size_t>(i)].vlist) {
       if (ret == ve->virtScheme && ve->substScheme) {
         ret = ve->substScheme;
-        curvl = vl;
+        curvl = i;
       }
     }
   }
-  if (curvl) {
-    curvl->shadowlast = last;
-    last = curvl->prev;
+  if (curvl >= 0) {
+    nodes[static_cast<size_t>(curvl)].shadow_last = last_index;
+    last_index = curvl - 1;
     return ret;
   }
   return nullptr;
@@ -129,55 +105,39 @@ SchemeImpl* VTList::pushvirt(SchemeImpl* scheme)
 
 void VTList::popvirt()
 {
-  VTList* that = last->next;
-  //  FAULT(!last->next || !that->shadowlast);
-  last = that->shadowlast;
-  that->shadowlast = nullptr;
+  const int that = last_index + 1;
+  last_index = nodes[static_cast<size_t>(that)].shadow_last;
+  nodes[static_cast<size_t>(that)].shadow_last = -1;
 }
 
 void VTList::clear()
 {
-  nodesnum = 0;
-  if (!prev && next) {
-    next->deltree();
-    next = nullptr;
-  }
-  last = this;
+  nodes.clear();
+  last_index = -1;
 }
 
 VirtualEntryVector** VTList::store()
 {
-  if (!nodesnum || last == this) {
+  if (last_index < 0) {
     return nullptr;
   }
-  int i = 0;
-  auto store = new VirtualEntryVector*[nodesnum + 1];
-  for (VTList* list = this->next; list; list = list->next) {
-    store[i++] = list->vlist;
-    if (list == this->last) {
-      break;
-    }
+  auto store = new VirtualEntryVector*[static_cast<size_t>(last_index) + 2];
+  for (int i = 0; i <= last_index; i++) {
+    store[i] = nodes[static_cast<size_t>(i)].vlist;
   }
-  store[i] = nullptr;
+  store[last_index + 1] = nullptr;
   return store;
 }
 
 bool VTList::restore(VirtualEntryVector** store)
 {
-  if (next || prev || !store) {
+  if (last_index >= 0 || !store) {
     return false;
   }
 
-  VTList* prevpos;
-  VTList* pos = this;
   for (int i = 0; store[i] != nullptr; i++) {
-    pos->next = new VTList;
-    prevpos = pos;
-    pos = pos->next;
-    pos->prev = prevpos;
-    pos->vlist = store[i];
-    nodesnum++;
+    nodes.push_back(Node {store[i], -1});
   }
-  last = pos;
+  last_index = static_cast<int>(nodes.size()) - 1;
   return true;
 }

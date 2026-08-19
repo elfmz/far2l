@@ -296,8 +296,9 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
 {
   const UnicodeString* name_id;
   const UnicodeString name_default(HrdNameDefault);
+  uUnicodeString hrd;
   if (nameID == nullptr) {
-    auto hrd = colorer::Environment::getOSEnv("COLORER_HRD");
+    hrd = colorer::Environment::getOSEnv("COLORER_HRD");
     if (hrd) {
       name_id = hrd.get();
     }

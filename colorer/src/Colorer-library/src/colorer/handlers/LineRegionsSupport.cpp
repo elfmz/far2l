@@ -13,9 +13,12 @@ LineRegionsSupport::~LineRegionsSupport()
 {
   clear();
   for (size_t i = 1; i < schemeStack.size(); i++) {
-    delete schemeStack[i];
+    freeRegion(schemeStack[i]);
   }
   schemeStack.clear();
+  for (auto* lr : regionPool) {
+    delete lr;
+  }
 }
 
 void LineRegionsSupport::resize(size_t lineCount_)
@@ -34,11 +37,7 @@ void LineRegionsSupport::clear()
   for (auto& lineRegion : lineRegions) {
     LineRegion* ln = lineRegion;
     lineRegion = nullptr;
-    while (ln != nullptr) {
-      LineRegion* lnn = ln->next;
-      delete ln;
-      ln = lnn;
-    }
+    freeRegionChain(ln);
   }
 }
 
@@ -67,7 +66,8 @@ size_t LineRegionsSupport::getFirstLine() const
 
 void LineRegionsSupport::setBackground(const RegionDefine* back)
 {
-  background.rdef = const_cast<RegionDefine*>(back);
+  delete background.rdef;
+  background.rdef = back != nullptr ? back->clone() : nullptr;
 }
 
 void LineRegionsSupport::setSpecialRegion(const Region* _special)
@@ -92,7 +92,7 @@ bool LineRegionsSupport::checkLine(size_t lno) const
 void LineRegionsSupport::startParsing(size_t /*lno*/)
 {
   for (size_t i = 1; i < schemeStack.size(); i++) {
-    delete schemeStack[i];
+    freeRegion(schemeStack[i]);
   }
   schemeStack.clear();
   schemeStack.push_back(&background);
@@ -104,13 +104,8 @@ void LineRegionsSupport::clearLine(size_t lno, UnicodeString* /*line*/)
     return;
   }
 
-  LineRegion* ln = getLineRegions(lno);
-  while (ln != nullptr) {
-    LineRegion* lnn = ln->next;
-    delete ln;
-    ln = lnn;
-  }
-  auto* lfirst = new LineRegion(*schemeStack.back());
+  freeRegionChain(getLineRegions(lno));
+  auto* lfirst = allocRegion(*schemeStack.back());
   lfirst->start = 0;
   lfirst->end = -1;
   lfirst->next = nullptr;
@@ -125,7 +120,7 @@ void LineRegionsSupport::addRegion(size_t line_no, UnicodeString* /*line*/, int 
   if (!checkLine(line_no)) {
     return;
   }
-  auto* lnew = new LineRegion();
+  auto* lnew = allocRegion();
   lnew->start = start_idx;
   lnew->end = end_idx;
   lnew->region = region;
@@ -138,17 +133,17 @@ void LineRegionsSupport::addRegion(size_t line_no, UnicodeString* /*line*/, int 
     if (rd == nullptr) {
       rd = schemeStack.back()->rdef;
     }
-    if (rd != nullptr) {
-      lnew->rdef = rd->clone();
-      lnew->rdef->assignParent(schemeStack.back()->rdef);
-    }
+    lnew->applyRegionDefine(rd, schemeStack.back()->rdef);
+  }
+  else {
+    lnew->applyRegionDefine(nullptr, nullptr);
   }
   addLineRegion(line_no, lnew);
 }
 
 void LineRegionsSupport::enterScheme(size_t line_no, UnicodeString* /*line*/, int start_idx, int /*end_idx*/, const Region* region, const Scheme* scheme)
 {
-  auto* lr = new LineRegion();
+  auto* lr = allocRegion();
   lr->region = region;
   lr->scheme = scheme;
   lr->start = start_idx;
@@ -158,10 +153,10 @@ void LineRegionsSupport::enterScheme(size_t line_no, UnicodeString* /*line*/, in
     if (rd == nullptr) {
       rd = schemeStack.back()->rdef;
     }
-    if (rd != nullptr) {
-      lr->rdef = rd->clone();
-      lr->rdef->assignParent(schemeStack.back()->rdef);
-    }
+    lr->applyRegionDefine(rd, schemeStack.back()->rdef);
+  }
+  else {
+    lr->applyRegionDefine(nullptr, nullptr);
   }
   schemeStack.push_back(lr);
   // ignoring out of cached interval lines
@@ -170,7 +165,7 @@ void LineRegionsSupport::enterScheme(size_t line_no, UnicodeString* /*line*/, in
   }
   // we must skip transparent regions
   if (lr->region != nullptr) {
-    auto* lr_add = new LineRegion(*lr);
+    auto* lr_add = allocRegion(*lr);
     flowBackground->end = lr_add->start;
     flowBackground = lr_add;
     addLineRegion(line_no, lr_add);
@@ -180,7 +175,7 @@ void LineRegionsSupport::enterScheme(size_t line_no, UnicodeString* /*line*/, in
 void LineRegionsSupport::leaveScheme(size_t line_no, UnicodeString* /*line*/, int /*start_idx*/, int end_idx, const Region* /*region*/, const Scheme* /*scheme*/)
 {
   const Region* scheme_region = schemeStack.back()->region;
-  delete schemeStack.back();
+  freeRegion(schemeStack.back());
   schemeStack.pop_back();
   // ignoring out of cached interval lines
   if (!checkLine(line_no)) {
@@ -188,7 +183,7 @@ void LineRegionsSupport::leaveScheme(size_t line_no, UnicodeString* /*line*/, in
   }
   // we have to skip transparent regions
   if (scheme_region != nullptr) {
-    auto* lr = new LineRegion(*schemeStack.back());
+    auto* lr = allocRegion(*schemeStack.back());
     lr->start = end_idx;
     lr->end = -1;
     flowBackground->end = lr->start;
@@ -208,5 +203,51 @@ void LineRegionsSupport::addLineRegion(size_t line_no, LineRegion* lr)
     lr->prev = lstart->prev;
     lr->prev->next = lr;
     lstart->prev = lr;
+  }
+}
+
+LineRegion* LineRegionsSupport::allocRegion()
+{
+  LineRegion* lr;
+  if (regionPool.empty()) {
+    lr = new LineRegion();
+  }
+  else {
+    lr = regionPool.back();
+    regionPool.pop_back();
+    lr->next = nullptr;
+    lr->prev = nullptr;
+    lr->start = 0;
+    lr->end = 0;
+    lr->scheme = nullptr;
+    lr->region = nullptr;
+    lr->special = false;
+  }
+  return lr;
+}
+
+LineRegion* LineRegionsSupport::allocRegion(const LineRegion& src)
+{
+  LineRegion* lr = allocRegion();
+  lr->adoptFrom(src);
+  return lr;
+}
+
+void LineRegionsSupport::freeRegion(LineRegion* lr)
+{
+  if (lr == nullptr || lr == &background) {
+    return;
+  }
+  lr->next = nullptr;
+  lr->prev = nullptr;
+  regionPool.push_back(lr);
+}
+
+void LineRegionsSupport::freeRegionChain(LineRegion* ln)
+{
+  while (ln != nullptr) {
+    LineRegion* next = ln->next;
+    freeRegion(ln);
+    ln = next;
   }
 }

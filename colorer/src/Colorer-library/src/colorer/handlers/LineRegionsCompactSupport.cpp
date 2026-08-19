@@ -61,7 +61,7 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
   if (ladd != lstart && ladd->prev && (ladd->prev->end > ladd->start || ladd->prev->end == -1)) {
     // our region breaks previous region into two parts
     if ((ladd->prev->end > ladd->end || ladd->prev->end == -1) && ladd->end != -1) {
-      auto* ln1 = new LineRegion(*ladd->prev);
+      auto* ln1 = allocRegion(*ladd->prev);
       ln1->prev = ladd;
       ln1->next = ladd->next;
       if (ladd->next) {
@@ -82,11 +82,11 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
       ladd->prev->prev->next = ladd;
       LineRegion* lntemp = ladd->prev;
       ladd->prev = ladd->prev->prev;
-      delete lntemp;
+      freeRegion(lntemp);
     }
     if (ladd->prev == lstart && ladd->prev->end == ladd->prev->start) {
       LineRegion* lntemp = ladd->prev->prev;
-      delete ladd->prev;
+      freeRegion(ladd->prev);
       ladd->prev = lntemp;
       lstart = ladd;
     }
@@ -107,7 +107,7 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
       } else {
         lstart->prev = ladd;
       }
-      delete lnext;
+      freeRegion(lnext);
       lnext = ladd;
       continue;
     }

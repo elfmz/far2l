@@ -175,7 +175,8 @@ class BaseEditor : public RegionHandler
    *   is used.
    * @param rebuildRegions If true, regions will be recalculated and
    *   repositioned for the specified line number usage. If false,
-   *   parser will just start internal cache rebuilding procedure.
+   *   parser only updates its internal line cache: the visible window
+   *   and the LineRegion ring stay where they are.
    */
   void validate(int lno, bool rebuildRegions);
 
@@ -195,11 +196,10 @@ class BaseEditor : public RegionHandler
 
   /**
    * Informs about single line modification event.
-   * Generally, this type of event can be processed much faster
-   * because of pre-checking line's changed structure and
-   * cancelling further parsing in case of unmodified text structure.
+   * Tries to reparse only that line. If the scheme stack past the line
+   * is unchanged, the rest of the file stays valid. Otherwise all text
+   * from this line is invalidated, same as modifyEvent.
    * @param line Modified line of text.
-   * @todo Not used yet! This must include special 'try' parse method.
    */
   void modifyLineEvent(int line);
 
@@ -244,6 +244,11 @@ class BaseEditor : public RegionHandler
 
   bool haveInvalidLine() const;
   void setMaxBlockSize(int max_block_size);
+  /**
+   * See TextParser::setChunkLongLines. Default is false (one window per line).
+   */
+  void setChunkLongLines(bool chunk);
+  bool getChunkLongLines() const;
 
  private:
   FileType* chooseFileTypeCh(const UnicodeString* fileName, int chooseStr, int chooseLen);

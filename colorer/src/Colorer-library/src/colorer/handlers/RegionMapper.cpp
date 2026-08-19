@@ -1,4 +1,5 @@
 #include "colorer/handlers/RegionMapper.h"
+#include <algorithm>
 
 std::vector<const RegionDefine*> RegionMapper::enumerateRegionDefines() const
 {
@@ -26,7 +27,9 @@ const RegionDefine* RegionMapper::getRegionDefine(const Region* region) const
   }
 
   if (regionDefinesCache.size() < region->getID() + 1) {
-    regionDefinesCache.resize(region->getID() * 2);
+    const auto needed = region->getID() + 1;
+    const auto grown = regionDefinesCache.size() * 2;
+    regionDefinesCache.resize(std::max(grown, needed));
   }
 
   const auto rd_new = regionDefines.find(region->getName());

@@ -2,9 +2,10 @@
 #define COLORER_TEXTPARSERPELPERS_H
 
 #include "colorer/parsers/HrcLibraryImpl.h"
+#include <vector>
 
-#if !defined COLORERMODE || defined NAMED_MATCHES_IN_HASH
-#error need (COLORERMODE & !NAMED_MATCHES_IN_HASH) in cregexp
+#if !defined COLORERMODE
+#error need COLORERMODE in cregexp
 #endif
 
 #define MATCH_NOTHING 0
@@ -19,17 +20,9 @@
 */
 class VTList
 {
-  VirtualEntryVector* vlist = nullptr;
-  VTList* prev = nullptr;
-  VTList* next = nullptr;
-  VTList* last = this;
-  VTList* shadowlast = nullptr;
-  int nodesnum = 0;
-
  public:
   VTList() = default;
-  ~VTList();
-  void deltree();
+  ~VTList() = default;
   bool push(SchemeNodeInherit* node);
   bool pop();
   SchemeImpl* pushvirt(SchemeImpl* scheme);
@@ -37,6 +30,16 @@ class VTList
   void clear();
   VirtualEntryVector** store();
   bool restore(VirtualEntryVector** store);
+
+ private:
+  struct Node
+  {
+    VirtualEntryVector* vlist = nullptr;
+    int shadow_last = -1;
+  };
+
+  std::vector<Node> nodes;
+  int last_index = -1;
 };
 
 /**

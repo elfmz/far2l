@@ -837,6 +837,85 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	}
 }
 
+// Extracts last argument of a command: trailing whitespace-separated token,
+// treating "quoted strings" and 'quoted strings' as a single argument.
+static bool GetLastArgOfCmd(const FARString &strCmd, FARString &strArg)
+{
+	size_t End = strCmd.GetLength();
+
+	while (End > 0 && (strCmd.At(End - 1) == L' ' || strCmd.At(End - 1) == L'\t'))
+		End--;
+
+	if (!End)
+		return false;
+
+	size_t Begin = End;
+	const wchar_t LastCh = strCmd.At(End - 1);
+
+	if (LastCh == L'"' || LastCh == L'\'') {
+		// quoted argument: scan back to the matching opening quote
+		size_t QPos = End - 1;
+		while (QPos > 0 && strCmd.At(QPos - 1) != LastCh)
+			QPos--;
+
+		if (QPos > 0)
+			Begin = QPos - 1;
+	}
+
+	while (Begin > 0 && strCmd.At(Begin - 1) != L' ' && strCmd.At(Begin - 1) != L'\t')
+		Begin--;
+
+	strArg = FARString(strCmd.CPtr() + Begin, End - Begin);
+	return !strArg.IsEmpty();
+}
+
+// bash-like Alt+. (yank-last-arg): inserts last argument of the previous
+// command at cursor position; each subsequent Alt+. replaces it with the
+// last argument of the progressively older command from the history.
+void CommandLine::ProcessKey_YankLastArg()
+{
+	FARString strCmd, strArg;
+	int Depth = YankLastArgDepth;
+
+	// find next (older) history record that actually has a last argument
+	for (;;) {
+		Depth++;
+		if (!CtrlObject->CmdHistory->GetRecentStr((size_t)Depth, strCmd))
+			return;		// ran out of history - keep things as they are
+
+		if (GetLastArgOfCmd(strCmd, strArg))
+			break;
+	}
+
+	FARString strStr;
+	CmdStr.GetString(strStr);
+
+	int Pos, Len;
+	if (YankLastArgDepth >= 0) {
+		// cycling: replace previously inserted argument
+		Pos = YankLastArgPos;
+		Len = YankLastArgLen;
+	} else {
+		Pos = CmdStr.GetCurPos();
+		if ((size_t)Pos > strStr.GetLength())
+			Pos = (int)strStr.GetLength();
+		Len = 0;
+	}
+
+	strStr.Replace((size_t)Pos, (size_t)Len, strArg);
+
+	LastCmdPartLength = -1;	// invalidate Ctrl-End state, line is changed
+	CmdStr.DisableAC();
+	CmdStr.SetString(strStr);
+	CmdStr.SetCurPos(Pos + (int)strArg.GetLength());
+	CmdStr.RevertAC();
+
+	YankLastArgDepth = Depth;
+	YankLastArgPos = Pos;
+	YankLastArgLen = (int)strArg.GetLength();
+	Show();
+}
+
 void CommandLine::ProcessKey_ClearTerminalHistory()
 {
 	if (!Opt.Confirm.ClearVT || Message(MSG_WARNING, 2,
@@ -1067,7 +1146,15 @@ int CommandLine::ProcessKey(FarKey Key)
 
 int CommandLine::ProcessKeyIfVisible(FarKey Key)
 { // this handles key events only when CmdLine is visible
+	// any key other than Alt+. breaks yank-last-arg cycling
+	if (Key != KEY_ALTDOT && Key != KEY_NONE)
+		YankLastArgDepth = -1;
+
 	switch (Key) {
+		case KEY_ALTDOT:
+			ProcessKey_YankLastArg();
+			return TRUE;
+
 		case KEY_NUMENTER:
 		case KEY_SHIFTNUMENTER:
 		case KEY_ENTER:

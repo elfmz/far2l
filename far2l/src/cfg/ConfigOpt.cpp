@@ -174,6 +174,8 @@ const ConfigOpt g_cfg_opts[] {
 		L"CmdlineSettings", L"Shows a visual splitter between the command line and terminal output" },
 	{OST_COMMON, NSecCmdline, "WaitKeypress", &Opt.CmdLine.WaitKeypress, 1,
 		L"CmdlineSettings", L"Controls whether FAR2L waits for a key press after an executed command finishes: 0=never, 1=only on error, 2=always" },
+	{OST_COMMON, NSecCmdline, "AltDotYankLastArg", &Opt.CmdLine.AltDotYankLastArg, 1,
+		L"CmdlineSettings", L"Controls when Alt+. inserts last argument of previous command instead of panel fast-find: 0=only when panels are hidden, 1=also when command line is not empty, 2=always" },
 	{OST_COMMON, NSecCmdline, "VTLogLimitKB", &Opt.CmdLine.VTLogLimit, 1024,
 		L"Terminal", L"The maximum terminal log size kept for the command line, in kilobytes" },
 	{OST_COMMON, NSecCmdline, "ShowStartupBanner",&Opt.ShowStartupBanner, 1,

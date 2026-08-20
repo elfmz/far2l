@@ -978,6 +978,12 @@ void CmdlineSettings()
 			{Msg::ConfigCmdlineWaitKeypress_Always,  2},
 	};
 
+	DialogBuilderListItem ADListItems[] = {
+			{Msg::ConfigCmdlineAltDotYank_PanelsOff, 0},
+			{Msg::ConfigCmdlineAltDotYank_NonEmpty,  1},
+			{Msg::ConfigCmdlineAltDotYank_Always,    2},
+	};
+
 	DialogBuilder Builder(Msg::ConfigCmdlineTitle, L"CmdlineSettings");
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
 	Builder.AddCheckbox(Msg::ConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
@@ -991,6 +997,10 @@ void CmdlineSettings()
 
 	Builder.AddText(Msg::ConfigCmdlineWaitKeypress);
 	Builder.AddComboBox((int *)&Opt.CmdLine.WaitKeypress, 40, CMWListItems, ARRAYSIZE(CMWListItems),
+			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+
+	Builder.AddText(Msg::ConfigCmdlineAltDotYank);
+	Builder.AddComboBox((int *)&Opt.CmdLine.AltDotYankLastArg, 40, ADListItems, ARRAYSIZE(ADListItems),
 			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
 
 	auto UsePromptFormat =

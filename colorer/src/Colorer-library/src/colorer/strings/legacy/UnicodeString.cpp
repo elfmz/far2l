@@ -211,18 +211,18 @@ UnicodeString& UnicodeString::operator=(UnicodeString const& cstring)
 
 int8_t UnicodeString::compare(int sp, int sl, const UnicodeString& str) const
 {
-  auto l = std::min(str.length(), sl);
-  int32_t i;
-  for (i = 0; i < l; i++) {
-    int cmp = (str[i]) - ((*this)[i + sp]);
-    if (cmp > 0)
-      return -1;
-    if (cmp < 0)
-      return 1;
+  const int32_t l = std::min(str.length(), sl);
+  if (l > 0) {
+    const wchar* a = str.wstr.get();
+    const wchar* b = wstr.get() + sp;
+    for (int32_t i = 0; i < l; i++) {
+      if (a[i] != b[i])
+        return a[i] > b[i] ? -1 : 1;
+    }
   }
-  if (i < sl)
+  if (l < sl)
     return 1;
-  if (i < str.length())
+  if (l < str.length())
     return -1;
   return 0;
 }
@@ -267,18 +267,20 @@ bool UnicodeString::equalsIgnoreCase(const UnicodeString* str) const
 
 int8_t UnicodeString::caseCompare(int sp, int sl, const UnicodeString& str) const
 {
-  auto l = std::min(str.length(), sl);
-  int32_t i;
-  for (i = 0; i < l; i++) {
-    int cmp = Character::toLowerCase(str[i]) - Character::toLowerCase((*this)[i + sp]);
-    if (cmp > 0)
-      return -1;
-    if (cmp < 0)
-      return 1;
+  const int32_t l = std::min(str.length(), sl);
+  if (l > 0) {
+    const wchar* a = str.wstr.get();
+    const wchar* b = wstr.get() + sp;
+    for (int32_t i = 0; i < l; i++) {
+      const wchar ca = Character::toLowerCase(a[i]);
+      const wchar cb = Character::toLowerCase(b[i]);
+      if (ca != cb)
+        return ca > cb ? -1 : 1;
+    }
   }
-  if (i < sl)
+  if (l < sl)
     return 1;
-  if (i < str.length())
+  if (l < str.length())
     return -1;
   return 0;
 }

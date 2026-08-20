@@ -1307,6 +1307,15 @@ között vált.
    #Mappakeresés#         ^<wrap>Mappát keres a mappák fáiban. További
 információk a ~mappakeresés~@FindFolder@ témakörben.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
    #Fájl előzmények#      ^<wrap>A korábban
 ~megnézett vagy szerkesztett~@HistoryViews@ fájlok listáját mutatja meg.
 

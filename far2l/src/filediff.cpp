@@ -32,6 +32,7 @@
 #include "mix.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 #include "panel.hpp"
 
 namespace
@@ -244,14 +245,9 @@ bool WriteEncoded(File &Dst, UINT CodePage, const wchar_t *Data, int Length)
 		return WriteAll(Dst, Utf8.data(), Utf8.size());
 	}
 
-	const int Bytes = WINPORT(WideCharToMultiByte)(CodePage, 0, Data, Length, nullptr, 0, nullptr, nullptr);
-	if (Bytes <= 0)
-		return false;
+	WideCharToMultiByteBuffer Buffer(CodePage, Data, Length);
 
-	std::vector<char> Buffer(Bytes);
-	const int Written = WINPORT(WideCharToMultiByte)(CodePage, 0, Data, Length, Buffer.data(),
-			static_cast<int>(Buffer.size()), nullptr, nullptr);
-	return Written > 0 && WriteAll(Dst, Buffer.data(), static_cast<size_t>(Written));
+	return !Buffer.empty() && WriteAll(Dst, Buffer.data(), Buffer.size());
 }
 
 bool IsEditorContentChangeKey(FarKey Key)

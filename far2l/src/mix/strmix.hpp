@@ -145,3 +145,4 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
+

@@ -244,6 +244,7 @@ struct EditorState
 	std::wstring file_w;
 	std::string file;
 	std::string repo_root;
+	bool repo_lookup_failed = false;
 	std::vector<std::string> repo_watch_paths;
 	uint64_t repo_watch_state = 0;
 	std::string rel_path;
@@ -926,7 +927,7 @@ static bool GetRepoRoot(const std::string &file_path, std::string &repo_root)
 	const std::string dir = (slash == std::string::npos) ? "." : file_path.substr(0, slash);
 	std::string dir_arg = dir;
 	QuoteCmdArgIfNeed(dir_arg);
-	const std::string cmd = "git -C " + dir_arg + " rev-parse --show-toplevel";
+	const std::string cmd = "git -C " + dir_arg + " rev-parse --show-toplevel 2>/dev/null";
 	std::string out;
 	if (!RunCommand(cmd, out)) {
 		return false;
@@ -1089,6 +1090,7 @@ static void UpdateEditorState(EditorState &st)
 		st.file_w = file_w;
 		st.file = Wide2MB(file_w.c_str());
 		st.repo_root.clear();
+		st.repo_lookup_failed = false;
 		st.repo_watch_paths.clear();
 		st.repo_watch_state = 0;
 		st.rel_path.clear();
@@ -1099,7 +1101,11 @@ static void UpdateEditorState(EditorState &st)
 	}
 
 	if (st.repo_root.empty()) {
-		if (!GetRepoRoot(st.file, st.repo_root)) {
+		if (!st.repo_lookup_failed && !GetRepoRoot(st.file, st.repo_root)) {
+			st.repo_lookup_failed = true;
+		}
+		if (st.repo_root.empty()) {
+			st.dirty = false;
 			return;
 		}
 		RepoStateChanged(st);

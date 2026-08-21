@@ -89,6 +89,7 @@ for (testrun = 1; testrun <= 2; testrun++) {
 		found=ExpectString("[ ] Use shell")
 		LClickWhereFound(found)
 		LClick(found.Y + 4, found.Y + 1)
+		Sync(1000)
 		TypeHome()
 		TypeDel(100)
 		Sync(1000)

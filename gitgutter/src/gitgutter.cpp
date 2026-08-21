@@ -1451,7 +1451,7 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 	return true;
 }
 
-static bool IsCtrlG(const INPUT_RECORD *ir)
+static bool GetCtrlGDirection(const INPUT_RECORD *ir, bool &backward)
 {
 	if (!ir || ir->EventType != KEY_EVENT)
 		return false;
@@ -1464,7 +1464,11 @@ static bool IsCtrlG(const INPUT_RECORD *ir)
 	if ((ke.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0)
 		return false;
 
-	return ke.wVirtualKeyCode == 'G' || ke.uChar.UnicodeChar == 7;
+	if (ke.wVirtualKeyCode != 'G' && ke.uChar.UnicodeChar != 7)
+		return false;
+
+	backward = (ke.dwControlKeyState & SHIFT_PRESSED) != 0;
+	return true;
 }
 
 static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
@@ -1485,9 +1489,27 @@ static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
 	return true;
 }
 
+static bool FindHunkFromLineUp(const EditorState &st, int cur_line, int &line)
+{
+	line = -1;
+	if (st.hunks.empty())
+		return false;
+
+	cur_line = std::max(0, cur_line);
+	for (const Hunk &h : st.hunks) {
+		if (h.start > cur_line)
+			break;
+		line = h.start;
+	}
+	if (line < 0)
+		line = st.hunks.back().start;
+	return true;
+}
+
 static bool HandleCtrlG(const INPUT_RECORD *ir)
 {
-	if (!IsCtrlG(ir))
+	bool backward = false;
+	if (!GetCtrlGDirection(ir, backward))
 		return false;
 	if (g_popup_active || g_pending_popup.active)
 		return true;
@@ -1501,7 +1523,8 @@ static bool HandleCtrlG(const INPUT_RECORD *ir)
 		return false;
 
 	int line = -1;
-	if (!FindHunkFromLineDown(it->second, ei.CurLine, line))
+	if (!(backward ? FindHunkFromLineUp(it->second, ei.CurLine, line)
+				  : FindHunkFromLineDown(it->second, ei.CurLine, line)))
 		return false;
 
 	g_pending_popup.active = true;

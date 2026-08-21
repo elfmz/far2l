@@ -386,18 +386,18 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 	return true;
 }
 
-bool KeyTracker::CheckForSuddenModifiersUp()
+bool KeyTracker::CheckForSuddenModifiersUp(const wxKeyEvent *confirmation)
 {
 	bool out = false;
-	if (CheckForSuddenModifierUp(WXK_CONTROL)) {
+	if ((!confirmation || !confirmation->ControlDown()) && CheckForSuddenModifierUp(WXK_CONTROL)) {
 		fprintf(stderr, "%s: CONTROL\n", __FUNCTION__);
 		out = true;
 	}
-	if (CheckForSuddenModifierUp(WXK_ALT)) {
+	if ((!confirmation || !confirmation->AltDown()) && CheckForSuddenModifierUp(WXK_ALT)) {
 		fprintf(stderr, "%s: ALT\n", __FUNCTION__);
 		out = true;
 	}
-	if (CheckForSuddenModifierUp(WXK_SHIFT)) {
+	if ((!confirmation || !confirmation->ShiftDown()) && CheckForSuddenModifierUp(WXK_SHIFT)) {
 		fprintf(stderr, "%s: SHIFT\n", __FUNCTION__);
 		out = true;
 	}

@@ -107,6 +107,7 @@ func far2l_TypeVK(key_code uint32, count int) {
 		log.Println("TypeVK:", key_code, "(", count, "times)")
 	}
 	for ;count > 0; count-- {
+		performAutoSync();
 		far2l_SendKeyEvent(0, key_code, true)
 		far2l_SendKeyEvent(0, key_code, false)
 	}
@@ -115,6 +116,7 @@ func far2l_TypeVK(key_code uint32, count int) {
 func far2l_TypeText(text string) {
 	log.Println("TypeText:", text)
     for _, r := range text {
+		performAutoSync();
 		far2l_SendKeyEvent(uint32(r), 0, true)
 		far2l_SendKeyEvent(uint32(r), 0, false)
     }
@@ -198,18 +200,21 @@ func far2l_DblClickWhereFound(where far2l_FoundString) {
 
 func far2l_LClick(x, y uint32) {
 	log.Println("LClick at", x, y)
+	performAutoSync();
 	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, 0)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }
 
 func far2l_RClick(x, y uint32) {
 	log.Println("RClick at", x, y)
+	performAutoSync();
 	far2l_SendMouseEvent(x, y, RIGHTMOST_BUTTON_PRESSED, 0)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }
 
 func far2l_DblClick(x, y uint32) {
 	log.Println("DblClick at", x, y)
+	performAutoSync();
 	far2l_SendMouseEvent(x, y, FROM_LEFT_1ST_BUTTON_PRESSED, DOUBLE_CLICK)
 	far2l_SendMouseEvent(x, y, 0, 0)
 }

@@ -181,6 +181,7 @@ src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 src/mix/GitTools.cpp
+src/mix/WideCharToMultiByteBuffer.cpp
 src/shoco/shoco.c
 )
 

@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "WideMB.h"
 #include "UtfConvert.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 #include "LinkHighlighter.hpp"
 #include <algorithm>
 #include <cwctype>
@@ -85,23 +86,14 @@ static int NextViewerID = 0;
 static bool EncodeTextForHex(FARString &hex, UINT codePage, const wchar_t *text)
 {
 	hex.Clear();
-	const int textLength = StrLength(text);
-	if (!textLength)
-		return true;
+	if (const auto length = StrLength(text); length > 0) {
+		WideCharToMultiByteBuffer bytes(codePage, text, length);
+		if (bytes.empty())
+			return false;
 
-	const int byteCount = WINPORT(WideCharToMultiByte)(codePage, 0, text, textLength, nullptr, 0, nullptr, nullptr);
-	if (byteCount <= 0)
-		return false;
-
-	std::vector<char> bytes(byteCount);
-	if (WINPORT(WideCharToMultiByte)(codePage, 0, text, textLength, bytes.data(), byteCount, nullptr, nullptr)
-			!= byteCount)
-		return false;
-
-	for (const auto byte : bytes) {
-		FARString value;
-		value.Format(L"%02X", static_cast<unsigned char>(byte));
-		hex += value;
+		for (const auto &byte : bytes) {
+			hex.AppendFormat(L"%02X", static_cast<unsigned char>(byte));
+		}
 	}
 	return true;
 }

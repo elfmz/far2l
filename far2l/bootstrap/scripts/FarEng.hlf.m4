@@ -1482,9 +1482,18 @@ $ #Menus: commands menu#
                         See ~Compare folders~@CompFolders@ for the
                         detailed description.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
    #Edit user menu#       Allows to edit main or local ~user menu~@UserMenu@.
-                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
-                        and #F4# to edit menu records.
+                        You may press #Ins# or #Ctrl+N# to insert,
+                        #Del# to delete and #F4# to edit menu records.
 
    #Edit associations#    Displays the list of ~file associations~@FileAssoc@.
                         You may press #Ins# to insert, #Del# to delete

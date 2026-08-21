@@ -703,6 +703,10 @@ int FilePanels::ProcessKey(FarKey Key)
 
 			break;
 		}
+		case KEY_CTRLSHIFTD: {
+			PresentFileDiff(true);
+			break;
+		}
 		case KEY_CTRLUP:
 		case KEY_CTRLNUMPAD8: {
 			bool Set = false;

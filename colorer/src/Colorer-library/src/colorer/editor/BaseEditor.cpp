@@ -6,6 +6,25 @@
 const int CHOOSE_STR = 4;
 const int CHOOSE_LEN = 200 * CHOOSE_STR;
 
+namespace {
+
+int regionWindow(int windowSize)
+{
+  return windowSize < 1 ? 1 : windowSize;
+}
+
+int regionCoverLines(int windowSize)
+{
+  return regionWindow(windowSize) * 2;
+}
+
+int regionBufferLines(int windowSize)
+{
+  return regionWindow(windowSize) * 3;
+}
+
+}  // namespace
+
 BaseEditor::BaseEditor(ParserFactory* parserFactory_, LineSource* lineSource_)
 {
   if (parserFactory_ == nullptr || lineSource_ == nullptr) {
@@ -26,7 +45,7 @@ BaseEditor::BaseEditor(ParserFactory* parserFactory_, LineSource* lineSource_)
   lineCount = 0;
   wStart = 0;
   wSize = 20;
-  lrSize = wSize * 3;
+  lrSize = regionBufferLines(wSize);
   internalRM = false;
   regionMapper = nullptr;
   regionCompact = false;
@@ -344,6 +363,9 @@ void BaseEditor::modifyEvent(int topLine)
 void BaseEditor::modifyLineEvent(int line)
 {
   if (invalidLine > line) {
+    if (textParser->tryParseLine(line)) {
+      return;
+    }
     invalidLine = line;
   }
 }
@@ -379,19 +401,41 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
     lno = lineCount - 1;
   }
 
+  /*
+   * Cache-only parse (idleJob, profile): warm TextParser's line cache
+   * without moving the visible window or the LineRegion ring.
+   */
+  if (!rebuildRegions) {
+    parseFrom = invalidLine;
+    parseTo = lno + 1;
+    if (parseTo > lineCount) {
+      parseTo = lineCount;
+    }
+    if (parseTo - parseFrom > 0) {
+      COLORER_LOG_DEBUG("[BaseEditor] validate:cache:%-%, UPDATE", parseFrom, parseTo);
+      int stopLine =
+          textParser->parse(parseFrom, parseTo - parseFrom, TextParser::TextParseMode::TPM_CACHE_UPDATE);
+      invalidLine = stopLine + 1;
+      COLORER_LOG_DEBUG("[BaseEditor] validate:parsed: invalidLine=%", invalidLine);
+    }
+    return;
+  }
+
+  const int cover = regionCoverLines(wSize);
   size_t firstLine = lrSupport->getFirstLine();
   parseFrom = parseTo = (wStart + wSize);
 
   /*
-   * Calculate changes, required by new screen position, if any
+   * Ring capacity is *3; parse/wrap cover is *2 — that *2 window is what
+   * colorer -ht goldens encode (first getLineRegions parses 40 lines at
+   * default wSize=20). Never shrink: 20→21 must fit in the ctor spare.
    */
-  if (lrSize != wSize * 2) {
-    lrSize = wSize * 2;
+  if (lrSize < cover) {
+    lrSize = regionBufferLines(wSize);
     lrSupport->resize(lrSize);
     lrSupport->clear();
-    // Regions were dropped
     layoutChanged = true;
-    COLORER_LOG_DEBUG("[BaseEditor] lrSize != wSize*2");
+    COLORER_LOG_DEBUG("[BaseEditor] grow lrSize=%", lrSize);
   }
 
   /* Fixes window position according to line number */
@@ -401,28 +445,25 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
     // layoutChanged = true;
   }
 
-  if (layoutChanged || wStart < (int) firstLine || wStart + wSize > (int) firstLine + lrSize) {
-    /*
-     * visible area is shifted and line regions
-     * should be rearranged according to
-     */
-    int newFirstLine = (wStart / wSize) * wSize;
+  if (layoutChanged || wStart < (int) firstLine || wStart + wSize > (int) firstLine + cover) {
+    int newFirstLine = (wStart / regionWindow(wSize)) * regionWindow(wSize);
     parseFrom = newFirstLine;
-    parseTo = newFirstLine + lrSize;
-    /*
-     * Change LineRegions parameters only in case
-     * of validate-for-usage request.
-     */
-    if (rebuildRegions) {
-      lrSupport->setFirstLine(newFirstLine);
-    }
-    /* Save time - already has the info in line cache */
-    if (!layoutChanged && (int) firstLine - newFirstLine == wSize) {
-      parseTo -= wSize - 1;
+    parseTo = newFirstLine + cover;
+    lrSupport->setFirstLine(newFirstLine);
+    if (!layoutChanged && (int) firstLine - newFirstLine == regionWindow(wSize)) {
+      parseTo -= regionWindow(wSize) - 1;
     }
     firstLine = newFirstLine;
     layoutChanged = true;
     COLORER_LOG_DEBUG("[BaseEditor] newFirstLine=%, parseFrom=%, parseTo=%", firstLine, parseFrom, parseTo);
+  }
+
+  /*
+   * First fill used to shrink 60→40 and set layoutChanged, parsing two
+   * windows. Keep that range when the spare *3 buffer is retained.
+   */
+  if (!layoutChanged && invalidLine == 0) {
+    parseTo = (int) firstLine + cover;
   }
 
   if (!layoutChanged) {
@@ -532,4 +573,14 @@ int BaseEditor::getInvalidLine() const
 void BaseEditor::setMaxBlockSize(int max_block_size)
 {
   textParser->setMaxBlockSize(max_block_size);
+}
+
+void BaseEditor::setChunkLongLines(bool chunk)
+{
+  textParser->setChunkLongLines(chunk);
+}
+
+bool BaseEditor::getChunkLongLines() const
+{
+  return textParser->getChunkLongLines();
 }

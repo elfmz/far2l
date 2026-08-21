@@ -71,6 +71,21 @@ class LineRegion
   ~LineRegion();
 
   void assigment(const LineRegion& lr);
+
+  /**
+   * Copies fields from @c lr, reusing this object's rdef when the type matches.
+   * Does not copy next/prev pointers.
+   */
+  void adoptFrom(const LineRegion& lr);
+
+  /**
+   * Replaces rdef with a copy of @c rd (reusing storage when types match),
+   * then fills transparent fields from @c parent.
+   */
+  void applyRegionDefine(const RegionDefine* rd, const RegionDefine* parent);
+
+ private:
+  void replaceRdef(const RegionDefine* rd);
 };
 
 #endif // COLORER_LINEREGION_H

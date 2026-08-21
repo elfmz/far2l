@@ -7,13 +7,9 @@
 /// macro - number of elements in array
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(*(a)))
 
-CharacterClass::CharacterClass()
-{
-}
+CharacterClass::CharacterClass() = default;
 
-CharacterClass::~CharacterClass()
-{
-}
+CharacterClass::~CharacterClass() = default;
 
 /**
   Creates CharacterClass object from regexp character class syntax.
@@ -299,4 +295,3 @@ void CharacterClass::fill()
 void CharacterClass::freeze()
 {
 }
-

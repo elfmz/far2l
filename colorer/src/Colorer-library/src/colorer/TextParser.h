@@ -79,6 +79,15 @@ class TextParser
   int parse(int from, int num, TextParseMode mode);
 
   /**
+   * Reparses a single line without dropping the cache tree.
+   * Returns true if the scheme stack that continues past this line is
+   * unchanged (same blocks, same start-RE captures). In that case the
+   * rest of the file does not need to be invalidated.
+   * RegionHandler still receives events for the parsed line.
+   */
+  bool tryParseLine(int line);
+
+  /**
    * Performs break of parsing process from external thread.
    * It is used to stop parse from external source. This is required
    * in some editor system implementations, where editor
@@ -90,7 +99,21 @@ class TextParser
    * Clears internal cached text tree stucture
    */
   void clearCache();
+  /**
+   * Window length for one regex/content pass on a line (default 1000).
+   * Bounds each match attempt. If the parent end-RE is not found, the parser
+   * either stops this line (default) or continues with the next window when
+   * setChunkLongLines(true) is set.
+   */
   void setMaxBlockSize(int max_block_size);
+  /**
+   * When false (default), a line is colored for at most one maxBlockSize
+   * window and the rest of that line is skipped — the historic editor-safe
+   * behavior on minified/pathological lines.
+   * When true, coloring continues in maxBlockSize windows until the line ends.
+   */
+  void setChunkLongLines(bool chunk);
+  bool getChunkLongLines() const;
 
   ~TextParser() = default;
 

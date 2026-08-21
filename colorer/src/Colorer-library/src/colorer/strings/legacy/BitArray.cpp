@@ -1,9 +1,7 @@
 #include <memory.h>
 #include <colorer/strings/legacy/BitArray.h>
 
-BitArray::BitArray()
-{
-}
+BitArray::BitArray() = default;
 
 BitArray::~BitArray()
 {

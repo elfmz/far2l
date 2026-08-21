@@ -1,11 +1,6 @@
 #include "colorer/cregexp/cregexp.h"
-#include <array>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
-StackElem* CRegExp::RegExpStack {nullptr};
-int CRegExp::RegExpStack_Size {0};
+std::vector<StackElem> CRegExp::RegExpStack;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -20,7 +15,6 @@ void SMatches::topseSanitize(int cur)
     }
 }
 
-#if !defined NAMED_MATCHES_IN_HASH
 void SMatches::topnseSanitize(int cur)
 {
     while (topnse < cur) {
@@ -29,7 +23,6 @@ void SMatches::topnseSanitize(int cur)
       ne[topnse] = -1;
     }
 }
-#endif
 
 
 SRegInfo::SRegInfo()
@@ -39,26 +32,29 @@ SRegInfo::SRegInfo()
 SRegInfo::~SRegInfo()
 {
   delete next;
-  if (un.param)
-    switch (op) {
-      case EOps::ReEnum:
-      case EOps::ReNEnum:
-        delete un.charclass;
-        break;
-      case EOps::ReWord:
-        delete un.word;
-        break;
-#ifdef NAMED_MATCHES_IN_HASH
-      case EOps::ReNamedBrackets:
-      case EOps::ReBkBrackName:
-        if (namedata)
-          delete namedata;
-#endif
-      default:
-        if (op > EOps::ReBlockOps && (op < EOps::ReSymbolOps || op == EOps::ReBrackets || op == EOps::ReNamedBrackets))
-          delete un.param;
-        break;
-    }
+  switch (op) {
+    case EOps::ReEnum:
+      delete un.charclass;
+      break;
+    case EOps::ReWord:
+      delete un.word;
+      break;
+    case EOps::ReBrackets:
+    case EOps::ReNamedBrackets:
+    case EOps::ReOr:
+    case EOps::ReAhead:
+    case EOps::ReNAhead:
+    case EOps::ReBehind:
+    case EOps::ReNBehind:
+    case EOps::ReRangeN:
+    case EOps::ReRangeNM:
+    case EOps::ReNGRangeN:
+    case EOps::ReNGRangeNM:
+      delete un.param;
+      break;
+    default:
+      break;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -77,13 +73,12 @@ void CRegExp::init()
   backRE = nullptr;
   backStr = nullptr;
   backTrace = nullptr;
+  usesBackTrace = false;
 #endif
-#ifndef NAMED_MATCHES_IN_HASH
   cnMatch = 0;
-#else
-  namedMatches = 0;
-#endif
   count_elem = 0;
+  parseSteps = 0;
+  stepBudgetExceeded = false;
 }
 CRegExp::CRegExp()
 {
@@ -98,13 +93,12 @@ CRegExp::CRegExp(const UnicodeString* text)
 CRegExp::~CRegExp()
 {
   delete tree_root;
-#ifndef NAMED_MATCHES_IN_HASH
   for (int bp = 0; bp < cnMatch; bp++) delete brnames[bp];
-#endif
 }
 
 bool CRegExp::matchChars(wchar one, wchar another) const
 {
+  // сознательное упрощение. правильнее дополнительно сравнивать toUpperCase, т.к. для Turkish I/ı и части Unicode это разное поведение
   return one == another ||
     (ignoreCase && Character::toLowerCase(one) == Character::toLowerCase(another));
 }
@@ -117,21 +111,22 @@ EError CRegExp::setRELow(const UnicodeString& expr)
 
   delete tree_root;
   tree_root = nullptr;
-#ifndef NAMED_MATCHES_IN_HASH
+  firstNode = nullptr;
+  firstCharMask = {};
+  firstCharMaskUseful = false;
   for (int bp = 0; bp < cnMatch; bp++) delete brnames[bp];
-#endif
 
   cMatch = 0;
-#ifndef NAMED_MATCHES_IN_HASH
   cnMatch = 0;
-#endif
   endChange = startChange = false;
+#ifdef COLORERMODE
+  usesBackTrace = false;
+#endif
   int start = 0;
-  while (Character::isWhitespace(expr[start])) start++;
-  if (expr[start] == '/')
-    start++;
-  else
+  while (start < len && Character::isWhitespace(expr[start])) start++;
+  if (start >= len || expr[start] != '/')
     return EError::ESYNTAX;
+  start++;
 
   bool ok = false;
   ignoreCase = extend = singleLine = multiLine = false;
@@ -161,12 +156,12 @@ EError CRegExp::setRELow(const UnicodeString& expr)
   tree_root->param0 = cMatch++;
 
   int endPos;
-  EError err = setStructs(tree_root->un.param, UnicodeString(expr, start, len), endPos);
-  if (endPos != len)
-    err = EError::EBRACKETS;
-
+  UnicodeString body(expr, start, len);
+  EError err = setStructs(tree_root->un.param, body, 0, len, endPos);
   if (err != EError::EOK)
     return err;
+  if (endPos != len)
+    return EError::EBRACKETS;
   optimize();
   return EError::EOK;
 }
@@ -205,8 +200,7 @@ void CRegExp::optimize()
       }
       break;
     }
-    if (next->op == EOps::ReSymb || next->op == EOps::ReWord ||
-        next->op == EOps::ReEnum || next->op == EOps::ReNEnum) {
+    if (next->op == EOps::ReSymb || next->op == EOps::ReWord || next->op == EOps::ReEnum) {
       firstNode = next;
     }
     break;
@@ -249,9 +243,8 @@ CRegExp::FirstChars CRegExp::firstCharsForNode(const SRegInfo* re) const
       else result.nullable = true;
       break;
     case EOps::ReEnum:
-    case EOps::ReNEnum:
       for (uint32_t ch = 0; ch < 128; ch++) {
-        if (re->un.charclass->contains(static_cast<wchar>(ch)) == (re->op == EOps::ReEnum)) {
+        if (re->un.charclass->contains(static_cast<wchar>(ch))) {
           result.mask[ch >> 6] |= uint64_t(1) << (ch & 63);
         }
       }
@@ -341,27 +334,27 @@ CRegExp::FirstChars CRegExp::analyzeFirstChars(const SRegInfo* re) const
   return result;
 }
 
-EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos)
+EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int from, int to, int& retPos)
 {
   SRegInfo *next, *temp;
 
   retPos = 0;
-  if (!expr.length())
+  if (from >= to)
     return EError::EOK;
   retPos = -1;
 
   next = re;
-  for (int i = 0; i < expr.length(); i++) {
+  for (int i = from; i < to; i++) {
     // simple character
     if (extend && Character::isWhitespace(expr[i]))
       continue;
     // context return
     if (expr[i] == ')') {
-      retPos = i;
+      retPos = i - from;
       break;
     }
     // next element
-    if (i != 0) {
+    if (i != from) {
       next->next = new SRegInfo;
       next->next->parent = next->parent;
       next->next->prev = next;
@@ -369,6 +362,8 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
     }
     // Escape symbol
     if (expr[i] == '\\') {
+      if (i + 1 >= to)
+        return EError::ESYNTAX;
       int blen;
       switch (expr[i + 1]) {
         case 'd':
@@ -436,10 +431,12 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
           next->op = EOps::ReMetaSymb;
           next->un.metaSymbol = EMetaSymbols::ReEnd;
           break;
-#ifndef NAMED_MATCHES_IN_HASH
         case 'y':
         case 'Y':
+          usesBackTrace = true;
           next->op = (expr[i + 1] == 'y' ? EOps::ReBkTrace : EOps::ReBkTraceN);
+          if (i + 2 >= to)
+            return EError::ESYNTAX;
           next->param0 = UnicodeTools::getHex(expr[i + 2]);
           if (next->param0 != -1) {
             i++;
@@ -460,26 +457,19 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
           }
           break;
 #endif  // COLORERMODE
-#endif  // NAMED_MATCHES_IN_HASH
 
         case 'p':  // \p{name}
         {
+          if (i + 2 >= to)
+            return EError::ESYNTAX;
           next->op = EOps::ReBkBrackName;
           auto br_name = UnicodeTools::getCurlyContent(expr, i + 2);
           if (br_name == nullptr)
             return EError::ESYNTAX;
           blen = br_name->length();
-#ifndef NAMED_MATCHES_IN_HASH
           next->param0 = getBracketNo(br_name.get());
           if (next->param0 == -1)
             return EError::ESYNTAX;
-#else
-          if (br_name->length() && namedMatches && !namedMatches->getItem(br_name)) {
-            return EBRACKETS;
-          }
-          next->param0 = 0;
-          next->namedata = new UnicodeString(br_name);
-#endif
           i += blen + 2;
         } break;
         default:
@@ -525,7 +515,7 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
     next->un.param = nullptr;
     next->param0 = 0;
 
-    if (expr.length() > i + 2) {
+    if (to > i + 2) {
       if (expr[i] == '?' && expr[i + 1] == '#' && expr[i + 2] >= '0' && expr[i + 2] <= '9') {
         next->op = EOps::ReBehind;
         next->param0 = UnicodeTools::getHex(expr[i + 2]);
@@ -539,7 +529,7 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
         continue;
       }
     }
-    if (expr.length() > i + 1) {
+    if (to > i + 1) {
       if (expr[i] == '*' && expr[i + 1] == '?') {
         next->op = EOps::ReNGRangeN;
         next->s = 0;
@@ -599,8 +589,8 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
       int comma = -1;
       bool nonGreedy = false;
       int j;
-      for (j = i; j < expr.length(); j++) {
-        if (expr.length() > j + 1 && expr[j] == '}' && expr[j + 1] == '?') {
+      for (j = i; j < to; j++) {
+        if (to > j + 1 && expr[j] == '}' && expr[j + 1] == '?') {
           en = j;
           nonGreedy = true;
           j++;
@@ -622,11 +612,12 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
         next->e = UnicodeTools::getNumber(&expr, comma + 1, en - comma - 1);
       else
         next->e = next->s;
-      if (next->e == -1)
+      if (next->s < 0)
         return EError::EOP;
-
       if (en - comma == 1)
         next->e = -1;
+      else if (next->e < next->s)
+        return EError::EOP;
       if (next->e == -1)
         next->op = nonGreedy ? EOps::ReNGRangeN : EOps::ReRangeN;
       else
@@ -636,18 +627,15 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
     }
     // ( ... )
     if (expr[i] == '(') {
-      // bool namedBracket = false;
       // perl-like "uncaptured" brackets
-      if (expr.length() >= i + 2 && expr[i + 1] == '?' && expr[i + 2] == ':') {
+      if (to >= i + 2 && expr[i + 1] == '?' && expr[i + 2] == ':') {
         next->op = EOps::ReNamedBrackets;
         next->param0 = -1;
-        // namedBracket = true;
         i += 3;
       }
-      else if (expr.length() > i + 2 && expr[i + 1] == '?' && expr[i + 2] == '{') {
+      else if (to > i + 2 && expr[i + 1] == '?' && expr[i + 2] == '{') {
         // named bracket
         next->op = EOps::ReNamedBrackets;
-        // namedBracket = true;
         auto s_curly = UnicodeTools::getCurlyContent(expr, i + 2);
         if (s_curly == nullptr)
           return EError::EBRACKETS;
@@ -658,34 +646,16 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
           delete br_name;
         }
         else {
-#ifndef NAMED_MATCHES_IN_HASH
-#ifdef CHECKNAMES
-          if (getBracketNo(br_name) != -1) {
-            delete br_name;
-            return EError::EBRACKETS;
-          }
-#endif
           if (cnMatch < NAMED_MATCHES_NUM) {
             next->param0 = cnMatch;
             brnames[cnMatch] = br_name;
             cnMatch++;
           }
-          else
+          else {
+            // HRC schemes may exceed the slot count; extra groups stay non-capturing
             delete br_name;
-#else
-#ifdef CHECKNAMES
-          if (br_name->length() && namedMatches && namedMatches->getItem(br_name)) {
-            delete br_name;
-            return EError::EBRACKETS;
+            next->param0 = -1;
           }
-#endif
-          next->param0 = 0;
-          next->namedata = br_name;
-          if (namedMatches) {
-            SMatch mt = {-1, -1};
-            namedMatches->setItem(br_name, mt);
-          }
-#endif
         }
         i += blen + 4;
       }
@@ -695,13 +665,15 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
           next->param0 = cMatch;
           cMatch++;
         }
+        else
+          next->param0 = -1;
         i += 1;
       }
       next->un.param = new SRegInfo;
       next->un.param->parent = next;
       int endPos;
-      EError err = setStructs(next->un.param, UnicodeString(expr, i), endPos);
-      if (expr.length() - i - endPos == 0)
+      EError err = setStructs(next->un.param, expr, i, to, endPos);
+      if (to - i - endPos == 0)
         return EError::EBRACKETS;
       if (err != EError::EOK)
         return err;
@@ -715,7 +687,6 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
       auto cc = UStr::createCharClass(expr, i, &endPos, ignoreCase);
       if (cc == nullptr)
         return EError::EENUM;
-      //      next->op = (exprn[i] == ReEnumS) ? ReEnum : ReNEnum;
       next->op = EOps::ReEnum;
       next->un.charclass = cc.release();
       i = endPos;
@@ -743,9 +714,9 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
     if (wsize > 1) {
       reafterword = resymb;
       resymb = reword;
-      UChar* wcword = new UChar[wsize];
+      auto* word = new UnicodeString();
       for (int idx = 0; idx < wsize; idx++) {
-        wcword[idx] = resymb->un.symbol;
+        word->append(resymb->un.symbol);
         SRegInfo* retmp = resymb;
         resymb = resymb->next;
         retmp->next = nullptr;
@@ -753,8 +724,7 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
           delete retmp;
       }
       reword->op = EOps::ReWord;
-      reword->un.word = new UnicodeString(wcword, wsize);
-      delete[] wcword;
+      reword->un.word = word;
       reword->next = reafterword;
       if (reafterword)
         reafterword->prev = reword;
@@ -830,7 +800,7 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
     next = next->next;
   }
   if (retPos == -1)
-    retPos = expr.length();
+    retPos = to - from;
   return EError::EOK;
 }
 
@@ -838,7 +808,7 @@ EError CRegExp::setStructs(SRegInfo*& re, const UnicodeString& expr, int& retPos
 // parsing
 ////////////////////////////////////////////////////////////////////////////
 
-static bool isLineBreak(wchar_t c)
+static bool isLineBreak(wchar c)
 {
    return c == 0x0A || c == 0x0B || c == 0x0C || c == 0x0D || c == 0x85 || c == 0x2028 || c == 0x2029;
 }
@@ -944,10 +914,10 @@ bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
   }
 }
 
-void CRegExp::check_stack(bool res, SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, int* action)
+void CRegExp::check_stack(bool res, SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, ReAction* action)
 {
   if (count_elem == 0) {
-    *action = res;
+    *action = res ? rea_True : rea_False;
     return;
   }
 
@@ -964,21 +934,34 @@ void CRegExp::check_stack(bool res, SRegInfo** re, SRegInfo** prev, int* toParse
   *leftenter = ne.leftenter;
 }
 
-void CRegExp::insert_stack(SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, int ifTrueReturn,
-                           int ifFalseReturn, SRegInfo** re2, SRegInfo** prev2, int toParse2)
+bool CRegExp::matchCopiedRange(const UnicodeString& src, int from, int to, int& toParse, bool icase) const
 {
-  if (RegExpStack_Size == 0) {
-    CRegExp::RegExpStack = new StackElem[INIT_MEM_SIZE];
-    RegExpStack_Size = INIT_MEM_SIZE;
+  // Unmatched groups are stored as -1,-1; the classic copy loop then does nothing.
+  if (from < 0 || to < 0)
+    return true;
+  const UnicodeString& pattern = *global_pattern;
+  for (int i = from; i < to; i++) {
+    if (toParse >= end)
+      return false;
+    if (icase) {
+      if (Character::toLowerCase(pattern[toParse]) != Character::toLowerCase(src[i]))
+        return false;
+    }
+    else if (pattern[toParse] != src[i]) {
+      return false;
+    }
+    toParse++;
   }
-  if (RegExpStack_Size == count_elem) {
-    RegExpStack_Size += MEM_INC;
-    StackElem* s = new StackElem[RegExpStack_Size];
-    memcpy(s, CRegExp::RegExpStack, count_elem * sizeof(StackElem));
-    delete[] CRegExp::RegExpStack;
-    CRegExp::RegExpStack = s;
+  return true;
+}
+
+void CRegExp::insert_stack(SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, ReAction ifTrueReturn,
+                           ReAction ifFalseReturn, SRegInfo** re2, SRegInfo** prev2, int toParse2)
+{
+  if (RegExpStack.size() == static_cast<size_t>(count_elem)) {
+    RegExpStack.resize(RegExpStack.empty() ? INIT_MEM_SIZE : RegExpStack.size() + MEM_INC);
   }
-  StackElem& ne = CRegExp::RegExpStack[count_elem++];
+  StackElem& ne = CRegExp::RegExpStack[static_cast<size_t>(count_elem++)];
   ne.re = *re;
   ne.prev = *prev;
   ne.toParse = *toParse;
@@ -1006,15 +989,19 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
   bool leftenter = true;
   bool br = false;
   const UnicodeString& pattern = *global_pattern;
-  int action = -1;
+  ReAction action = rea_None;
 
   if (!re) {
     re = prev->parent;
     leftenter = false;
   }
   while (true) {
-    while (re || action != -1) {
-      if (re && action == -1)
+    while (re || action != rea_None) {
+      if (++parseSteps > parseStepLimit) {
+        stepBudgetExceeded = true;
+        return false;
+      }
+      if (re && action == rea_None)
         switch (re->op) {
           case EOps::ReEmpty:
             break;
@@ -1037,16 +1024,11 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
                 matches->s[re->param0] = matches->e[re->param0];
             }
             else {
-#ifndef NAMED_MATCHES_IN_HASH
               matches->topnseSanitize(re->param0);
               matches->ns[re->param0] = re->s;
               matches->ne[re->param0] = toParse;
               if (matches->ne[re->param0] < matches->ns[re->param0])
                 matches->ns[re->param0] = matches->ne[re->param0];
-#else
-              SMatch mt = {re->s, toParse};
-              namedMatches->setItem(re->namedata, mt);
-#endif
             }
             break;
           case EOps::ReSymb:
@@ -1097,110 +1079,62 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             }
             toParse++;
             break;
-          case EOps::ReNEnum:
-            if (toParse >= end) {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-            if (re->un.charclass->contains(pattern[toParse])) {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-            toParse++;
-            break;
 #ifdef COLORERMODE
           case EOps::ReBkTrace:
             sv = re->param0;
-            if (!backStr || !backTrace || sv == -1) {
+            if (!backStr || !backTrace || sv < 0 || sv >= MATCHES_NUM) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
-            br = false;
-            for (i = backTrace->s[sv]; i < backTrace->e[sv]; i++) {
-              if (toParse >= end || pattern[toParse] != (*backStr)[i]) {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                br = true;
-                break;
-              }
-              toParse++;
-            }
-            if (br)
+            backTrace->topseSanitize(sv);
+            if (!matchCopiedRange(*backStr, backTrace->s[sv], backTrace->e[sv], toParse, false)) {
+              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
+            }
             break;
           case EOps::ReBkTraceN:
             sv = re->param0;
-            if (!backStr || !backTrace || sv == -1) {
+            if (!backStr || !backTrace || sv < 0 || sv >= MATCHES_NUM) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
-            br = false;
-            for (i = backTrace->s[sv]; i < backTrace->e[sv]; i++) {
-              if (toParse >= end || Character::toLowerCase(pattern[toParse]) != Character::toLowerCase((*backStr)[i])) {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                br = true;
-                break;
-              }
-              toParse++;
-            }
-            if (br)
+            backTrace->topseSanitize(sv);
+            if (!matchCopiedRange(*backStr, backTrace->s[sv], backTrace->e[sv], toParse, true)) {
+              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
+            }
             break;
           case EOps::ReBkTraceName:
-#ifndef NAMED_MATCHES_IN_HASH
             sv = re->param0;
-            if (!backStr || !backTrace || sv == -1) {
+            if (!backStr || !backTrace || sv < 0 || sv >= NAMED_MATCHES_NUM) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
-            br = false;
-            for (i = backTrace->ns[sv]; i < backTrace->ne[sv]; i++) {
-              if (toParse >= end || pattern[toParse] != (*backStr)[i]) {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                br = true;
-                break;
-              }
-              toParse++;
-            }
-            if (br)
+            backTrace->topnseSanitize(sv);
+            if (!matchCopiedRange(*backStr, backTrace->ns[sv], backTrace->ne[sv], toParse, false)) {
+              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
+            }
             break;
-#else
-            // !!!;
-            {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-#endif  // NAMED_MATCHES_IN_HASH
           case EOps::ReBkTraceNName:
-#ifndef NAMED_MATCHES_IN_HASH
             sv = re->param0;
-            if (!backStr || !backTrace || sv == -1) {
+            if (!backStr || !backTrace || sv < 0 || sv >= NAMED_MATCHES_NUM || backTrace->cnMatch <= sv) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
             }
-            br = false;
-            for (i = backTrace->s[sv]; i < backTrace->e[sv]; i++) {
-              if (toParse >= end || Character::toLowerCase(pattern[toParse]) != Character::toLowerCase((*backStr)[i])) {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                br = true;
-                break;
-              }
-              toParse++;
-            }
-            if (br)
+            backTrace->topnseSanitize(sv);
+            if (backTrace->ns[sv] == -1 || backTrace->ne[sv] == -1) {
+              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
               continue;
+            }
+            if (!matchCopiedRange(*backStr, backTrace->ns[sv], backTrace->ne[sv], toParse, true)) {
+              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
+              continue;
+            }
             break;
-#else
-            // !!;
-            {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-#endif  // NAMED_MATCHES_IN_HASH
 #endif  // COLORERMODE
 
           case EOps::ReBkBrackName:
-#ifndef NAMED_MATCHES_IN_HASH
             sv = re->param0;
             if (sv == -1 || cnMatch <= sv) {
               check_stack(false, &re, &prev, &toParse, &leftenter, &action);
@@ -1223,30 +1157,6 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             if (br)
               continue;
             break;
-#else
-          {
-            SMatch* mt = namedMatches->getItem(re->namedata);
-            if (!mt) {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-            if (mt->s == -1 || mt->e == -1) {
-              check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-              continue;
-            }
-            br = false;
-            for (i = mt->s; i < mt->e; i++) {
-              if (toParse >= end || pattern[toParse] != pattern[i]) {
-                check_stack(false, &re, &prev, &toParse, &leftenter, &action);
-                br = true;
-                break;
-              }
-              toParse++;
-            }
-            if (br)
-              continue;
-          } break;
-#endif  // NAMED_MATCHES_IN_HASH
 
           case EOps::ReBkBrack:
             sv = re->param0;
@@ -1415,17 +1325,13 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             leftenter = true;
             continue;
           case EOps::ReBlockOps:
-          case EOps::ReMul:
-          case EOps::RePlus:
-          case EOps::ReQuest:
-          case EOps::ReNGMul:
-          case EOps::ReNGPlus:
-          case EOps::ReNGQuest:
           case EOps::ReSymbolOps:
             break;
         }
 
       switch (action) {
+        case rea_None:
+          break;
         case rea_False:
           if (count_elem) {
             check_stack(false, &re, &prev, &toParse, &leftenter, &action);
@@ -1443,26 +1349,26 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
             return true;
           break;
         case rea_Break:
-          action = -1;
+          action = rea_None;
           break;
         case rea_RangeN_step2:
-          action = -1;
+          action = rea_None;
           insert_stack(&re, &prev, &toParse, &leftenter, rea_True, rea_False, &re->next, &re, toParse);
           continue;
           break;
         case rea_RangeNM_step2:
-          action = -1;
+          action = rea_None;
           insert_stack(&re, &prev, &toParse, &leftenter, rea_True, rea_RangeNM_step3, &re->next, &re, toParse);
           continue;
           break;
         case rea_RangeNM_step3:
-          action = -1;  //-V1037
+          action = rea_None;
           re->param1++;
           check_stack(false, &re, &prev, &toParse, &leftenter, &action);
           continue;
           break;
         case rea_NGRangeN_step2:
-          action = -1;
+          action = rea_None;
           if (re->param0)
             re->param0--;
           re = re->un.param;
@@ -1470,13 +1376,13 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
           continue;
           break;
         case rea_NGRangeNM_step2:
-          action = -1;
+          action = rea_None;
           insert_stack(&re, &prev, &toParse, &leftenter, rea_True, rea_NGRangeNM_step3, &re->un.param, nullptr,
                        toParse);
           continue;
           break;
         case rea_NGRangeNM_step3:
-          action = -1;
+          action = rea_None;
           re->param1++;
           check_stack(false, &re, &prev, &toParse, &leftenter, &action);
           continue;
@@ -1511,8 +1417,6 @@ bool CRegExp::canStartWith(wchar ch) const
       return matchChars(ch, (*firstNode->un.word)[0]);
     case EOps::ReEnum:
       return firstNode->un.charclass->contains(ch);
-    case EOps::ReNEnum:
-      return !firstNode->un.charclass->contains(ch);
     case EOps::ReMetaSymb:
       switch (firstNode->un.metaSymbol) {
         case EMetaSymbols::ReAnyChr:
@@ -1549,10 +1453,7 @@ inline bool CRegExp::quickCheck(int toParse)
     case EOps::ReWord:
       return toParse < end && matchChars((*global_pattern)[toParse], (*firstNode->un.word)[0]);
     case EOps::ReEnum:
-    case EOps::ReNEnum:
-      return toParse < end &&
-             (firstNode->un.charclass->contains((*global_pattern)[toParse]) ==
-              (firstNode->op == EOps::ReEnum));
+      return toParse < end && firstNode->un.charclass->contains((*global_pattern)[toParse]);
     case EOps::ReMetaSymb:
       switch (firstNode->un.metaSymbol) {
 #ifdef COLORERMODE
@@ -1576,6 +1477,13 @@ inline bool CRegExp::parseRE(int pos)
   if (error != EError::EOK)
     return false;
 
+  count_elem = 0;
+  parseSteps = 0;
+  stepBudgetExceeded = false;
+  // Early-out paths never reach the search loop; still drop \m/\M left on a
+  // reused end-RE from the previous parse().
+  startChange = false;
+  endChange = false;
   int toParse = pos;
 
   if (!positionMoves && firstCharMaskUseful) {
@@ -1588,18 +1496,39 @@ inline bool CRegExp::parseRE(int pos)
 
   matches->reset();
   matches->cMatch = cMatch;
-#ifndef NAMED_MATCHES_IN_HASH
   matches->cnMatch = cnMatch;
-#endif
   do {
-    // stack=null;
+    if (positionMoves) {
+      bool skip = false;
+      if (firstCharMaskUseful) {
+        if (toParse >= end) {
+          skip = true;
+        }
+        else {
+          const auto ch = static_cast<uint32_t>((*global_pattern)[toParse]);
+          if (ch < 128 && !(firstCharMask[ch >> 6] & (uint64_t(1) << (ch & 63))))
+            skip = true;
+        }
+      }
+      if (!skip && firstNode && !quickCheck(toParse))
+        skip = true;
+      if (skip) {
+        toParse = ++pos;
+        continue;
+      }
+    }
+    startChange = false;
+    endChange = false;
+    matches->reset();
+    matches->cMatch = cMatch;
+    matches->cnMatch = cnMatch;
     if (lowParse(tree_root, nullptr, toParse)) {
       matches->topseSanitize(cMatch - 1);
-#ifndef NAMED_MATCHES_IN_HASH
       matches->topnseSanitize(cnMatch - 1);
-#endif
       return true;
     }
+    if (stepBudgetExceeded)
+      return false;
     if (!positionMoves)
       return false;
     toParse = ++pos;
@@ -1607,13 +1536,8 @@ inline bool CRegExp::parseRE(int pos)
   return false;
 }
 
-bool CRegExp::parse(const UnicodeString* str, int pos, int eol, SMatches* mtch
-#ifdef NAMED_MATCHES_IN_HASH
-                    ,
-                    PMatchHash nmtch
-#endif
-                    ,
-                    int soScheme, int posMoves)
+bool CRegExp::parse(const UnicodeString* str, int pos, int eol, SMatches* mtch, int soScheme,
+                    int posMoves)
 {
   bool nms = positionMoves;
   if (posMoves != -1)
@@ -1624,20 +1548,12 @@ bool CRegExp::parse(const UnicodeString* str, int pos, int eol, SMatches* mtch
   global_pattern = str;
   end = eol;
   matches = mtch;
-#ifdef NAMED_MATCHES_IN_HASH
-  namedMatches = nmtch;
-#endif
   bool result = parseRE(pos);
   positionMoves = nms;
   return result;
 }
 
-bool CRegExp::parse(const UnicodeString* str, SMatches* mtch
-#ifdef NAMED_MATCHES_IN_HASH
-                    ,
-                    PMatchHash nmtch
-#endif
-)
+bool CRegExp::parse(const UnicodeString* str, SMatches* mtch)
 {
   end = str->length();
   global_pattern = str;
@@ -1645,9 +1561,6 @@ bool CRegExp::parse(const UnicodeString* str, SMatches* mtch
   schemeStart = 0;
 #endif
   matches = mtch;
-#ifdef NAMED_MATCHES_IN_HASH
-  namedMatches = nmtch;
-#endif
   return parseRE(0);
 }
 
@@ -1657,22 +1570,14 @@ bool CRegExp::parse(const UnicodeString* str, SMatches* mtch
 bool CRegExp::setRE(const UnicodeString* re)
 {
   error = EError::EERROR;
-#ifdef NAMED_MATCHES_IN_HASH
-  PMatchHash oldnamedMatches = namedMatches;
-  SMatchHash tmpMatchHash;
-  namedMatches = &tmpMatchHash;
   error = setRELow(*re);
-  namedMatches = oldnamedMatches;
-#else
-  error = setRELow(*re);
-#endif
   return error == EError::EOK;
 }
-bool CRegExp::isOk()
+bool CRegExp::isOk() const
 {
   return error == EError::EOK;
 }
-EError CRegExp::getError()
+EError CRegExp::getError() const
 {
   return error;
 }
@@ -1683,28 +1588,39 @@ bool CRegExp::setPositionMoves(bool moves)
   return true;
 }
 
-void CRegExp::clearRegExpStack()
+void CRegExp::setParseStepLimit(int limit)
 {
-  CRegExp::RegExpStack_Size = 0;
-  delete[] CRegExp::RegExpStack;
-  CRegExp::RegExpStack = nullptr;
+  parseStepLimit = limit < 1 ? 1 : limit;
 }
 
-#ifndef NAMED_MATCHES_IN_HASH
-int CRegExp::getBracketNo(const UnicodeString* brname)
+int CRegExp::getParseStepLimit() const
+{
+  return parseStepLimit;
+}
+
+bool CRegExp::exceededParseStepLimit() const
+{
+  return stepBudgetExceeded;
+}
+
+void CRegExp::clearRegExpStack()
+{
+  std::vector<StackElem>().swap(RegExpStack);
+}
+
+int CRegExp::getBracketNo(const UnicodeString* brname) const
 {
   for (int brn = 0; brn < cnMatch; brn++)
     if (UStr::caseCompare(*brname, *brnames[brn]) == 0)
       return brn;
   return -1;
 }
-UnicodeString* CRegExp::getBracketName(int no)
+const UnicodeString* CRegExp::getBracketName(int no) const
 {
   if (no >= cnMatch)
     return nullptr;
   return brnames[no];
 }
-#endif
 
 #ifdef COLORERMODE
 bool CRegExp::setBackRE(CRegExp* bkre)
@@ -1718,11 +1634,16 @@ bool CRegExp::setBackTrace(const UnicodeString* str, SMatches* trace)
   backStr = str;
   return true;
 }
-bool CRegExp::getBackTrace(const UnicodeString** str, SMatches** trace)
+bool CRegExp::getBackTrace(const UnicodeString** str, SMatches** trace) const
 {
   *str = backStr;
   *trace = backTrace;
   return true;
+}
+
+bool CRegExp::hasBackTrace() const
+{
+  return usesBackTrace;
 }
 
 #endif

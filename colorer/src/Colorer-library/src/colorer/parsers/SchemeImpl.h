@@ -7,7 +7,6 @@
 #include <vector>
 #include "colorer/Scheme.h"
 #include "colorer/TextParser.h"
-#include "colorer/cregexp/cregexp.h"
 #include "colorer/parsers/SchemeNode.h"
 
 class FileType;

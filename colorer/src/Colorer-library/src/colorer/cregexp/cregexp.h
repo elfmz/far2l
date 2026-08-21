@@ -3,6 +3,7 @@
 
 #include "colorer/Common.h"
 #include <array>
+#include <vector>
 
 /**
     @addtogroup cregexp Regular Expressions
@@ -15,69 +16,29 @@
 /// regexp compatibility mode
 #define COLORERMODE
 
-/// use hashes for saving named brackets
-//#define NAMED_MATCHES_IN_HASH
-
-/// check duplicate brackets
-//#define CHECKNAMES
-
-#if defined COLORERMODE && defined NAMED_MATCHES_IN_HASH
-#error COLORERMODE && NAMED_MATCHES_IN_HASH not realyzed yet
-#endif
-
 /// numeric matches num
 #define MATCHES_NUM 0x10
-
-#if !defined NAMED_MATCHES_IN_HASH
 // number of named brackets (access through SMatches.ns)
 #define NAMED_MATCHES_NUM 0x10
-#endif
-
-#ifdef NAMED_MATCHES_IN_HASH
-struct SMatch
-{
-  int s, e;
-};
-// you can redefine this class
-typedef class SMatchHash
-{
- public:
-  SMatch* setItem(const UnicodeString* name, SMatch& smatch)
-  {
-    return nullptr;
-  };
-  SMatch* getItem(const UnicodeString* name)
-  {
-    return nullptr;
-  };
-} * PMatchHash;
-#endif
 
 enum class EOps {
-  ReBlockOps,
-  ReMul,        // *
-  RePlus,       // +
-  ReQuest,      // ?
-  ReNGMul,      // *?
-  ReNGPlus,     // +?
-  ReNGQuest,    // ??
-  ReRangeN,     // {n,}
-  ReRangeNM,    // {n,m}
-  ReNGRangeN,   // {n,}?
-  ReNGRangeNM,  // {n,m}?
+  ReBlockOps,   // sentinel: postfix operators follow
+  ReRangeN,     // {n,}  *  +
+  ReRangeNM,    // {n,m} ?
+  ReNGRangeN,   // {n,}? *? +?
+  ReNGRangeNM,  // {n,m}? ??
   ReOr,         // |
   ReBehind,     // ?#n
   ReNBehind,    // ?~n
   ReAhead,      // ?=
   ReNAhead,     // ?!
 
-  ReSymbolOps,
+  ReSymbolOps,  // sentinel: atoms follow
   ReEmpty,
   ReMetaSymb,       // \W \s \d ...
   ReSymb,           // a b c ...
   ReWord,           // word...
-  ReEnum,           // []
-  ReNEnum,          // [^]
+  ReEnum,           // [] [^]
   ReBrackets,       // (...)
   ReNamedBrackets,  // (?{name} ...)
 #ifdef COLORERMODE
@@ -131,11 +92,9 @@ struct SMatches
     s[0] = e[0] = -1;
     cMatch = 0;
     topse = 0;
-#if !defined NAMED_MATCHES_IN_HASH
     ns[0] = ne[0] = -1;
     cnMatch = 0;
     topnse = 0;
-#endif
   }
 
   void topseSanitize(int cur); // use before accessing s[cur]/e[cur] to ensure their lazy inited to -1
@@ -144,13 +103,11 @@ struct SMatches
   int topse;
   int cMatch;
 
-#if !defined NAMED_MATCHES_IN_HASH
   void topnseSanitize(int cur); // use before accessing ns[cur]/ne[cur] to ensure their lazy inited to -1
   int ns[NAMED_MATCHES_NUM];
   int ne[NAMED_MATCHES_NUM];
   int topnse;
   int cnMatch;
-#endif
 };
 
 /** Regular expressions internal tree node.
@@ -161,6 +118,10 @@ class SRegInfo
  public:
   SRegInfo();
   ~SRegInfo();
+  SRegInfo(const SRegInfo&) = delete;
+  SRegInfo& operator=(const SRegInfo&) = delete;
+  SRegInfo(SRegInfo&&) = delete;
+  SRegInfo& operator=(SRegInfo&&) = delete;
 
   union {
     EMetaSymbols metaSymbol;
@@ -169,9 +130,6 @@ class SRegInfo
     CharacterClass* charclass;
     SRegInfo* param;
   } un;
-#if defined NAMED_MATCHES_IN_HASH
-  UnicodeString* namedata;
-#endif
   SRegInfo* parent = nullptr;
   SRegInfo* next = nullptr;
   SRegInfo* prev = nullptr;
@@ -184,23 +142,8 @@ class SRegInfo
   EOps op = EOps::ReEmpty;
 };
 
-struct StackElem
-{
-  // local variable
-  SRegInfo* re;
-  SRegInfo* prev;
-  int toParse;
-  bool leftenter;
-  // step if function return true
-  int ifTrueReturn;
-  // step if function return false
-  int ifFalseReturn;
-};
-
-#define INIT_MEM_SIZE 512
-#define MEM_INC 128
-
 enum ReAction {
+  rea_None = -1,
   rea_False = 0,
   rea_True = 1,
   rea_Break,
@@ -211,6 +154,20 @@ enum ReAction {
   rea_NGRangeNM_step2,
   rea_NGRangeNM_step3
 };
+
+struct StackElem
+{
+  // local variable
+  SRegInfo* re;
+  SRegInfo* prev;
+  int toParse;
+  bool leftenter;
+  ReAction ifTrueReturn;
+  ReAction ifFalseReturn;
+};
+
+#define INIT_MEM_SIZE 512
+#define MEM_INC 128
 /** Regular Expression compiler and matcher.
     Colorer regular expressions library cregexp.
 
@@ -251,7 +208,7 @@ enum ReAction {
      - \\yN \\YN \\y{name} \\Y{name} - back reference into another RE's bracket.
 
 \par 1.3. Perl compatibility.
-   - Modifiers //ismx
+   - Modifiers //isx
    - \\ p{name} - back reference to named bracket (but not named property as in Perl!)
    - No POSIX character classes support.
 
@@ -263,7 +220,8 @@ enum ReAction {
    - No surrogate symbols support,
    - No string length changes on case mappings (only 1 <-> 1 mappings),
 \par 2.2. Algorithmic problems:
-   - Stack recursion implementation.
+   - Explicit parse stack (grows as needed and is reused by all CRegExp
+     instances; matching is single-threaded).
 
     @ingroup cregexp
 */
@@ -280,29 +238,33 @@ class CRegExp
   */
   CRegExp(const UnicodeString* text);
   ~CRegExp();
+  CRegExp(const CRegExp&) = delete;
+  CRegExp& operator=(const CRegExp&) = delete;
+  CRegExp(CRegExp&&) = delete;
+  CRegExp& operator=(CRegExp&&) = delete;
 
   /**
     Is compilied RE well-formed.
   */
-  bool isOk();
+  bool isOk() const;
 
   /**
     Returns information about RE compilation error.
   */
-  EError getError();
+  EError getError() const;
 
   /**
     Tells RE parser, that it must make moves on tested string while RE matching.
   */
   bool setPositionMoves(bool moves);
   /**
-    Returns count of named brackets.
+    Returns named bracket index, or -1 if the name is unknown.
   */
-  int getBracketNo(const UnicodeString* brname);
+  int getBracketNo(const UnicodeString* brname) const;
   /**
-    Returns named bracked name by it's index.
+    Returns named bracket name by its index. Owned by this CRegExp.
   */
-  UnicodeString* getBracketName(int no);
+  const UnicodeString* getBracketName(int no) const;
 #ifdef COLORERMODE
   bool setBackRE(CRegExp* bkre);
   /**
@@ -312,22 +274,17 @@ class CRegExp
   /**
     Returns current RE object, used for backreferences with \y \Y operators.
   */
-  bool getBackTrace(const UnicodeString** str, SMatches** trace);
+  bool getBackTrace(const UnicodeString** str, SMatches** trace) const;
+  /**
+    True if this RE contains \y / \Y backtrace operators and needs the start-line copy.
+  */
+  bool hasBackTrace() const;
 #endif
   /**
     Compiles specified regular expression and drops all
     previous structures.
   */
   bool setRE(const UnicodeString* re);
-#ifdef NAMED_MATCHES_IN_HASH
-  /** Runs RE parser against input string @c str
-   */
-  bool parse(const UnicodeString* str, SMatches* mtch, SMatchHash* nmtch = nullptr);
-  /** Runs RE parser against input string @c str
-   */
-  bool parse(const UnicodeString* str, int pos, int eol, SMatches* mtch,
-             SMatchHash* nmtch = nullptr, int soscheme = 0, int moves = -1);
-#else
   /** Runs RE parser against input string @c str
    */
   bool parse(const UnicodeString* str, SMatches* mtch);
@@ -335,8 +292,14 @@ class CRegExp
    */
   bool parse(const UnicodeString* str, int pos, int eol, SMatches* mtch, int soscheme = 0,
              int moves = -1);
-#endif
   bool canStartWith(wchar ch) const;
+  /**
+   * Caps backtracking steps in one parse() call. When exceeded, the match
+   * fails (it is not a wall-clock quantum). Default 1 000 000.
+   */
+  void setParseStepLimit(int limit);
+  int getParseStepLimit() const;
+  bool exceededParseStepLimit() const;
 
  private:
   bool ignoreCase = false;
@@ -353,6 +316,7 @@ class CRegExp
   CRegExp* backRE = nullptr;
   const UnicodeString* backStr = nullptr;
   SMatches* backTrace = nullptr;
+  bool usesBackTrace = false;
   int schemeStart = 0;
 #endif
   bool startChange = false;
@@ -363,16 +327,12 @@ class CRegExp
   SMatches* matches = nullptr;
   int cMatch = 0;
 
-#if !defined NAMED_MATCHES_IN_HASH
   UnicodeString* brnames[NAMED_MATCHES_NUM] = {};
   int cnMatch = 0;
-#else
-  SMatchHash* namedMatches = nullptr;
-#endif
 
   void init();
   EError setRELow(const UnicodeString& re);
-  EError setStructs(SRegInfo*&, const UnicodeString& expr, int& endPos);
+  EError setStructs(SRegInfo*&, const UnicodeString& expr, int from, int to, int& endPos);
 
   bool matchChars(wchar one, wchar another) const;
   struct FirstChars
@@ -387,17 +347,20 @@ class CRegExp
   bool quickCheck(int toParse);
   bool isWordBoundary(int toParse);
   bool checkMetaSymbol(EMetaSymbols metaSymbol, int& toParse);
+  bool matchCopiedRange(const UnicodeString& src, int from, int to, int& toParse, bool icase) const;
   bool lowParse(SRegInfo* re, SRegInfo* prev, int toParse);
   bool parseRE(int toParse);
 
   int count_elem;
+  int parseSteps = 0;
+  int parseStepLimit = 1000000;
+  bool stepBudgetExceeded = false;
   void check_stack(bool res, SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter,
-                   int* action);
-  void insert_stack(SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, int ifTrueReturn,
-                    int ifFalseReturn, SRegInfo** re2, SRegInfo** prev2, int toParse2);
+                   ReAction* action);
+  void insert_stack(SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, ReAction ifTrueReturn,
+                    ReAction ifFalseReturn, SRegInfo** re2, SRegInfo** prev2, int toParse2);
 
-  static StackElem* RegExpStack;
-  static int RegExpStack_Size;
+  static std::vector<StackElem> RegExpStack;
 
  public:
   static void clearRegExpStack();

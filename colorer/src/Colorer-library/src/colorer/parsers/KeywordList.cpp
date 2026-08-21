@@ -27,7 +27,7 @@ void KeywordList::sortList() // sort and remove dups
   KeywordInfo* new_end = std::unique(kwList, kwList + count, [&](const KeywordInfo& a, const KeywordInfo& b) {
       return a.region == b.region && a.isSymbol == b.isSymbol && a.keyword->compare(*b.keyword) == 0; // indexOfShorter is irrelevant now
   });
-  count = new_end - kwList;
+  count = static_cast<int>(new_end - kwList);
 }
 
 /* Searches previous elements num with same partial name

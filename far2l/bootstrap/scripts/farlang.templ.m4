@@ -8154,6 +8154,17 @@ EditSearchSearch
 "Шукати"
 "Шукаць"
 
+EditSearchAll
+"Все"
+"All"
+"Všechny"
+"Alles"
+"Mind"
+"Wszystko"
+"Todo"
+"Всі"
+"Усё"
+
 EditSearchCancel
 "Отменить"
 "Cancel"
@@ -8221,6 +8232,28 @@ EditNotFound
 "No se puede encontrar la cadena"
 "Рядок не знайдено"
 "Радок не знойдзены"
+
+EditSearchTooMany
+"Слишком много вхождений, уточните строку поиска"
+"Too many occurrences, refine the search string"
+"Příliš mnoho výskytů, upřesněte hledaný řetězec"
+"Zu viele Fundstellen, Suchbegriff eingrenzen"
+"Too many occurrences, refine the search string"
+"Zbyt wiele wystąpień, uściślij szukany tekst"
+"Demasiadas ocurrencias, refine la cadena de búsqueda"
+"Забагато входжень, уточніть рядок пошуку"
+"Занадта шмат уваходжаняў, удакладніце радок пошуку"
+
+EditSearchStatistics
+"Вхождений: %d, строк: %d"
+"Occurrences: %d, lines: %d"
+"Nalezených: %d, řádky: %d"
+"Vorkommen: %d, Zeilen: %d"
+"Occurrences: %d, lines: %d"
+"Wystąpień: %d, linii: %d"
+"Frecuencia: %d, líneas: %d"
+"Входжень: %d, рядків: %d"
+"Уваходжаняў: %d, радкоў: %d"
 
 EditEmptySearchField
 "Пустое поле поиска"

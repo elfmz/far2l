@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
+#include "scrbuf.hpp"
 #include "farcolors.hpp"
 #include "config.hpp"
 #include "processname.hpp"
@@ -460,6 +461,8 @@ int VMenu::AddItem(const MenuItemEx *NewItem, int PosAdd)
 	// Item[PosAdd]->AmpPos = NewItem->AmpPos;
 	Item[PosAdd]->AmpPos = -1;
 	Item[PosAdd]->PrefixLen = NewItem->PrefixLen;
+	Item[PosAdd]->HiliteStart = NewItem->HiliteStart;
+	Item[PosAdd]->HiliteLength = NewItem->HiliteLength;
 	// Item[PosAdd]->ShowPos = NewItem->ShowPos;
 	Item[PosAdd]->ShowPos = 0;
 
@@ -492,6 +495,9 @@ int VMenu::UpdateItem(const FarListUpdate *NewItem)
 		FarList2MenuItem(&NewItem->Item, &MItem);
 
 		PItem->strName = MItem.strName;
+		// текст пункта заменён - старая подсветка к нему уже не относится
+		PItem->HiliteStart = 0;
+		PItem->HiliteLength = 0;
 
 		UpdateItemFlags(NewItem->Index, MItem.Flags);
 
@@ -1986,6 +1992,36 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					int Width = X2 - WhereX() + (BoxType == NO_BOX ? 1 : 0);
 					if (Width > 0)
 						FS << fmt::Expand(Width) << L"";
+				}
+
+				// подсветка произвольного фрагмента пункта (HiliteStart/HiliteLength)
+				if (Item[I]->HiliteLength > 0) {
+					const FARString &ItemName = Item[I]->strName;
+					const int NameLen = (int)ItemName.GetLength();
+					const int HiFrom = std::max(Item[I]->HiliteStart, ShowPos);
+					const int HiTo = std::min(Item[I]->HiliteStart + Item[I]->HiliteLength, NameLen);
+
+					if (HiTo > HiFrom) {
+						// смещения внутри строки заданы в символах, а на экране нужны ячейки;
+						// без VMENU_SHOWAMPERSAND пункт рисуется через HiText(), который съедает
+						// амперсанды, так что и ячейки надо считать точно так же
+						const FARString strUpToFrom(ItemName.CPtr() + ShowPos, HiFrom - ShowPos);
+						const FARString strUpToTo(ItemName.CPtr() + ShowPos, HiTo - ShowPos);
+						const bool ShowAmpersand = CheckFlags(VMENU_SHOWAMPERSAND);
+						const int FromCell = ShowAmpersand
+							? (int)strUpToFrom.CellsCount()
+							: HiStrCellsCount(strUpToFrom);
+						const int ToCell = ShowAmpersand
+							? (int)strUpToTo.CellsCount()
+							: HiStrCellsCount(strUpToTo);
+
+						if (FromCell < MaxLineWidth) {
+							const int TextX = (BoxType != NO_BOX ? X1 + 1 : X1) + 1;	// +1 - место под "галочку"
+							ScrBuf.ApplyColor(TextX + FromCell, Y, TextX + Min(ToCell, MaxLineWidth) - 1, Y,
+									Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorHSelect
+																		: VMenuColorHilite]);
+						}
+					}
 				}
 
 				if (Item[I]->Flags & MIF_SUBMENU) {

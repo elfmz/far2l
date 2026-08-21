@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "wakeful.hpp"
 #include "codepage.hpp"
+#include "vmenu.hpp"
 #include <algorithm>
 
 static int ReplaceMode, ReplaceAll;
@@ -4890,6 +4891,7 @@ BOOL Editor::Search(int Next)
 	FARString strMsgStr;
 	const wchar_t *TextHistoryName = L"SearchText", *ReplaceHistoryName = L"ReplaceText";
 	int CurPos, Case, WholeWords, ReverseSearch, SelectFound, Regexp, Match, NewNumLine, UserBreak;
+	int FindAll = FALSE;
 
 	if (Next && strLastSearchStr.IsEmpty())
 		return TRUE;
@@ -4914,10 +4916,14 @@ BOOL Editor::Search(int Next)
 			}
 		}
 
-		if (!GetSearchReplaceString(ReplaceMode, &strSearchStr, &strReplaceStr, TextHistoryName,
-					ReplaceHistoryName, &Case, &WholeWords, &ReverseSearch, &SelectFound, &Regexp,
-					L"EditorSearch"))
+		const int DlgResult = GetSearchReplaceString(ReplaceMode, &strSearchStr, &strReplaceStr,
+				TextHistoryName, ReplaceHistoryName, &Case, &WholeWords, &ReverseSearch, &SelectFound,
+				&Regexp, L"EditorSearch", !ReplaceMode);
+
+		if (DlgResult == SEARCHDLG_CANCEL)
 			return FALSE;
+
+		FindAll = (DlgResult == SEARCHDLG_ALL);
 	}
 
 	strLastSearchStr = strSearchStr;
@@ -4931,6 +4937,10 @@ BOOL Editor::Search(int Next)
 
 	if (strSearchStr.IsEmpty())
 		return TRUE;
+
+	// нажата кнопка "Все" - собираем все вхождения и показываем их списком
+	if (FindAll)
+		return SearchAll(strSearchStr, Case, WholeWords, Regexp, SelectFound);
 
 	// LastSuccessfulReplaceMode=ReplaceMode;
 
@@ -5251,6 +5261,246 @@ BOOL Editor::Search(int Next)
 		Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditNotFound, strMsgStr, Msg::Ok);
 
 	return TRUE;
+}
+
+/*
+	Поиск всех вхождений сразу - кнопка "Все" в диалоге поиска (как в far3).
+	Все найденные вхождения показываются списком, по Enter выполняется переход к выбранному.
+*/
+BOOL Editor::SearchAll(const FARString &strSearchStr, int Case, int WholeWords, int Regexp, int SelectFound)
+{
+	std::vector<EditorFoundCoord> FoundItems;
+	const EditorFindAllResult Result =
+			CollectFoundItems(strSearchStr, Case, WholeWords, Regexp, FoundItems);
+
+	Show();
+
+	switch (Result) {
+		case EditorFindAllResult::Aborted:
+			// пользователь отказался от поиска - показывать собранную часть незачем
+			return TRUE;
+
+		case EditorFindAllResult::TooMany:
+			Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditSearchTooMany, Msg::Ok);
+			return TRUE;
+
+		case EditorFindAllResult::Completed:
+			break;
+	}
+
+	if (FoundItems.empty()) {
+		FARString strMsgStr = strSearchStr;
+		InsertQuote(strMsgStr);
+		Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditNotFound, strMsgStr, Msg::Ok);
+		return TRUE;
+	}
+
+	ShowFoundItems(FoundItems, SelectFound);
+	return TRUE;
+}
+
+/*
+	Пробегаем по всему файлу и собираем координаты всех вхождений строки поиска.
+	Если поиск не дошёл до конца файла (прерван пользователем или уперся в ограничение
+	на количество вхождений), то собранное к этому моменту показывать нельзя - неполный
+	список выглядел бы как полный.
+*/
+EditorFindAllResult Editor::CollectFoundItems(const FARString &strSearchStr, int Case, int WholeWords,
+		int Regexp, std::vector<EditorFoundCoord> &FoundItems)
+{
+	// столько вхождений уже не просмотреть глазами, а список из них съест сотни мегабайт
+	const size_t MaxFoundItems = 100000;
+
+	TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
+	FARString strMsgStr = strSearchStr;
+	InsertQuote(strMsgStr);
+	SetCursorType(FALSE, -1);
+	wakeful W;
+
+	FARString strReplaceStr;
+	DWORD LastRedraw = 0;
+	int LineNumber = 0;
+
+	for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next, ++LineNumber) {
+		const DWORD CurTime = WINPORT(GetTickCount)();
+
+		if (CurTime - LastRedraw > RedrawTimeout) {
+			LastRedraw = CurTime;
+			SetCursorType(FALSE, -1);
+			EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr,
+					ToPercent64(LineNumber, NumLastLine));
+
+			if (CheckForEscSilent() && ConfirmAbortOp())
+				return EditorFindAllResult::Aborted;
+		}
+
+		// Edit::Search двигает позицию в строке, поэтому запомним и восстановим её
+		const int SavedCurPos = CurPtr->GetCurPos();
+		const int Length = CurPtr->GetLength();
+		bool TooMany = false;
+
+		for (int CurPos = 0; CurPos <= Length;) {
+			int SearchLength = 0;
+
+			if (!CurPtr->Search(strSearchStr, strReplaceStr, CurPos, Case, WholeWords, FALSE, Regexp,
+						&SearchLength))
+				break;
+
+			const int FoundPos = CurPtr->GetCurPos();
+			FoundItems.emplace_back(EditorFoundCoord{LineNumber, FoundPos, SearchLength});
+
+			if (FoundItems.size() >= MaxFoundItems) {
+				TooMany = true;
+				break;
+			}
+
+			// совпадение нулевой длины (возможно для регулярного выражения) не должно зациклить поиск
+			CurPos = FoundPos + (SearchLength > 0 ? SearchLength : 1);
+		}
+
+		CurPtr->SetCurPos(SavedCurPos);
+		CurPtr->Compact();
+
+		if (TooMany)
+			return EditorFindAllResult::TooMany;
+	}
+
+	return EditorFindAllResult::Completed;
+}
+
+/*
+	Показать список найденных вхождений и перейти к выбранному в нем.
+*/
+void Editor::ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int SelectFound)
+{
+	// ширина колонки = количество десятичных разрядов в максимальном значении
+	const auto DigitsCount = [](int Value) {
+		int Count = 1;
+
+		for (; Value >= 10; Value/= 10)
+			++Count;
+
+		return Count;
+	};
+
+	int MaxLine = 0, MaxPos = 0, UniqueLines = 0, LastLine = -1;
+
+	for (const auto &Coord : FoundItems) {
+		if (Coord.Line != LastLine) {
+			LastLine = Coord.Line;
+			++UniqueLines;
+		}
+
+		MaxLine = Max(MaxLine, Coord.Line);
+		MaxPos = Max(MaxPos, Coord.Pos);
+	}
+
+	const int LineNumWidth = DigitsCount(MaxLine + 1);
+	const int PosWidth = DigitsCount(MaxPos + 1);
+
+	FARString strTitle;
+	strTitle.Format(Msg::EditSearchStatistics, static_cast<int>(FoundItems.size()), UniqueLines);
+
+	// список показываем в нижней части экрана - так же, как это делает far3
+	const int MenuY1 = Max(0, ScrY - 20);
+	const int VisibleCount =
+			Min(Min(static_cast<int>(FoundItems.size()), 10), Max(1, ScrY - MenuY1 - 1));
+	const int MenuY2 = MenuY1 + VisibleCount + 1;
+
+	size_t Index = FoundItems.size();
+
+	// меню живет только внутри этого блока: его деструктор восстанавливает экран, каким тот был
+	// до показа списка, поэтому переходить к найденному надо уже после закрытия блока
+	{
+		VMenu FindAllList(strTitle, nullptr, 0, VisibleCount);
+		FindAllList.SetFlags(VMENU_WRAPMODE | VMENU_SHOWAMPERSAND);
+		FindAllList.SetPosition(-1, MenuY1, 0, MenuY2);
+
+		FARString strLineText;
+		int CachedLineNumber = -1;
+
+		for (size_t I = 0; I < FoundItems.size(); ++I) {
+			const EditorFoundCoord &Coord = FoundItems[I];
+
+			if (Coord.Line != CachedLineNumber) {
+				CachedLineNumber = Coord.Line;
+				strLineText.Clear();
+
+				if (Edit *LinePtr = GetStringByNumber(Coord.Line)) {
+					LinePtr->GetString(strLineText);
+					LinePtr->Compact();
+				}
+
+				// табуляции в меню не разворачиваются, да и слишком длинные строки там ни к чему
+				ReplaceStrings(strLineText, L"\t", L" ");
+
+				if (strLineText.GetLength() > 512)
+					strLineText.Truncate(512);
+			}
+
+			FARString strItem;
+			strItem.Format(L" %*d %lc %*d %lc ", LineNumWidth, Coord.Line + 1, BoxSymbols[BS_V1], PosWidth,
+					Coord.Pos + 1, BoxSymbols[BS_V1]);
+			// колонки с номерами строки и позиции показываем "неважным" префиксом
+			const int PrefixLen = (int)strItem.GetLength();
+			strItem+= strLineText;
+
+			MenuItemEx ListItem;
+			ListItem.strName = strItem;
+			ListItem.PrefixLen = PrefixLen;
+			// табуляции заменены на пробелы один в один, так что позиция в строке совпадает с позицией
+			// в пункте
+			ListItem.HiliteStart = PrefixLen + Coord.Pos;
+			ListItem.HiliteLength = Coord.SearchLen;
+			FindAllList.SetUserData(reinterpret_cast<void *>(static_cast<DWORD_PTR>(I)), sizeof(void *),
+					FindAllList.AddItem(&ListItem));
+		}
+
+		FindAllList.Process();
+
+		const int ExitCode = FindAllList.Modal::GetExitCode();
+
+		if (ExitCode < 0)
+			return;
+
+		Index = static_cast<size_t>(
+				reinterpret_cast<DWORD_PTR>(FindAllList.GetUserData(nullptr, 0, ExitCode)));
+	}
+
+	if (Index < FoundItems.size())
+		SelectFoundPattern(FoundItems[Index], SelectFound);
+}
+
+/*
+	Переход к найденному вхождению с опциональным его выделением.
+*/
+void Editor::SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound)
+{
+	if (!EdOpt.PersistentBlocks || SelectFound)
+		UnmarkBlockAndShowIt();
+
+	GoToLine(Coord.Line);
+	CurLine->SetCurPos(Coord.Pos);
+
+	if (SelectFound) {
+		Pasting++;
+		Lock();
+		Flags.Set(FEDITOR_MARKINGBLOCK);
+		CurLine->Select(Coord.Pos, Coord.Pos + Coord.SearchLen);
+		BlockStart = CurLine;
+		BlockStartLine = Coord.Line;
+		Unlock();
+		Pasting--;
+	}
+
+	const int LeftPos = CurLine->GetLeftPos();
+	const int CellCurPos = CurLine->GetCellCurPos();
+
+	if (ObjWidth() > 8 && CellCurPos - LeftPos + Coord.SearchLen > ObjWidth() - 8)
+		CurLine->SetLeftPos(CellCurPos + Coord.SearchLen - ObjWidth() + 8);
+
+	RememberWordWrapPreferredCellPos();
+	Show();
 }
 
 void Editor::Paste(const wchar_t *Src)

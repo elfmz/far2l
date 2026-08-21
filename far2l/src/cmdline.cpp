@@ -687,11 +687,11 @@ int CommandLine::ProcessKey(FarKey Key)
 int CommandLine::ProcessKeyIfVisible(FarKey Key)
 { // this handles key events only when CmdLine is visible
 	// any key other than Alt+. breaks yank-last-arg cycling
-	if (Key != KEY_ALTDOT && Key != KEY_NONE)
+	if (Key != KEY_CTRLALTDOT && Key != KEY_NONE)
 		YankLastArgDepth = -1;
 
 	switch (Key) {
-		case KEY_ALTDOT:
+		case KEY_CTRLALTDOT:
 			ProcessKey_YankLastArg();
 			return TRUE;
 

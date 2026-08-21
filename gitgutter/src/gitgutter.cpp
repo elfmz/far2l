@@ -244,6 +244,7 @@ struct EditorState
 	std::wstring file_w;
 	std::string file;
 	std::string repo_root;
+	bool repo_lookup_failed = false;
 	std::vector<std::string> repo_watch_paths;
 	uint64_t repo_watch_state = 0;
 	std::string rel_path;
@@ -926,7 +927,7 @@ static bool GetRepoRoot(const std::string &file_path, std::string &repo_root)
 	const std::string dir = (slash == std::string::npos) ? "." : file_path.substr(0, slash);
 	std::string dir_arg = dir;
 	QuoteCmdArgIfNeed(dir_arg);
-	const std::string cmd = "git -C " + dir_arg + " rev-parse --show-toplevel";
+	const std::string cmd = "git -C " + dir_arg + " rev-parse --show-toplevel 2>/dev/null";
 	std::string out;
 	if (!RunCommand(cmd, out)) {
 		return false;
@@ -1089,6 +1090,7 @@ static void UpdateEditorState(EditorState &st)
 		st.file_w = file_w;
 		st.file = Wide2MB(file_w.c_str());
 		st.repo_root.clear();
+		st.repo_lookup_failed = false;
 		st.repo_watch_paths.clear();
 		st.repo_watch_state = 0;
 		st.rel_path.clear();
@@ -1099,7 +1101,11 @@ static void UpdateEditorState(EditorState &st)
 	}
 
 	if (st.repo_root.empty()) {
-		if (!GetRepoRoot(st.file, st.repo_root)) {
+		if (!st.repo_lookup_failed && !GetRepoRoot(st.file, st.repo_root)) {
+			st.repo_lookup_failed = true;
+		}
+		if (st.repo_root.empty()) {
+			st.dirty = false;
 			return;
 		}
 		RepoStateChanged(st);
@@ -1445,7 +1451,7 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 	return true;
 }
 
-static bool IsCtrlG(const INPUT_RECORD *ir)
+static bool GetCtrlGDirection(const INPUT_RECORD *ir, bool &backward)
 {
 	if (!ir || ir->EventType != KEY_EVENT)
 		return false;
@@ -1458,7 +1464,11 @@ static bool IsCtrlG(const INPUT_RECORD *ir)
 	if ((ke.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0)
 		return false;
 
-	return ke.wVirtualKeyCode == 'G' || ke.uChar.UnicodeChar == 7;
+	if (ke.wVirtualKeyCode != 'G' && ke.uChar.UnicodeChar != 7)
+		return false;
+
+	backward = (ke.dwControlKeyState & SHIFT_PRESSED) != 0;
+	return true;
 }
 
 static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
@@ -1479,9 +1489,27 @@ static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
 	return true;
 }
 
+static bool FindHunkFromLineUp(const EditorState &st, int cur_line, int &line)
+{
+	line = -1;
+	if (st.hunks.empty())
+		return false;
+
+	cur_line = std::max(0, cur_line);
+	for (const Hunk &h : st.hunks) {
+		if (h.start > cur_line)
+			break;
+		line = h.start;
+	}
+	if (line < 0)
+		line = st.hunks.back().start;
+	return true;
+}
+
 static bool HandleCtrlG(const INPUT_RECORD *ir)
 {
-	if (!IsCtrlG(ir))
+	bool backward = false;
+	if (!GetCtrlGDirection(ir, backward))
 		return false;
 	if (g_popup_active || g_pending_popup.active)
 		return true;
@@ -1495,7 +1523,8 @@ static bool HandleCtrlG(const INPUT_RECORD *ir)
 		return false;
 
 	int line = -1;
-	if (!FindHunkFromLineDown(it->second, ei.CurLine, line))
+	if (!(backward ? FindHunkFromLineUp(it->second, ei.CurLine, line)
+				  : FindHunkFromLineDown(it->second, ei.CurLine, line)))
 		return false;
 
 	g_pending_popup.active = true;

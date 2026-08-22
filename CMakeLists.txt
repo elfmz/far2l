@@ -426,6 +426,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED JUMPWORD OR JUMPWORD)
+    message(STATUS "JUMPWORD plugin enabled")
+    add_subdirectory (jumpword)
+else()
+    message(STATUS "${ColorRed}JUMPWORD plugin disabled due to JUMPWORD=${JUMPWORD}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/jumpword/plug/jumpword.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED ARCLITE OR ARCLITE)
     message(STATUS "ARCLITE plugin enabled")
     add_subdirectory (arclite)

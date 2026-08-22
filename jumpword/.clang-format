@@ -1,0 +1,15 @@
+{
+  "BasedOnStyle": "LLVM",
+  "AllowShortIfStatementsOnASingleLine": "true",
+  "AlignAfterOpenBracket": "AlwaysBreak",
+  "AllowShortLoopsOnASingleLine": "true",
+  "AllowShortFunctionsOnASingleLine": "false",
+  "AlignConsecutiveAssignments": "Consecutive",
+  "AllowAllArgumentsOnNextLine": "false",
+  "BinPackParameters": "false",
+  "BinPackArguments": "false",
+  "ColumnLimit": "100",
+  "IndentWidth": 4,
+  "TabWidth": 4,
+  "UseTab": "Never",
+}

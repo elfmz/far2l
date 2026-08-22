@@ -88,30 +88,27 @@ static bool FileExists(const std::string &path)
 	return access(path.c_str(), F_OK) == 0;
 }
 
-static bool MakeTempFile(std::string &path, FILE *&f)
+static FILE *MakeTempFile(std::string &path)
 {
-	f = nullptr;
 	std::string tmpl = InMyTemp("gitgutter/far2l_gitgutter_XXXXXX");
-	std::vector<char> buf(tmpl.begin(), tmpl.end());
-	buf.push_back('\0');
-	const int fd = mkstemp(buf.data());
+	const int fd = mkstemp(tmpl.data());
 	if (fd == -1) {
-		return false;
+		return nullptr;
 	}
-	f = fdopen(fd, "wb");
+	FILE *f = fdopen(fd, "wb");
 	if (!f) {
 		close(fd);
-		unlink(buf.data());
-		return false;
+		unlink(tmpl.c_str());
+		return nullptr;
 	}
-	path.assign(buf.data());
-	return true;
+	path.swap(tmpl);
+	return f;
 }
 
 static bool WriteTextToTempFile(const std::string &text, std::string &path)
 {
-	FILE *f = nullptr;
-	if (!MakeTempFile(path, f)) {
+	FILE *f = MakeTempFile(path);
+	if (!f) {
 		return false;
 	}
 	if (!text.empty()) {
@@ -124,17 +121,29 @@ static bool WriteTextToTempFile(const std::string &text, std::string &path)
 static bool RunCommand(const std::string &cmd, std::string &out)
 {
 	out.clear();
-	FILE *pipe = popen(cmd.c_str(), "r");
-	if (!pipe) {
-		return false;
-	}
-	char buffer[4096];
-	while (fgets(buffer, sizeof(buffer), pipe)) {
-		out.append(buffer);
-	}
-	const int rc = pclose(pipe);
-	return rc == 0 || !out.empty();
+	return POpen(out, cmd.c_str());
 }
+
+static std::wstring FormatColorHex(uint32_t value)
+{
+	wchar_t buf[16];
+	swprintf_ws2ls(buf, sizeof(buf) / sizeof(buf[0]), L"0x%06x", value & 0x00ffffff);
+	return std::wstring(buf);
+}
+
+static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
+{
+	if (!s || !*s) {
+		return def;
+	}
+	wchar_t *endp = nullptr;
+	unsigned long val = std::wcstoul(s, &endp, 0);
+	if (endp == s) {
+		return def;
+	}
+	return static_cast<uint32_t>(val & 0x00ffffff);
+}
+
 
 struct Settings
 {
@@ -156,20 +165,9 @@ struct Settings
 		enabled = vals->GetInt("Enabled", enabled ? 1 : 0) != 0;
 		baseline = vals->GetString("Baseline", baseline.c_str());
 		interval_ms = std::max(50, vals->GetInt("IntervalMs", interval_ms));
-
-		auto parse_color = [](const std::string &s, uint32_t def) -> uint32_t
-		{
-			if (s.empty())
-				return def;
-			char *endp = nullptr;
-			unsigned long val = std::strtoul(s.c_str(), &endp, 0);
-			if (endp == s.c_str())
-				return def;
-			return static_cast<uint32_t>(val & 0x00ffffff);
-		};
-		color_added = parse_color(vals->GetString("ColorAdded", ""), color_added);
-		color_modified = parse_color(vals->GetString("ColorModified", ""), color_modified);
-		color_deleted = parse_color(vals->GetString("ColorDeleted", ""), color_deleted);
+		color_added = ParseColorHex(vals->GetString("ColorAdded", L"").c_str(), color_added);
+		color_modified = ParseColorHex(vals->GetString("ColorModified", L"").c_str(), color_modified);
+		color_deleted = ParseColorHex(vals->GetString("ColorDeleted", L"").c_str(), color_deleted);
 	}
 
 	void Save() const
@@ -178,16 +176,9 @@ struct Settings
 		kfh.SetInt("Settings", "Enabled", enabled ? 1 : 0);
 		kfh.SetString("Settings", "Baseline", baseline);
 		kfh.SetInt("Settings", "IntervalMs", interval_ms);
-
-		auto fmt_color = [](uint32_t value) -> std::string
-		{
-			char buf[16];
-			std::snprintf(buf, sizeof(buf), "0x%06x", value & 0x00ffffff);
-			return std::string(buf);
-		};
-		kfh.SetString("Settings", "ColorAdded", fmt_color(color_added));
-		kfh.SetString("Settings", "ColorModified", fmt_color(color_modified));
-		kfh.SetString("Settings", "ColorDeleted", fmt_color(color_deleted));
+		kfh.SetString("Settings", "ColorAdded", FormatColorHex(color_added).c_str());
+		kfh.SetString("Settings", "ColorModified", FormatColorHex(color_modified).c_str());
+		kfh.SetString("Settings", "ColorDeleted", FormatColorHex(color_deleted).c_str());
 		kfh.Save();
 	}
 };
@@ -711,21 +702,20 @@ static bool WriteEditorBufferToTemp(std::string &path)
 		return false;
 	}
 	FILE *f = nullptr;
-	if (path.empty()) {
-		if (!MakeTempFile(path, f)) {
-			return false;
-		}
-	} else {
+	if (!path.empty()) {
 		f = fopen(path.c_str(), "wb");
 		if (!f) {
 			unlink(path.c_str());
-			path.clear();
-			if (!MakeTempFile(path, f)) {
-				return false;
-			}
+		}
+	}
+	if (!f) {
+		f = MakeTempFile(path);
+		if (!f) {
+			return false;
 		}
 	}
 	EditorGetString egs{};
+	std::string mb;
 	for (int i = 0; i < ei.TotalLines; ++i) {
 		egs.StringNumber = i;
 		if (!g_info.EditorControl(ECTL_GETSTRING, &egs)) {
@@ -734,21 +724,16 @@ static bool WriteEditorBufferToTemp(std::string &path)
 			path.clear();
 			return false;
 		}
+		mb.clear();
 		if (egs.StringText && egs.StringLength > 0) {
-			std::wstring wline(egs.StringText, egs.StringText + egs.StringLength);
-			const std::string mb = Wide2MB(wline.c_str());
-			if (!mb.empty()) {
-				fwrite(mb.data(), 1, mb.size(), f);
-			}
+			Wide2MB(egs.StringText, egs.StringLength, mb, false);
 		}
 		if (egs.StringEOL && *egs.StringEOL) {
-			const std::string eol_mb = Wide2MB(egs.StringEOL);
-			if (!eol_mb.empty()) {
-				fwrite(eol_mb.data(), 1, eol_mb.size(), f);
-			}
+			Wide2MB(egs.StringEOL, mb, true);
 		} else if (i + 1 < ei.TotalLines) {
-			fwrite("\n", 1, 1, f);
+			mb+= "\n";
 		}
+		fwrite(mb.data(), 1, mb.size(), f);
 	}
 	fclose(f);
 	return true;
@@ -1142,26 +1127,6 @@ static void UpdateEditorState(EditorState &st)
 	BuildMarksFromDiff(out, st);
 	ApplyMarksToEditor(st);
 	st.dirty = false;
-}
-
-static std::wstring FormatColorHex(uint32_t value)
-{
-	wchar_t buf[16];
-	swprintf_ws2ls(buf, sizeof(buf) / sizeof(buf[0]), L"0x%06x", value & 0x00ffffff);
-	return std::wstring(buf);
-}
-
-static uint32_t ParseColorHex(const wchar_t *s, uint32_t def)
-{
-	if (!s || !*s) {
-		return def;
-	}
-	wchar_t *endp = nullptr;
-	unsigned long val = std::wcstoul(s, &endp, 0);
-	if (endp == s) {
-		return def;
-	}
-	return static_cast<uint32_t>(val & 0x00ffffff);
 }
 
 static bool GetGutterBackground(uint64_t &background)

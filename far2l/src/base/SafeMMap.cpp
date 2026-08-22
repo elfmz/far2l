@@ -234,11 +234,11 @@ static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct siga
 	}
 }
 
-static struct sigaction s_prev_sa_bus {}, s_prev_sa_segv {};
+static struct sigaction s_prev_sa_bus {}, s_prev_sa_segv {}, s_prev_sa_abrt {};
 
 void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 {
-	{
+	if (num != SIGABRT) {
 		SMM_Lock sl;
 		for (const auto &smm : s_safe_mmaps) {
 			if ((uintptr_t)info->si_addr >= (uintptr_t)smm->_view &&
@@ -255,9 +255,12 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 
 	if (num == SIGSEGV) {
 		InvokePrevSigaction(num, info, ctx, s_prev_sa_segv);
-
 	} else if (num == SIGBUS) {
 		InvokePrevSigaction(num, info, ctx, s_prev_sa_bus);
+	} else if (num == SIGABRT) {
+		//InvokePrevSigaction(num, info, ctx, s_prev_sa_abrt);
+		struct sigaction tmp{};
+		sigaction(SIGABRT, &s_prev_sa_abrt, &tmp);
 	}
 
 	WriteCrashSigLog(num, info, ctx);
@@ -276,6 +279,7 @@ void SafeMMap::sRegisterSignalHandler()
 
 	sigaction(SIGBUS, &sa, &s_prev_sa_bus);
 	sigaction(SIGSEGV, &sa, &s_prev_sa_segv);
+	sigaction(SIGABRT, &sa, &s_prev_sa_abrt);
 }
 
 void SafeMMap::sUnregisterSignalHandler()
@@ -283,6 +287,7 @@ void SafeMMap::sUnregisterSignalHandler()
 	struct sigaction tmp{};
 	sigaction(SIGBUS, &s_prev_sa_bus, &tmp);
 	sigaction(SIGSEGV, &s_prev_sa_segv, &tmp);
+	sigaction(SIGABRT, &s_prev_sa_abrt, &tmp);
 }
 
 

@@ -6,7 +6,7 @@
 |---|---|
 | Upstream | https://github.com/unxed/f4 |
 | Path | `plugins/netfox/fishplus/helper.sh` |
-| Commit | `891a485` (mklink) |
+| Commit | `9a03d417` (portable `chown` invocation) |
 | License | BSD-3-Clause (see the f4 repository) |
 
 It is deliberately **not** edited here, not even to remove the parts NetRocks

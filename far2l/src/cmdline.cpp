@@ -452,19 +452,38 @@ static bool GetLastArgOfCmd(const FARString &strCmd, FARString &strArg)
 // bash-like Alt+. (yank-last-arg): inserts last argument of the previous
 // command at cursor position; each subsequent Alt+. replaces it with the
 // last argument of the progressively older command from the history.
-void CommandLine::ProcessKey_YankLastArg()
+void CommandLine::ProcessKey_YankLastArg(bool Reverse)
 {
 	FARString strCmd, strArg;
 	int Depth = YankLastArgDepth;
 
-	// find next (older) history record that actually has a last argument
-	for (;;) {
-		Depth++;
-		if (!CtrlObject->CmdHistory->GetRecentStr((size_t)Depth, strCmd))
-			return;		// ran out of history - keep things as they are
+	if (Reverse) {
+		// nothing to reverse to if not cycling, or already at the newest entry
+		if (Depth <= 0)
+			return;
 
-		if (GetLastArgOfCmd(strCmd, strArg))
-			break;
+		// find previous (more recent) history record that has a last argument
+		for (;;) {
+			Depth--;
+			if (Depth < 0)
+				return;		// shouldn't normally happen, we've seen a valid entry here before
+
+			if (!CtrlObject->CmdHistory->GetRecentStr((size_t)Depth, strCmd))
+				continue;
+
+			if (GetLastArgOfCmd(strCmd, strArg))
+				break;
+		}
+	} else {
+		// find next (older) history record that actually has a last argument
+		for (;;) {
+			Depth++;
+			if (!CtrlObject->CmdHistory->GetRecentStr((size_t)Depth, strCmd))
+				return;		// ran out of history - keep things as they are
+
+			if (GetLastArgOfCmd(strCmd, strArg))
+				break;
+		}
 	}
 
 	FARString strStr;
@@ -686,13 +705,17 @@ int CommandLine::ProcessKey(FarKey Key)
 
 int CommandLine::ProcessKeyIfVisible(FarKey Key)
 { // this handles key events only when CmdLine is visible
-	// any key other than Alt+. breaks yank-last-arg cycling
-	if (Key != KEY_CTRLALTDOT && Key != KEY_NONE)
+	// any key other than Ctrl-Alt-. / Ctrl-Alt-Shift-. breaks yank-last-arg cycling
+	if (Key != KEY_CTRLALTDOT && Key != KEY_CTRLALTCOMMA && Key != KEY_NONE)
 		YankLastArgDepth = -1;
 
 	switch (Key) {
 		case KEY_CTRLALTDOT:
 			ProcessKey_YankLastArg();
+			return TRUE;
+
+		case KEY_CTRLALTCOMMA:
+			ProcessKey_YankLastArg(true);
 			return TRUE;
 
 		case KEY_NUMENTER:

@@ -86,7 +86,7 @@ private:
 	void CheckForKeyPressAfterCmd(int r);
 
 	void ProcessKey_ClearTerminalHistory();
-	void ProcessKey_YankLastArg();
+	void ProcessKey_YankLastArg(bool Reverse = false);
 	void ProcessKey_ShowFolderTree();
 	void ProcessKey_ShowFolderHistory();
 	void ProcessKey_ShowCommandsHistory();

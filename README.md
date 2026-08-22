@@ -26,6 +26,7 @@ hexitor,
 ImageViewer,
 incsrch,
 inside,
+jumpword <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/jumpword/README.md))</sub>,
 memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/memo/README.md))</sub>,
 MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/mtp/README.md))</sub>,
 multiarc,
@@ -382,6 +383,7 @@ There're also options to toggle other plugins build in same way:
 `-DGITGUTTER=no`,
 `-DHEXITOR=no`,
 `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`,
+`-DJUMPWORD=no`,
 `-DMEMO=no`,
 `-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/mtp/README.md)),
 `-DMULTIARC=no`,
@@ -525,7 +527,6 @@ but vanilla PuTTY can not transfer clipboard.
     * tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
 
  * External far2l plugins:
-    + **jumpword** (far2l editor plugin for quick searching the word under cursor): https://github.com/axxie/far2l-jumpword/
     + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
     + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
     + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes

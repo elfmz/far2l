@@ -95,6 +95,9 @@ static void ParseWebDavDateTime(timespec &result, const std::string &str)
 	const char *mon = strcasestr(s_months, parts[parts.size() - 4].c_str());
 	tm_parts.tm_mon = mon ? (mon - s_months) / 3 : 0;
 	tm_parts.tm_mday = atoi(parts[parts.size() - 5].c_str());
+	if (tm_parts.tm_year >= 1900) {
+		tm_parts.tm_year-= 1900;
+	}
 
 /*
 	fprintf(stderr, "ParseWebDavDateTime('%s') -> %u/%u/%u %u:%u.%u\n", str.c_str(),

@@ -22,6 +22,7 @@ NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 */
 
 #include <sys/types.h>
+#include <UnixModeStr.h>
 #include <time.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -284,24 +285,11 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 				if ((buf[j] == ' ') && (buf[j - 1] != ' ')) {
 					switch (state) {
 						case 1: /* handling perm */
-							if (len > 1 && buf[1] != '-')
-								fp->mode|= S_IRUSR;
-							if (len > 2 && buf[2] != '-')
-								fp->mode|= S_IWUSR;
-							if (len > 3 && buf[3] != '-')
-								fp->mode|= S_IXUSR;
-							if (len > 4 && buf[4] != '-')
-								fp->mode|= S_IRGRP;
-							if (len > 5 && buf[5] != '-')
-								fp->mode|= S_IWGRP;
-							if (len > 6 && buf[6] != '-')
-								fp->mode|= S_IXGRP;
-							if (len > 7 && buf[7] != '-')
-								fp->mode|= S_IROTH;
-							if (len > 8 && buf[8] != '-')
-								fp->mode|= S_IWOTH;
-							if (len > 9 && buf[9] != '-')
-								fp->mode|= S_IXOTH;
+							// Type bits were set from buf[0] above, so take permissions only.
+							// The previous "any character but '-' sets the bit" rule marked
+							// "-rwSr--r--" executable and turned NetWare's "d [R----F--]" into
+							// nonsense.
+							fp->mode|= UnixModeStr::Parse(buf, len) & 07777;
 							state = 2;
 							break;
 						case 2:										/* skipping nlink */

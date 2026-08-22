@@ -9,19 +9,15 @@ ProgressStateUpdate::ProgressStateUpdate(ProgressState &state)
 {
 	std::chrono::milliseconds pause_ticks = {};
 
-	for (;;) {
-		if (state.aborting)
-			throw AbortError();
-		if (!state.paused)
-			break;
-
-		unlock();
+	while (state.paused && !state.aborting) {
 		if (pause_ticks.count() == 0) {
 			pause_ticks = TimeMSNow();
 		}
-		usleep(1000000);
-		lock();
+		state.cond.wait_for(*this, std::chrono::milliseconds(500));
 	}
+
+	if (state.aborting)
+		throw AbortError();
 
 	if (pause_ticks.count() != 0) {
 		pause_ticks = TimeMSNow() - pause_ticks;

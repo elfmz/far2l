@@ -4723,7 +4723,9 @@ sequence in regular expression. #$0# means the whole found sequence.
 #$*# is replaced with '*' character.
 
     Both #\n# and #\r# are interpreted as line breaks, depending on
-the end-of-line style used in the file. They behave the same way.
+the end-of-line style used in the file. They behave the same way and do not
+represent literal LF and CR characters in the replacement. Therefore, searching
+for #\r\n# and replacing it with #\n# does not convert CRLF line endings to LF.
 
     #\t# is replaced with tab character (0x09).
 

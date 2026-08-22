@@ -1290,7 +1290,7 @@ std::string UnescapeUnprintable(const std::string &str)
 
 bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARString &ReplaceStr,
 		int &CurPos, int Position, int Case, int WholeWords, int Reverse, int Regexp, int *SearchLength,
-		const wchar_t *WordDiv)
+		const wchar_t *WordDiv, int RegexpOptions)
 {
 	*SearchLength = 0;
 
@@ -1311,7 +1311,7 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 		if (Regexp) {
 			FARString strSlash(Str);
 			InsertRegexpQuote(strSlash);
-			int reFlags = OP_PERLSTYLE | OP_OPTIMIZE | (!Case ? OP_IGNORECASE : 0);
+			int reFlags = OP_PERLSTYLE | OP_OPTIMIZE | (!Case ? OP_IGNORECASE : 0) | RegexpOptions;
 
 			// Use cached regex if pattern and flags match
 			RegExp *re = nullptr;
@@ -1358,7 +1358,8 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 			if (found) {
 				*SearchLength = pm[half].end - pm[half].start;
 				CurPos = pm[half].start;
-				ReplaceStr = ReplaceBrackets(Source, ReplaceStr, pm + half, n);
+				if (ReplaceStr.Contains(L'$'))
+					ReplaceStr = ReplaceBrackets(Source, ReplaceStr, pm + half, n);
 			}
 
 			return found;

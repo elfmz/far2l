@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "datetime.hpp"
 #include "stddlg.hpp"
 #include "strmix.hpp"
+#include "RegExp.hpp"
 #include "farcolors.hpp"
 #include "DialogBuilder.hpp"
 #include "wakeful.hpp"
@@ -66,6 +67,129 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int ReplaceMode, ReplaceAll;
 
 static int EditorID = 0;
+
+static void PrepareRegexpReplacement(FARString &text)
+{
+	ReplaceStrings(text, L"\\r", L"\r");
+	ReplaceStrings(text, L"\\n", L"\r");
+	ReplaceStrings(text, L"\\t", L"\t");
+}
+
+static void NormalizeReplacementLineBreaks(FARString &text)
+{
+	ReplaceStrings(text, L"\r\n", L"\r");
+	ReplaceStrings(text, L"\n", L"\r");
+}
+
+struct MultilineSearchBuffer
+{
+	struct Location
+	{
+		Edit *line;
+		int lineNumber;
+		int position;
+	};
+
+	struct Line
+	{
+		Edit *edit;
+		int start;
+		int textEnd;
+		int end;
+	};
+
+	FARString text;
+	std::vector<Line> lines;
+
+	void Build(Edit *first, const wchar_t *defaultEol)
+	{
+		text.Clear();
+		lines.clear();
+		size_t textLength = 0;
+		size_t lineCount = 0;
+		for (Edit *line = first; line; line = line->m_next) {
+			const wchar_t *eol = line->GetEOL();
+			textLength += line->GetLength() + StrLength((*eol || !line->m_next) ? eol : defaultEol);
+			++lineCount;
+		}
+		text.Reserve(textLength);
+		lines.reserve(lineCount);
+		for (Edit *line = first; line; line = line->m_next) {
+			const int start = static_cast<int>(text.GetLength());
+			text.Append(line->GetStringAddr(), line->GetLength());
+			const int textEnd = static_cast<int>(text.GetLength());
+			const wchar_t *eol = line->GetEOL();
+			text += (*eol || !line->m_next) ? eol : defaultEol;
+			lines.push_back({line, start, textEnd, static_cast<int>(text.GetLength())});
+		}
+	}
+
+	bool GetOffset(Edit *line, int lineNumber, int position, int &offset) const
+	{
+		if (lineNumber < 0 || lineNumber >= static_cast<int>(lines.size())
+				|| lines[lineNumber].edit != line)
+			return false;
+		const Line &entry = lines[lineNumber];
+		const int length = entry.textEnd - entry.start;
+		offset = position > length ? entry.end : entry.start + std::max(0, position);
+		return true;
+	}
+
+	bool GetLocation(int offset, bool rangeEnd, Location &location) const
+	{
+		if (offset < 0 || offset > static_cast<int>(text.GetLength()) || lines.empty())
+			return false;
+
+		auto it = std::upper_bound(lines.begin(), lines.end(), offset,
+				[](int value, const Line &entry) { return value < entry.start; });
+		if (it != lines.begin())
+			--it;
+		const size_t index = it - lines.begin();
+		const Line &entry = *it;
+		if (rangeEnd && offset > entry.textEnd && index + 1 != lines.size()) {
+			const Line &next = lines[index + 1];
+			location = {next.edit, static_cast<int>(index + 1), 0};
+			return true;
+		}
+		location = {entry.edit, static_cast<int>(index),
+				std::min(offset - entry.start, entry.textEnd - entry.start)};
+		return true;
+	}
+
+	bool IsInsideEol(int offset) const
+	{
+		Location location{};
+		if (!GetLocation(offset, false, location))
+			return false;
+		const Line &entry = lines[location.lineNumber];
+		return offset > entry.textEnd && offset < entry.end;
+	}
+
+	bool Search(const FARString &pattern, FARString &replace, int position, int caseSensitive,
+			int wholeWords, int reverse, int &matchPosition, int &matchLength) const
+	{
+		for (;;) {
+			if (!SearchString(text.CPtr(), text.GetLength(), pattern, replace, matchPosition, position,
+					caseSensitive, wholeWords, reverse, TRUE, &matchLength, nullptr, OP_MULTILINE))
+				return false;
+			if (matchLength || !IsInsideEol(matchPosition))
+				return true;
+			position = reverse ? matchPosition : matchPosition + 1;
+		}
+	}
+
+	int NextPosition(int matchPosition, int matchLength) const
+	{
+		int next = matchPosition + (matchLength ? matchLength : 1);
+		Location location{};
+		if (GetLocation(next - 1, false, location)) {
+			const Line &entry = lines[location.lineNumber];
+			if (next > entry.textEnd && next < entry.end)
+				next = entry.end;
+		}
+		return next;
+	}
+};
 
 static DWORD64 MakeWordWrapTailFillColor(DWORD64 color)
 {
@@ -487,6 +611,7 @@ void Editor::DrawGutterMark(int logical_line, int y, int line_num_x1)
 
 void Editor::FreeAllocatedData(bool FreeUndo)
 {
+	m_MultilineSearchBuffer.reset();
 	for (Edit *e = TopList; e;) {
 		auto *d = e;
 		e = e->m_next;
@@ -686,6 +811,9 @@ void Editor::DisplayObject()
 
 void Editor::ShowEditor(int CurLineOnly)
 {
+	if (Locked() || !TopList)
+		return;
+
 	const int cur_visual_line = (m_bWordWrap && CurLine) ? GetCurVisualLine() : 0;
 
 	if (m_bWordWrap && CurLine)
@@ -696,9 +824,6 @@ void Editor::ShowEditor(int CurLineOnly)
 			AdjustScreenPosition();
 		}
 	}
-	if (Locked() || !TopList)
-		return;
-
 	if (m_bWordWrap)
 	{
 		CurLineOnly = FALSE;
@@ -979,8 +1104,188 @@ void Editor::ShowEditor(int CurLineOnly)
 */
 void Editor::TextChanged(int State)
 {
+	m_MultilineSearchBuffer.reset();
 	Flags.Change(FEDITOR_MODIFIED, State);
 	Flags.Set(FEDITOR_JUSTMODIFIED);
+}
+
+MultilineSearchBuffer &Editor::GetMultilineSearchBuffer()
+{
+	if (!m_MultilineSearchBuffer) {
+		m_MultilineSearchBuffer = std::make_unique<MultilineSearchBuffer>();
+		m_MultilineSearchBuffer->Build(TopList, *GlobalEOL ? GlobalEOL : NATIVE_EOLW);
+	}
+	return *m_MultilineSearchBuffer;
+}
+
+bool Editor::ReplaceAllRegexp(MultilineSearchBuffer &buffer, const FARString &searchStr,
+		const FARString &replaceStr, int matchPosition, int matchLength,
+		const FARString &currentReplaceStr, int caseSensitive, int wholeWords, int reverse)
+{
+	struct Replacement
+	{
+		int startOffset;
+		int endOffset;
+		int startLine;
+		int startPos;
+		int endLine;
+		int endPos;
+		FARString text;
+	};
+
+	UnmarkBlock();
+	std::vector<Replacement> replacements;
+	FARString quotedSearchStr = searchStr;
+	InsertQuote(quotedSearchStr);
+	DWORD lastCheck = WINPORT(GetTickCount)();
+	const auto checkForAbort = [&](int percent = -1) {
+		const DWORD now = WINPORT(GetTickCount)();
+		if (now - lastCheck <= RedrawTimeout)
+			return false;
+		lastCheck = now;
+		if (percent >= 0)
+			EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, quotedSearchStr, percent);
+		return CheckForEscSilent() && ConfirmAbortOp();
+	};
+	const auto addReplacement = [&](int position, int length, const FARString &text) {
+		MultilineSearchBuffer::Location start{}, end{};
+		if (!buffer.GetLocation(position, false, start)
+				|| !buffer.GetLocation(position + length, length != 0, end))
+			return false;
+		replacements.push_back(
+				{position, position + length, start.lineNumber, start.position,
+						end.lineNumber, end.position, text});
+		return true;
+	};
+
+	if (!addReplacement(matchPosition, matchLength, currentReplaceStr))
+		return false;
+
+	int position = reverse ? matchPosition : buffer.NextPosition(matchPosition, matchLength);
+	int reverseBoundary = matchPosition;
+	for (;;) {
+		FARString replacement = replaceStr;
+		int nextMatchPosition = 0;
+		int nextMatchLength = 0;
+		if (!buffer.Search(searchStr, replacement, position, caseSensitive, wholeWords, reverse,
+					nextMatchPosition, nextMatchLength))
+			break;
+		NormalizeReplacementLineBreaks(replacement);
+		if (reverse && nextMatchPosition + nextMatchLength > reverseBoundary) {
+			position = nextMatchPosition;
+			continue;
+		}
+		if (!addReplacement(nextMatchPosition, nextMatchLength, replacement))
+			return false;
+		const long long progress = reverse ? matchPosition - nextMatchPosition : nextMatchPosition;
+		const long long total = reverse ? matchPosition : buffer.text.GetLength();
+		if (checkForAbort(ToPercent64(progress, std::max(1LL, total))))
+			return false;
+		if (reverse)
+			reverseBoundary = nextMatchPosition;
+		position = reverse ? nextMatchPosition : buffer.NextPosition(nextMatchPosition, nextMatchLength);
+	}
+
+	const Replacement target = replacements.back();
+	const int eolLength = StrLength(*GlobalEOL ? GlobalEOL : NATIVE_EOLW);
+	const auto replacementLength = [&](const FARString &text) {
+		return static_cast<int>(text.GetLength()
+				+ std::count(text.CPtr(), text.CPtr() + text.GetLength(), L'\r') * (eolLength - 1));
+	};
+	int targetOffset = target.startOffset + replacementLength(target.text);
+	for (const Replacement &replacement : replacements) {
+		if (replacement.startOffset < target.startOffset)
+			targetOffset += replacementLength(replacement.text)
+					- (replacement.endOffset - replacement.startOffset);
+	}
+
+	if (!reverse)
+		std::reverse(replacements.begin(), replacements.end());
+
+	const auto resetViewport = [&] {
+		LastGetLine = nullptr;
+		TopScreen = CurLine;
+		if (m_bWordWrap) {
+			AdjustScreenPosition();
+			RememberWordWrapPreferredCellPos();
+		} else {
+			const int fromTop = std::max(0, (ScrY - 2) / 4);
+			for (int i = 0; i < fromTop && TopScreen->m_prev; ++i)
+				TopScreen = TopScreen->m_prev;
+			m_TopScreenVisualLine = 0;
+		}
+	};
+
+	LockObject lock(*this);
+	Pasting++;
+	AddUndoData(UNDO_BEGIN);
+	std::wstring lineText;
+	bool changed = false;
+	for (const Replacement &replacement : replacements) {
+		if (checkForAbort()) {
+			AddUndoData(UNDO_END);
+			resetViewport();
+			Pasting--;
+			return false;
+		}
+		Edit *start = GetStringByNumber(replacement.startLine);
+		Edit *end = GetStringByNumber(replacement.endLine);
+		if (!start || !end) {
+			AddUndoData(UNDO_END);
+			if (changed)
+				Undo(FALSE);
+			resetViewport();
+			Pasting--;
+			return false;
+		}
+
+		FARString endEol = end->GetEOL();
+		CurLine = start;
+		NumLine = replacement.startLine;
+		CurLine->SetCurPos(replacement.startPos);
+		if (replacement.startLine == replacement.endLine
+				&& !replacement.text.Contains(L'\t') && !replacement.text.Contains(L'\r')) {
+			CurLine->GetString(lineText);
+			lineText.replace(replacement.startPos, replacement.endPos - replacement.startPos,
+					replacement.text.CPtr(), replacement.text.GetLength());
+			lineText+= CurLine->GetEOL();
+			AddUndoData(UNDO_EDIT, NumLine, replacement.startPos, CurLine);
+			CurLine->SetBinaryString(lineText.data(), lineText.size());
+			CurLine->SetCurPos(replacement.startPos + replacement.text.GetLength());
+			TextChanged(1);
+			changed = true;
+			continue;
+		}
+		UnmarkBlock();
+		Flags.Set(FEDITOR_MARKINGBLOCK);
+		BlockStart = start;
+		BlockStartLine = replacement.startLine;
+		for (int lineNumber = replacement.startLine; lineNumber <= replacement.endLine;
+				++lineNumber) {
+			start->Select(lineNumber == replacement.startLine ? replacement.startPos : 0,
+					lineNumber == replacement.endLine ? replacement.endPos : -1);
+			start = start->m_next;
+		}
+		DeleteBlock();
+		UnmarkBlock();
+		CurLine->SetEOL(endEol.CPtr());
+		if (replacement.text.Contains(L'\r'))
+			CurLine->SetEOL(*GlobalEOL ? GlobalEOL : NATIVE_EOLW);
+		Paste(replacement.text);
+		CurLine->SetEOL(endEol.CPtr());
+		changed = true;
+	}
+	AddUndoData(UNDO_END);
+	MultilineSearchBuffer &newBuffer = GetMultilineSearchBuffer();
+	MultilineSearchBuffer::Location targetLocation{};
+	if (newBuffer.GetLocation(targetOffset, false, targetLocation)) {
+		CurLine = targetLocation.line;
+		NumLine = targetLocation.lineNumber;
+		CurLine->SetCurPos(targetLocation.position);
+	}
+	resetViewport();
+	Pasting--;
+	return true;
 }
 
 bool Editor::CheckLine(Edit *line)
@@ -5011,23 +5316,65 @@ BOOL Editor::Search(int Next)
 
 			int SearchLength = 0;
 			FARString strReplaceStrCurrent(ReplaceMode ? strReplaceStr : L"");
+			if (Regexp)
+				PrepareRegexpReplacement(strReplaceStrCurrent);
+
+			bool search_match = false;
+			bool multiline_match = false;
+			bool zeroLengthMatch = false;
+			int SelHeight = 1;
+			int SelWidth = 0;
+			int matchPosition = 0;
+			FARString strToReplace;
+			FARString matchEndEol;
 			if (Regexp) {
-				ReplaceStrings(strReplaceStrCurrent, L"\\r", L"\r");
-				ReplaceStrings(strReplaceStrCurrent, L"\\n", L"\r");
-				ReplaceStrings(strReplaceStrCurrent, L"\\t", L"\t");
+				MultilineSearchBuffer &multilineBuffer = GetMultilineSearchBuffer();
+				int searchPosition = 0;
+				MultilineSearchBuffer::Location start{}, end{};
+				search_match = multilineBuffer.GetOffset(CurPtr, NewNumLine, CurPos, searchPosition)
+						&& multilineBuffer.Search(strSearchStr, strReplaceStrCurrent, searchPosition,
+								Case, WholeWords, ReverseSearch, matchPosition, SearchLength);
+				if (search_match)
+					NormalizeReplacementLineBreaks(strReplaceStrCurrent);
+				if (search_match
+						&& multilineBuffer.GetLocation(matchPosition, false, start)
+						&& multilineBuffer.GetLocation(
+								matchPosition + SearchLength, SearchLength != 0, end)) {
+					zeroLengthMatch = SearchLength == 0;
+					multiline_match = start.line != end.line;
+					strToReplace = multilineBuffer.text.SubStr(matchPosition, SearchLength);
+					matchEndEol = end.line->GetEOL();
+					CurPtr = start.line;
+					CurPtr->SetCurPos(start.position);
+					CurPos = start.position;
+					NewNumLine = start.lineNumber;
+					SelHeight = end.lineNumber - start.lineNumber + 1;
+					SelWidth = end.position - start.position;
+				} else {
+					break;
+				}
+			} else {
+				search_match = CurPtr->Search(strSearchStr, strReplaceStrCurrent, CurPos, Case,
+						WholeWords, ReverseSearch, Regexp, &SearchLength);
 			}
 
-			if (CurPtr->Search(strSearchStr, strReplaceStrCurrent, CurPos, Case, WholeWords, ReverseSearch,
-						Regexp, &SearchLength)) {
+			if (search_match) {
+				if (!Regexp)
+					SelWidth = SearchLength;
+
 				if (SelectFound && !ReplaceMode) {
 					Pasting++;
 					Lock();
 					UnmarkBlockAndShowIt();
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					int iFoundPos = CurPtr->GetCurPos();
-					CurPtr->Select(iFoundPos, iFoundPos + SearchLength);
-					BlockStart = CurPtr;
-					BlockStartLine = NewNumLine;
+					if (multiline_match) {
+						MarkBlock(false, NewNumLine, CurPtr->GetCurPos(), SelWidth, SelHeight);
+					} else {
+						Flags.Set(FEDITOR_MARKINGBLOCK);
+						const int foundPos = CurPtr->GetCurPos();
+						CurPtr->Select(foundPos, foundPos + SearchLength);
+						BlockStart = CurPtr;
+						BlockStartLine = NewNumLine;
+					}
 					Unlock();
 					Pasting--;
 				}
@@ -5086,21 +5433,36 @@ BOOL Editor::Search(int Next)
 				int LeftPos = CurPtr->GetLeftPos();
 				int CellCurPos = CurPtr->GetCellCurPos();
 
-				if (ObjWidth() > 8 && CellCurPos - LeftPos + SearchLength > ObjWidth() - 8)
-					CurPtr->SetLeftPos(CellCurPos + SearchLength - ObjWidth() + 8);
+				const int FirstLineLength = multiline_match ? CurPtr->GetLength() - CurPtr->GetCurPos()
+						: SelWidth;
+				if (ObjWidth() > 8 && CellCurPos - LeftPos + FirstLineLength > ObjWidth() - 8)
+					CurPtr->SetLeftPos(CellCurPos + FirstLineLength - ObjWidth() + 8);
 
 				if (ReplaceMode) {
 					int MsgCode = 0;
+					bool blockHighlighted = false;
 
 					if (!ReplaceAll) {
+						if (multiline_match) {
+							Pasting++;
+							Lock();
+							UnmarkBlockAndShowIt();
+							MarkBlock(false, NewNumLine, CurPtr->GetCurPos(), SelWidth, SelHeight);
+							Unlock();
+							Pasting--;
+							blockHighlighted = true;
+						}
 						Show();
-						SHORT CurX, CurY;
-						GetCursorPos(CurX, CurY);
-						ScrBuf.ApplyColor(CurX, CurY,
-								CurPtr->RealPosToCell(CurPtr->CellPosToReal(CurX) + SearchLength) - 1, CurY,
-								FarColorToReal(COL_EDITORSELECTEDTEXT));
-						FARString strQSearchStr(CurPtr->GetStringAddr() + CurPtr->GetCurPos(), SearchLength),
-								strQReplaceStr = strReplaceStrCurrent;
+						if (!multiline_match) {
+							SHORT CurX, CurY;
+							GetCursorPos(CurX, CurY);
+							ScrBuf.ApplyColor(CurX, CurY,
+									CurPtr->RealPosToCell(CurPtr->CellPosToReal(CurX) + SearchLength) - 1,
+									CurY, FarColorToReal(COL_EDITORSELECTEDTEXT));
+						}
+						FARString strQSearchStr = Regexp ? strToReplace
+								: FARString(CurPtr->GetStringAddr() + CurPtr->GetCurPos(), SearchLength);
+						FARString strQReplaceStr = strReplaceStrCurrent;
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
 						ReplaceStrings(strQReplaceStr, L"\r", L"\x2424"); // ␤
@@ -5118,20 +5480,53 @@ BOOL Editor::Search(int Next)
 							Skip = TRUE;
 
 						if (MsgCode < 0 || MsgCode == 3) {
+							if (blockHighlighted)
+								UnmarkBlockAndShowIt();
 							UserBreak = TRUE;
 							break;
 						}
 					}
 
+					if (MsgCode == 1 && Regexp) {
+						FARString replaceTemplate = strReplaceStr;
+						PrepareRegexpReplacement(replaceTemplate);
+						auto multilineBuffer = std::move(m_MultilineSearchBuffer);
+						if (!multilineBuffer
+								|| !ReplaceAllRegexp(*multilineBuffer, strSearchStr, replaceTemplate,
+										matchPosition, SearchLength, strReplaceStrCurrent,
+										Case, WholeWords, ReverseSearch))
+							UserBreak = TRUE;
+						else
+							Match = 1;
+						break;
+					}
+
 					if (!MsgCode || MsgCode == 1) {
 						Pasting++;
-
+						if (multiline_match) {
+							LockObject lock(*this);
+							AddUndoData(UNDO_BEGIN);
+							if (!blockHighlighted) {
+								UnmarkBlockAndShowIt();
+								MarkBlock(false, NewNumLine, CurPtr->GetCurPos(), SelWidth, SelHeight);
+							}
+							DeleteBlock();
+							UnmarkBlockAndShowIt();
+							CurLine->SetEOL(matchEndEol.CPtr());
+							if (strReplaceStrCurrent.Contains(L'\r'))
+								CurLine->SetEOL(*GlobalEOL ? GlobalEOL : NATIVE_EOLW);
+							Paste(strReplaceStrCurrent);
+							CurLine->SetEOL(matchEndEol.CPtr());
+							AddUndoData(UNDO_END);
+							CurPtr = CurLine;
+							NewNumLine = NumLine;
+						}
 						/*
 							$ 15.08.2000 skv
 							If Replace FARString doesn't contain control symbols (tab and return),
 							processed with fast method, otherwise use improved old one.
 						*/
-						if (strReplaceStrCurrent.Contains(L'\t') || strReplaceStrCurrent.Contains(L'\r')) {
+						else if (strReplaceStrCurrent.Contains(L'\t') || strReplaceStrCurrent.Contains(L'\r')) {
 							int SaveOvertypeMode = Flags.Check(FEDITOR_OVERTYPE);
 							Flags.Set(FEDITOR_OVERTYPE);
 							CurLine->SetOvertypeMode(TRUE);
@@ -5223,6 +5618,9 @@ BOOL Editor::Search(int Next)
 						// CurLine->SetCurPos(CurPos);
 						Pasting--;
 					}
+					else if (blockHighlighted) {
+						UnmarkBlockAndShowIt();
+					}
 				}
 
 				Match = 1;
@@ -5232,9 +5630,9 @@ BOOL Editor::Search(int Next)
 
 				CurPos = CurLine->GetCurPos();
 
-				if (Skip)
-					if (!ReverseSearch)
-						CurPos++;
+				if (!ReverseSearch && (Skip
+						|| (Regexp && zeroLengthMatch && strReplaceStrCurrent.IsEmpty())))
+					CurPos++;
 			} else {
 				CurPtr->Compact();
 				if (ReverseSearch) {
@@ -5320,6 +5718,37 @@ EditorFindAllResult Editor::CollectFoundItems(const FARString &strSearchStr, int
 	FARString strReplaceStr;
 	DWORD LastRedraw = 0;
 	int LineNumber = 0;
+	if (Regexp) {
+		MultilineSearchBuffer &buffer = GetMultilineSearchBuffer();
+		for (int Position = 0; Position <= static_cast<int>(buffer.text.GetLength());) {
+			const DWORD CurTime = WINPORT(GetTickCount)();
+			if (CurTime - LastRedraw > RedrawTimeout) {
+				LastRedraw = CurTime;
+				SetCursorType(FALSE, -1);
+				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr,
+						ToPercent64(Position, buffer.text.GetLength()));
+				if (CheckForEscSilent() && ConfirmAbortOp())
+					return EditorFindAllResult::Aborted;
+			}
+
+			int SearchLength = 0;
+			int MatchPosition = 0;
+			MultilineSearchBuffer::Location start{}, end{};
+			if (!buffer.Search(strSearchStr, strReplaceStr, Position, Case, WholeWords, FALSE,
+						MatchPosition, SearchLength)
+					|| !buffer.GetLocation(MatchPosition, false, start)
+					|| !buffer.GetLocation(MatchPosition + SearchLength, SearchLength != 0, end))
+				break;
+
+			FoundItems.emplace_back(
+					EditorFoundCoord{start.lineNumber, start.position, end.lineNumber, end.position});
+			if (FoundItems.size() >= MaxFoundItems)
+				return EditorFindAllResult::TooMany;
+
+			Position = buffer.NextPosition(MatchPosition, SearchLength);
+		}
+		return EditorFindAllResult::Completed;
+	}
 
 	for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next, ++LineNumber) {
 		const DWORD CurTime = WINPORT(GetTickCount)();
@@ -5347,7 +5776,8 @@ EditorFindAllResult Editor::CollectFoundItems(const FARString &strSearchStr, int
 				break;
 
 			const int FoundPos = CurPtr->GetCurPos();
-			FoundItems.emplace_back(EditorFoundCoord{LineNumber, FoundPos, SearchLength});
+			FoundItems.emplace_back(
+					EditorFoundCoord{LineNumber, FoundPos, LineNumber, FoundPos + SearchLength});
 
 			if (FoundItems.size() >= MaxFoundItems) {
 				TooMany = true;
@@ -5451,7 +5881,8 @@ void Editor::ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int
 			// табуляции заменены на пробелы один в один, так что позиция в строке совпадает с позицией
 			// в пункте
 			ListItem.HiliteStart = PrefixLen + Coord.Pos;
-			ListItem.HiliteLength = Coord.SearchLen;
+			ListItem.HiliteLength = Coord.EndLine == Coord.Line ? Coord.EndPos - Coord.Pos
+					: std::max(0, static_cast<int>(strLineText.GetLength()) - Coord.Pos);
 			FindAllList.SetUserData(reinterpret_cast<void *>(static_cast<DWORD_PTR>(I)), sizeof(void *),
 					FindAllList.AddItem(&ListItem));
 		}
@@ -5485,19 +5916,26 @@ void Editor::SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound)
 	if (SelectFound) {
 		Pasting++;
 		Lock();
-		Flags.Set(FEDITOR_MARKINGBLOCK);
-		CurLine->Select(Coord.Pos, Coord.Pos + Coord.SearchLen);
-		BlockStart = CurLine;
-		BlockStartLine = Coord.Line;
+		if (Coord.EndLine != Coord.Line) {
+			MarkBlock(false, Coord.Line, Coord.Pos, Coord.EndPos - Coord.Pos,
+					Coord.EndLine - Coord.Line + 1);
+		} else {
+			Flags.Set(FEDITOR_MARKINGBLOCK);
+			CurLine->Select(Coord.Pos, Coord.EndPos);
+			BlockStart = CurLine;
+			BlockStartLine = Coord.Line;
+		}
 		Unlock();
 		Pasting--;
 	}
 
 	const int LeftPos = CurLine->GetLeftPos();
 	const int CellCurPos = CurLine->GetCellCurPos();
+	const int FirstLineLength = Coord.EndLine == Coord.Line ? Coord.EndPos - Coord.Pos
+			: CurLine->GetLength() - Coord.Pos;
 
-	if (ObjWidth() > 8 && CellCurPos - LeftPos + Coord.SearchLen > ObjWidth() - 8)
-		CurLine->SetLeftPos(CellCurPos + Coord.SearchLen - ObjWidth() + 8);
+	if (ObjWidth() > 8 && CellCurPos - LeftPos + FirstLineLength > ObjWidth() - 8)
+		CurLine->SetLeftPos(CellCurPos + FirstLineLength - ObjWidth() + 8);
 
 	RememberWordWrapPreferredCellPos();
 	Show();
@@ -5818,7 +6256,7 @@ void Editor::DeleteBlock()
 				TopScreen = CurPtr;
 			}
 
-			DeleteString(CurPtr->m_next, i, FALSE, BlockStartLine + 1);
+			DeleteString(CurPtr->m_next, i + 1, FALSE, BlockStartLine + 1);
 
 			if (BlockStartLine + 1 < NumLine)
 				NumLine--;
@@ -5843,22 +6281,15 @@ void Editor::DeleteBlock()
 
 bool Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
 {
-	fprintf(stderr, "Editor::MarkBlock: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
-		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
-
 	if (SelVBlock && m_bWordWrap)
 		return false;
 
 	Edit *CurPtr = GetStringByNumber(SelStartLine);
 
-	if (!CurPtr) {
-		fprintf(stderr, "Editor::MarkBlock: fail cuz StartLine=%d not found\n", SelStartLine);
+	if (!CurPtr)
 		return false;
-	}
-	if (SelHeight <= 0 || SelStartPos < 0) {
-		fprintf(stderr, "Editor::MarkBlock: fail cuz Height=%d <= 0 || StartPos=%d < 0\n", SelHeight, SelStartPos);
+	if (SelHeight <= 0 || SelStartPos < 0)
 		return false;
-	}
 
 	UnmarkBlock();
 

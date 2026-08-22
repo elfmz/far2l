@@ -7,7 +7,7 @@ src/JumpWord.cpp
 
 add_library (jumpword MODULE ${SOURCES})
 
-target_link_libraries(jumpword)
+target_link_libraries(jumpword utils far2l)
 
 target_compile_definitions(jumpword PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 

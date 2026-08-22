@@ -8155,15 +8155,15 @@ EditSearchSearch
 "Шукаць"
 
 EditSearchAll
-"Все"
-"All"
-"Všechny"
-"Alles"
+"&Все"
+"&All"
+"&Všechny"
+"&Alles"
 "Mind"
 "Wszystko"
 "Todo"
-"Всі"
-"Усё"
+"&Всі"
+"&Усё"
 
 EditSearchCancel
 "Отменить"

@@ -1011,7 +1011,10 @@ f4_cmd_chown() {
   f4_end err "nothing to change"
   return
  fi
- f4_do chown "$F4SPEC" -- "$F4PATH"
+ # "--" must come before the owner spec: GNU getopt permutes arguments,
+ # but BSD and macOS stop option parsing at the first operand, so a
+ # trailing "--" is taken as a file name there.
+ f4_do chown -- "$F4SPEC" "$F4PATH"
 }
 # grep <mode><i?> <limit>, then a pattern line and a path line. The reply is
 # one byte offset per match: the point of doing this remotely is that a

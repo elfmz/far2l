@@ -3213,6 +3213,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-F3#                 Toggle line numbers display
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #F5#                      Toggle whitespace characters displaying
+   #Ctrl-Shift-F5#           Toggle physical line-ending characters displaying
    #Shift-F5#                Change Tab character width
    #Ctrl-F5#                 Toggle Tab-to-spaces expansion
    #Alt-F5#                  ^<wrap>Print file or selected block.
@@ -3292,6 +3293,9 @@ $ #Editor: search/replace#
 and shows the list of all found occurrences with their line and column numbers.
 Pressing #Enter# in that list moves the cursor to the selected occurrence, #Esc#
 leaves the current position unchanged.
+
+    When #Show line endings# is enabled with #Ctrl-Shift-F5#, physical line
+endings are shown as #␍# (CR) and #␊# (LF), so mixed styles can be identified.
 
 
 @FileOpenCreate
@@ -3767,6 +3771,10 @@ $ #Settings dialog: editor#
   #Show line numbers#       Show line numbers on the left side of the
                           editor. This option can also be toggled by
                           pressing #Ctrl-F3# in the editor.
+
+  #Show line endings#       Show physical line endings as #␍# (CR) and #␊# (LF).
+                          This option can also be toggled by pressing
+                          #Ctrl-Shift-F5# in the editor.
 
   #Word wrap#               Word wrap. This option can also be toggled by
                           pressing #F3# in the editor.
@@ -4722,10 +4730,9 @@ The numbers are assigned to the groups in order of opening parentheses
 sequence in regular expression. #$0# means the whole found sequence.
 #$*# is replaced with '*' character.
 
-    Both #\n# and #\r# are interpreted as line breaks, depending on
-the end-of-line style used in the file. They behave the same way and do not
-represent literal LF and CR characters in the replacement. Therefore, searching
-for #\r\n# and replacing it with #\n# does not convert CRLF line endings to LF.
+    #\r# and #\n# represent literal CR and LF characters. Captured line endings
+are preserved exactly, so #\r\n# can be replaced with #\n#, and either character
+of a CRLF pair can be matched and replaced separately.
 
     #\t# is replaced with tab character (0x09).
 

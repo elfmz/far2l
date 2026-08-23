@@ -343,6 +343,7 @@ private:
 	bool ReplaceAllRegexp(MultilineSearchBuffer &Buffer, const FARString &SearchStr,
 			const FARString &ReplaceStr, int MatchPosition, int MatchLength,
 			const FARString &CurrentReplaceStr, int Case, int WholeWords, int Reverse);
+	void PasteRegexpReplacement(const FARString &Text, const wchar_t *EndEol);
 	void ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int SelectFound);
 	void SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound);
 
@@ -492,6 +493,8 @@ public:
 
 	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 	void SetShowWhiteSpace(int NewMode);
+	int GetShowEOL() const { return EdOpt.ShowEOL; }
+	void SetShowEOL(int NewMode);
 
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);

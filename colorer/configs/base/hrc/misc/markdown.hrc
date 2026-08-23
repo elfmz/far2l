@@ -5,9 +5,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 <type name="markdown">
-<annotation><documentation><![CDATA[
+<annotation>
+<documentation><![CDATA[
 
-markdown.hrc by Roman Kuzmin (nightroman), 2025-05-09
+markdown.hrc by Roman Kuzmin (nightroman), 2026-01-30
 
 * Use markdown2 for extensions.
 * Opened spans are always colored.
@@ -18,14 +19,20 @@ markdown.hrc by Roman Kuzmin (nightroman), 2025-05-09
 
 Inline HTML
 
-* ALLCAPS tags are treated separately, not affecting markdown, see #6: https://github.github.com/gfm/#html-block
-* Other HTML is treated as XML and should be well formed.
+* HTML highlighting applies to CommonMark HTML blocks https://spec.commonmark.org/0.31.2/#html-blocks
+* Inline HTML tags are highlighted as tags only and do not disable markdown parsing inside.
 
 Inline JavaScript
 
 * <% %> marks Obsidian Templater blocks.
 
-]]></documentation></annotation>
+Contributors:
+  Alexey Shelaev
+]]></documentation>
+<contributors><![CDATA[
+  Aleksey Dobrunov <ctapmex@ctapmex.com>
+]]></contributors>
+</annotation>
 
 <region name="Anchor"        parent="def:LabelStrong"    description="{#Anchor}"/>
 <region name="Code"          parent="def:TypeKeyword"    description="`Code` spans, indented and fenced blocks."/>
@@ -48,8 +55,10 @@ Inline JavaScript
 <region name="FenceMark"     parent="BlindMark"          description="~~~"/>
 <region name="HeadMark"      parent="BlindMark"          description="#, ##, ..., ######"/>
 <region name="LinkMark"      parent="BlindMark"          description="[]() or [][] or []"/>
+<region name="LinkDest"      parent="def:URI"            description="Link destination in [Ref]: Address"/>
+<region name="LinkTitle"     parent="def:String"         description="Optional title in [Ref]: Address 'Title'"/>
 <region name="QuoteMark"     parent="BlindMark"          description=">, >>, ..."/>
-<region name="Reference"     parent="BlindMark"          description="[Ref]: Address 'Title'"/>
+<region name="Reference"     parent="BlindMark"          description="[Ref]: prefix of a link reference definition"/>
 
 <region name="TemplateStart" parent="def:InsertionStart"/>
 <region name="TemplateEnd" parent="def:InsertionEnd"/>
@@ -86,6 +95,7 @@ Inline JavaScript
 <entity name="Html" value="(?:ADDRESS|ARTICLE|ASIDE|BASE|BASEFONT|BLOCKQUOTE|BODY|CAPTION|CENTER|COL|COLGROUP|DD|DETAILS|DIALOG|DIR|DIV|DL|DT|FIELDSET|FIGCAPTION|FIGURE|FOOTER|FORM|FRAME|FRAMESET|H1|H2|H3|H4|H5|H6|HEAD|HEADER|HR|HTML|IFRAME|LEGEND|LI|LINK|MAIN|MENU|MENUITEM|NAV|NOFRAMES|OL|OPTGROUP|OPTION|P|PARAM|SECTION|SOURCE|SUMMARY|TABLE|TBODY|TD|TFOOT|TH|THEAD|TITLE|TR|TRACK|UL)"/>
 
 <entity name="Top" value="^(?:\s*$|%Rule;|%Head;|%Ref;|%Abbr;)"/>
+<entity name="Blank" value="^\s*$"/>
 <entity name="LEnd" value="^(?:%Top;|\s*%List2;|%Fence;|%i3;%Quote;)?="/>
 <entity name="PEnd" value="^(?:%Top;| {,3}:\s+\S|%Fence;|%i3;%Quote;)?="/>
 
@@ -134,16 +144,63 @@ Inline JavaScript
 <scheme name="Html">
   <regexp match="/(?{LinkMark}&lt;)(?{LinkText}%URI;|%Email;)(?{LinkMark}&gt;)/"/>
 
+  <block scheme="def:Comment" region="def:Comment"
+    start="/(?{start}&lt;!--)/" end="/(?{end}--&gt;)/"
+  />
   <block scheme="xml:Attribute"
-    start="/(?{start}(?{xml:element.start.lt}&lt;)(?{xml:element.start.name}%Html;)\b)/"
-    end="/(?{end}(?{xml:element.start.gt}&gt;))/"
+    start="/(?{start}(?{xml:element.start.lt}&lt;)(?{xml:element.start.name}%ID;)\b)/"
+    end="/(?{end}(?{xml:element.start.gt}\/?&gt;))/"
   />
 
-  <regexp match="/(?{xml:element.end.lt}&lt;\/)(?{xml:element.end.name}%Html;)(?{xml:element.end.gt}&gt;)/"/>
+  <regexp match="/(?{xml:element.end.lt}&lt;\/)(?{xml:element.end.name}%ID;)(?{xml:element.end.gt}&gt;)/"/>
 
-  <block scheme="xml:xml"
-    start="/\M&lt;(?:!--|\d?!\w+(?:\s|\/?&gt;|$))/"
-    end="//"
+</scheme>
+
+<scheme name="HtmlTags">
+    <inherit scheme="html:html">
+        <virtual scheme="html:htmlPairs" subst-scheme="def:empty"/>
+    </inherit>
+</scheme>
+
+<scheme name="HtmlBlock">
+  <!-- HTML Block Type 1 (pre/script/style/textarea)  -->
+  <block scheme="html:html"
+    start="/(?{start}%i3;(?{html:htmlTagBr}&lt;(?{html:htmlOpenTag}(?{starttag}pre|script|style|textarea))(?:\s+[^&lt;&gt;]*?)?(?:&gt;|$)))/i"
+    end="/(?{end}(?{html:htmlTagBr}&lt;\/(?{html:htmlCloseTag}\y{starttag}\b\s*)&gt;))/i"
+  />
+
+  <!-- HTML Block Type 2 (comment)  -->
+  <!-- handled by Html scheme  -->
+
+  <!-- HTML Block Type 3 (processing instruction)  -->
+  <block scheme="html:htmlCoreParams"
+    start="/(?{start}%i3;(?{html:htmlTagBr}&lt;\?%ID;*))/"
+    end="/(?{end}(?{html:htmlTagBr}\?&gt;))/"
+  />
+
+  <!-- HTML Block Type 4 (declaration)  -->
+  <block scheme="html:html"
+    start="/(?{start}%i3;&lt;![A-Za-z])/i"
+    end="/(?{end}&gt;)/"
+    region="html:htmlDirective"
+  />
+
+  <!-- HTML Block Type 5 (CDATA)  -->
+  <block scheme="html:html"
+    start="/(?{start}%i3;(?{BlindMark}&lt;!\[CDATA\[))/"
+    end="/(?{end}(?{BlindMark}\]\]&gt;))/"
+  />
+
+  <!-- HTML Block Type 6 (block tags, blank line ends)  -->
+  <block scheme="HtmlTags"
+    start="/\M(?:%i3;&lt;\/?%Html;(?:\s|\t|$|&gt;|\/&gt;))/i"
+    end="/(?:%Blank;)/"
+  />
+
+  <!-- HTML Block Type 7 (complete tag line, blank line ends) -->
+  <block scheme="HtmlTags"
+    start="/\M(?:%i3;(?:&lt;%ID;(?:\s+[^&lt;&gt;]*?)?\/?&gt;|&lt;\/%ID;\s*&gt;)[ \t]*$)/i"
+    end="/(?:%Blank;)/"
   />
 </scheme>
 
@@ -153,6 +210,7 @@ Inline JavaScript
   <inherit scheme="CodeSpan"/>
   <inherit scheme="LinkSpan"/>
   <inherit scheme="Template"/>
+  <inherit scheme="HtmlBlock"/>
   <inherit scheme="Html"/>
 </scheme>
 
@@ -201,6 +259,7 @@ Inline JavaScript
 </scheme>
 
 <scheme name="Quote">
+  <inherit scheme="HtmlBlock"/>
   <inherit scheme="Wrap"/>
   <inherit scheme="Escape"/>
   <inherit scheme="Template"/>
@@ -221,6 +280,15 @@ Inline JavaScript
   </inherit>
 </scheme>
 
+<scheme name="ReferenceDef">
+  <!-- <destination> -->
+  <regexp match="/\s*(?{LinkMark}&lt;)(?{LinkDest}[^&gt;]*)(?{LinkMark}&gt;)/"/>
+  <!-- destination; first char is not a title delimiter -->
+  <regexp match="/\s*(?{LinkDest}[^\s&lt;&quot;'\(]\S*)/"/>
+  <!-- "title" | 'title' | (title) -->
+  <regexp match="/\s*(?{LinkTitle}(?:&quot;[^&quot;]*&quot;|'[^']*'|\([^)]*\)))/"/>
+</scheme>
+
 <scheme name="Head">
   <regexp match="/(?{HeadMark}#*\s*)?(?{Anchor}\{#%ID;\})(?{HeadMark}\s*#*\s*)$/"/>
   <regexp match="/(?{HeadMark}#+\s*)$/"/>
@@ -234,6 +302,7 @@ Inline JavaScript
 </scheme>
 
 <scheme name="Item3">
+  <inherit scheme="HtmlBlock"/>
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s12;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,3}%Fence;|%i11;%Quote;)/"/>
 
@@ -259,6 +328,7 @@ Inline JavaScript
 </scheme>
 
 <scheme name="Item2">
+  <inherit scheme="HtmlBlock"/>
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s8;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,2}%Fence;|%i7;%Quote;)/"/>
 
@@ -284,6 +354,7 @@ Inline JavaScript
 </scheme>
 
 <scheme name="Item">
+  <inherit scheme="HtmlBlock"/>
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s4;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;%Fence;|%i3;%Quote;)/"/>
 
@@ -311,6 +382,8 @@ Inline JavaScript
 <scheme name="markdown">
   <!--user extensions-->
   <inherit scheme="markdown2:markdown2" />
+  <inherit scheme="HtmlBlock"/>
+
 
   <regexp match="/^(?{Rule}%Rule;)/"/>
 
@@ -326,7 +399,8 @@ Inline JavaScript
   <block scheme="Template" region="Code"
   start="/(?{start}^%FenceMark;).*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark}))\s*$/"/>
 
-  <regexp match="/^(?{def:Outlined}(?{Reference}%Ref;.*))/"/>
+  <block scheme="ReferenceDef" region="def:Outlined"
+  start="/^(?{def:Outlined}(?{Reference}%Ref;))/" end="/$/"/>
 
   <regexp match="/^(?{Abbreviation}%Abbr;.*)/"/>
 

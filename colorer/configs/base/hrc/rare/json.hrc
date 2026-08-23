@@ -14,9 +14,12 @@
     </documentation><contributors><![CDATA[
         Aliaksei Chapyzhenka <alex.drom@gmail.com>
         Konstantin Kushnir <chpock@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
     ]]></contributors></annotation>
 
     <import type="def"/>
+
+    <region name="Key" parent="def:Keyword" description="JSON object key"/>
 
     <scheme name="jsonCommentInternal">
     </scheme>
@@ -42,7 +45,7 @@
     </scheme>
 
     <scheme name="Key">
-        <regexp match="/\\([\\bfnrtv&quot;&apos;\/]|x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4})/x" region="VarStrong"/>
+        <inherit scheme="jsonMETA"/>
     </scheme>
 
     <scheme name="RE">
@@ -59,9 +62,9 @@
         <block start="/:/" end="/\M,|\}/" region00="SymbolStrong" scheme="json"/>
         <!-- object key -->
         <block start="/(&quot;)/" end="/(&quot;)/"
-            scheme="Key" region="Var"
-            region00='VarStrong' region01='PairStart'
-            region10='VarStrong' region11='PairEnd'
+            scheme="Key" region="Key"
+            region00='StringEdge' region01='PairStart'
+            region10='StringEdge' region11='PairEnd'
         />
         <keywords region="def:Symbol">
             <symb name=","/>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="moonscript">
+    <annotation>
+      <documentation>
+        MoonScript language syntax
+        https://moonscript.org/
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="Function" parent="def:FunctionKeyword"/>
+    <region name="String" parent="def:String"/>
+    <region name="StringEdge" parent="def:String"/>
+    <region name="Number" parent="def:Number"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="LineComment" parent="def:LineComment"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="SymbolStrong" parent="def:SymbolStrong"/>
+    <region name="Error" parent="def:Error"/>
+
+    <scheme name="comment">
+      <!-- block comment, e.g. [[ ... ]] -->
+      <block start="/(--\[{2,3})/" end="/(\]{2,3})/" scheme="def:Comment" region="Comment"
+             region00="LineComment" region01="def:PairStart" region10="LineComment" region11="def:PairEnd"/>
+      <!-- line comment -->
+      <regexp match="/--.*$/" region="LineComment"/>
+    </scheme>
+
+    <scheme name="stringContent">
+      <regexp match="/\\[abfnrtv\\&#34;']/" region="SymbolStrong"/>
+      <regexp match="/\\\d{1,3}/" region="SymbolStrong"/>
+      <regexp match="/\\x[\da-fA-F]{2}/" region="SymbolStrong"/>
+      <regexp match="/\\u[\da-fA-F]{4}/" region="SymbolStrong"/>
+    </scheme>
+
+    <scheme name="string">
+      <!-- double quoted -->
+      <block start="/(&#34;)/" end="/(&#34;)/" scheme="stringContent" region="String"
+             region00="StringEdge" region01="def:PairStart" region10="StringEdge" region11="def:PairEnd"/>
+      <!-- single quoted -->
+      <block start="/(')/" end="/(')/" scheme="stringContent" region="String"
+             region00="StringEdge" region01="def:PairStart" region10="StringEdge" region11="def:PairEnd"/>
+      <!-- long string [[ ... ]] and [=[ ... ]=] -->
+      <block start="/(\[{2})/" end="/(\]{2})/" scheme="def:empty" region="String"
+             region00="StringEdge" region01="def:PairStart" region10="StringEdge" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="number">
+      <regexp match="/\b0x[\da-fA-F]+\b/" region="Number"/>
+      <regexp match="/\b\d+\.\d+([eE][+-]?\d+)?\b/" region="Number"/>
+      <regexp match="/\b\d+\b/" region="Number"/>
+    </scheme>
+
+    <scheme name="moonscript">
+      <inherit scheme="comment"/>
+      <inherit scheme="string"/>
+      <inherit scheme="number"/>
+
+      <keywords region="Keyword">
+        <word name="and"/>
+        <word name="as"/>
+        <word name="break"/>
+        <word name="class"/>
+        <word name="continue"/>
+        <word name="do"/>
+        <word name="else"/>
+        <word name="elseif"/>
+        <word name="export"/>
+        <word name="extends"/>
+        <word name="false"/>
+        <word name="for"/>
+        <word name="from"/>
+        <word name="global"/>
+        <word name="if"/>
+        <word name="import"/>
+        <word name="in"/>
+        <word name="is"/>
+        <word name="local"/>
+        <word name="nil"/>
+        <word name="not"/>
+        <word name="or"/>
+        <word name="return"/>
+        <word name="super"/>
+        <word name="switch"/>
+        <word name="then"/>
+        <word name="true"/>
+        <word name="unless"/>
+        <word name="until"/>
+        <word name="when"/>
+        <word name="while"/>
+        <word name="with"/>
+      </keywords>
+
+      <keywords region="Function">
+        <word name="self"/>
+        <word name="new"/>
+      </keywords>
+
+      <!-- operators -->
+      <keywords region="Symbol">
+        <symb name="=="/>
+        <symb name="~="/>
+        <symb name="!="/>
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name="//"/>
+        <symb name=".."/>
+        <symb name="..."/>
+        <symb name="="/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="^"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+      </keywords>
+
+      <!-- brackets and punctuation -->
+      <keywords region="Symbol">
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="{"/>
+        <symb name="}"/>
+        <symb name="["/>
+        <symb name="]"/>
+        <symb name=","/>
+        <symb name=";"/>
+        <symb name=":"/>
+      </keywords>
+
+      <!-- self reference @ and method call \name -->
+      <regexp match="/@/" region="Symbol"/>
+      <regexp match="/(\\)([a-zA-Z_][\w!?]*)/" region1="Symbol" region2="Function"/>
+
+      <!-- arrows -->
+      <regexp match="/(->|=>)/" region="SymbolStrong"/>
+
+      <!-- identifiers (low priority so keywords/operators win) -->
+      <regexp match="/[a-zA-Z_][\w!?]*/" region="def:Text" priority="low"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

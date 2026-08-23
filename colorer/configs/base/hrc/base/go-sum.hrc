@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="go-sum">
+    <annotation>
+      <documentation>
+        Go checksum file syntax (go.sum)
+        https://go.dev/ref/mod#go-sum-files
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="ModulePath" parent="def:String"/>
+    <region name="Version" parent="def:Number"/>
+    <region name="HashType" parent="def:Keyword"/>
+    <region name="Hash" parent="def:CommentContent"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="Error" parent="def:Error"/>
+
+    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
+    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
+    <entity name="hash" value="[A-Za-z0-9+/=]+"/>
+
+    <scheme name="go-sum">
+      <!-- module version h1:hash -->
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)\s+(h1:)\s*(%hash;)\s*$/"
+              region1="ModulePath" region2="Version" region3="HashType" region4="Hash"/>
+
+      <!-- module version/go.mod h1:hash -->
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)(\/go\.mod)\s+(h1:)\s*(%hash;)\s*$/"
+              region1="ModulePath" region2="Version" region3="Symbol" region4="HashType" region5="Hash"/>
+
+      <!-- blank lines and leading whitespace are allowed -->
+      <regexp match="/^\s*$/"/>
+
+      <!-- any unexpected content is an error -->
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

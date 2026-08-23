@@ -45,6 +45,7 @@
      - add format support
      - changed names for take5-like style
      - any other fixs and addons...
+   Aleksey Dobrunov <ctapmex@ctapmex.com>
   ]]>
  </contributors>
 
@@ -376,6 +377,7 @@
 <!-- move ~ to separated block (s{}{/... - '/' no regexp ) -->
          <block start="/(
                   (\=|\! \~) |
+                  \.\.\.? |
                   [^&lt;\]\}\)\+\-\w\s\/] |
                   (\bif) | (\bunless) | (\bsplit) | (\bor) | \bgrep | \band | \bnot |^ )
                  \s*

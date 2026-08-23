@@ -9,13 +9,14 @@
 
 		<annotation>
 			<documentation>
-				Cascading Style Sheets, Level 1 and 2
+				Cascading Style Sheets, Level 1 and 2, with media queries
 			</documentation>
 			<contributors><![CDATA[
 				darkman <darkman@magnet.ru>
 				Albert Micheev <2:5049/80>
 				Timur Safin <timur@lanit.ru>
 				Eugene Efremov <4mirror@mail.ru>
+				Aleksey Dobrunov <ctapmex@ctapmex.com>
 			]]></contributors>
 			<appinfo>
 				<prototype name="css" group="inet" description="css">
@@ -45,6 +46,7 @@
 
 		<region name="Directive" parent="def:Directive" description='Directives, started with @ char'/>
 		<region name="MediaType" parent="def:DirectiveContent" description='Media type region'/>
+		<region name="MediaOperator" parent="def:Keyword" description='Media query logical operator'/>
 
 		<region name="NameSpacePrefix" parent="def:StringEdge"/>
 		<region name="TagName" parent="default" />
@@ -56,6 +58,7 @@
 		<region name="DeprecatedPseudoElement" parent="def:DeprecatedKeyword"/>
 
 		<region name="PropertyName" parent="def:KeywordStrong" />
+		<region name="MediaFeature" parent="PropertyName" description='Media query feature'/>
 		<region name="PropertyFunc" parent="def:FunctionKeyword" />
 		<region name="PropertyValue" parent="def:Parameter" />
 		<region name="ImportantValue" parent="def:Keyword" />
@@ -72,6 +75,7 @@
 		<region name="UnicodeCharContent" parent="def:CharacterContent"/>
 
 		<entity name='worddiv-class' value="[\s\,\}\{\x22\x27\:\;\(\)]"/>
+		<entity name='worddiv-media' value="[\s\,\}\{\x22\x27\:\;\(\)\x3c\x3e\=]"/>
 		<entity name='worddiv' value="(?{}$|%worddiv-class;)"/>
 
 		<scheme name="Colors">
@@ -1209,6 +1213,7 @@
     
 		<scheme name="RuleContent">
 			<inherit scheme="Comment"/>
+			<inherit scheme="NestedMediaDirective"/>
 			<!-- property value after colon -->
 			<block start="/\M([\w\d\-]+)?\s*(:)/" end="/\M[\;\}\x22\x27]/"
 				scheme="PropertyWrapper" region02="Symbol"
@@ -1310,7 +1315,183 @@
 			</keywords>
 		</scheme>
     
+		<scheme name="MediaQueryList">
+			<inherit scheme="Comment"/>
+			<regexp match="/~\s*,|,\s*,/" region="def:Error"/>
+			<regexp match="/,/" region="Symbol"/>
+			<keywords region="MediaOperator" ignorecase="yes" worddiv='%worddiv-class;'>
+				<word name="and"/>
+				<word name="or"/>
+				<word name="not"/>
+				<word name="only"/>
+			</keywords>
+			<keywords region="MediaType" ignorecase="yes" worddiv='%worddiv-class;'>
+				<word name="all"/>
+				<word name="print"/>
+				<word name="screen"/>
+				<word name="speech"/>
+			</keywords>
+			<keywords region="DeprecatedPropertyValue" ignorecase="yes" worddiv='%worddiv-class;'>
+				<word name="aural"/>
+				<word name="braille"/>
+				<word name="embossed"/>
+				<word name="handheld"/>
+				<word name="projection"/>
+				<word name="tty"/>
+				<word name="tv"/>
+			</keywords>
+			<block start="/(\()/" end="/(\))/"
+				scheme="MediaQueryList"
+				region00="Symbol" region01="def:PairStart"
+				region10="Symbol" region11="def:PairEnd"
+			/>
+			<inherit scheme="NumericValue"/>
+			<keywords region="Symbol">
+				<symb name=">="/>
+				<symb name="&lt;="/>
+				<symb name=">"/>
+				<symb name="&lt;"/>
+				<symb name="="/>
+				<symb name=":"/>
+				<symb name="/"/>
+			</keywords>
+			<keywords region="DeprecatedPropertyName" ignorecase="yes" worddiv='%worddiv-media;'>
+				<word name="device-aspect-ratio"/>
+				<word name="device-height"/>
+				<word name="device-width"/>
+				<word name="max-device-aspect-ratio"/>
+				<word name="max-device-height"/>
+				<word name="max-device-width"/>
+				<word name="min-device-aspect-ratio"/>
+				<word name="min-device-height"/>
+				<word name="min-device-width"/>
+			</keywords>
+			<keywords region="MediaFeature" ignorecase="yes" worddiv='%worddiv-media;'>
+				<word name="-webkit-animation"/>
+				<word name="-webkit-device-pixel-ratio"/>
+				<word name="-webkit-max-device-pixel-ratio"/>
+				<word name="-webkit-min-device-pixel-ratio"/>
+				<word name="-webkit-transform-2d"/>
+				<word name="-webkit-transform-3d"/>
+				<word name="-webkit-transition"/>
+				<word name="any-hover"/>
+				<word name="any-pointer"/>
+				<word name="aspect-ratio"/>
+				<word name="color-gamut"/>
+				<word name="color-index"/>
+				<word name="color"/>
+				<word name="display-mode"/>
+				<word name="dynamic-range"/>
+				<word name="forced-colors"/>
+				<word name="grid"/>
+				<word name="height"/>
+				<word name="hover"/>
+				<word name="inverted-colors"/>
+				<word name="light-level"/>
+				<word name="max-aspect-ratio"/>
+				<word name="max-color-index"/>
+				<word name="max-color"/>
+				<word name="max-height"/>
+				<word name="max-monochrome"/>
+				<word name="max-resolution"/>
+				<word name="max-width"/>
+				<word name="min-aspect-ratio"/>
+				<word name="min-color-index"/>
+				<word name="min-color"/>
+				<word name="min-height"/>
+				<word name="min-monochrome"/>
+				<word name="min-resolution"/>
+				<word name="min-width"/>
+				<word name="monochrome"/>
+				<word name="orientation"/>
+				<word name="overflow-block"/>
+				<word name="overflow-inline"/>
+				<word name="pointer"/>
+				<word name="prefers-color-scheme"/>
+				<word name="prefers-contrast"/>
+				<word name="prefers-reduced-data"/>
+				<word name="prefers-reduced-motion"/>
+				<word name="prefers-reduced-transparency"/>
+				<word name="resolution"/>
+				<word name="scan"/>
+				<word name="scripting"/>
+				<word name="update"/>
+				<word name="width"/>
+			</keywords>
+			<keywords region="PropertyValue" ignorecase="yes" worddiv='%worddiv-class;'>
+				<word name="active"/>
+				<word name="browser"/>
+				<word name="coarse"/>
+				<word name="custom"/>
+				<word name="dark"/>
+				<word name="dim"/>
+				<word name="enabled"/>
+				<word name="fine"/>
+				<word name="fullscreen"/>
+				<word name="high"/>
+				<word name="hover"/>
+				<word name="interlace"/>
+				<word name="inverted"/>
+				<word name="landscape"/>
+				<word name="less"/>
+				<word name="light"/>
+				<word name="minimal-ui"/>
+				<word name="more"/>
+				<word name="no-preference"/>
+				<word name="none"/>
+				<word name="optional-paged"/>
+				<word name="p3"/>
+				<word name="paged"/>
+				<word name="portrait"/>
+				<word name="progressive"/>
+				<word name="rec2020"/>
+				<word name="reduce"/>
+				<word name="scroll"/>
+				<word name="slow"/>
+				<word name="srgb"/>
+				<word name="standalone"/>
+				<word name="standard"/>
+				<word name="washed"/>
+			</keywords>
+			<regexp match="/[\w\-]+/" region="MediaFeature" priority="low"/>
+		</scheme>
+
+		<scheme name="MediaQuery">
+			<inherit scheme="MediaQueryList"/>
+			<block start="/(\{)/" end="/(\})/"
+				region00="PairStart" region01="SymbolStrong"
+				region10="PairEnd" region11="SymbolStrong"
+				scheme="RulesList"
+			/>
+		</scheme>
+
+		<scheme name="NestedMediaQuery">
+			<inherit scheme="MediaQueryList"/>
+			<block start="/(\{)/" end="/(\})/"
+				region00="PairStart" region01="SymbolStrong"
+				region10="PairEnd" region11="SymbolStrong"
+				scheme="RuleContent"
+			/>
+		</scheme>
+
+		<scheme name="MediaDirective">
+			<regexp match="/\M\@media\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(media)\s*\M.*/i" end="/(\})?#1/"
+				region01="SymbolStrong" region02="Directive"
+				scheme="MediaQuery"
+			/>
+		</scheme>
+
+		<scheme name="NestedMediaDirective">
+			<regexp match="/\M\@media\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(media)\s*\M.*/i" end="/(\})?#1/"
+				region01="SymbolStrong" region02="Directive"
+				scheme="NestedMediaQuery"
+			/>
+		</scheme>
+
 		<scheme name="RuleDirective">
+			<inherit scheme="MediaDirective"/>
 			<regexp match="/\M\@(\w+)/" region1="DirectiveOutline"/>
 			<block start="/(?{SymbolStrong}\@)(?{Directive}font-face)\s+
 				(?{PairStart}(?{SymbolStrong}\{))/ixs"
@@ -1439,12 +1620,7 @@
 				region10="SymbolStrong" region11="PairEnd"
 				scheme="Animation"
 			/>
-			<regexp match="/\M\@media \s+ (?{MediaOutline}.*?) \{/ix"/>
-			<block start="/(?{SymbolStrong}\@)(?{Directive}media) \s+
-				(?{MediaOutline}(?{MediaType}.*?))
-				(?{PairStart}(?{SymbolStrong}\{))/ixs"
-				end="/(?{PairEnd}(?{SymbolStrong}\}))/" scheme="RulesList"
-			/>
+			<inherit scheme="MediaDirective"/>
 			<block start="/(\@)(import|charset|namespace(\s*[\w]+)?)/i" end="/(\;)/" scheme="Property"
 				region01="SymbolStrong" region02="Directive" region03="NameSpacePrefix" region11="SymbolStrong"
 			/>

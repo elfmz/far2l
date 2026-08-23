@@ -12,6 +12,7 @@
 		Microsoft NMake Syntax
 	</documentation><contributors><![CDATA[
 		Eugene Efremov <4mirror@mail.ru>
+		Aleksey Dobrunov <ctapmex@ctapmex.com>
 	]]></contributors>
 	<appinfo><todo>
 		GNU:
@@ -262,6 +263,11 @@
 	<inherit scheme='comments'/>
 </scheme>
 
+<scheme name='export-list'>
+	<inherit scheme='vars'/>
+	<regexp match='/%var-name;/' region0='var' priority='low'/>
+</scheme>
+
 
 
 
@@ -422,6 +428,17 @@
 </scheme>
 
 <scheme name='keyword-if-content'>
+	<!-- GNU Make 3.81+: else ifeq / else ifneq -->
+	<block scheme='keyword-if-head' region='in-directive'>
+		<start match='/^\s*(else)\s+(ifn?eq)\b/'
+			region0='keyword'
+		/>
+		<end match='/$/'/>
+	</block>
+	<!-- else ifdef / else ifndef -->
+	<regexp match='/^\s*(else)\s+(ifn?def)\s+(%var-name;)/'
+		region0='keyword' region3='var'
+	/>
 	<regexp match='/^\s*else\b/' region0='keyword'/>
 	<inherit scheme='makefile'/>
 </scheme>
@@ -446,7 +463,6 @@
 		/>
 	</block>
 	
-	<regexp match="/^\s*unexport\s+(%var-name;)/" region0='keyword' region1='var'/>
 	<block start='/^\s*vpath\b/' end='/\\?~1$/' 
 		region00='keyword' scheme='template' region='in-directive'
 	/>
@@ -605,6 +621,10 @@
 		<start match='/^\M\s*(override|export)?\s*%var-name;\s*%var-equ;/' />
 		<end match='/(endif)?~5[\\\^]?~1$/i'/>
 	</block>
+	<!-- export/unexport without assignment: export $(TEST), unexport VAR, bare export -->
+	<block start='/^\s*(unexport|export)\b/' end='/$/'
+		region00='keyword' scheme='export-list' region='in-directive'
+	/>
 	
 	<block scheme='rule'>
 		<start match="/^\M(?{rule-outline}%rule-name;):/"/>

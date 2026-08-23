@@ -14,6 +14,7 @@
              Initial revision
            Igor Russkih - Sat 08 Jan 01:05:50 2005
              primitive/endprimitive
+           Aleksey Dobrunov <ctapmex@ctapmex.com>
          ]]></contributors>
       </annotation>
 
@@ -71,13 +72,51 @@
          </keywords>
       </scheme>
 
+      <scheme name="verMacroArgs">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="verMacroArgs"/>
+         </inherit>
+         <inherit scheme="verSymbols"/>
+      </scheme>
+
+      <!-- compiler macros: `name or `name(...) with nested parentheses, like C -->
+      <scheme name="verMacro">
+         <block start="/(`\w+)\s*(\()/" end="/(\))/" scheme="verMacroArgs"
+                region00="PreprocWord" region01="PreprocWord" region02="PairStart"
+                region10="verSymb" region11="PairEnd"/>
+         <regexp match="/`\w+/" region0="PreprocWord"/>
+      </scheme>
+
+      <scheme name="verPreproc">
+         <block start="/`include\s*((&quot;))/" end="/(&quot;)/"
+                scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+                region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+                region02="def:PairStart" region11="def:PairEnd"/>
+         <block start="/`include\s*((&lt;))/" end="/(&gt;)/"
+                scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+                region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+                region02="def:PairStart" region11="def:PairEnd"/>
+         <regexp match="/(`define)\s+([^\s]+)\s+(.*)/x" region1="def:Directive" region2="def:Keyword" region3="def:Identifier"/>
+         <regexp match="/(`timescale)\s+(\d+\w+)\s*\/\s*(\d+\w+)/x" region1="def:Directive" region2="def:Keyword" region3="def:Keyword"/>
+         <inherit scheme="verMacro"/>
+      </scheme>
+
       <scheme name="verilog2">
          <inherit scheme="verComment"/>
          <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
          <inherit scheme="PairedBrackets">
             <virtual scheme="PairedBrackets" subst-scheme="verilog2"/>
          </inherit>
          <inherit scheme="verSymbols"/>
+         <keywords region="Keyword">
+            <word name="input"/>
+            <word name="output"/>
+            <word name="inout"/>
+         </keywords>
 <!--
   <regexp match="/\b\d+\'x[\da-fA-F]+\b/" region0="verNumb"/>
   <regexp match="/\b[\d\.]+([eE][\-+]?\d+)?\b/" region0="verNumb"/>
@@ -90,6 +129,7 @@
       <scheme name="verCase">
          <inherit scheme="verComment"/>
          <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
          <keywords region="verWord">
             <word name="&lt;="/>
             <word name="default"/>
@@ -113,6 +153,7 @@
          <inherit scheme="verComment"/>
          <inherit scheme="verBegin"/>
          <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
          <block start="/\b (case) \b/x" end="/\b (endcase) \b/x" scheme="verCase" region00="Keyword" region10="Keyword" region01="PairStart" region11="PairEnd"/>
          <keywords region="verWord">
             <word name="if"/>
@@ -124,6 +165,7 @@
       <scheme name="verModule">
          <inherit scheme="verComment"/>
          <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
          <inherit scheme="verBegin"/>
 <!--block start="/ \b always \s* \@ \s* \((.*)\) \s+ if \s* \((.*)\) /" end="/\;/"-->
          <regexp match="/\b (always) \s* \@ \s* (\()(.*)(\)) /x" region1="verWord" region3="verString" region2="PairStart" region4="PairEnd"/>
@@ -132,7 +174,8 @@
          </inherit>
          <block start="/\b (task) \s+ (\w+)/x" end="/\b (endtask) \b/x" scheme="verBeginCore" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
          <block start="/\b(parameter|wire|reg|assign)/" end="/\;/" scheme="verilog2" region00="Keyword" region10="Keyword"/>
-         <block start="/\b(input|output|inout)/" end="/\;/" scheme="verilog2" region00="Keyword" region10="Keyword"/>
+         <!-- ANSI port lists put input/output inside (...); do not consume ')' -->
+         <block start="/\b(input|output|inout)/" end="/;|\M\)/" scheme="verilog2" region00="Keyword" region10="Keyword"/>
          <inherit scheme="verSymbols"/>
 <!--block start="/\bdefparam/" end="/\;/" scheme="verilog2"
     region00="Keyword" region10="Keyword"/-->
@@ -142,16 +185,20 @@
          <regexp match="/\S+/" region0="Error" priority="low"/>
       </scheme>
 
+      <!-- module/primitive whose name is a compiler macro: `name or `name(...) -->
+      <scheme name="verModuleMacroName">
+         <block start="/~\s*(\()/" end="/(\))/" scheme="verMacroArgs"
+                region00="verSymb" region01="PairStart"
+                region10="verSymb" region11="PairEnd"/>
+         <inherit scheme="verModule"/>
+      </scheme>
+
       <scheme name="verilog">
-         <block start="/`include\s*((&quot;))/" end="/(&quot;)/"
-         scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
-         region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
-         region02="def:PairStart" region11="def:PairEnd"
-         />
-         <regexp match="/(`define)\s+([^\s]+)\s+(.+)/x" region1="def:Directive" region2="def:Keyword" region3="def:Identifier"/>
-         <regexp match="/(`timescale)\s+(\d+\w+)\s+\/\s+(\d+\w+)/x" region1="def:Directive" region2="def:Keyword" region3="def:Keyword"/>
+         <inherit scheme="verPreproc"/>
          <inherit scheme="verComment"/>
-         <block start="/\b (module)\s+ ([`\w]+) /x" end="/\b (endmodule) \b/x" scheme="verModule" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (module) \s+ (`\w+) /x" end="/\b (endmodule) \b/x" scheme="verModuleMacroName" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (module)\s+ (\w+) /x" end="/\b (endmodule) \b/x" scheme="verModule" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (primitive) \s+ (`\w+) /x" end="/\b (endprimitive) \b/x" scheme="verModuleMacroName" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
          <block start="/\b (primitive)\s+ (\w+) /x" end="/\b (endprimitive) \b/x" scheme="verModule" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
          <inherit scheme="verBad"/>
       </scheme>

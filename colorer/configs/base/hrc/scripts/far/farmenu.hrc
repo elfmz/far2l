@@ -11,6 +11,7 @@
    FarMenu.Ini (F2 in Far manager)
  </documentation><contributors><![CDATA[
    Eugene Efremov <4mirror@mail.ru>
+   Aleksey Dobrunov <ctapmex@ctapmex.com>
  ]]></contributors></annotation>
 
 <region name="symb" parent="def:Symbol"/>
@@ -87,10 +88,15 @@
 </scheme>
 
 <scheme name="farsymb.input.content">
- <block start="/(\()\M\!/" end="/(\))/" scheme="farsymb.content"
+ <block start="/(\()/" end="/(\))/" scheme="farsymb.input.paren"
   region00="symb.struct" region10="symb.struct"
   region01="def:PairStart" region11="def:PairEnd"
  />
+</scheme>
+
+<scheme name="farsymb.input.paren">
+ <inherit scheme="farsymb.input.content"/>
+ <inherit scheme="farsymb.content"/>
 </scheme>
 
 

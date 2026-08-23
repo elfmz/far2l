@@ -198,6 +198,10 @@
         <location link="base/lua.hrc" />
         <filename>/\.(w?lua)$/i</filename>
     </prototype>
+    <prototype name="moonscript" group="main" description="MoonScript">
+        <location link="base/moonscript.hrc" />
+        <filename>/\.moon$/i</filename>
+    </prototype>
     <prototype name="ruby" group="main" description="Ruby">
         <location link="base/ruby.hrc" />
         <filename>/\.(rb|rbw|ruby|rake)$/i</filename>
@@ -232,6 +236,14 @@
         <parameters>
             <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
         </parameters>
+    </prototype>
+    <prototype name="go-mod" group="main" description="Go module">
+        <location link="base/go-mod.hrc" />
+        <filename>/^go\.mod$/i</filename>
+    </prototype>
+    <prototype name="go-sum" group="main" description="Go checksum">
+        <location link="base/go-sum.hrc" />
+        <filename>/^go\.sum$/i</filename>
     </prototype>
     <prototype name="kotlin" group="main" description="Kotlin">
         <location link="base/kotlin.hrc" />
@@ -269,6 +281,11 @@
     <prototype name="swift" group="main" description="Swift">
         <location link="base/swift.hrc" />
         <filename>/\.swift$/i</filename>
+    </prototype>
+    <prototype name="dart" group="main" description="Dart">
+        <location link="base/dart.hrc" />
+        <filename>/\.dart$/i</filename>
+        <firstline weight='2'>/^\#!\s*.+\bdart\b/</firstline>
     </prototype>
 
     <!--  inet languages  -->
@@ -653,6 +670,10 @@
         <filename>/\.(ctl|tpl|ini|cfg|inf|srg|conf|types|tab|dof|dsk|lng|editorconfig)$/i</filename>
         <firstline>/^[;\[\#]/</firstline>
     </prototype>
+    <prototype name="gitignore" group="scripts" description="Git ignore">
+        <location link="scripts/gitignore.hrc" />
+        <filename>/^\.gitignore$/i</filename>
+    </prototype>
     <prototype name="awk" group="scripts" description="AWK">
         <location link="scripts/awk.hrc" />
         <filename weight='5'>/\.awk$/i</filename>
@@ -1002,6 +1023,7 @@
     <prototype name="verilog" group="rare" description="Verilog HDL">
         <location link="rare/verilog.hrc" />
         <filename weight='3'>/\.g?v$/i</filename>
+        <filename weight='3'>/\.vh$/i</filename>
     </prototype>
     <prototype name="vhdl" group="rare" description="VHDL">
         <location link="rare/vhdl.hrc" />

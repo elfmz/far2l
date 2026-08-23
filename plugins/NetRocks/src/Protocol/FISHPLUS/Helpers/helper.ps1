@@ -1315,17 +1315,38 @@ function New-JobSlot {
 # The scan job body: walks a tree, counts files/dirs and their bytes,
 # emits "P" progress lines every 2000 entries and one "T" total at end.
 function Cmd-JStart {
-    param([string]$kind, [string]$nPathsArg)
+    param(
+        [string]$kind,
+        [string]$nPathsArg,
+        [string]$xa1 = '',   # extra args used by 'ffind': limit, nmasks, gmode
+        [string]$xa2 = '',
+        [string]$xa3 = ''
+    )
     try {
         if (-not (Test-IsUInt $nPathsArg)) { Write-Err 'bad path count'; return }
         $n = [int]$nPathsArg
-        if ($n -gt 4) { Write-Err 'bad path count'; return }
+        # 32 is a generous cap: scan/hash use 1, exec uses 2, ffind uses
+        # 1 + mask count + optional pattern (typical Alt+F7 dialog sends
+        # under a handful).
+        if ($n -gt 32) { Write-Err 'bad path count'; return }
         $paths = New-Object 'string[]' $n
         for ($i = 0; $i -lt $n; $i++) { $paths[$i] = Read-PathLine }
         switch ($kind) {
-            'scan' { if ($n -ne 1) { Write-Err 'this job takes one path'; return } }
-            'hash' { if ($n -ne 1) { Write-Err 'this job takes one path'; return } }
-            'exec' { if ($n -ne 2) { Write-Err 'the exec job takes a directory and a command'; return } }
+            'scan'  { if ($n -ne 1) { Write-Err 'this job takes one path'; return } }
+            'hash'  { if ($n -ne 1) { Write-Err 'this job takes one path'; return } }
+            'exec'  { if ($n -ne 2) { Write-Err 'the exec job takes a directory and a command'; return } }
+            'ffind' {
+                if ($n -lt 2) { Write-Err 'ffind needs a directory and at least one mask'; return }
+                if (-not (Test-IsUInt $xa1) -or -not (Test-IsUInt $xa2) -or [string]::IsNullOrEmpty($xa3)) {
+                    Write-Err 'ffind needs <limit> <nmasks> <gmode>'; return
+                }
+                $nmasks = [int]$xa2
+                # dir + nmasks + optional pattern
+                $expected = 1 + $nmasks
+                if ($xa3 -ne '-') { $expected += 1 }
+                if ($n -ne $expected) { Write-Err 'ffind path count does not match nmasks'; return }
+                if ($xa3 -ne '-' -and $xa3 -match '[^fie]') { Write-Err 'bad grep mode'; return }
+            }
             default { Write-Err 'unknown job kind'; return }
         }
         $slot = New-JobSlot
@@ -1409,7 +1430,7 @@ function Cmd-JStart {
         # references so a maintainer can read them independently; the
         # runtime copies live in $body.
         $body = {
-            param($kind, $paths, $jd, $outP, $errP, $rcP)
+            param($kind, $paths, $jd, $outP, $errP, $rcP, $xa1 = '', $xa2 = '', $xa3 = '')
             $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
             function Convert-PosixToWin([string]$p) {
                 if ($p -eq '' -or $p -eq '/') { return '' }
@@ -1639,11 +1660,397 @@ function Cmd-JStart {
                     [System.IO.File]::WriteAllText($rcPath, '1', $enc)
                 }
             }
+            function Run-JobFFind {
+                # Coordinator for a parallel tree search. Enumerates the
+                # top-level subdirectories of the search root, spawns a
+                # RunspacePool of worker runspaces, and hands each worker
+                # its own subtree. Workers write hits to a shared
+                # StreamWriter under a lock and update shared counters in
+                # a PSCustomObject; the coordinator also processes the
+                # files directly in the root and emits the terminal T
+                # line once the pool drains.
+                #
+                # Why a pool: on a wide root a single-threaded walk
+                # bottlenecks on per-directory latency long before it
+                # bottlenecks on disk throughput (a field report showed
+                # CPU near idle and disk under 10 % during a
+                # content-search of 2 TB on the same peer). Splitting the
+                # walk one worker per top-level subtree lets the disk
+                # queue several reads at a time without any changes to
+                # the per-file work.
+                param($paths, $limitArg, $nmasksArg, $gmode, $jd, $outPath, $errPath, $rcPath, $enc)
+                $rc = 0
+                try {
+                    $limit  = [int]$limitArg
+                    $nmasks = [int]$nmasksArg
+                    if ($paths.Length -lt (1 + $nmasks)) { throw 'not enough paths for masks' }
+                    $dirWire = $paths[0]
+                    $masks   = New-Object 'string[]' $nmasks
+                    for ($i = 0; $i -lt $nmasks; $i++) { $masks[$i] = $paths[1 + $i] }
+                    $hasPat = $gmode -ne '-'
+                    $pat    = $null
+                    if ($hasPat) {
+                        if ($paths.Length -lt (2 + $nmasks)) { throw 'ffind pattern path missing' }
+                        $pat = $paths[1 + $nmasks]
+                    }
+                    $fixed = $hasPat -and $gmode.Contains('f')
+                    $ci    = $hasPat -and $gmode.Contains('i')
+
+                    $dir = Convert-PosixToWin $dirWire
+                    if (-not (Test-Path -LiteralPath $dir -PathType Container)) { throw 'not a directory' }
+
+                    # Byte-preserving pattern (ISO-8859-1 round-trip)
+                    # built once and shared with every worker — same
+                    # trick Test-FileContainsPattern uses in the sync
+                    # helper for grep-shaped content matches.
+                    $latin1 = [System.Text.Encoding]::GetEncoding(28591)
+                    $utf8bare = [System.Text.UTF8Encoding]::new($false)
+                    $bytePat = ''
+                    if ($hasPat) { $bytePat = $latin1.GetString($utf8bare.GetBytes($pat)) }
+                    $rx = $null
+                    if ($hasPat -and -not $fixed) {
+                        $opts = [System.Text.RegularExpressions.RegexOptions]::CultureInvariant
+                        if ($ci) { $opts = $opts -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase }
+                        $rx = New-Object System.Text.RegularExpressions.Regex($bytePat, $opts)
+                    }
+                    $reparse = [System.IO.FileAttributes]::ReparsePoint
+                    $killPath = Join-Path $jd 'kill'
+
+                    # Shared state that every worker (and the coordinator's
+                    # own root-file loop) updates under $lock. Counters
+                    # are batched inside the workers to keep contention
+                    # off the fast path.
+                    $out = New-Object System.IO.StreamWriter($outPath, $false, $enc)
+                    $lock = New-Object System.Object
+                    $state = [pscustomobject]@{
+                        Count    = 0L
+                        Scanned  = 0L
+                        LastPath = ''
+                        LastEmit = [DateTime]::UtcNow
+                    }
+
+                    # Pack every immutable knob a worker needs into one
+                    # object so the AddArgument list stays short and the
+                    # worker script has one shape to bind against.
+                    $cfg = @{
+                        Limit    = $limit
+                        Masks    = $masks
+                        HasPat   = $hasPat
+                        Fixed    = $fixed
+                        Ci       = $ci
+                        BytePat  = $bytePat
+                        Rx       = $rx
+                        KillPath = $killPath
+                        EmitMs   = 300
+                        ChunkSize = 1MB
+                    }
+
+                    # Self-contained worker body: runs inside its own
+                    # RunspacePool runspace, receives every dependency
+                    # through AddArgument. No closure over caller scope.
+                    $workerScript = {
+                        param($rootDir, $writer, $lock, $state, $cfg)
+                        $reparse = [System.IO.FileAttributes]::ReparsePoint
+                        $readOnly = [System.IO.FileAttributes]::ReadOnly
+                        $latin1 = [System.Text.Encoding]::GetEncoding(28591)
+                        $strCmp = if ($cfg.Ci) { [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
+                        $chunkSize = $cfg.ChunkSize
+                        $overlap = if ($cfg.Fixed) { [Math]::Max(0, $cfg.BytePat.Length - 1) } else { 8192 }
+                        $emitInterval = [TimeSpan]::FromMilliseconds($cfg.EmitMs)
+                        # ISO-8859-1 keeps the WinToPosix conversion
+                        # inline: same rule as helper.ps1's top-level
+                        # Convert-WinToPosix, minus a bit of the
+                        # end-trimming that does not matter for a
+                        # full-path emit.
+                        function Wp2Wire([string]$w) {
+                            if ($w.StartsWith('\\')) { return '//' + $w.Substring(2).Replace('\', '/') }
+                            if ($w.Length -ge 2 -and $w[1] -eq ':') {
+                                $dr = [char]::ToLower($w[0])
+                                $rs = if ($w.Length -gt 2) { $w.Substring(2).Replace('\', '/').TrimStart('/') } else { '' }
+                                if ($rs -eq '') { return '/' + $dr } else { return '/' + $dr + '/' + $rs }
+                            }
+                            return $w.Replace('\', '/')
+                        }
+
+                        $stack = New-Object System.Collections.Generic.Stack[string]
+                        $stack.Push($rootDir)
+                        # Local batch of scanned files, flushed to shared
+                        # state every N files so the lock is not taken on
+                        # every metadata touch.
+                        $localScanned = 0L
+                        $flushBatch = 50L
+                        :outer while ($stack.Count -gt 0) {
+                            if ([System.IO.File]::Exists($cfg.KillPath)) { break outer }
+                            if ($state.Count -ge $cfg.Limit) { break outer }
+                            $cur = $stack.Pop()
+                            $files = $null
+                            try { $files = [System.IO.Directory]::EnumerateFiles($cur) } catch { }
+                            if ($null -ne $files) {
+                                foreach ($fp in $files) {
+                                    if ($state.Count -ge $cfg.Limit) { break outer }
+                                    $fi = $null
+                                    try { $fi = New-Object System.IO.FileInfo $fp } catch { continue }
+                                    if ($fi.Attributes -band $reparse) { continue }
+                                    $localScanned++
+                                    if ($localScanned -ge $flushBatch) {
+                                        # Flush our scanned batch into
+                                        # shared state and, if enough
+                                        # wall-clock has passed, emit a P
+                                        # progress line.
+                                        [System.Threading.Monitor]::Enter($lock)
+                                        try {
+                                            $state.Scanned += $localScanned
+                                            $state.LastPath = $fi.FullName.Replace('\', '/')
+                                            $tnow = [DateTime]::UtcNow
+                                            if (($tnow - $state.LastEmit) -ge $emitInterval) {
+                                                $state.LastEmit = $tnow
+                                                $writer.WriteLine("P $($state.Scanned) $($state.Count) $($state.LastPath)")
+                                                $writer.Flush()
+                                            }
+                                        } finally { [System.Threading.Monitor]::Exit($lock) }
+                                        $localScanned = 0L
+                                        if ([System.IO.File]::Exists($cfg.KillPath)) { break outer }
+                                    }
+                                    # Mask match on the bare name.
+                                    $ok = $false
+                                    foreach ($m in $cfg.Masks) {
+                                        if ($fi.Name -like $m) { $ok = $true; break }
+                                    }
+                                    if (-not $ok) { continue }
+                                    # Byte-level content match if requested.
+                                    if ($cfg.HasPat) {
+                                        $found = $false
+                                        $fs = $null
+                                        try {
+                                            $fs = [System.IO.File]::Open($fi.FullName, [System.IO.FileMode]::Open,
+                                                                         [System.IO.FileAccess]::Read,
+                                                                         [System.IO.FileShare]::ReadWrite)
+                                            $buf = New-Object 'byte[]' ($chunkSize + $overlap)
+                                            $carry = 0
+                                            while (-not $found) {
+                                                $got = $fs.Read($buf, $carry, $chunkSize)
+                                                if ($got -le 0) { break }
+                                                $have = $carry + $got
+                                                $chunk = $latin1.GetString($buf, 0, $have)
+                                                if ($cfg.Fixed) {
+                                                    if ($chunk.IndexOf($cfg.BytePat, $strCmp) -ge 0) { $found = $true; break }
+                                                } else {
+                                                    if ($cfg.Rx.IsMatch($chunk)) { $found = $true; break }
+                                                }
+                                                if ($overlap -gt 0 -and $have -gt $overlap) {
+                                                    [Array]::Copy($buf, $have - $overlap, $buf, 0, $overlap)
+                                                    $carry = $overlap
+                                                } else { $carry = 0 }
+                                            }
+                                        } catch { $found = $false } finally {
+                                            if ($null -ne $fs) { $fs.Dispose() }
+                                        }
+                                        if (-not $found) { continue }
+                                    }
+                                    # Format a stat-shaped entry line and
+                                    # emit it under the shared lock. The
+                                    # count and last-path get updated in
+                                    # the same critical section so the P
+                                    # line the next worker emits reads a
+                                    # consistent pair.
+                                    $mode = 0x8000
+                                    if ($fi.Attributes -band $reparse) { $mode = 0xA000 }
+                                    $perm = if ($fi.Attributes -band $readOnly) { 0x1A4 } else { 0x1ED }
+                                    $mt = 0L; $at = 0L; $ct = 0L
+                                    try { $mt = [int64]([DateTimeOffset]::new($fi.LastWriteTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                    try { $at = [int64]([DateTimeOffset]::new($fi.LastAccessTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                    try { $ct = [int64]([DateTimeOffset]::new($fi.CreationTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                    $wirePath = Wp2Wire $fi.FullName
+                                    $entryLine = "{0:x} {1} {2} {3} {4} 0 0 {5}" -f ($mode -bor $perm), $fi.Length, $mt, $at, $ct, $wirePath
+                                    [System.Threading.Monitor]::Enter($lock)
+                                    try {
+                                        $writer.WriteLine($entryLine)
+                                        $writer.Flush()
+                                        $state.Count++
+                                        $state.LastPath = $wirePath
+                                    } finally { [System.Threading.Monitor]::Exit($lock) }
+                                }
+                            }
+                            $subs = $null
+                            try { $subs = [System.IO.Directory]::EnumerateDirectories($cur) } catch { }
+                            if ($null -ne $subs) {
+                                foreach ($sd in $subs) {
+                                    try {
+                                        $di = New-Object System.IO.DirectoryInfo $sd
+                                        if ($di.Attributes -band $reparse) { continue }
+                                        $stack.Push($sd)
+                                    } catch { }
+                                }
+                            }
+                        }
+                        # Final flush of any scanned files that did not
+                        # trip the batch threshold.
+                        if ($localScanned -gt 0) {
+                            [System.Threading.Monitor]::Enter($lock)
+                            try { $state.Scanned += $localScanned } finally { [System.Threading.Monitor]::Exit($lock) }
+                        }
+                    }
+
+                    try {
+                        # Mode marker first, same as sync ffind's reply
+                        # shape and what the client's parseFoundEntry
+                        # expects to see before entry lines.
+                        $out.WriteLine('M stat')
+                        $out.Flush()
+
+                        # Collect top-level subdirectories that are not
+                        # reparse points. Anything else in $dir (the
+                        # files directly under it) is processed inline
+                        # by the coordinator below — same body as a
+                        # worker, minus the recursion.
+                        $topSubs = New-Object System.Collections.Generic.List[string]
+                        try {
+                            foreach ($sd in [System.IO.Directory]::EnumerateDirectories($dir)) {
+                                try {
+                                    $di = New-Object System.IO.DirectoryInfo $sd
+                                    if ($di.Attributes -band $reparse) { continue }
+                                    $topSubs.Add($sd)
+                                } catch { }
+                            }
+                        } catch { }
+
+                        # Kick off the workers on the subdirectories.
+                        # Pool cap: min(top-level count, CPU count) so a
+                        # wide root uses every core but a narrow one
+                        # does not spin up 32 idle runspaces.
+                        $workerCap = [Math]::Max(1, [Environment]::ProcessorCount)
+                        $workerCount = [Math]::Min($topSubs.Count, $workerCap)
+                        $pool = $null
+                        $workers = New-Object System.Collections.Generic.List[object]
+                        if ($workerCount -gt 0) {
+                            $pool = [runspacefactory]::CreateRunspacePool(1, $workerCount)
+                            $pool.Open()
+                            foreach ($sd in $topSubs) {
+                                $wps = [System.Management.Automation.PowerShell]::Create()
+                                $wps.RunspacePool = $pool
+                                [void]$wps.AddScript($workerScript)
+                                [void]$wps.AddArgument($sd)
+                                [void]$wps.AddArgument($out)
+                                [void]$wps.AddArgument($lock)
+                                [void]$wps.AddArgument($state)
+                                [void]$wps.AddArgument($cfg)
+                                $handle = $wps.BeginInvoke()
+                                $workers.Add([pscustomobject]@{PS=$wps; Handle=$handle})
+                            }
+                        }
+
+                        # Coordinator walks the root's own files (no
+                        # recursion into subdirs — those are the
+                        # workers' territory). Same match logic as the
+                        # worker, inlined to avoid a duplicate scriptblock
+                        # invocation shape.
+                        $strCmp = if ($ci) { [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
+                        $overlap = if ($fixed) { [Math]::Max(0, $bytePat.Length - 1) } else { 8192 }
+                        $chunkSize = 1MB
+                        $readOnly = [System.IO.FileAttributes]::ReadOnly
+                        $rootFiles = $null
+                        try { $rootFiles = [System.IO.Directory]::EnumerateFiles($dir) } catch { }
+                        if ($null -ne $rootFiles) {
+                            foreach ($fp in $rootFiles) {
+                                if ($state.Count -ge $limit) { break }
+                                $fi = $null
+                                try { $fi = New-Object System.IO.FileInfo $fp } catch { continue }
+                                if ($fi.Attributes -band $reparse) { continue }
+                                [System.Threading.Monitor]::Enter($lock)
+                                try { $state.Scanned++; $state.LastPath = $fi.FullName.Replace('\', '/') } finally { [System.Threading.Monitor]::Exit($lock) }
+                                $ok = $false
+                                foreach ($m in $masks) { if ($fi.Name -like $m) { $ok = $true; break } }
+                                if (-not $ok) { continue }
+                                if ($hasPat) {
+                                    $found = $false
+                                    $fs = $null
+                                    try {
+                                        $fs = [System.IO.File]::Open($fi.FullName, [System.IO.FileMode]::Open,
+                                                                     [System.IO.FileAccess]::Read,
+                                                                     [System.IO.FileShare]::ReadWrite)
+                                        $buf = New-Object 'byte[]' ($chunkSize + $overlap)
+                                        $carry = 0
+                                        while (-not $found) {
+                                            $got = $fs.Read($buf, $carry, $chunkSize)
+                                            if ($got -le 0) { break }
+                                            $have = $carry + $got
+                                            $chunk = $latin1.GetString($buf, 0, $have)
+                                            if ($fixed) {
+                                                if ($chunk.IndexOf($bytePat, $strCmp) -ge 0) { $found = $true; break }
+                                            } else {
+                                                if ($rx.IsMatch($chunk)) { $found = $true; break }
+                                            }
+                                            if ($overlap -gt 0 -and $have -gt $overlap) {
+                                                [Array]::Copy($buf, $have - $overlap, $buf, 0, $overlap)
+                                                $carry = $overlap
+                                            } else { $carry = 0 }
+                                        }
+                                    } catch { $found = $false } finally {
+                                        if ($null -ne $fs) { $fs.Dispose() }
+                                    }
+                                    if (-not $found) { continue }
+                                }
+                                $mode = 0x8000
+                                if ($fi.Attributes -band $reparse) { $mode = 0xA000 }
+                                $perm = if ($fi.Attributes -band $readOnly) { 0x1A4 } else { 0x1ED }
+                                $mt = 0L; $at = 0L; $ct = 0L
+                                try { $mt = [int64]([DateTimeOffset]::new($fi.LastWriteTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                try { $at = [int64]([DateTimeOffset]::new($fi.LastAccessTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                try { $ct = [int64]([DateTimeOffset]::new($fi.CreationTimeUtc, [TimeSpan]::Zero)).ToUnixTimeSeconds() } catch { }
+                                $wirePath = Convert-WinToPosix $fi.FullName
+                                $entryLine = "{0:x} {1} {2} {3} {4} 0 0 {5}" -f ($mode -bor $perm), $fi.Length, $mt, $at, $ct, $wirePath
+                                [System.Threading.Monitor]::Enter($lock)
+                                try {
+                                    $out.WriteLine($entryLine)
+                                    $out.Flush()
+                                    $state.Count++
+                                    $state.LastPath = $wirePath
+                                } finally { [System.Threading.Monitor]::Exit($lock) }
+                            }
+                        }
+
+                        # Wait for the pool to drain. Poll for kill every
+                        # 100 ms so cancel wakes the workers within a
+                        # couple of their own batch-flush intervals.
+                        while ($workers.Count -gt 0) {
+                            $anyRunning = $false
+                            foreach ($w in $workers) { if (-not $w.Handle.IsCompleted) { $anyRunning = $true; break } }
+                            if (-not $anyRunning) { break }
+                            if ([System.IO.File]::Exists($killPath)) { break }
+                            if ($state.Count -ge $limit) { break }
+                            Start-Sleep -Milliseconds 100
+                        }
+
+                        # EndInvoke / Dispose every worker regardless of
+                        # how the loop above exited (natural completion,
+                        # limit reached, kill). Stop() first so a worker
+                        # still walking a big directory does not keep
+                        # holding I/O after we have committed to ending.
+                        foreach ($w in $workers) {
+                            try { $w.PS.Stop() } catch { }
+                            try { [void]$w.PS.EndInvoke($w.Handle) } catch { }
+                            try { $w.PS.Dispose() } catch { }
+                        }
+                        if ($null -ne $pool) {
+                            try { $pool.Close() } catch { }
+                            try { $pool.Dispose() } catch { }
+                        }
+
+                        $out.WriteLine("T $($state.Count)")
+                        $out.Flush()
+                    } finally { $out.Dispose() }
+                } catch {
+                    [System.IO.File]::AppendAllText($errPath, $_.Exception.Message + "`n", $enc)
+                    $rc = 1
+                }
+                [System.IO.File]::WriteAllText($rcPath, $rc.ToString(), $enc)
+            }
             try {
                 switch ($kind) {
                     'scan'  { Run-JobScan (Convert-PosixToWin $paths[0]) $outP $errP $rcP $utf8NoBom }
                     'hash'  { Run-JobHash (Convert-PosixToWin $paths[0]) $jd $outP $errP $rcP $utf8NoBom }
                     'exec'  { Run-JobExec $paths[0] $paths[1] $outP $errP $rcP $utf8NoBom }
+                    'ffind' { Run-JobFFind $paths $xa1 $xa2 $xa3 $jd $outP $errP $rcP $utf8NoBom }
                 }
             } catch {
                 [System.IO.File]::AppendAllText($errP, $_.Exception.Message + "`n", $utf8NoBom)
@@ -1670,6 +2077,9 @@ function Cmd-JStart {
         [void]$ps.AddArgument($outP)
         [void]$ps.AddArgument($errP)
         [void]$ps.AddArgument($rcP)
+        [void]$ps.AddArgument($xa1)
+        [void]$ps.AddArgument($xa2)
+        [void]$ps.AddArgument($xa3)
         [void]$ps.BeginInvoke()
         $script:F4Jobs[$slot.Id] = $ps
         [System.IO.File]::WriteAllText((Join-Path $jd 'pid'), $PID.ToString(), $utf8NoBom)
@@ -1893,7 +2303,7 @@ function Invoke-JCleanup {
 # "hash:<tool>" is what gates the duplicate search on the client side
 # (Features.HashTool, checked by CanHash); announcing sha256sum alone is
 # not enough, exactly as in helper.sh where the two are separate tags.
-$F4FEATS = 'flavor:pwsh base64 grep sed awk wc head tail truncate touch date sha256sum findbin jobs cp dd readlink du chown mode:stat hash:sha256sum read:filestream write:b64 headc headsafe tailc ddnotrunc statl ddbytes awkflush'
+$F4FEATS = 'flavor:pwsh base64 grep sed awk wc head tail truncate touch date sha256sum findbin jobs ffindjob cp dd readlink du chown mode:stat hash:sha256sum read:filestream write:b64 headc headsafe tailc ddnotrunc statl ddbytes awkflush'
 
 try {
     # A leading LF ensures the terminator starts a line even if the
@@ -1905,7 +2315,10 @@ try {
         $reqLine = Read-Line
         if ($null -eq $reqLine) { break }
         if ($reqLine -eq '') { continue }
-        $parts = $reqLine.Split(' ', 5)
+        # Room for six positional args after id + cmd. jstart ffind needs
+        # five (kind, npaths, limit, nmasks, gmode) — every other command
+        # uses three or fewer.
+        $parts = $reqLine.Split(' ', 8)
         if ($parts.Length -lt 2) { continue }
         if (-not (Test-IsUInt $parts[0])) { continue }
         $script:F4ID = [int64]$parts[0]
@@ -1913,6 +2326,8 @@ try {
         $a1 = if ($parts.Length -ge 3) { $parts[2] } else { '' }
         $a2 = if ($parts.Length -ge 4) { $parts[3] } else { '' }
         $a3 = if ($parts.Length -ge 5) { $parts[4] } else { '' }
+        $a4 = if ($parts.Length -ge 6) { $parts[5] } else { '' }
+        $a5 = if ($parts.Length -ge 7) { $parts[6] } else { '' }
 
         switch ($cmd) {
             'noop'   { Cmd-Noop }
@@ -1939,7 +2354,7 @@ try {
             'grep'   { Cmd-Grep $a1 $a2 }
             'lidx'   { Cmd-LineIdx $a1 $a2 }
             'ffind'  { Cmd-FFind $a1 $a2 $a3 }
-            'jstart' { Cmd-JStart $a1 $a2 }
+            'jstart' { Cmd-JStart $a1 $a2 $a3 $a4 $a5 }
             'jpoll'  { Cmd-JPoll $a1 $a2 }
             'jkill'  { Cmd-JKill $a1 }
             'jdrop'  { Cmd-JDrop $a1 }

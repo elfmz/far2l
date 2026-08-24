@@ -19,6 +19,7 @@ fixes to "Gold on Blue" and "DOS Navigator"
 * Macro Browser (**F9**->Commands->Macro Browser): for Macros now support operations Add, Edit, Delete, Enable/Disable and Show List of Global Constants, Global Variables and MacroFunctions
 * _New_: `--nodetect=e` command line parameter to prevent emoji VS16 suffix detection
 * _New_: Restore initial terminal cursor shape on exit
+* Editor: "All" button in search dialog - list all occurrences at once
 * Editor/Viewer: search/replace dialog: don't start search if search string is empty or regular expression is invalid
 * Viewer: Hex Mode now supports multibyte UTF-8, UTF-16 etc.
 * Viewer: Printing support from viewer (via **Alt+F5**)
@@ -26,9 +27,11 @@ fixes to "Gold on Blue" and "DOS Navigator"
 * Fix AltGr producing uppercase letters in WX backend
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
 * _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system (see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
+* _colorer plugin_: Update colorer schemes to v1.2.0.110 (see: [CHANGELOG.md](https://github.com/elfmz/far2l/blob/master/colorer/configs/base/CHANGELOG.md))
+* _colorer plugin_: Update colorer library to v1.5.0-19.08.2026: Parser and regexp performance, dramatically increased initial coloring for large files (see: [#3567](https://github.com/elfmz/far2l/issues/3567))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
-* _FarColorer plugin_: Dramatically increased initial coloring for large files
-* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** to open the nearest hunk at the current editor line
+* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** or **Ctrl+Shift+G** to open the nearest hunk at the current editor line
+* _jumpword plugin_: New plugin in editor to quick searches the word under the cursor below or above the current location (for use manually add macros, see: [jumpword/README.md](https://github.com/elfmz/far2l/blob/master/jumpword/README.md))
 * _MTP plugin_: New panel plugin to browse and manage files on USB-connected MTP/PTP devices (Android, cameras, iOS Camera Roll, media players); see [mtp/README.md](https://github.com/elfmz/far2l/blob/master/mtp/README.md))
 * _multiarc plugin_: Update bundled unrar sources to 7.23
 * _NetRocks plugin_: AWS support with biuld-in custom S3 implementation based on neon (not need aws-sdk-cpp anymore)

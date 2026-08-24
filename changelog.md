@@ -26,16 +26,16 @@ fixes to "Gold on Blue" and "DOS Navigator"
 * Fix cmdline autocomplete when commands deduplicated by text
 * Fix AltGr producing uppercase letters in WX backend
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
-* _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system (see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
+* _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system (see [plugins/adb/README.md](https://github.com/elfmz/far2l/blob/master/plugins/adb/README.md))
 * _colorer plugin_: Update colorer schemes to v1.2.0.110 (see: [CHANGELOG.md](https://github.com/elfmz/far2l/blob/master/colorer/configs/base/CHANGELOG.md))
 * _colorer plugin_: Update colorer library to v1.5.0-19.08.2026: Parser and regexp performance, dramatically increased initial coloring for large files (see: [#3567](https://github.com/elfmz/far2l/issues/3567))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
 * _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** or **Ctrl+Shift+G** to open the nearest hunk at the current editor line
-* _jumpword plugin_: New plugin in editor to quick searches the word under the cursor below or above the current location (for use manually add macros, see: [jumpword/README.md](https://github.com/elfmz/far2l/blob/master/jumpword/README.md))
-* _MTP plugin_: New panel plugin to browse and manage files on USB-connected MTP/PTP devices (Android, cameras, iOS Camera Roll, media players); see [mtp/README.md](https://github.com/elfmz/far2l/blob/master/mtp/README.md))
+* _jumpword plugin_: New plugin in editor to quick searches the word under the cursor below or above the current location (for use manually add macros, see: [plugins/jumpword/README.md](https://github.com/elfmz/far2l/blob/master/plugins/jumpword/README.md))
+* _MTP plugin_: New panel plugin to browse and manage files on USB-connected MTP/PTP devices (Android, cameras, iOS Camera Roll, media players); see [plugins/mtp/README.md](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md))
 * _multiarc plugin_: Update bundled unrar sources to 7.23
 * _NetRocks plugin_: AWS support with biuld-in custom S3 implementation based on neon (not need aws-sdk-cpp anymore)
-* _NetRocks plugin_: FISH+ protocol: Server-side copy, Recursive delete in one round trip, Remote search / server-side grep, etc. (see: [FISHPLUS/INTEGRATION.md](https://github.com/elfmz/far2l/blob/master/NetRocks/src/Protocol/FISHPLUS/INTEGRATION.md) and [#3542](https://github.com/elfmz/far2l/issues/3542))
+* _NetRocks plugin_: FISH+ protocol: Server-side copy, Recursive delete in one round trip, Remote search / server-side grep, etc. (see: [FISHPLUS/INTEGRATION.md](https://github.com/elfmz/far2l/blob/master/plugins/NetRocks/src/Protocol/FISHPLUS/INTEGRATION.md) and [#3542](https://github.com/elfmz/far2l/issues/3542))
 * _ImageViewer plugin_: New actions: **I** / **F3** - show full EXIF metadata using `exiftool`; **G** / **Alt+F8** - choose a map service and open the GPS location from the current file's EXIF metadata in a browser; **T** / **Ctrl+F10** - exit and move the panel cursor to the currently viewed file. Fix extra commands menu logic and data consistency.
 * _OpenWith plugin_: Update to v1.3. **General**: Added a progress dialog allowing cancellation of application discovery; allow plugin invocation on `..` (treated as the current directory); new option "Display filename in the menu title"; bugfixes and help updates. **Linux/BSD**: new options "Show package qualifiers", "Ignore [Removed Associations] section", "Query system defaults via xdg-mime"; new buttons "GoTo .desktop", "GoTo TryExec", and "GoTo source" in the "Details" dialog. **macOS**: more comprehensive information in the "Details" dialog; new "GoTo bundle location" button in the "Details" dialog; new options "Show UTI instead of MIME types", "Respect system ranking", "Disable ranking and sort alphabetically".
 * _python plugin_: plugin manager (upluginmanager.py), fixes and new subplugins uhashes.py uimgimage.py, uimgpdf.py, ustealer.py (see: [#3346](https://github.com/elfmz/far2l/issues/3346) and [#3439](https://github.com/elfmz/far2l/pull/3439))
@@ -73,7 +73,7 @@ fixes to "Gold on Blue" and "DOS Navigator"
   Uses ImageMagick for graphics operations and ffmpeg for video preview,
   works in GUI and in TTY|F and TTY|k.
 * _memo plugin_: New multi-page scratchpad/memo common plugin
-  (**F11**->Memo or **Ctrl+Alt+S** inside Panel, Dialog, Editor or Viewer; see [memo/README.md](https://github.com/elfmz/far2l/blob/master/memo/README.md))
+  (**F11**->Memo or **Ctrl+Alt+S** inside Panel, Dialog, Editor or Viewer; see [plugins/memo/README.md](https://github.com/elfmz/far2l/blob/master/plugins/memo/README.md))
 * _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
 * _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at chosen column
 * _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file

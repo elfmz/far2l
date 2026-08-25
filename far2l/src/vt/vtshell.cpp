@@ -380,8 +380,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		std::string cmd = " ";
 		cmd+= VT_ComposeMarkerCommand(_startup_marker);
 		cmd+= '\n';
+		fprintf(stderr, "%s: starting IO readers, _startup_marker='%s'\n", __FUNCTION__, _startup_marker.c_str());
 		StartIOReaders();
-		do {
+		for (;;) {
 			const auto now = GetProcessUptimeMSec();
 			if (when_printed_cmd == 0 || now - when_printed_cmd >= 300) {
 				when_printed_cmd = now;
@@ -389,11 +390,23 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			DispatchInterThreadCalls();
 			InterThreadLock lock;
-			if (_startup_marker.empty() || _output_reader.IsDeactivated()) {
+			if (_startup_marker.empty()) {
+				break;
+			}
+			if (_output_reader.IsDeactivated()) {
+				fprintf(stderr, "%s: _output_reader deactivated\n", __FUNCTION__);
 				break;
 			}
 			lock.WaitForWake(300);
-		} while (CheckLeaderAlive() && (GetProcessUptimeMSec() - when_started) < SHELL_TIMEOUT);
+			if (!CheckLeaderAlive()) {
+				fprintf(stderr, "%s: leader terminated unexpectedly\n", __FUNCTION__);
+				break;
+			}
+			if (GetProcessUptimeMSec() - when_started > SHELL_TIMEOUT) {
+				fprintf(stderr, "%s: timed out\n", __FUNCTION__);
+				break;
+			}
+		}
 		StopIOReaders();
 
 		_console_switch_requested = false;
@@ -402,7 +415,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "%s: startup took %lu msec\n",
 				__FUNCTION__, (unsigned long)(GetProcessUptimeMSec() - when_started));
 		} else {
-			fprintf(stderr, "VT: shell is not talking with us\n");
+			fprintf(stderr, "%s: failed in %lu msec\n",
+				__FUNCTION__, (unsigned long)(GetProcessUptimeMSec() - when_started));
 			r = _leader_pid;
 			if (r != -1) {
 				kill(r, SIGKILL);

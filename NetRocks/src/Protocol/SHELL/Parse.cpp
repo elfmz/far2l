@@ -3,6 +3,7 @@
 #include <utils.h>
 
 #include "Parse.h"
+#include <UnixModeStr.h>
 #include "../ShellParseUtils.h"
 #include "../Protocol.h"
 
@@ -21,7 +22,7 @@ static std::string FetchHead(std::string &line)
 static void SHELLParseLSPermissions(FileInfo &fi, const char *line, size_t line_len)
 {
 //	drwxr-xr-x 0 0
-	fi.mode = ShellParseUtils::Str2Mode(line, line_len);
+	fi.mode = UnixModeStr::Parse(line, line_len);
 	for (size_t i = line_len, j = line_len; i--;) {
 		if (line[i] == ' ' || line[i] == '.') {
 			if (j > i) {
@@ -51,7 +52,7 @@ static unsigned int ParseModeByStatOrFindLine(const std::string &s)
 		return strtoul(s.c_str(), nullptr, 16);
 	}
 
-	return ShellParseUtils::Str2Mode(s.c_str(), s.size());
+	return UnixModeStr::Parse(s.c_str(), s.size());
 }
 
 static bool SHELLParseEnumByStatOrFindLine(FileInfo &fi, std::string line)

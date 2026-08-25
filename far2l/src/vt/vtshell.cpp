@@ -760,14 +760,25 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				} break;
 
 				case '_': { // internal markers control
-					if (!_startup_marker.empty() && _startup_marker == &str[6]) {
+					/*if (!_startup_marker.empty() && _startup_marker == &str[6]) {
 						// we are in Startup()/EnsureShellTalkative()
 						// clear marker under InterThreadLock so EnsureShellTalkative() will awake immediately after it cleared
 						// dont enable console output cuz its too early - it will be enabled when command will eventually started
 						InterThreadLock itl;
 						_startup_marker.clear();
-					} else if (!_start_marker.empty() && _start_marker == &str[6]) {
+					} else if (!_start_marker.empty() && _start_marker == &str[6]) {*/
+					if (!_start_marker.empty() && _start_marker == &str[6]) {
 						_start_marker.clear();
+						std::lock_guard<std::mutex> lock(_console_handle_mutex);
+						if (_output_disabled_console_handle) {
+							WINPORT(DiscardConsole)(_output_disabled_console_handle);
+							_output_disabled_console_handle = NULL;
+						} else {
+							fprintf(stderr, "VT: start marked arrived but _output_disabled_console_handle == NULL already\n");
+						}
+					}
+					// tryed to return old logic for console action handle
+					else if (!_exit_marker.empty()
 						MakeConsoleDisabled(false);
 					} else if (!_exit_marker.empty()
 						&& strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0)

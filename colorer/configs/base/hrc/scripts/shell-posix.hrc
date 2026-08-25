@@ -303,17 +303,29 @@
 <scheme name="redirections_end_caught">
     <inherit scheme="redirections_start"/>
     <!-- heredoc in form [n]<<'word' -->
-    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*([&quot;&apos;])(?{HeredocAnchor}[\w\d_-]+)(\1)/"
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-)\s*([&quot;&apos;])(?{HeredocAnchor}[\w\d_-]+)(\1)/"
+        end="/^\t*((\y{HeredocAnchor}))$/" scheme="heredoc_quoted"
+        region01="StringEdge" region02="StringEdge" region11="HeredocAnchor"
+        region00="PairStart"  region12="PairEnd"/>
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;)\s*([&quot;&apos;])(?{HeredocAnchor}[\w\d_-]+)(\1)/"
         end="/^(\y{HeredocAnchor})$/" scheme="heredoc_quoted"
         region01="StringEdge" region02="StringEdge" region11="HeredocAnchor"
         region00="PairStart"  region10="PairEnd"/>
     <!-- heredoc in form [n]<<\word -->
-    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*(\\)(?{HeredocAnchor}[\w\d_-]+)/"
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-)\s*(\\)(?{HeredocAnchor}[\w\d_-]+)/"
+        end="/^\t*((\y{HeredocAnchor}))$/" scheme="heredoc_quoted"
+        region01="StringEdge" region11="HeredocAnchor"
+        region00="PairStart"  region12="PairEnd"/>
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;)\s*(\\)(?{HeredocAnchor}[\w\d_-]+)/"
         end="/^(\y{HeredocAnchor})$/" scheme="heredoc_quoted"
         region01="StringEdge" region11="HeredocAnchor"
         region00="PairStart"  region10="PairEnd"/>
     <!-- heredoc in form [n]<<word -->
-    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*(?{HeredocAnchor}[\w\d_-]+)/"
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-)\s*(?{HeredocAnchor}[\w\d_-]+)/"
+        end="/^\t*((\y{HeredocAnchor}))$/" scheme="heredoc"
+        region11="HeredocAnchor"
+        region00="PairStart" region12="PairEnd"/>
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;)\s*(?{HeredocAnchor}[\w\d_-]+)/"
         end="/^(\y{HeredocAnchor})$/" scheme="heredoc"
         region11="HeredocAnchor"
         region00="PairStart" region10="PairEnd"/>

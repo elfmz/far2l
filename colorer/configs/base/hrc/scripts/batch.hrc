@@ -18,6 +18,15 @@ With help of:
 -->
    <type name="Batch">
 
+      <annotation>
+         <documentation>
+            Batch/WinNT CMD script files
+         </documentation>
+         <contributors><![CDATA[
+            Aleksey Dobrunov <ctapmex@ctapmex.com>
+         ]]></contributors>
+      </annotation>
+
       <import type="def"/>
       <import type="perl"/>
 
@@ -28,6 +37,7 @@ With help of:
       <region name="ntNumber" parent="Number"/>
       <region name="ntSpec" parent="Symbol"/>
       <region name="ntStr" parent="String"/>
+      <region name="ntStrEdge" parent="def:StringEdge"/>
       <region name="ntVarEnv" parent="Var"/>
 
       <region name="ntHereDoc" parent="String"/>
@@ -88,8 +98,9 @@ Internal usage: call :heredoc :LABEL & goto :LABEL
          <regexp match="/\b\d[0-9a-fA-F]*\b/" region0="ntNumber"/>
          <regexp match="/\%\@[^\[]+/" region0="ntNumber"/>
          <inherit scheme="BatchContent"/>
-<!-- Strings -->
-         <regexp match="/\&#34;(\\.|[^\\&#34;])*?\&#34;/" region0="ntStr"/>
+<!-- Strings: backslash is not an escape in cmd.exe; quotes are paired -->
+         <block start="/(&#34;)/" end="/(&#34;)/" scheme="def:empty" region="ntStr"
+                region00="ntStrEdge" region01="PairStart" region10="ntStrEdge" region11="PairEnd"/>
 <!--regexp match='/\%.*?\%/' region0="ntVarEnv"/-->
          <regexp match="/([%!])[^\[\]]*?(\1)/" region0="ntVarEnv" region1="PairStart" region2="PairEnd"/>
          <regexp match="/\[.*?\]/" region0="ntVarEnv"/>

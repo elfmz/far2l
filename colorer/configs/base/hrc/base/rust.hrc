@@ -13,6 +13,7 @@
       <contributors>
         <![CDATA[
         Maksim Galkin <maksim.galkin@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
       ]]>
       </contributors>
     </annotation>
@@ -36,8 +37,16 @@
 
       <inherit scheme="def:Number"/>
 
-      <block start="/^\s*(#\[)/" end="/(\])/" scheme="rust" region="def:Directive"
-             region00="def:DirectiveEdge" region10="def:DirectiveEdge"/>
+      <block start="/^\s*(#)(\[)/" end="/(\])/" scheme="rust" region="def:Directive"
+             region00="def:DirectiveEdge" region01="def:DirectiveEdge" region02="def:PairStart"
+             region10="def:DirectiveEdge" region11="def:PairEnd"/>
+
+      <block start="/(\{)/" end="/(\})/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\()/" end="/(\))/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
 
       <keywords region="def:Keyword">
         <word name='abstract'/>
@@ -97,12 +106,6 @@
         <symb name="::" />
         <symb name="->" />
         <symb name="#" />
-        <symb name="[" />
-        <symb name="]" />
-        <symb name="(" />
-        <symb name=")" />
-        <symb name="{" />
-        <symb name="}" />
         <symb name="," />
         <symb name=";" />
       </keywords>

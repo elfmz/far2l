@@ -2,7 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+- [dart] Add Dart syntax highlighting support
+- [swift] Add Swift syntax highlighting support
+- [go.mod] Add go.mod file syntax highlighting support
+- [go.sum] Add go.sum file syntax highlighting support
+- [gitignore] Add .gitignore file syntax highlighting support
+- [moonscript] Add moonscript file syntax highlighting support
+
 ### Changed
+- [css] add @media rules and media query highlighting
 - License has been changed to LGPL 2.1 for the resulting hrc files with the specified license 'MPL 1.1/GPL 2.0/LGPL 2.1'.
 - Simplified catalog.xml.
 - Use new xsd schema for catalog.xml.
@@ -19,8 +28,13 @@
 - Add *.xaml to xml prototype
 - Add *.lpr to pascal prototype
 - Add *.lfm to delphiform prototype
-  
+
 ### Fixed
+- [farmenu] do not treat `!` inside parentheses as a `!?...!` dialog field terminator
+- [rust] highlight matching `()`, `[]` and `{}` when the cursor is on a bracket
+- [batch] cmd does not treat backslash as a quote escape; mark double quotes as pairs
+- [makefile] recognise GNU Make `else ifeq`/`else ifdef` conditionals and `export`/`unexport` without assignment
+- [perl] recognise regexp after range operator (`/'/ .. /"/`)
 - [calcset] update hrc for latest file structure.
 - [picasm] fix typo  sndwf -> andwf
 - [python] numeric fixes, more strict, and fine-grained types/classes
@@ -53,8 +67,13 @@
 - [black.hrd] fix colors for cross
 - [yml] fix error in generated scheme; update scheme to 2.4.0
 - [verilog] add define, include, timescale support
+- [json] object keys use string edges/escapes and Keyword coloring (visible in default.hrd)
+- [verilog] highlight function-like compiler macros (`name(...)) and pair module/endmodule when the name is a macro; recognise .vh headers
 - [cmake] fix escaping strings
 - [cpp] functions outliner list cleanup
+- [markdown] improve HTML handling (inline tags and CommonMark blocks)
+- [markdown] highlight URL and title in link reference definitions
+- [shell-posix] fix heredoc with '<<-' operator
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.

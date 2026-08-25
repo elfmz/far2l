@@ -378,7 +378,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		MakeConsoleDisabled(true);
 		VT_ComposeMarker(_startup_marker);
 		std::string cmd;
-		cmd+= '\n';
 		cmd+= VT_ComposeMarkerCommand(_startup_marker);
 		cmd+= '\n';
 		StartIOReaders();

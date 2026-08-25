@@ -22,7 +22,7 @@ std::string VT_ComposeMarkerCommand(const std::string &marker)
 	// split marker by two parts, separating leading character to avoid echoed
 	// command affecting us, as we want to react only on command's output
 	// there is $FARVTRESULT at the end sometimes so tailing part must be in double quotes
-	std::string out = "printf '\\033_far2l_%s%s\\007' '";
+	std::string out = "printf \"\\033_far2l_%s%s\\007\" '";
 	out+= marker.front();
 	out+= "' \"";
 	out+= marker.c_str() + 1;

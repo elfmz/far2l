@@ -32,7 +32,7 @@ MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/mtp/R
 multiarc,
 NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3),
 OpenWith,
-Python <sub>(optional scripting support, see [readme](python/configs/plugins/read-en.txt) and [info](python/configs/plugins/readme-plugins.txt))</sub>,
+Python <sub>(optional scripting support, see [readme](plugins/python/configs/plugins/read-en.txt) and [info](plugins/python/configs/plugins/readme-plugins.txt))</sub>,
 SimpleIndent,
 tmppanel,
 Transformer <sub>(generic external-command text transformations for the editor and file panels)</sub>,
@@ -73,7 +73,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * See also (in external documents):
     * [Change log](changelog.md)
     * [Releases](https://github.com/elfmz/far2l/releases)
-    * [Python plugin readme](python/configs/plugins/read-en.txt) and [Short information about each Python plugins/files](python/configs/plugins/readme-plugins.txt)
+    * [Python plugin readme](plugins/python/configs/plugins/read-en.txt) and [Short information about each Python plugins/files](plugins/python/configs/plugins/readme-plugins.txt)
     * [Notes on porting and FAR Plugin API changes](HACKING.md)
     * [Coding style](CODESTYLE.md)
     * [Testing](testing/README.md)

@@ -1089,7 +1089,14 @@ void FarEditorSet::SaveSettings() const
 
 bool FarEditorSet::checkConsoleExtendedColors()
 {
-  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
+  // GetConsoleColorPalette returns:
+  //   4  - true color is disabled (norgb or a basic terminal);
+  //   8  - 256-color terminal (far2l still emits true-color sequences
+  //        and lets the terminal approximate them);
+  //   24 - true color is explicitly supported.
+  // far2l uses true-color palette attributes by default, so the only
+  // case where Colorer should disable TrueMod is the 4-bpp "no rgb" one.
+  return WINPORT(GetConsoleColorPalette)(NULL) >= 8;
 }
 
 namespace {

@@ -7,7 +7,7 @@ BETA VERSION.
 **Use at your own risk!**
 
 Plug-ins that are currently working:
-ADB <sub>(the external adb binary is required to work, see: [README](https://github.com/elfmz/far2l/blob/master/adb/README.md))</sub>,
+ADB <sub>(the external adb binary is required to work, see: [README](https://github.com/elfmz/far2l/blob/master/plugins/adb/README.md))</sub>,
 Advanced compare,
 align,
 arclite <sub>(now as experimental version which partially more effective than multiarc;
@@ -26,9 +26,9 @@ hexitor,
 ImageViewer,
 incsrch,
 inside,
-jumpword <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/jumpword/README.md))</sub>,
-memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/memo/README.md))</sub>,
-MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/mtp/README.md))</sub>,
+jumpword <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/jumpword/README.md))</sub>,
+memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/memo/README.md))</sub>,
+MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md))</sub>,
 multiarc,
 NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3),
 OpenWith,
@@ -385,7 +385,7 @@ There're also options to toggle other plugins build in same way:
 `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`,
 `-DJUMPWORD=no`,
 `-DMEMO=no`,
-`-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/mtp/README.md)),
+`-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md)),
 `-DMULTIARC=no`,
 `-DNETROCKS=no`,
 `-DOPENWITH=no`,

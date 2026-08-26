@@ -1188,7 +1188,9 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 
 	int focus_item = POPUP_MEMO;
 	for (;;) {
-		const auto &h = st.hunks[index];
+		if (index >= st.hunks.size())
+			return;
+		const Hunk h = st.hunks[index];
 		int max_line = 0;
 		int cur_line = 0;
 		int lines = 1;
@@ -1319,7 +1321,7 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 		if (rc == POPUP_PREV) {
 			if (!st.hunks.empty()) {
 				focus_item = POPUP_PREV;
-				index = (index == 0) ? (st.hunks.size() - 1) : (index - 1);
+				index = (index == 0 || index >= st.hunks.size()) ? (st.hunks.size() - 1) : (index - 1);
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
 			}
@@ -1335,16 +1337,15 @@ static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 			ShowConfigDialog(&git_info, &st.repo_root);
 			return;
 		} else if (rc == POPUP_REVERT) {
-			const Hunk old_hunk = st.hunks[index];
-			RevertHunkInEditor(st.hunks[index]);
+			RevertHunkInEditor(h);
 			MaybeScheduleTick();
 			UpdateEditorState(const_cast<EditorState &>(st));
 			if (st.hunks.empty())
 				return;
 			size_t found = st.hunks.size();
 			for (size_t i = 0; i < st.hunks.size(); ++i) {
-				const Hunk &h = st.hunks[i];
-				if (h.start == old_hunk.start && h.end == old_hunk.end && h.text == old_hunk.text) {
+				const Hunk &candidate = st.hunks[i];
+				if (candidate.start == h.start && candidate.end == h.end && candidate.text == h.text) {
 					found = i;
 					break;
 				}

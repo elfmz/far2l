@@ -187,6 +187,7 @@ enum CopyMode
 	CM_ONLYNEWER,
 	CM_SEPARATOR,
 	CM_ASKRO,
+	CM_COUNT,
 };
 
 // CopyProgress start
@@ -908,7 +909,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	 */
 	if (Ask) {
 		FarList ComboList;
-		FarListItem LinkTypeItems[2] = {}, CopyModeItems[8] = {};
+		FarListItem LinkTypeItems[2] = {}, CopyModeItems[CM_COUNT] = {};
 
 		if (Link) {
 			ComboList.ItemsNumber = ARRAYSIZE(LinkTypeItems);

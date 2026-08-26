@@ -299,15 +299,15 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 
 void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 {
-	if (strncmp(s, "f2l", 3) == 0) {
+	if (l >= 3 && strncmp(s, "f2l", 3) == 0) {
 		_tmp_stk_ser.FromBase64(s + 3, l - 3);
 		_handler->OnFar2lEvent(_tmp_stk_ser);
 
-	} else if (strncmp(s, "far2l", 5) == 0) {
+	} else if (l >= 5 && strncmp(s, "far2l", 5) == 0) {
 		_tmp_stk_ser.FromBase64(s + 5, l - 5);
 		_handler->OnFar2lReply(_tmp_stk_ser);
 
-	} else if (*s == 'G') {
+	} else if (l != 0 && *s == 'G') {
 		_handler->OnKittyGraphicsResponse(std::string(s + 1, l - 1));
 	}
 }
@@ -400,7 +400,8 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 
 	if (l > 5 && s[0] == '[' && s[1] == '6' && s[2] == ';') { // Response to ESC [ 16 t
 		unsigned int h=0, w=0;
-		if (sscanf(s, "[6;%u;%ut", &h, &w) == 2) {
+		const std::string response(s, l);
+		if (sscanf(response.c_str(), "[6;%u;%ut", &h, &w) == 2) {
 			_handler->OnGetCellSize(w, h);
 			// find 't'
 			for (size_t i = 3; i < l; ++i) {

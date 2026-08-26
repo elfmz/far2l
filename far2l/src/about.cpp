@@ -174,7 +174,7 @@ void FarAbout(PluginManager &Plugins)
 	if (Opt.CmdLine.UseShell)
 		fs.Format(L"   Command shell (User): \"%ls\"", Opt.CmdLine.strShell.CPtr() );
 	else
-		fs.Format(L" Command shell (System): \"%s\"", GetSystemShell() );
+		fs.Format(L" Command shell (System): \"%s\"", VTShell_GetSystemShell().c_str() );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
 	ListAbout.AddItem(L""); fs2copy += "\n";

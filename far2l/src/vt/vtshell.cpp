@@ -84,22 +84,54 @@ std::string VTSanitizeHistcontrol()
 	return hc_override;
 }
 
-const char *GetSystemShell()
+static bool VTShell_LookFor(std::string &out, const char *path, const char *what)
 {
+	for (const char *end = path; ; ++end) {
+		if (*end == 0 || *end == ':') {
+			out.assign(path, end - path);
+			if (!out.empty() && out.back() != '/' ) {
+				out+= '/';
+			}
+			out+= what;
+			if (access(out.c_str(), X_OK) == 0) {
+				return true;
+			}
+			if (*end == 0) {
+				return false;
+			}
+			path = end +1;
+		}
+	}
+}
+
+std::string VTShell_GetSystemShell()
+{
+	std::string out;
+	// prefer to use known-good shell
+	// fallback: "$SHELL"
+	// last resort: "sh"
+	const char *known_good[] = {"bash", "dash"};
+	const char *path = getenv("PATH");
+	for (const auto *what : known_good) {
+		if (path && VTShell_LookFor(out, path, what)) {
+			return out;
+		}
+		if (VTShell_LookFor(out, "/bin:/usr/bin:/usr/local/bin", what)) {
+			return out;
+		}
+	}
 	const char *env_shell = getenv("SHELL");
-	if (!env_shell || !*env_shell) {
-		return "/bin/sh";
+	if (env_shell && *env_shell) {
+		const char *slash = strrchr(env_shell, '/');
+		out = slash ? slash + 1 : env_shell;
+		// avoid using known-incompatible shells for a while, it requires changes in Opt.strQuotedSymbols and some others
+		if (out == "fish" || out == "csh" || out == "tcsh" || out == "nu") {
+			out = "sh";
+		}
+	} else {
+		out = "sh";
 	}
-
-	const char *slash = strrchr(env_shell, '/');
-	// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
-	if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
-	 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
-	 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
-		return "bash";
-	}
-
-	return env_shell;
+	return out;
 }
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
@@ -151,14 +183,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		if (shell_exploded.empty() || shell_exploded.front().empty()) {
-			shell_exploded.Parse(GetSystemShell());
+			shell_exploded.Parse(VTShell_GetSystemShell());
 			shell_exploded.emplace_back("-i");
 		}
 
+		fprintf(stderr, "%s:", __FUNCTION__);
 		std::vector<char *> shell_argv;
 		for (const auto &arg : shell_exploded) {
 			shell_argv.emplace_back((char *)arg.c_str());
+			fprintf(stderr, " '%s'", arg.c_str());
 		}
+		fprintf(stderr, "\n");
 		shell_argv.emplace_back(nullptr);
 
 		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
@@ -180,9 +215,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (strstr(shell_argv.front(), "zsh")) {
 			_init_user_profile = ".zprofile";
 		} else if (strstr(shell_argv.front(), "bash")) {
-			_init_user_profile = ".bash_profile";;
+			_init_user_profile = ".bash_profile";
 		}
 #endif
+
 		std::cin.sync();
 		std::cout.flush();
 		std::cerr.flush();
@@ -377,16 +413,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		clock_t when_printed_cmd = 0;
 		MakeConsoleDisabled(true);
 		VT_ComposeMarker(_startup_marker);
-		std::string cmd = " ";
+		std::string cmd = "\n ";
 		cmd+= VT_ComposeMarkerCommand(_startup_marker);
 		cmd+= '\n';
-		fprintf(stderr, "%s: starting IO readers, _startup_marker='%s'\n", __FUNCTION__, _startup_marker.c_str());
 		StartIOReaders();
 		for (;;) {
 			const auto now = GetProcessUptimeMSec();
 			if (when_printed_cmd == 0 || now - when_printed_cmd >= 300) {
 				when_printed_cmd = now;
 				InjectInput(cmd.c_str());
+				if (cmd.front() == '\n') {
+					cmd.erase(0, 1);
+				}
 			}
 			DispatchInterThreadCalls();
 			InterThreadLock lock;

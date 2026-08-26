@@ -338,15 +338,15 @@ struct VTAnsiContext
 
 // ========== Print Buffer functions
 
-	void ApplyConsoleTitle(HANDLE con_hnd)
+	void ApplyConsoleTitle()
 	{
 		std::wstring title(1, L'[');
 		{
 			std::lock_guard<std::mutex> lock(title_mutex);
-			title+= StrMB2Wide(cur_title);
+			StrMB2Wide(cur_title, title, true);
 		}
 		title+= L']';
-		WINPORT(SetConsoleTitle)(con_hnd, title.c_str());
+		vt_shell->OnSetTitle(title.c_str());
 	}
 
 //-----------------------------------------------------------------------------
@@ -1241,7 +1241,7 @@ struct VTAnsiContext
 					cur_title.swap(os_cmd_arg);
 				}
 				os_cmd_arg.clear();
-				ApplyConsoleTitle(con_hnd);
+				ApplyConsoleTitle();
 
 			} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
@@ -1681,7 +1681,7 @@ void VTAnsi::OnReattached()
 		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
-	_ctx->ApplyConsoleTitle(con_hnd);
+	_ctx->ApplyConsoleTitle();
 	_ctx->ShowImages();
 }
 

@@ -928,6 +928,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_input_reader.InjectInput(str, strlen(str));
 	}
 
+	void OnSetTitle(const wchar_t *title)
+	{
+		WINPORT(SetConsoleTitle)(_console_handle, title);
+	}
+
 	std::string StringFromClipboard()
 	{
 		std::string out;

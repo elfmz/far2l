@@ -97,8 +97,6 @@ in
           prev.gnutls
           prev.libtasn1
           prev.p11-kit
-          # Netrocks AWS
-          prev.aws-sdk-cpp
           # ImageViewer
           prev.imagemagick
           prev.ffmpeg
@@ -134,7 +132,6 @@ in
           "-DARCLITE=ON"
           "-DMULTIARC=ON"
           "-DNETROCKS=ON"
-          "-DAWS_S3=ON"
           "-DSIMPLEINDENT=ON"
           "-DTMPPANEL=ON"
           "-DHEXITOR=ON"

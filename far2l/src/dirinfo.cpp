@@ -77,20 +77,103 @@ static void PR_DrawGetDirInfoMsg()
 			reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3));
 }
 
+static int ScanDirInfoImpl(const wchar_t *DirName, DirInfoData &Data, bool CountDirSize,
+		bool ScanSymlinks, FileFilter *Filter, bool UseFilter,
+		const std::function<int(const DirInfoData &)> &Progress)
+{
+	ScanTree ScTree(FALSE, TRUE, ScanSymlinks);
+	FAR_FIND_DATA_EX FindData;
+	FARString strFullName, strCurDirName, strLastDirName;
+	ScannedINodes scanned_inodes;
+	struct stat s = {0};
+
+	Data = {};
+	ScTree.SetFindPath(DirName, L"*", 0);
+
+	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
+		if (CountDirSize) {
+			Data.FileSize = s.st_size;
+			Data.PhysicalSize = ((DWORD64)s.st_blocks) * 512;
+		}
+		Data.ClusterSize = s.st_blksize;
+	}
+
+	while (ScTree.GetNextName(&FindData, strFullName)) {
+		if (Progress) {
+			const int Result = Progress(Data);
+			if (Result != 1)
+				return Result;
+		}
+
+		const DWORD file_attributes = FindData.dwFileAttributes;
+		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+
+		if (!is_directory || CountDirSize)
+			Data.PhysicalSize+= FindData.nPhysicalSize;
+
+		if (is_reparse_point) {
+			if (CountDirSize && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0)
+				Data.FileSize+= s.st_size;
+
+			Data.FileCount++;
+			if (!ScanSymlinks)
+				continue;
+		}
+
+		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode))
+			continue;
+
+		if (is_directory) {
+			if (!UseFilter) {
+				Data.DirCount++;
+				if (CountDirSize)
+					Data.FileSize+= FindData.nFileSize;
+			} else if (Filter->FileInFilter(FindData)) {
+				if (CountDirSize)
+					Data.FileSize+= FindData.nFileSize;
+			} else {
+				ScTree.SkipDir();
+			}
+		} else {
+			if (UseFilter && !Filter->FileInFilter(FindData))
+				continue;
+
+			if (UseFilter) {
+				strCurDirName = strFullName;
+				CutToSlash(strCurDirName);
+
+				if (StrCmp(strCurDirName, strLastDirName)) {
+					Data.DirCount++;
+					strLastDirName = strCurDirName;
+				}
+			}
+
+			Data.FileCount++;
+			Data.FileSize+= FindData.nFileSize;
+		}
+	}
+
+	return 1;
+}
+
+bool ScanDirInfo(const wchar_t *DirName, DirInfoData &Data, bool CountDirSize, bool ScanSymlinks,
+		const DirInfoProgress &Progress)
+{
+	return ScanDirInfoImpl(DirName, Data, CountDirSize, ScanSymlinks, nullptr, false,
+			[&](const DirInfoData &Current) { return (!Progress || Progress(Current)) ? 1 : 0; }) == 1;
+}
+
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
 		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
 		FileFilter *Filter, DWORD Flags)
 {
 	FARString strFullDirName;
-	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
 	SaveScreen SaveScr;
 	UndoGlobalSaveScrPtr UndSaveScr(&SaveScr);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_DrawGetDirInfoMsg);
 	wakeful W;
-	ScanTree ScTree(FALSE, TRUE,
-			((Flags & GETDIRINFO_SCANSYMLINKDEF) ? -1 : ((Flags & GETDIRINFO_SCANSYMLINK) != 0)));
-	FAR_FIND_DATA_EX FindData;
 	clock_t StartTime = GetProcessUptimeMSec();
 	SetCursorType(FALSE, 0);
 	/*
@@ -108,31 +191,16 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 
 	ConsoleTitle OldTitle;
 	RefreshFrameManager frref(ScrX, ScrY, MsgWaitTime, Flags & GETDIRINFO_DONTREDRAWFRAME);
-	// DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
-
-	// Временные хранилища имён каталогов
-	strLastDirName.Clear();
-	strCurDirName.Clear();
-	DirCount = FileCount = 0;
-	FileSize = PhysicalSize = 0;
-	ClusterSize = 0;
-	ScTree.SetFindPath(DirName, L"*", 0);
-	ScannedINodes scanned_inodes;
 	const bool count_dir_size = !Opt.OnlyFilesSize;
 	const bool use_filter = (Flags & GETDIRINFO_USEFILTER) != 0;
-	const bool scan_symlinks = ScTree.IsSymlinksScanEnabled();
+	const bool scan_symlinks = (Flags & GETDIRINFO_SCANSYMLINKDEF)
+			? Opt.ScanJunction
+			: (Flags & GETDIRINFO_SCANSYMLINK) != 0;
 	const bool can_break = !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
+	DirInfoData Data;
 
-	struct stat s = {0};
-	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
-		if (count_dir_size) {	// include size of root dir's node
-			FileSize = s.st_size;
-			PhysicalSize = ((DWORD64)s.st_blocks) * 512;
-		}
-		ClusterSize = s.st_blksize;		// TODO: check if its best thing to be used here
-	}
-
-	while (ScTree.GetNextName(&FindData, strFullName)) {
+	const int Result = ScanDirInfoImpl(DirName, Data, count_dir_size, scan_symlinks, Filter, use_filter,
+			[&](const DirInfoData &Current) {
 		if (can_break) {
 			INPUT_RECORD rec;
 
@@ -154,9 +222,8 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 					return 0;
 				default:
 
-					if (Flags & GETDIRINFO_ENHBREAK) {
+					if (Flags & GETDIRINFO_ENHBREAK)
 						return -1;
-					}
 
 					GetInputRecord(&rec);
 					break;
@@ -171,85 +238,19 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 				MsgWaitTime = 500;
 				OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
 				SetCursorType(FALSE, 0);
-				DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
+				DrawGetDirInfoMsg(Title, ShowDirName, Current.FileSize);
 			}
 		}
 
-		const DWORD file_attributes = FindData.dwFileAttributes;
-		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+		return 1;
+	});
 
-		if (!is_directory || count_dir_size) {
-			PhysicalSize+= FindData.nPhysicalSize;
-		}
-
-		if (is_reparse_point) {
-			// include symlink's own size to total size
-			if (count_dir_size && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
-				FileSize+= s.st_size;
-			}
-
-			FileCount++;
-			if (!scan_symlinks)
-				continue;
-		}
-
-		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
-			continue;
-		}
-
-		if (is_directory) {
-			/*
-				Счётчик каталогов наращиваем только если не включен фильтр,
-				в противном случае это будем делать в подсчёте количества файлов
-			*/
-			if (!use_filter) {
-				DirCount++;
-				if (count_dir_size)
-					FileSize+= FindData.nFileSize;
-			} else {
-				/*
-					Если каталог не попадает под фильтр то его надо полностью
-					пропустить - иначе при включенном подсчёте total
-					он учтётся (mantis 551)
-				*/
-				if (Filter->FileInFilter(FindData)) {
-					if (count_dir_size)
-						FileSize+= FindData.nFileSize;	// TODO: add size at same condifion as DirCount increment
-				} else
-					ScTree.SkipDir();
-			}
-		} else {
-			/*
-				$ 17.04.2005 KM
-				Проверка попадания файла в условия фильра
-			*/
-			if (use_filter) {
-				if (!Filter->FileInFilter(FindData))
-					continue;
-			}
-
-			/*
-				Наращиваем счётчик каталогов при включенном фильтре только тогда,
-				когда в таком каталоге найден файл, удовлетворяющий условиям
-				фильтра.
-			*/
-			if (use_filter) {
-				strCurDirName = strFullName;
-				CutToSlash(strCurDirName);	//???
-
-				if (StrCmp(strCurDirName, strLastDirName)) {
-					DirCount++;
-					strLastDirName = strCurDirName;
-				}
-			}
-
-			FileCount++;
-			FileSize+= FindData.nFileSize;
-		}
-	}
-
-	return 1;
+	DirCount = Data.DirCount;
+	FileCount = Data.FileCount;
+	FileSize = Data.FileSize;
+	PhysicalSize = Data.PhysicalSize;
+	ClusterSize = Data.ClusterSize;
+	return Result;
 }
 
 int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,

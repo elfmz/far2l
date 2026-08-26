@@ -36,8 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "CriticalSections.hpp"
 #include "FARString.hpp"
+#include <memory>
 
 class Viewer;
+struct DirInfoData;
+struct QuickViewDirScanState;
+class QuickViewDirScanner;
 
 class QuickView : public Panel
 {
@@ -47,6 +51,8 @@ private:
 	FARString strCurFileName;
 	FARString strCurFileType;
 	FARString strTempName;
+	std::shared_ptr<QuickViewDirScanState> DirScanState;
+	std::unique_ptr<QuickViewDirScanner> DirScanner;
 
 	CriticalSection CS;
 
@@ -64,6 +70,10 @@ private:
 	void SetMacroMode(int Restore = FALSE);
 
 	void DynamicUpdateKeyBar();
+	void StartDirectoryScan(const wchar_t *DirName);
+	void CancelDirectoryScan();
+	void StopDirectoryScanning();
+	bool GetDirectoryScanData(DirInfoData &Data, bool &Calculating) const;
 
 public:
 	QuickView();

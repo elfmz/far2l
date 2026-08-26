@@ -51,15 +51,179 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "syslog.hpp"
+#include "InterThreadCall.hpp"
+#include <Threaded.h>
+#include <chrono>
+#include <condition_variable>
+#include <exception>
+#include <mutex>
+#include <string>
+#include <unordered_map>
 
 static int LastWrapMode = -1;
 static int LastWrapType = -1;
 
+struct QuickViewDirScanState
+{
+	std::mutex Mutex;
+	std::condition_variable Wake;
+	QuickView *Owner{};
+	std::unordered_map<std::wstring, DirInfoData> Cache;
+	std::wstring CurrentPath;
+	DirInfoData Current;
+	uint64_t Generation{};
+	bool Pending{};
+	bool CountDirSize{};
+	bool ScanSymlinks{};
+	bool Calculating{};
+	bool RefreshQueued{};
+	bool Closed{};
+};
+
+static void QueueQuickViewRefresh(const std::shared_ptr<QuickViewDirScanState> &State)
+{
+	{
+		std::lock_guard<std::mutex> Lock(State->Mutex);
+		if (State->Closed || State->RefreshQueued)
+			return;
+		State->RefreshQueued = true;
+	}
+
+	InterThreadCallAsync([State] {
+		QuickView *Owner;
+		{
+			std::lock_guard<std::mutex> Lock(State->Mutex);
+			State->RefreshQueued = false;
+			if (State->Closed)
+				return;
+			Owner = State->Owner;
+		}
+
+		if (Owner)
+			Owner->Redraw();
+	});
+}
+
+class QuickViewDirScanner : protected Threaded
+{
+	std::shared_ptr<QuickViewDirScanState> State;
+
+	bool IsCurrent(uint64_t Generation) const
+	{
+		std::lock_guard<std::mutex> Lock(State->Mutex);
+		return !State->Closed && State->Generation == Generation;
+	}
+
+	bool Publish(const std::wstring &Path, uint64_t Generation, const DirInfoData &Data, bool Complete)
+	{
+		{
+			std::lock_guard<std::mutex> Lock(State->Mutex);
+			if (State->Closed || State->Generation != Generation)
+				return false;
+
+			State->Current = Data;
+			if (Complete) {
+				State->Calculating = false;
+				State->Cache[Path] = Data;
+			}
+		}
+
+		QueueQuickViewRefresh(State);
+		return true;
+	}
+
+	void Failed(uint64_t Generation)
+	{
+		bool Current = false;
+		{
+			std::lock_guard<std::mutex> Lock(State->Mutex);
+			if (!State->Closed && State->Generation == Generation) {
+				State->Calculating = false;
+				Current = true;
+			}
+		}
+
+		if (Current)
+			QueueQuickViewRefresh(State);
+	}
+
+protected:
+	void *ThreadProc() override
+	{
+		for (;;) {
+			std::wstring Path;
+			uint64_t Generation;
+			bool CountDirSize;
+			bool ScanSymlinks;
+			{
+				std::unique_lock<std::mutex> Lock(State->Mutex);
+				State->Wake.wait(Lock, [&] { return State->Closed || State->Pending; });
+				if (State->Closed)
+					break;
+
+				Generation = State->Generation;
+				State->Wake.wait_for(Lock, std::chrono::milliseconds(150), [&] {
+					return State->Closed || State->Generation != Generation;
+				});
+				if (State->Closed)
+					break;
+				if (State->Generation != Generation)
+					continue;
+
+				Path = State->CurrentPath;
+				CountDirSize = State->CountDirSize;
+				ScanSymlinks = State->ScanSymlinks;
+				State->Pending = false;
+				State->Calculating = true;
+			}
+			QueueQuickViewRefresh(State);
+
+			DirInfoData Data;
+			clock_t LastUpdate = GetProcessUptimeMSec();
+			SudoClientRegion scr;
+			SudoSilentQueryRegion ssqr;
+			try {
+				const bool Complete = ScanDirInfo(Path.c_str(), Data, CountDirSize, ScanSymlinks,
+						[&](const DirInfoData &Current) {
+							if (!IsCurrent(Generation))
+								return false;
+
+							const clock_t Now = GetProcessUptimeMSec();
+							if (Now - LastUpdate >= 250) {
+								LastUpdate = Now;
+								return Publish(Path, Generation, Current, false);
+							}
+							return true;
+						});
+
+				if (Complete)
+					Publish(Path, Generation, Data, true);
+			} catch (const std::exception &e) {
+				fprintf(stderr, "QuickViewDirScanner: %s\n", e.what());
+				Failed(Generation);
+			}
+		}
+
+		return nullptr;
+	}
+
+public:
+	explicit QuickViewDirScanner(const std::shared_ptr<QuickViewDirScanState> &State_) : State(State_) {}
+	~QuickViewDirScanner() override { WaitThread(); }
+
+	bool Start() { return StartThread(); }
+};
+
 QuickView::QuickView()
 	:
-	QView(nullptr), Directory(0), PrevMacroMode(-1)
+	QView(nullptr), DirScanState(std::make_shared<QuickViewDirScanState>()), Directory(0), PrevMacroMode(-1)
 {
 	Type = QVIEW_PANEL;
+	DirScanState->Owner = this;
+	DirScanner.reset(new(std::nothrow) QuickViewDirScanner(DirScanState));
+	if (DirScanner && !DirScanner->Start())
+		DirScanner.reset();
+
 	if (LastWrapMode < 0) {
 		LastWrapMode = Opt.ViOpt.ViewerIsWrap;
 		LastWrapType = Opt.ViOpt.ViewerWrap;
@@ -68,6 +232,7 @@ QuickView::QuickView()
 
 QuickView::~QuickView()
 {
+	StopDirectoryScanning();
 	CloseFile();
 	SetMacroMode(TRUE);
 }
@@ -122,6 +287,12 @@ void QuickView::DisplayObject()
 
 	if (Directory) {
 		FormatString FString;
+		DirInfoData Data{DirCount, FileCount, ClusterSize, FileSize, PhysicalSize};
+		bool Calculating = false;
+		bool HaveDirectoryData = Directory == 4;
+		if (Directory == 1)
+			HaveDirectoryData = GetDirectoryScanData(Data, Calculating);
+
 		FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
 		SetFarColor(COL_PANELTEXT);
 		GotoXY(X1 + 2, Y1 + 2);
@@ -159,50 +330,57 @@ void QuickView::DisplayObject()
 			}
 		}*/
 
-		if (Directory == 1 || Directory == 4) {
+		if (HaveDirectoryData) {
+			if (Calculating) {
+				SetFarColor(COL_PANELINFOTEXT);
+				GotoXY(X1 + 2, Y1 + 3);
+				PrintText(Msg::QuickViewCalculating);
+				SetFarColor(COL_PANELTEXT);
+			}
+
 			GotoXY(X1 + 2, Y1 + 4);
 			PrintText(Msg::QuickViewContains);
 			GotoXY(X1 + 2, Y1 + 6);
 			PrintText(Msg::QuickViewFolders);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << DirCount;
+			FString << Data.DirCount;
 			PrintText(FString);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 7);
 			PrintText(Msg::QuickViewFiles);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << FileCount;
+			FString << Data.FileCount;
 			PrintText(FString);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 8);
 			PrintText(Msg::QuickViewBytes);
 			SetFarColor(COL_PANELINFOTEXT);
 			FARString strSize;
-			InsertCommas(FileSize, strSize);
+			InsertCommas(Data.FileSize, strSize);
 			PrintText(strSize);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 9);
 			PrintText(Msg::QuickViewPhysical);
 			SetFarColor(COL_PANELINFOTEXT);
-			InsertCommas(PhysicalSize, strSize);
+			InsertCommas(Data.PhysicalSize, strSize);
 			PrintText(strSize);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 10);
 			PrintText(Msg::QuickViewRatio);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << ToPercent64(PhysicalSize, FileSize) << L"%";
+			FString << ToPercent64(Data.PhysicalSize, Data.FileSize) << L"%";
 			PrintText(FString);
 
-			if (Directory == 1 && ClusterSize) {
+			if (Directory == 1 && Data.ClusterSize) {
 				SetFarColor(COL_PANELTEXT);
 				GotoXY(X1 + 2, Y1 + 12);
 				PrintText(Msg::QuickViewCluster);
 				SetFarColor(COL_PANELINFOTEXT);
 				FARString strSize;
-				InsertCommas(ClusterSize, strSize);
+				InsertCommas(Data.ClusterSize, strSize);
 				PrintText(strSize);
 			}
 		}
@@ -311,9 +489,94 @@ void QuickView::Update(int Mode)
 	Redraw();
 }
 
+void QuickView::StartDirectoryScan(const wchar_t *DirName)
+{
+	FARString strFullName;
+	ConvertNameToFull(DirName, strFullName);
+	std::wstring Path = strFullName.CPtr();
+	const bool CountDirSize = !Opt.OnlyFilesSize;
+	const bool ScanSymlinks = Opt.ScanJunction;
+
+	{
+		std::lock_guard<std::mutex> Lock(DirScanState->Mutex);
+		if (DirScanState->CurrentPath == Path
+				&& DirScanState->CountDirSize == CountDirSize
+				&& DirScanState->ScanSymlinks == ScanSymlinks)
+			return;
+
+		++DirScanState->Generation;
+		DirScanState->CurrentPath = Path;
+		if (DirScanState->CountDirSize != CountDirSize || DirScanState->ScanSymlinks != ScanSymlinks)
+			DirScanState->Cache.clear();
+		DirScanState->CountDirSize = CountDirSize;
+		DirScanState->ScanSymlinks = ScanSymlinks;
+		const auto Cached = DirScanState->Cache.find(Path);
+		if (Cached != DirScanState->Cache.end()) {
+			DirScanState->Current = Cached->second;
+			DirScanState->Pending = false;
+			DirScanState->Calculating = false;
+			return;
+		}
+
+		DirScanState->Current = {};
+		DirScanState->Calculating = false;
+		DirScanState->Pending = DirScanner != nullptr;
+	}
+
+	DirScanState->Wake.notify_one();
+}
+
+void QuickView::CancelDirectoryScan()
+{
+	std::lock_guard<std::mutex> Lock(DirScanState->Mutex);
+	++DirScanState->Generation;
+	DirScanState->Pending = false;
+	DirScanState->CurrentPath.clear();
+	DirScanState->Calculating = false;
+}
+
+void QuickView::StopDirectoryScanning()
+{
+	{
+		std::lock_guard<std::mutex> Lock(DirScanState->Mutex);
+		DirScanState->Closed = true;
+		DirScanState->Owner = nullptr;
+		++DirScanState->Generation;
+		DirScanState->Pending = false;
+		DirScanState->Cache.clear();
+	}
+	DirScanState->Wake.notify_one();
+	DirScanner.reset();
+}
+
+bool QuickView::GetDirectoryScanData(DirInfoData &Data, bool &Calculating) const
+{
+	std::lock_guard<std::mutex> Lock(DirScanState->Mutex);
+	if (DirScanState->CurrentPath.empty() || DirScanState->Pending)
+		return false;
+
+	Data = DirScanState->Current;
+	Calculating = DirScanState->Calculating;
+	return true;
+}
+
 void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin)
 {
 	DWORD FileAttr = 0;
+	const bool SameFile = FileName && !StrCmp(strCurFileName, FileName);
+
+	if (FileName && !hDirPlugin)
+		FileAttr = apiGetFileAttributes(FileName);
+
+	const bool LocalDirectory = !hDirPlugin && FileAttr != INVALID_FILE_ATTRIBUTES
+			&& (FileAttr & FILE_ATTRIBUTE_DIRECTORY);
+	if (SameFile && LocalDirectory && IsVisible()) {
+		Directory = 1;
+		StartDirectoryScan(FileName);
+		Redraw();
+		return;
+	}
+
 	CloseFile();
 	QView = nullptr;
 
@@ -328,13 +591,11 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 	}
 
 	if (!hDirPlugin) {
-		FileAttr = apiGetFileAttributes(FileName);
 		if (FileAttr != INVALID_FILE_ATTRIBUTES
 			&& ((FileAttr & FILE_ATTRIBUTE_DEVICE) != 0 || (FileAttr & FILE_ATTRIBUTE_BROKEN) != 0) )
 			return; // avoid stuck
 	}
 
-	bool SameFile = !StrCmp(strCurFileName, FileName);
 	strCurFileName = FileName;
 	//	size_t pos;
 
@@ -342,9 +603,7 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 		//
 		strCurFileType.Clear();
 
-		if (SameFile && !hDirPlugin) {
-			Directory = 1;
-		} else if (hDirPlugin) {
+		if (hDirPlugin) {
 			int ExitCode =
 					GetPluginDirInfo(hDirPlugin, strCurFileName, DirCount, FileCount, FileSize, PhysicalSize);
 			if (ExitCode)
@@ -352,16 +611,8 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 			else
 				Directory = 3;
 		} else {
-			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
-					PhysicalSize, ClusterSize, 500, nullptr,
-					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME);
-
-			if (ExitCode == 1)
-				Directory = 1;
-			else if (ExitCode == -1)
-				Directory = 2;
-			else
-				Directory = 3;
+			Directory = 1;
+			StartDirectoryScan(strCurFileName);
 		}
 	} else {
 		if (!strCurFileName.IsEmpty()) {
@@ -391,6 +642,8 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 
 void QuickView::CloseFile()
 {
+	CancelDirectoryScan();
+
 	if (QView) {
 		LastWrapMode = QView->GetWrapMode();
 		LastWrapType = QView->GetWrapType();
@@ -433,14 +686,8 @@ void QuickView::PrintText(const wchar_t *Str)
 	FS << fmt::Cells() << fmt::Truncate(X2 - 2 - WhereX() + 1) << Str;
 }
 
-int QuickView::UpdateIfChanged(int UpdateMode)
+int QuickView::UpdateIfChanged(int)
 {
-	if (IsVisible() && !strCurFileName.IsEmpty() && Directory == 2) {
-		FARString strViewName = strCurFileName;
-		ShowFile(strViewName, !strTempName.IsEmpty(), nullptr);
-		return TRUE;
-	}
-
 	return FALSE;
 }
 

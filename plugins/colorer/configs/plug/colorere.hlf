@@ -51,7 +51,6 @@ $# FarColorer's settings#
      the color scheme FarColorer.
      The effect is visible on the files, the number of rows in less than window height
      editor.
-     Does not work in TrueColor mode.
 
   #Color style#
      Choose a color style, which will be used for coloring text.

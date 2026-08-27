@@ -1089,20 +1089,61 @@ void FarEditorSet::SaveSettings() const
 
 bool FarEditorSet::checkConsoleExtendedColors()
 {
-  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
+  // GetConsoleColorPalette returns:
+  //   4  - true color is disabled (norgb or a basic terminal);
+  //   8  - 256-color terminal (far2l still emits true-color sequences
+  //        and lets the terminal approximate them);
+  //   24 - true color is explicitly supported.
+  // far2l uses true-color palette attributes by default, so the only
+  // case where Colorer should disable TrueMod is the 4-bpp "no rgb" one.
+  return WINPORT(GetConsoleColorPalette)(NULL) >= 8;
+}
+
+namespace {
+  // Internal far2l true-color flags (from WinPort/WinCompat.h)
+  constexpr uint64_t FAR2L_FOREGROUND_TRUECOLOR = 0x0100;
+  constexpr uint64_t FAR2L_BACKGROUND_TRUECOLOR = 0x0200;
+
+  // Colorer stores HRD colors in HTML 0xRRGGBB form, while far2l keeps
+  // 24-bit RGB fields in Windows/COLORREF order (0xBBGGRR).
+  inline uint64_t ColorerRgbToFar(uint32_t rgb)
+  {
+    return (uint64_t(rgb & 0x000000FF) << 16)
+         | (uint64_t(rgb & 0x0000FF00))
+         | (uint64_t(rgb & 0x00FF0000) >> 16);
+  }
 }
 
 bool FarEditorSet::SetBgEditor() const
 {
-  if (Opt.rEnabled && Opt.ChangeBgEditor && !useExtendedColors) {
-    const StyledRegion* def_text =
-        StyledRegion::cast(regionMapper->getRegionDefine(UnicodeString("def:Text")));
-    uint64_t c = (def_text->back << 4) + def_text->fore;
+  if (!Opt.rEnabled || !Opt.ChangeBgEditor)
+    return false;
 
-    FarSetColors fsc {FCLR_REDRAW, COL_EDITORTEXT, 1, &c};
-    return !!Info.AdvControl(Info.ModuleNumber, ACTL_SETARRAYCOLOR, &fsc, nullptr);
+  const StyledRegion* def_text =
+      StyledRegion::cast(regionMapper->getRegionDefine(UnicodeString("def:Text")));
+  if (!def_text)
+    return false;
+
+  uint64_t c = 0;
+
+  if (useExtendedColors) {
+    // Preserve the 16-color fallback of the original palette entry and
+    // overlay the true-color foreground/background from the current HRD.
+    Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void*)COL_EDITORTEXT, &c);
+    c &= 0x00FF; // keep only the indexed foreground/background part
+
+    const auto fore = static_cast<uint32_t>(def_text->fore);
+    const auto back = static_cast<uint32_t>(def_text->back);
+
+    c |= (ColorerRgbToFar(fore) << 16) | FAR2L_FOREGROUND_TRUECOLOR;
+    c |= (ColorerRgbToFar(back) << 40) | FAR2L_BACKGROUND_TRUECOLOR;
   }
-  return false;
+  else {
+    c = (static_cast<uint64_t>(def_text->back) << 4) + def_text->fore;
+  }
+
+  FarSetColors fsc {FCLR_REDRAW, COL_EDITORTEXT, 1, &c};
+  return !!Info.AdvControl(Info.ModuleNumber, ACTL_SETARRAYCOLOR, &fsc, nullptr);
 }
 
 UnicodeString FarEditorSet::getParamDefValue(const FileType* type, const UnicodeString& param) const

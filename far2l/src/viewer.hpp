@@ -98,6 +98,19 @@ private:
 
 	ViewerStrings Strings;
 
+	struct ViewerColorRange
+	{
+		int StartPos;
+		int EndPos;
+		DWORD64 Color;
+	};
+
+	std::vector<std::vector<ViewerColorRange>> ViewerColors;
+	std::vector<ViewerString> ViewerContext;
+	bool ViewerContextReady = false;
+	int64_t ViewerContextPos = -1;
+	UINT ViewerContextCodePage = 0;
+
 	FARString strFullFileName;
 
 	BufferedFileView ViewFile;
@@ -203,6 +216,8 @@ private:
 	bool HandleLinkClick(int mouseX, int mouseY);
 	void UnderlineLinks(int screenY, const std::vector<VisibleLinkInfo> &storage);
 	void ApplyUnderlineSegment(int segmentStart, int segmentEnd, int screenY, bool focused);
+	void ApplyColorRanges(int line, int screenY, ViewerPrinter &printer);
+	void PrepareViewerContext();
 	void UpdateWrapFlags();
 	void CollectVisibleLinks();
 	bool LaunchLinkById(int linkId);

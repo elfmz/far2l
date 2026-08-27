@@ -1,4 +1,5 @@
 #include "FarEditorSet.h"
+#include "FarViewer.h"
 #include <KeyFileHelper.h>
 #include <farcolor.h>
 #include <farkeys.h>
@@ -58,6 +59,7 @@ FarEditorSet::FarEditorSet()
 FarEditorSet::~FarEditorSet()
 {
   dropAllEditors(false);
+  farViewerInstances.clear();
 }
 
 void FarEditorSet::openMenu()
@@ -769,6 +771,44 @@ int FarEditorSet::editorEvent(int Event, void* Param)
   return 0;
 }
 
+int FarEditorSet::viewerEvent(int Event, void* Param)
+{
+  if (Event == VE_CLOSE) {
+    if (Param) {
+      farViewerInstances.erase(*static_cast<int*>(Param));
+    }
+    return 0;
+  }
+
+  if (!Opt.rEnabled || !Opt.drawSyntax || !parserFactory || !regionMapper) {
+    return 0;
+  }
+
+  try {
+    ViewerInfo vi {sizeof(vi)};
+    if (!Info.ViewerControl(VCTL_GETINFO, &vi)) {
+      return 0;
+    }
+    if (Event == VE_READ) {
+      farViewerInstances.erase(vi.ViewerID);
+    }
+    else if (Event == VE_REDRAW && (vi.Options & VOPT_QUICKVIEW) &&
+             !vi.CurMode.Hex && !vi.CurMode.Processed)
+    {
+      auto& viewer = farViewerInstances[vi.ViewerID];
+      if (!viewer) {
+        viewer = std::make_unique<FarViewer>(&Info, parserFactory.get(), regionMapper.get(),
+                                             useExtendedColors);
+      }
+      viewer->colorize(vi);
+    }
+  } catch (Exception& e) {
+    COLORER_LOG_ERROR("%", e.what());
+  }
+
+  return 0;
+}
+
 bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userHrdPath,
                                 const wchar_t* userHrcPath, const wchar_t* userHrcSettingsPath,
                                 const int full, const HRC_MODE hrc_mode)
@@ -863,6 +903,7 @@ void FarEditorSet::ReloadBase()
   Info.Message(Info.ModuleNumber, 0, nullptr, &marr[0], 2, 0);
 
   dropAllEditors(true);
+  farViewerInstances.clear();
   regionMapper = nullptr;
 
   useExtendedColors = checkConsoleExtendedColors() && Opt.TrueModOn;
@@ -976,6 +1017,7 @@ void FarEditorSet::disableColorer()
     KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, Opt.rEnabled);
   }
   dropCurrentEditor(true);
+  farViewerInstances.clear();
 
   regionMapper.reset();
   parserFactory.reset();
@@ -983,6 +1025,7 @@ void FarEditorSet::disableColorer()
 
 void FarEditorSet::ApplySettingsToEditors()
 {
+  farViewerInstances.clear();
   for (auto fe = farEditorInstances.begin(); fe != farEditorInstances.end(); ++fe) {
     fe->second->setTrueMod(useExtendedColors);
     fe->second->setDrawCross(Opt.drawCross);

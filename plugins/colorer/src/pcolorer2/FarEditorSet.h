@@ -8,6 +8,8 @@
 #include "FarEditor.h"
 #include "pcolorer.h"
 
+class FarViewer;
+
 // registry keys
 extern const char cRegEnabled[];
 extern const char cRegHrdName[];
@@ -123,6 +125,7 @@ class FarEditorSet
 
   /** Dispatch editor event in the opened editor */
   int editorEvent(int Event, void* Param);
+  int viewerEvent(int Event, void* Param);
   /** Dispatch editor input event in the opened editor */
   int editorInput(const INPUT_RECORD* ir);
   /** Continues background parsing of the current editor on a synchro event. */
@@ -224,6 +227,7 @@ class FarEditorSet
   void SaveChangedValueParam(HANDLE hDlg);
 
   std::unordered_map<intptr_t, std::unique_ptr<FarEditor>> farEditorInstances;
+  std::unordered_map<intptr_t, std::unique_ptr<FarViewer>> farViewerInstances;
   std::unique_ptr<ParserFactory> parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;
 

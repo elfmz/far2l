@@ -456,6 +456,9 @@ int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 	// }
 	ChangeViewKeyBar();
 	AdjustWidth();
+	ViewerContext.clear();
+	ViewerContextReady = false;
+	ViewerContextPos = -1;
 	CtrlObject->Plugins.CurViewer = this;	// HostFileViewer;
 	/*
 		$ 15.09.2001 tran
@@ -540,6 +543,7 @@ void Viewer::ShowPage(int nMode)
 		SelectPos = FilePos;
 
 	if (nMode == SHOW_HEX) {
+		ViewerColors.clear();
 		LineLinks.clear();
 		PageLinks.clear();
 		VisibleTopPos = -1;
@@ -607,6 +611,17 @@ void Viewer::ShowPage(int nMode)
 		if (ViOpt.ClickableURLs)
 			CollectVisibleLinks();
 
+		if (m_bQuickView && !VM.Processed) {
+			ViewerColors.assign(static_cast<size_t>(lineCount), {});
+			if (ViewerContextPos != Strings[0].nFilePos || ViewerContextCodePage != VM.CodePage) {
+				ViewerContext.clear();
+				ViewerContextReady = false;
+			}
+			CtrlObject->Plugins.CurViewer = this;
+			CtrlObject->Plugins.ProcessViewerEvent(VE_REDRAW, &ViewerID);
+		} else
+			ViewerColors.clear();
+
 		std::unique_ptr<ViewerPrinter> printer;
 		if (VM.Processed)
 			printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
@@ -620,6 +635,7 @@ void Viewer::ShowPage(int nMode)
 			GotoXY(X1, Y);
 
 			printer->Print(LeftPos, Width, Strings[I].Chars());
+			ApplyColorRanges(I, Y, *printer);
 
 			auto &StringI = Strings[I];
 			if (SelectSize && StringI.bSelection) {
@@ -677,6 +693,98 @@ void Viewer::ShowPage(int nMode)
 
 	DrawScrollbar();
 	ShowStatus();
+}
+
+void Viewer::PrepareViewerContext()
+{
+	ViewerContextReady = true;
+	ViewerContext.clear();
+	ViewerContextPos = Strings[0].nFilePos;
+	ViewerContextCodePage = VM.CodePage;
+	if (!ViewFile.Opened() || ViewerColors.empty() || Strings[0].nFilePos <= 0)
+		return;
+
+	constexpr size_t MaxContextLines = 200;
+	const int64_t savedFilePos = FilePos;
+	const int64_t savedViewPos = vtell();
+	const int64_t savedLastPage = LastPage;
+	const int savedWrap = VM.Wrap;
+	const int64_t visiblePos = Strings[0].nFilePos;
+	std::vector<int64_t> positions;
+
+	FilePos = visiblePos;
+	VM.Wrap = FALSE;
+	while (positions.size() < MaxContextLines && FilePos > 0) {
+		const int64_t previous = FilePos;
+		Up();
+		if (FilePos == previous)
+			break;
+		positions.emplace_back(FilePos);
+	}
+	std::reverse(positions.begin(), positions.end());
+
+	for (const int64_t position : positions) {
+		vseek(position, SEEK_SET);
+		ViewerString line;
+		ReadString(line, -1, MAX_VIEWLINE);
+		if (vtell() > visiblePos) {
+			const int64_t distance = visiblePos - position;
+			size_t length = 0;
+			int64_t consumed = 0;
+			while (line.Chars(length)[0]) {
+				const int width = CalcCodeUnitsDistance(VM.CodePage,
+					line.Chars(length), line.Chars(length + 1));
+				if (consumed + width > distance)
+					break;
+				consumed+= width;
+				++length;
+			}
+			line.SetChar(length, 0);
+			line.WrapsToNext = true;
+		}
+		ViewerContext.emplace_back(std::move(line));
+	}
+
+	VM.Wrap = savedWrap;
+	FilePos = savedFilePos;
+	LastPage = savedLastPage;
+	vseek(savedViewPos, SEEK_SET);
+}
+
+void Viewer::ApplyColorRanges(int line, int screenY, ViewerPrinter &printer)
+{
+	if (line < 0 || static_cast<size_t>(line) >= ViewerColors.size())
+		return;
+
+	const wchar_t *text = Strings[line].Chars();
+	const int length = static_cast<int>(wcslen(text));
+	const int visualLength = printer.Length(text);
+	const auto visualPosition = [&](int64_t position) {
+		return position <= length
+			? static_cast<int64_t>(printer.Length(text, static_cast<int>(position)))
+			: visualLength + position - length;
+	};
+
+	for (const auto &range : ViewerColors[line]) {
+		const int64_t visualStart = visualPosition(range.StartPos);
+		const int64_t visualEnd = visualPosition(static_cast<int64_t>(range.EndPos) + 1);
+		const int64_t visibleStart = std::max<int64_t>(visualStart, LeftPos);
+		const int64_t visibleEnd = std::min<int64_t>(visualEnd, LeftPos + Width);
+
+		if (visibleStart >= visibleEnd)
+			continue;
+
+		const int startX = X1 + static_cast<int>(visibleStart - LeftPos);
+		const int endX = X1 + static_cast<int>(visibleEnd - LeftPos) - 1;
+		std::vector<CHAR_INFO> buffer(static_cast<size_t>(endX - startX + 1));
+		GetText(startX, screenY, endX, screenY, buffer.data(),
+			static_cast<int>(buffer.size() * sizeof(CHAR_INFO)));
+
+		for (auto &cell : buffer)
+			cell.Attributes = range.Color;
+
+		PutText(startX, screenY, endX, screenY, buffer.data());
+	}
 }
 
 void Viewer::DisplayObject()
@@ -3766,12 +3874,55 @@ int Viewer::ViewerControl(int Command, void *Param)
 				if (ViOpt.AutoDetectCodePage)
 					Info->Options|= VOPT_AUTODETECTCODEPAGE;
 
+				if (m_bQuickView)
+					Info->Options|= VOPT_QUICKVIEW;
+
 				Info->TabSize = ViOpt.TabSize;
 				Info->LeftPos = LeftPos;
 				return TRUE;
 			}
 
 			break;
+		}
+		case VCTL_GETSTRING:
+		case VCTL_GETCONTEXT: {
+			ViewerGetString *string = static_cast<ViewerGetString *>(Param);
+			if (!string || string->StringNumber < 0)
+				break;
+
+			const bool context = Command == VCTL_GETCONTEXT;
+			if (context && !ViewerContextReady)
+				PrepareViewerContext();
+			const size_t count = context ? ViewerContext.size() : ViewerColors.size();
+			if (static_cast<size_t>(string->StringNumber) >= count)
+				break;
+
+			const ViewerString &source = context
+				? ViewerContext[string->StringNumber]
+				: Strings[string->StringNumber];
+			string->StringText = source.Chars();
+			string->StringLength = static_cast<int>(wcslen(string->StringText));
+			string->Flags = source.WrapsToNext ? VGS_WRAPS_TO_NEXT : 0;
+			return TRUE;
+		}
+		case VCTL_ADDCOLOR:
+		case VCTL_ADDTRUECOLOR: {
+			if (!Param)
+				break;
+			const ViewerColor *color = Command == VCTL_ADDCOLOR
+				? static_cast<const ViewerColor *>(Param)
+				: &static_cast<const ViewerTrueColor *>(Param)->Base;
+			if (!color || color->StringNumber < 0 || color->StartPos < 0 ||
+				color->EndPos < color->StartPos ||
+				static_cast<size_t>(color->StringNumber) >= ViewerColors.size())
+				break;
+
+			ViewerColorRange range {color->StartPos, color->EndPos, color->Color};
+			if (Command == VCTL_ADDTRUECOLOR)
+				FarTrueColorToAttributes(range.Color,
+					static_cast<const ViewerTrueColor *>(Param)->TrueColor);
+			ViewerColors[color->StringNumber].emplace_back(range);
+			return TRUE;
 		}
 		/*
 			Param = ViewerSetPosition

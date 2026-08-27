@@ -1582,14 +1582,14 @@ static int ShowConfigDialog(const std::wstring *git_info, const std::string *rep
 
 	std::vector<std::string> baseline_values;
 	std::vector<std::wstring> baseline_labels;
-	auto add_baseline = [&](const std::string &v)
+	auto add_baseline = [&](const std::string &v, const wchar_t *label = nullptr)
 	{
 		baseline_values.push_back(v);
-		baseline_labels.push_back(StrMB2Wide(v));
+		baseline_labels.push_back(label ? std::wstring(label) : StrMB2Wide(v));
 	};
-	add_baseline("head");
-	add_baseline("index");
-	add_baseline("unstaged");
+	add_baseline("head", GetMsg(MBaselineHead));
+	add_baseline("index", GetMsg(MBaselineIndex));
+	add_baseline("unstaged", GetMsg(MBaselineFile));
 
 	std::string branches_out;
 	if (repo_root && !repo_root->empty()) {

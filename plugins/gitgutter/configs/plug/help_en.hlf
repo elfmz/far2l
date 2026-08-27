@@ -72,11 +72,13 @@ $^#Configuration dialog#
  #-# Baseline
    Selects what the editor buffer is compared with:
 
-   #head# compares against #HEAD#.
+   #HEAD (last commit)# compares against #HEAD# and shows all changes made
+since the last commit.
 
-   #index# compares against the Git index.
+   #Staged version (index)# compares against the version prepared by #git add#
+and shows changes that are not staged, including unsaved editor changes.
 
-   #unstaged# compares against the file currently stored on disk.
+   #Saved file on disk# shows only editor changes that have not been saved yet.
 
    Branch names are also listed when they can be obtained from Git.
 

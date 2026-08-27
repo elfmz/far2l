@@ -731,7 +731,7 @@ static bool WriteEditorBufferToTemp(std::string &path)
 		if (egs.StringEOL && *egs.StringEOL) {
 			Wide2MB(egs.StringEOL, mb, true);
 		} else if (i + 1 < ei.TotalLines) {
-			mb+= "\n";
+			mb+= '\n';
 		}
 		fwrite(mb.data(), 1, mb.size(), f);
 	}
@@ -1101,7 +1101,8 @@ static void UpdateEditorState(EditorState &st)
 
 	std::string out;
 	std::string effective_baseline = g_settings.baseline;
-	if (!TryRunEditorBufferDiff(st, out, effective_baseline)) {
+
+	if ((ei.CurState & ECSTATE_MODIFIED) == 0 || !TryRunEditorBufferDiff(st, out, effective_baseline)) {
 		RunDiffCommand(st.repo_root, st.file, out, effective_baseline);
 	}
 

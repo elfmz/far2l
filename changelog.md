@@ -5,6 +5,8 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+
+## 2.9.0 beta (2026-08-27)
 * _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)
 * _New:_ Added a new option "Auto save panels state" (in "System settings") and details choice of categories in manual config saving (via **Shift+F9**)
 * _New:_ Added a new option "Show startup banner in built-in terminal"

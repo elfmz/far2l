@@ -728,11 +728,12 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLDOWN:
 		case KEY_CTRLNUMPAD2: {
 			bool Set = false;
-			if (Opt.LeftHeightDecrement >= 0) {
+			const int min_decrement = CtrlObject->CmdLine->IsNotEmpty() ? 0 : -1;
+			if (Opt.LeftHeightDecrement > min_decrement) {
 				Opt.LeftHeightDecrement--;
 				Set = true;
 			}
-			if (Opt.RightHeightDecrement >= 0) {
+			if (Opt.RightHeightDecrement > min_decrement) {
 				Opt.RightHeightDecrement--;
 				Set = true;
 			}
@@ -762,7 +763,8 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD2: {
 			int &HeightDecrement =
 					(ActivePanel == LeftPanel) ? Opt.LeftHeightDecrement : Opt.RightHeightDecrement;
-			if (HeightDecrement >= 0) {
+			const int min_decrement = CtrlObject->CmdLine->IsNotEmpty() ? 0 : -1;
+			if (HeightDecrement > min_decrement) {
 				HeightDecrement--;
 				SetScreenPosition();
 				FrameManager->RefreshFrame();

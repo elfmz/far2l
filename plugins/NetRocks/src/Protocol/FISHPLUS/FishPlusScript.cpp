@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <random>
+#include <RandomString.h>
 #include "FishPlusScript.h"
 #include "../../Erroring.h"
 
@@ -16,25 +17,9 @@ namespace FishPlus
 
 	std::string NewToken()
 	{
-		unsigned long long v = 0;
-		try {
-			std::random_device rd;
-			v = ((unsigned long long)rd() << 32) ^ (unsigned long long)rd();
-		} catch (...) {
-			v = 0;
-		}
-		if (v == 0) {
-			// std::random_device may be a stub on some platforms; anything
-			// unpredictable enough to keep two concurrent sessions apart will
-			// do, the token is a framing device and not a secret.
-			struct timespec ts {};
-			clock_gettime(CLOCK_REALTIME, &ts);
-			v = ((unsigned long long)ts.tv_sec << 20) ^ (unsigned long long)ts.tv_nsec
-				^ ((unsigned long long)getpid() << 44);
-		}
-		char buf[32];
-		snprintf(buf, sizeof(buf), "%016llx", v);
-		return std::string(buf);
+		std::string out;
+		RandomStringAppend(out, 16, 16, RNDF_DIGITS);
+		return out;
 	}
 
 	std::string ReadyMarker(const std::string &token)

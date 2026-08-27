@@ -391,7 +391,7 @@ There're also options to toggle other plugins build in same way:
 `-DOPENWITH=no`,
 `-DSIMPLEINDENT=no`,
 `-DTMPPANEL=no`, `-DTRANSFORMER=no`, `-DTRUNCATE=no`
-(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
+(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [plugins/NetRocks/CMakeLists.txt](plugins/NetRocks/CMakeLists.txt)).
 
 #### macOS build
 

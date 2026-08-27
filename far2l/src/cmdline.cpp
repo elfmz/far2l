@@ -605,14 +605,13 @@ int CommandLine::GetMaxVisibleMultilineLines() const
 
 	if (!Opt.PanelsDisposition) {
 		const int panel_top = Opt.ShowMenuBar ? 1 : 0;
-		const int left_bottom = ScrY - 1 - keybar - Opt.LeftHeightDecrement;
-		const int right_bottom = ScrY - 1 - keybar - Opt.RightHeightDecrement;
-		available_extra = std::min(left_bottom, right_bottom) - panel_top + 1 - min_panel_height;
+		const int panel_bottom = ScrY - 1 - keybar;
+		available_extra = panel_bottom - panel_top + 1 - min_panel_height;
 	} else {
 		const int left_bottom = (ScrY - (Opt.ShowMenuBar ? 1 : 0)) / 2 - keybar
 				- Opt.LeftHeightDecrement / 2;
 		const int right_top = left_bottom + 1 - Opt.WidthDecrement;
-		const int right_bottom = ScrY - keybar - 1 - Opt.RightHeightDecrement;
+		const int right_bottom = ScrY - keybar - 1;
 		available_extra = right_bottom - right_top + 1 - min_panel_height;
 	}
 

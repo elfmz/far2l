@@ -138,8 +138,11 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		ClusterSize = s.st_blksize;		// TODO: check if its best thing to be used here
 	}
 
+	clock_t LastInputCheckTime = 0;
 	while (ScTree.GetNextName(&FindData, strFullName)) {
-		if (can_break) {
+		clock_t CurTime = GetProcessUptimeMSec();
+		if (can_break && CurTime - LastInputCheckTime > 100) {
+			LastInputCheckTime = CurTime;
 			INPUT_RECORD rec{};
 			switch (PeekInputRecord(&rec)) {
 				case 0:
@@ -175,8 +178,6 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		}
 
 		if (MsgWaitTime != -1) {
-			clock_t CurTime = GetProcessUptimeMSec();
-
 			if (CurTime - StartTime > MsgWaitTime) {
 				StartTime = CurTime;
 				MsgWaitTime = 500;

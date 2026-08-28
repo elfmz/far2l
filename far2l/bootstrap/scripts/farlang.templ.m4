@@ -495,6 +495,17 @@ MultilinePaste
 "Вставка багаторядкового тексту"
 "Устаўка шматрадковага тэксту"
 
+CtrlEnterMultipleItems
+"Ctrl+&Ввод вставляет все выделенные объекты"
+"Ctrl+&Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+upd:"Ctrl+Enter inserts all selected items"
+
 F1
 l:
 l://functional keys - 6 characters max
@@ -1847,7 +1858,7 @@ ConfigRO
 "&Зняць атрыбут R/O з CD файлаў"
 
 ConfigSudoEnabled
-"Разрешить повышение привилегий"
+"Разрешить п&овышение привилегий"
 "Enable s&udo privileges elevation"
 upd:"Enable sudo privileges elevation"
 upd:"Enable sudo privileges elevation"
@@ -1957,8 +1968,8 @@ upd:"Copy extended a&ttributes"
 "Капіяваць пашыраныя а&трыбуты"
 
 ConfigOnlyFilesSize
-"Учитывать только размер файлов"
-"Use only files size in estimation"
+"&Учитывать только размер файлов"
+"Use only files size in &estimation"
 upd:"Use only files size in estimation"
 upd:"Use only files size in estimation"
 upd:"Use only files size in estimation"
@@ -3469,8 +3480,8 @@ upd:"Use shell"
 "Ужываць &shell"
 
 ConfigShowStartupBanner
-"Показывать стартовый баннер во встроенном терминале"
-"Show startup banner in built-in terminal"
+"Показывать стартовый баннер во встроенном &терминале"
+"Show startup banner in built-in &terminal"
 upd:"Show startup banner in built-in terminal"
 upd:"Show startup banner in built-in terminal"
 upd:"Show startup banner in built-in terminal"
@@ -8143,6 +8154,17 @@ EditSearchSearch
 "Шукати"
 "Шукаць"
 
+EditSearchAll
+"&Все"
+"&All"
+"&Všechny"
+"&Alles"
+"Mind"
+"Wszystko"
+"Todo"
+"&Всі"
+"&Усё"
+
 EditSearchCancel
 "Отменить"
 "Cancel"
@@ -8210,6 +8232,28 @@ EditNotFound
 "No se puede encontrar la cadena"
 "Рядок не знайдено"
 "Радок не знойдзены"
+
+EditSearchTooMany
+"Слишком много вхождений, уточните строку поиска"
+"Too many occurrences, refine the search string"
+"Příliš mnoho výskytů, upřesněte hledaný řetězec"
+"Zu viele Fundstellen, Suchbegriff eingrenzen"
+"Too many occurrences, refine the search string"
+"Zbyt wiele wystąpień, uściślij szukany tekst"
+"Demasiadas ocurrencias, refine la cadena de búsqueda"
+"Забагато входжень, уточніть рядок пошуку"
+"Занадта шмат уваходжаняў, удакладніце радок пошуку"
+
+EditSearchStatistics
+"Вхождений: %d, строк: %d"
+"Occurrences: %d, lines: %d"
+"Nalezených: %d, řádky: %d"
+"Vorkommen: %d, Zeilen: %d"
+"Occurrences: %d, lines: %d"
+"Wystąpień: %d, linii: %d"
+"Frecuencia: %d, líneas: %d"
+"Входжень: %d, рядків: %d"
+"Уваходжаняў: %d, радкоў: %d"
 
 EditEmptySearchField
 "Пустое поле поиска"
@@ -16706,6 +16750,336 @@ MenuCompareFiles
 "Порівняння фа&йлів         Ctrl+D"
 "Параўнанне фа&йлаў         Ctrl+D"
 
+MenuCompareFilesSame
+"Сравн. файлов с одинак. именем Ctrl+Shift+D"
+"File diff same name Ctrl+Shift+D"
+"Porovnat soubory se stejným názvem Ctrl+Shift+D"
+"Dateien vergleichen mit gleichem namen Ctrl+Shift+D"
+"Fájl diff azonos nevekkel Ctrl+Shift+D"
+"Porównaj pliki o tej samej nazwie Ctrl+Shift+D"
+"Comparar archivos con el mismo nombre Ctrl+Shift+D"
+"Порівняння файлів з однаковою назвою Ctrl+Shift+D"
+"Параўнанне файлаў з такой жа назвай Ctrl+Shift+D"
+
+FileDiffTitle
+"Сравнение файлов"
+"Compare files"
+"Porovnání souborů"
+"Dateien vergleichen"
+"Fájlok összehasonlítása"
+"Porównanie plików"
+"Comparar archivos"
+"Порівняння файлів"
+"Параўнанне файлаў"
+
+FileDiffHeuristicEncoding
+"Кодировка была эвристически определена как %ls. Сохранить в ней?"
+"The encoding was detected heuristically as %ls. Save using it?"
+"Kódování bylo heuristicky rozpoznáno jako %ls. Uložit v něm?"
+"Die Kodierung wurde heuristisch als %ls erkannt. Damit speichern?"
+"A kódolás heurisztikusan %ls értékűnek lett felismerve. Mentés ezzel?"
+"Kodowanie zostało heurystycznie rozpoznane jako %ls. Zapisać w nim?"
+"La codificación se detectó heurísticamente como %ls. ¿Guardar con ella?"
+"Кодування було евристично визначено як %ls. Зберегти в ньому?"
+"Кадзіроўка была эўрыстычна вызначана як %ls. Захаваць у ёй?"
+
+FileDiffFile
+"Файл: "
+"File: "
+"Soubor: "
+"Datei: "
+"Fájl: "
+"Plik: "
+"Archivo: "
+"Файл: "
+"Файл: "
+
+FileDiffCannotOpen
+"Не удаётся открыть один из выбранных файлов."
+"Cannot open one of the selected files."
+"Jeden z vybraných souborů nelze otevřít."
+"Eine der ausgewählten Dateien kann nicht geöffnet werden."
+"Az egyik kijelölt fájl nem nyitható meg."
+"Nie można otworzyć jednego z wybranych plików."
+"No se puede abrir uno de los archivos seleccionados."
+"Не вдається відкрити один із вибраних файлів."
+"Не ўдаецца адкрыць адзін з выбраных файлаў."
+
+FileDiffCannotMerge
+"Не удаётся объединить блок изменений."
+"Cannot merge hunk."
+"Blok změn nelze sloučit."
+"Änderungsblock kann nicht übernommen werden."
+"A módosításblokk nem egyesíthető."
+"Nie można scalić bloku zmian."
+"No se puede fusionar el bloque de cambios."
+"Не вдається об'єднати блок змін."
+"Не ўдаецца аб'яднаць блок змен."
+
+FileDiffLeftFile
+"Левый файл: "
+"Left file: "
+"Levý soubor: "
+"Linke Datei: "
+"Bal oldali fájl: "
+"Lewy plik: "
+"Archivo izquierdo: "
+"Лівий файл: "
+"Левы файл: "
+
+FileDiffRightFile
+"Правый файл: "
+"Right file: "
+"Pravý soubor: "
+"Rechte Datei: "
+"Jobb oldali fájl: "
+"Prawy plik: "
+"Archivo derecho: "
+"Правий файл: "
+"Правы файл: "
+
+FileDiffSaveFile
+"Сохранить файл?"
+"Save file?"
+"Uložit soubor?"
+"Datei speichern?"
+"Menti a fájlt?"
+"Zapisać plik?"
+"¿Guardar el archivo?"
+"Зберегти файл?"
+"Захаваць файл?"
+
+FileDiffCannotSave
+"Не удаётся сохранить файл."
+"Cannot save file."
+"Soubor nelze uložit."
+"Datei kann nicht gespeichert werden."
+"A fájl nem menthető."
+"Nie można zapisać pliku."
+"No se puede guardar el archivo."
+"Не вдається зберегти файл."
+"Не ўдаецца захаваць файл."
+
+FileDiffHunkCurrent
+"Блок: %u/%u"
+"Hunk: %u/%u"
+"Blok: %u/%u"
+"Block: %u/%u"
+"Blokk: %u/%u"
+"Blok: %u/%u"
+"Bloque: %u/%u"
+"Блок: %u/%u"
+"Блок: %u/%u"
+
+FileDiffHunksTotal
+"Блоков: %u"
+"Hunks: %u"
+"Bloků: %u"
+"Blöcke: %u"
+"Blokkok: %u"
+"Bloki: %u"
+"Bloques: %u"
+"Блоків: %u"
+"Блокаў: %u"
+
+FileDiffActive
+"Активно: "
+"Active: "
+"Aktivní: "
+"Aktiv: "
+"Aktív: "
+"Aktywne: "
+"Activo: "
+"Активне: "
+"Актыўна: "
+
+FileDiffGutter
+"разделитель"
+"gutter"
+"oddělovač"
+"Trennbereich"
+"elválasztó"
+"separator"
+"separador"
+"роздільник"
+"раздзяляльнік"
+
+FileDiffLeft
+"слева"
+"left"
+"vlevo"
+"links"
+"bal"
+"lewy"
+"izquierdo"
+"ліворуч"
+"злева"
+
+FileDiffRight
+"справа"
+"right"
+"vpravo"
+"rechts"
+"jobb"
+"prawy"
+"derecho"
+"праворуч"
+"справа"
+
+FileDiffModified
+"Изменено: "
+"Modified: "
+"Změněno: "
+"Geändert: "
+"Módosítva: "
+"Zmienione: "
+"Modificado: "
+"Змінено: "
+"Зменена: "
+
+FileDiffLines
+"Строки: "
+"Lines: "
+"Řádky: "
+"Zeilen: "
+"Sorok: "
+"Wiersze: "
+"Líneas: "
+"Рядки: "
+"Радкі: "
+
+FileDiffRows
+"Строки сравнения: "
+"Diff rows: "
+"Řádky rozdílů: "
+"Vergleichszeilen: "
+"Eltérő sorok: "
+"Wiersze różnic: "
+"Filas de diferencias: "
+"Рядки порівняння: "
+"Радкі параўнання: "
+
+FileDiffSaveChanged
+"Сохранить изменённые файлы перед закрытием?"
+"Save changed files before closing?"
+"Uložit změněné soubory před zavřením?"
+"Geänderte Dateien vor dem Schließen speichern?"
+"Menti a módosított fájlokat bezárás előtt?"
+"Zapisać zmienione pliki przed zamknięciem?"
+"¿Guardar los archivos modificados antes de cerrar?"
+"Зберегти змінені файли перед закриттям?"
+"Захаваць змененыя файлы перад закрыццём?"
+
+FileDiffStatusHelp
+"F1 Справка"
+"F1 Help"
+"F1 Nápověda"
+"F1 Hilfe"
+"F1 Súgó"
+"F1 Pomoc"
+"F1 Ayuda"
+"F1 Довідка"
+"F1 Даведка"
+
+FileDiffStatusSave
+"F2 Сохранить"
+"F2 Save"
+"F2 Uložit"
+"F2 Speichern"
+"F2 Mentés"
+"F2 Zapisz"
+"F2 Guardar"
+"F2 Зберегти"
+"F2 Захаваць"
+
+FileDiffStatusMerge
+"F5 Объединить"
+"F5 Merge"
+"F5 Sloučit"
+"F5 Übernehmen"
+"F5 Egyesítés"
+"F5 Scal"
+"F5 Fusionar"
+"F5 Об'єднати"
+"F5 Аб'яднаць"
+
+FileDiffStatusPrev
+"Ctrl-^ Пред."
+"Ctrl-^ Prev"
+"Ctrl-^ Předch."
+"Ctrl-^ Vorh."
+"Ctrl-^ Előző"
+"Ctrl-^ Poprz."
+"Ctrl-^ Anterior"
+"Ctrl-^ Попер."
+"Ctrl-^ Папяр."
+
+FileDiffStatusNext
+"Ctrl-v След."
+"Ctrl-v Next"
+"Ctrl-v Další"
+"Ctrl-v Nächster"
+"Ctrl-v Következő"
+"Ctrl-v Nast."
+"Ctrl-v Siguiente"
+"Ctrl-v Наст."
+"Ctrl-v Наст."
+
+FileDiffStatusFocus
+"Tab Фокус"
+"Tab Focus"
+"Tab Zaměření"
+"Tab Fokus"
+"Tab Fókusz"
+"Tab Fokus"
+"Tab Foco"
+"Tab Фокус"
+"Tab Фокус"
+
+FileDiffSelectBoth
+"Выберите файлы на обеих файловых панелях"
+"Select files on both file panels"
+"Vyberte soubory na obou souborových panelech"
+"Wählen Sie Dateien in beiden Dateifenstern aus"
+"Jelöljön ki fájlt mindkét fájlpanelen"
+"Wybierz pliki w obu panelach plików"
+"Seleccione archivos en ambos paneles"
+"Виберіть файли на обох файлових панелях"
+"Выберыце файлы на абедзвюх файлавых панэлях"
+
+FileDiffSelectPassiveNotSameName
+"На пассивной панели нет файла с таким же именем"
+"There is no file with the same name on the passive panel"
+"Na pasivním panelu není žádný soubor se stejným názvem"
+"Auf dem passiven Bedienfeld befindet sich keine Datei mit demselben Namen"
+"Nincs azonos nevű fájl a passzív panelen"
+"Na panelu pasywnym nie ma pliku o tej samej nazwie"
+"No existe ningún archivo con el mismo nombre en el panel pasivo"
+"На пасивній панелі немає файлу з такою ж назвою"
+"На пасіўнай панэлі няма файла з такой назвай"
+
+FileDiffSameBoth
+"Для сравнения выбран один и тот же файл"
+"The same file was selected for comparison"
+"Pro porovnání byl vybrán stejný soubor"
+"Für den Vergleich wurde dieselbe Datei ausgewählt"
+"Ugyanazt a fájlt választottuk ki összehasonlításra"
+"Do porównania wybrano ten sam plik"
+"Se seleccionó el mismo archivo para compararlo"
+"Для порівняння було обрано той самий файл"
+"Для параўнання быў абраны той жа файл"
+
+FileDiffCannotAllocate
+"Не удаётся создать окно сравнения"
+"Cannot allocate compare view"
+"Okno porovnání nelze vytvořit"
+"Vergleichsansicht kann nicht erstellt werden"
+"Az összehasonlító nézet nem hozható létre"
+"Nie można utworzyć widoku porównania"
+"No se puede crear la vista de comparación"
+"Не вдається створити вікно порівняння"
+"Не ўдаецца стварыць акно параўнання"
+
 MenuUserMenu
 "Меню пользовател&я"
 "Edit user &menu"
@@ -16795,8 +17169,8 @@ MenuFarConfig
 "Р&эдактар канфігурацыі"
 
 MenuMacroBrowser
-"Макрокоманды"
-"Macro Browser"
+"Макрокоманд&ы"
+"Macro &Browser"
 upd:"Macro Browser"
 upd:"Macro Browser"
 upd:"Macro Browser"
@@ -16807,7 +17181,7 @@ upd:"Macro Browser"
 
 MenuAboutFar
 "Св&едения о FAR"
-"A&bout FAR"
+"Abou&t FAR"
 "Informace o &FAR"
 "Ü&ber FAR"
 "Információk a &FAR"
@@ -29159,8 +29533,8 @@ upd:"Word wrap"
 upd:"Word wrap"
 
 EnforceColorCorrection
-"Выравнивать контрастность цветов автоматически"
-"Auto-adjust colors contrast"
+"&Выравнивать контрастность цветов автоматически"
+"&Auto-adjust colors contrast"
 upd:"Auto-adjust colors contrast"
 upd:"Auto-adjust colors contrast"
 upd:"Auto-adjust colors contrast"

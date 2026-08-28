@@ -71,6 +71,7 @@ FARString &InsertRegexpQuote(FARString &strStr);
 void UnquoteExternal(FARString &strStr);
 wchar_t *WINAPI RemoveLeadingSpaces(wchar_t *Str);
 FARString &WINAPI RemoveLeadingSpaces(FARString &strStr);
+void RemoveTrailingSpaces(std::wstring &Str);
 wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str);
 FARString &WINAPI RemoveTrailingSpaces(FARString &strStr, bool keep_escaping=false);
 wchar_t *WINAPI RemoveExternalSpaces(wchar_t *Str);

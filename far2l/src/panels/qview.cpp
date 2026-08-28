@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "dirinfo.hpp"
 #include "pathmix.hpp"
+#include "strmix.hpp"
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "syslog.hpp"
@@ -454,6 +455,8 @@ void QuickView::SetTitle()
 		} else {
 			FARString strCmdText;
 			CtrlObject->CmdLine->GetString(strCmdText);
+			ReplaceStrings(strCmdText, L"\r", L"\x240D", -1);
+			ReplaceStrings(strCmdText, L"\n", L"\x21B5", -1);
 			strTitleDir+= strCmdText;
 		}
 

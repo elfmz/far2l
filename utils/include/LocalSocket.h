@@ -28,6 +28,8 @@ protected:
 	FDScope _sock;
 
 public:
+	void SetBufferSize(int size);
+
 	size_t Send(const void *data, size_t len);
 	size_t Recv(void *data, size_t len);
 
@@ -58,4 +60,3 @@ class LocalSocketClient : public LocalSocket
 public:
 	LocalSocketClient(Kind sock_kind, const std::string &server, const std::string &client);
 };
-

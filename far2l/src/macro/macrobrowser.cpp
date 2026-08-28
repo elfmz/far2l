@@ -255,6 +255,8 @@ static LONG_PTR WINAPI MacroEditDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					if (i < MEParam->Descriptions->size())
 						SendDlgMessage(hDlg, DM_SETTEXTPTR, ME_MEMOEDIT_MLIB_DESC,
 								reinterpret_cast<LONG_PTR>(MEParam->Descriptions->at(i).CPtr()));
+
+					SendDlgMessage(hDlg, DM_LISTSETMOUSEREACTION, ME_COMBO_MLIB, (LONG_PTR)LMRT_NEVER);
 				}
 				break;
 
@@ -666,7 +668,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_DOUBLEBOX].X2 = DLG_WIDTH - 4;
 		MacroEditDlgData[ME_COMBO_MLIB].X2 = DLG_WIDTH - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Y1 = 2;
-		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 4;
+		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Type = DI_LISTBOX;
 		MacroEditDlgData[ME_COMBO_MLIB].Flags|= DIF_LISTNOCLOSE;
 		if (MacroEditDlgData[ME_COMBO_MLIB].X2 - MacroEditDlgData[ME_COMBO_MLIB].X1 > x_mlib) {
@@ -682,7 +684,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X1 = MacroEditDlgData[ME_COMBO_MLIB].X1;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X2 = MacroEditDlgData[ME_COMBO_MLIB].X2;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y1 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 1;
-		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 4;
+		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 6;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Flags = DIF_FOCUS | DIF_READONLY; // clear DIF_HIDDEN
 	}
 	MakeDialogItemsEx(MacroEditDlgData, MacroEditDlg);

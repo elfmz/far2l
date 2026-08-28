@@ -1019,6 +1019,11 @@ enum FarHelpFlags
 	FHELP_USECONTENTS = 0x40000000,
 };
 
+enum FarSynchroFlags
+{
+	FCTL_SYNCHRO_IDLE = 0x00000001,
+};
+
 typedef BOOL (WINAPI *FARAPISHOWHELP)(
 	const wchar_t *ModuleName,
 	const wchar_t *Topic,

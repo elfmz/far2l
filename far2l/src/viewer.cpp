@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "WideMB.h"
 #include "UtfConvert.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 #include "LinkHighlighter.hpp"
 #include <algorithm>
 #include <cwctype>
@@ -81,6 +82,21 @@ static void ViewerSearchMsg(const wchar_t *Name, int Percent);
 static int InitHex = FALSE, SearchHex = FALSE;
 
 static int NextViewerID = 0;
+
+static bool EncodeTextForHex(FARString &hex, UINT codePage, const wchar_t *text)
+{
+	hex.Clear();
+	if (const auto length = StrLength(text); length > 0) {
+		WideCharToMultiByteBuffer bytes(codePage, text, length);
+		if (bytes.empty())
+			return false;
+
+		for (const auto &byte : bytes) {
+			hex.AppendFormat(L"%02X", static_cast<unsigned char>(byte));
+		}
+	}
+	return true;
+}
 
 static int CalcByteDistance(UINT CodePage, const wchar_t *begin, const wchar_t *end)
 {
@@ -677,7 +693,7 @@ void Viewer::ShowHex()
 	int X, Y, TextPos;
 	int SelStart, SelEnd;
 	bool bSelStartFound = false, bSelEndFound = false;
-	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth) ? Max(80 - ObjWidth, 0) : LeftPos);
+	int64_t HexLeftPos = ((LeftPos > 80 - ObjWidth()) ? Max(80 - ObjWidth(), 0) : LeftPos);
 
 	for (EndFile = 0, Y = Y1; Y <= Y2; Y++) {
 		bSelStartFound = false;
@@ -687,7 +703,7 @@ void Viewer::ShowHex()
 		GotoXY(X1, Y);
 
 		if (EndFile) {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 			continue;
 		}
 
@@ -858,10 +874,10 @@ void Viewer::ShowHex()
 #endif
 
 		if (StrLength(OutStr) > HexLeftPos) {
-			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth)
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth())
 				<< OutStr + static_cast<size_t>(HexLeftPos);
 		} else {
-			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth()) << L"";
 		}
 
 		if (bSelStartFound && bSelEndFound) {
@@ -2275,7 +2291,7 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseY == (Y1 - 1) && (HostFileViewer && HostFileViewer->IsTitleBarVisible()))		// Status line
 	{
 		int XCodePage, XPos, NameLength;
-		NameLength = ObjWidth - 40;
+		NameLength = ObjWidth() - 40;
 
 		if (Opt.ViewerEditorClock && HostFileViewer && HostFileViewer->IsFullScreen())
 			NameLength-= 6;
@@ -2618,10 +2634,14 @@ LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 				bool Hex = (Param1 == SD_RADIO_HEX);
 				FARString strDataStr;
-				Transform(strDataStr,
-						(const wchar_t *)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR,
-								Hex ? SD_EDIT_TEXT : SD_EDIT_HEX, 0),
-						Hex ? L'X' : L'S');
+				const auto *source = (const wchar_t *)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR,
+						Hex ? SD_EDIT_TEXT : SD_EDIT_HEX, 0);
+				if (Hex) {
+					auto *viewer = reinterpret_cast<Viewer *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+					EncodeTextForHex(strDataStr, viewer ? viewer->GetCodePage() : CP_UTF8, source);
+				} else {
+					Transform(strDataStr, source, L'S');
+				}
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, Hex ? SD_EDIT_HEX : SD_EDIT_TEXT,
 						(LONG_PTR)strDataStr.CPtr());
 				SendDlgMessage(hDlg, DM_SDSETVISIBILITY, Hex, 0);
@@ -2771,6 +2791,7 @@ void Viewer::Search(int Next, int FirstChar)
 	if (!Next) {
 		SearchFlags.Flags = 0;
 		Dialog Dlg(SearchDlg, ARRAYSIZE(SearchDlg), ViewerSearchDlgProc);
+		Dlg.SetDialogData(reinterpret_cast<LONG_PTR>(this));
 		Dlg.SetPosition(-1, -1, 76, 13);
 		Dlg.SetHelp(L"ViewerSearch");
 
@@ -2817,8 +2838,8 @@ void Viewer::Search(int Next, int FirstChar)
 		SetCursorType(FALSE, 0);
 		strMsgStr = strSearchStr;
 
-		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth))
-			TruncStrFromEnd(strMsgStr, ObjWidth - 18);
+		if (strMsgStr.GetLength() + 18 > static_cast<DWORD>(ObjWidth()))
+			TruncStrFromEnd(strMsgStr, ObjWidth() - 18);
 
 		InsertQuote(strMsgStr);
 
@@ -2834,8 +2855,8 @@ void Viewer::Search(int Next, int FirstChar)
 		if (!SearchWChars)
 			return;
 
-		SearchCodeUnits =
-				CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchWChars);
+		SearchCodeUnits = SearchHex ? SearchWChars
+				: CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchWChars);
 		FARString strSearchStrLowerCase;
 
 		if (!Case && !SearchHex) {
@@ -2979,7 +3000,8 @@ void Viewer::Search(int Next, int FirstChar)
 							Match = CheckBufMatchesCaseSensitive(SearchWChars, &Buf[I], strSearchStr.CPtr());
 						}
 						if (Match) {
-							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I);
+							MatchPos = CurPos + (SearchHex ? I
+									: CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I));
 							break;
 						}
 					}
@@ -3585,16 +3607,16 @@ void Viewer::SelectText(const int64_t &MatchPos, const int64_t &SearchLength, co
 	//	LastSelPos=SelectPos+((Flags&0x2) ? -1:1);
 	LastSelPos = SelectPos + SearchLength * ((Flags & 0x2) ? -1 : 1);
 	if (VM.Hex) {
-		size_t len = 8;
+		size_t len = 16;
 		switch (VM.CodePage) {
 			case CP_UTF32LE:
 			case CP_UTF32BE:
-				len*= 4;
+				len/= 4;
 				break;
 
 			case CP_UTF16LE:
 			case CP_UTF16BE:
-				len*= 2;
+				len/= 2;
 				break;
 		}
 		FilePos&= ~(len - 1);
@@ -3731,8 +3753,8 @@ int Viewer::ViewerControl(int Command, void *Param)
 				memset(&Info->ViewerID, 0, Info->StructSize - sizeof(Info->StructSize));
 				Info->ViewerID = ViewerID;
 				Info->FileName = strFullFileName;
-				Info->WindowSizeX = ObjWidth;
-				Info->WindowSizeY = Y2 - Y1 + 1;
+				Info->WindowSizeX = ObjWidth();
+				Info->WindowSizeY = ObjHeight();
 				Info->FilePos = FilePos;
 				Info->FileSize = FileSize;
 				Info->CurMode = VM;

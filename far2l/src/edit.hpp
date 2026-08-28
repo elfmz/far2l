@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FilesSuggestor.hpp"
 #include "EcoString.hpp"
 #include "EcoVector.hpp"
+#include "EcoLazy.hpp"
 #include <memory>
 #include <vector>
 #include <vector>
@@ -127,7 +128,6 @@ struct IEditListener
 	virtual void OnEditChanged(Edit *edit) = 0;
 };
 
-
 class Edit : public ThinScreenObject
 {
 	friend class DlgEdit;
@@ -141,18 +141,32 @@ public:
 	Edit *m_next;
 	Edit *m_prev;
 
-private:
-	EcoVector<ColorItem> ColorList;
-	EcoVector<int> m_WrapBreaks;
-	EcoString Str;
 
-	int LeftPos;
-	int CurPos;
-	int PrevCurPos;		// 12.08.2000 KM - предыдущее положение курсора
-	int MSelStart;
-	int SelStart;
-	int SelEnd;
-	int CursorPos;
+private:
+	struct Fields // lazily instantiated and accessed by EcoLazy
+	{
+		EcoVector<int> WrapBreaks;
+
+		int LeftPos{0};
+		int CurPos{0};
+		int PrevCurPos{0};		// 12.08.2000 KM - предыдущее положение курсора
+		int CursorPos{0};
+		int MSelStart{-1};
+		int SelStart{-1};
+		int SelEnd{0};
+
+		// things below needed for EcoLazy
+		static Fields Default;
+
+		bool IsDefault() const
+		{
+			return LeftPos == 0 && CurPos == 0 && PrevCurPos == 0 && CursorPos == 0
+				&& MSelStart == -1 && SelStart == -1 && SelEnd == 0 && WrapBreaks.empty();
+		}
+	};
+	struct MyEcoLazy : EcoLazy<Fields> {} fields;
+	EcoVector<ColorItem> ColorList; // all colors will be fullfilled by colorer as its fast now
+	EcoString Str;
 
 private:
 	virtual void DisplayObject();
@@ -188,8 +202,8 @@ protected:
 	int CalcPosFwdTo(int Pos, int LimitPos = -1) const;
 	int CalcPosBwdTo(int Pos) const;
 
-	inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
-	inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
+	inline int CalcPosFwd(int LimitPos = -1) const;
+	inline int CalcPosBwd() const;
 
 	int FindVisualLine(int Pos) const;
 	int GetVisualLineCount() const;
@@ -200,6 +214,9 @@ public:
 
 	void SetListener(IEditListener *Listener = nullptr);
 	IEditListener *GetListener();
+
+	void Compact() { Str.Compact(); }
+	bool IsCompact() const { return Str.IsCompact(); }
 
 	DWORD SetCodePage(UINT codepage);	// BUGBUG
 	UINT GetCodePage();					// BUGBUG
@@ -226,25 +243,58 @@ public:
 
 	void SetShowWhiteSpace(int Mode) { Flags.Change(FEDITLINE_SHOWWHITESPACE, Mode); }
 
-	void GetString(wchar_t *Data, int MaxSize);
-	void GetString(FARString &strStr);
+	void GetString(int Offset, wchar_t *Data, int MaxSize);
+	inline void GetString(wchar_t *Data, int MaxSize)
+	{
+		GetString(0, Data, MaxSize);
+	}
 
+	template <class DST_T>
+		void GetString(DST_T &dst, const wchar_t **EOL = nullptr)
+	{
+		if (EOL)
+			*EOL = GetEOL();
+
+		Str.CopyTo(dst);
+	}
+
+	template <class CMP_T>
+		bool EqualTo(CMP_T &to)
+	{
+		return Str.EqualTo(to);
+	}
+
+	std::wstring GetString()
+	{
+		std::wstring out;
+		Str.CopyTo(out);
+		return out;
+	}
+
+	int GetLength(const wchar_t **EOL = nullptr);
+
+	// NB: GetStringAddr functions have implicit memory overhead due to they forcing uncompacting of underlying string
+	// so prefer use GetString()/GetLength() if need to massive-query multiple lines, or use Compact() afterwards
+	// to avoid memory usage surge
+	const wchar_t *GetStringAddr(int &Length, const wchar_t **EOL = nullptr);
 	const wchar_t *GetStringAddr();
+
+	inline const wchar_t GetChar(int Pos) // similar to but faster than GetStringAddr()[Pos]
+	{
+		return Str.At(Pos);
+	}
 
 	void SetHiString(const wchar_t *Str);
 	void SetString(const wchar_t *Str, int Length = -1);
 
 	void SetBinaryString(const wchar_t *Str, int Length);
 
-	void GetBinaryString(const wchar_t **Data, const wchar_t **EOL, int &Length);
-
 	void SetEOL(const wchar_t *EOL);
+	void SetEOL(const char *EOL);
 	const wchar_t *GetEOL();
 
 	int GetSelString(wchar_t *Data, int MaxSize);
 	int GetSelString(FARString &strStr);
-
-	int GetLength();
 
 	void InsertString(const wchar_t *Str);
 	void InsertBinaryString(const wchar_t *Str, int Length);
@@ -254,16 +304,12 @@ public:
 
 	void SetClearFlag(int Flag) { Flags.Change(FEDITLINE_CLEARFLAG, Flag); }
 	int GetClearFlag() { return Flags.Check(FEDITLINE_CLEARFLAG); }
-	void SetCurPos(int NewPos)
-	{
-		CurPos = NewPos;
-		PrevCurPos = NewPos;
-	}
-	int GetCurPos() { return (CurPos); }
+	void SetCurPos(int NewPos);
+	int GetCurPos();
 	int GetCellCurPos();
 	void SetCellCurPos(int NewPos);
-	int GetLeftPos() { return (LeftPos); }
-	void SetLeftPos(int NewPos) { LeftPos = NewPos; }
+	int GetLeftPos();
+	void SetLeftPos(int NewPos);
 	void SetPasswordMode(int Mode) { Flags.Change(FEDITLINE_PASSWORDMODE, Mode); };
 	void SetMaxLength(int Length);
 
@@ -283,9 +329,27 @@ public:
 	int CellPosToReal(int Pos);
 	void Select(int Start, int End);
 	void AddSelect(int Start, int End);
-	void GetSelection(int &Start, int &End);
-	BOOL IsSelection() { return SelStart == -1 && !SelEnd ? FALSE : TRUE; };
-	void GetRealSelection(int &Start, int &End);
+
+	bool IsSelection();
+
+	struct Selection { int Start, End; };
+
+	Selection GetSelection();
+	void GetSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
+	Selection GetRealSelection();
+	void GetRealSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetRealSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
 	void SetWordWrap(int Wrap) { Flags.Change(FEDITLINE_WORDWRAP, Wrap != 0); }
 	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }

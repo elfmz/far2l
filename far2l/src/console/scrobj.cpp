@@ -38,15 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 
 ThinScreenObject::ThinScreenObject()
-	:
-	pOwner(nullptr),
-	X1(0),
-	Y1(0),
-	X2(0),
-	Y2(0),
-	ObjWidth(0),
-	ObjHeight(0),
-	nLockCount(0)
+	: X1(0), Y1(0), X2(0), Y2(0)
 {
 	//  _OT(SysLog(L"[%p] ThinScreenObject::ThinScreenObject()", this));
 }
@@ -55,22 +47,30 @@ ThinScreenObject::~ThinScreenObject()
 {
 }
 
+
+bool ThinScreenObject::Locked() const
+{
+	return Flags.Check(FSCROBJ_LOCKED) || (pOwner && pOwner->Locked());
+}
+
 void ThinScreenObject::Lock()
 {
-	nLockCount++;
+	Flags.Set(FSCROBJ_LOCKED);
 }
 
 void ThinScreenObject::Unlock()
 {
-	if (nLockCount > 0)
-		nLockCount--;
-	else
-		nLockCount = 0;
+	Flags.Clear(FSCROBJ_LOCKED);
 }
 
-bool ThinScreenObject::Locked()
+int ThinScreenObject::ObjWidth() const
 {
-	return (nLockCount > 0) || (pOwner ? pOwner->Locked() : false);
+	return X2 >= X1 ? X2 + 1 - X1 : 0;
+}
+
+int ThinScreenObject::ObjHeight() const
+{
+	return Y2 >= Y1 ? Y2 + 1 - Y1 : 0;
 }
 
 void ThinScreenObject::SetOwner(ThinScreenObject *pOwner)
@@ -83,14 +83,12 @@ ThinScreenObject *ThinScreenObject::GetOwner()
 	return pOwner;
 }
 
-void ThinScreenObject::SetPosition(int X1, int Y1, int X2, int Y2)
+void ThinScreenObject::SetPosition(int newX1, int newY1, int newX2, int newY2)
 {
-	ThinScreenObject::X1 = X1;
-	ThinScreenObject::Y1 = Y1;
-	ThinScreenObject::X2 = X2;
-	ThinScreenObject::Y2 = Y2;
-	ObjWidth = X2 - X1 + 1;
-	ObjHeight = Y2 - Y1 + 1;
+	X1 = newX1;
+	Y1 = newY1;
+	X2 = newX2;
+	Y2 = newY2;
 	Flags.Set(FSCROBJ_SETPOSITIONDONE);
 }
 
@@ -99,20 +97,17 @@ void ThinScreenObject::SetScreenPosition()
 	Flags.Clear(FSCROBJ_SETPOSITIONDONE);
 }
 
-void ThinScreenObject::GetPosition(int &X1, int &Y1, int &X2, int &Y2)
+void ThinScreenObject::GetPosition(int &outX1, int &outY1, int &outX2, int &outY2) const
 {
-	X1 = ThinScreenObject::X1;
-	Y1 = ThinScreenObject::Y1;
-	X2 = ThinScreenObject::X2;
-	Y2 = ThinScreenObject::Y2;
+	outX1 = X1;
+	outY1 = Y1;
+	outX2 = X2;
+	outY2 = Y2;
 }
 
 void ThinScreenObject::Hide()
 {
 	//  _tran(SysLog(L"[%p] ThinScreenObject::Hide()",this));
-	if (!Flags.Check(FSCROBJ_VISIBLE))
-		return;
-
 	Flags.Clear(FSCROBJ_VISIBLE);
 }
 
@@ -238,3 +233,22 @@ void ScreenObject::Shadow(bool Full)
 	}
 }
 
+void ScreenObject::Lock()
+{
+	if (++nLockCount == 1) {
+		ThinScreenObject::Lock();
+	}
+}
+
+void ScreenObject::Unlock()
+{
+	if (nLockCount > 1) {
+		--nLockCount;
+	} else {
+		ThinScreenObject::Unlock();
+		if (UNLIKELY(nLockCount <= 0)) {
+			fprintf(stderr, "ScreenObject::Unlock: unexpected nLockCount=%d\n", nLockCount);
+		}
+		nLockCount = 0;
+	}
+}

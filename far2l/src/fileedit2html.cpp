@@ -147,11 +147,11 @@ static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len
 	if (len <= 0) len = line->GetLength() - start;
 	int end = start + len;
 
-	const wchar_t *CurStr = 0, *EndSeq = 0;
-	int Length;
+	const wchar_t *EndSeq = 0;
+	int Length = 0;
 	ColorItem ci;
 
-	line->GetBinaryString(&CurStr, &EndSeq, Length);
+	const wchar_t *CurStr = line->GetStringAddr(Length, &EndSeq);
 
 	if (!CurStr) return false;
 
@@ -220,27 +220,26 @@ BOOL FileEditor::SendToPrinter()
 	int tab = m_editor->EdOpt.TabSize;
 
 	const wchar_t *CurStr = 0, *EndSeq = 0;
-	int StartSel = -1, EndSel = -1;
 	int Length = 0;
 
 	// first, try to check against selection
 	if (m_editor->BlockStart) { // we have block selection active
-    	for (Edit *Ptr = m_editor->BlockStart; Ptr; Ptr = Ptr->m_next) {
-    		Ptr->GetSelection(StartSel, EndSel);
-    		if (StartSel == -1)	break;
+		for (Edit *Ptr = m_editor->BlockStart; Ptr; Ptr = Ptr->m_next) {
+			auto Sel = Ptr->GetSelection();
+			if (Sel.Start == -1)	break;
 
-			if (EndSel == -1)
-				Length = Ptr->GetLength() - StartSel;
+			if (Sel.End == -1)
+				Length = Ptr->GetLength() - Sel.Start;
 			else
-				Length = EndSel - StartSel;
+				Length = Sel.End - Sel.Start;
 
 			if (Length > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 				tb.append(HTML_PRE_HEADER);
 
-			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
+			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, Sel.Start, Length, tab)) {
 				int Len2 = 0;
-				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
-				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
+				CurStr = Ptr->GetStringAddr(Len2, &EndSeq);
+				escapeHtmlTags(tb, CurStr + Sel.Start, Length, printer.IsReducedHTMLSupported(), tab);
 				tb+= '\n';
 			}
     	}
@@ -252,7 +251,7 @@ BOOL FileEditor::SendToPrinter()
     		int TBlockX = CurPtr->CellPosToReal(m_editor->VBlockX);
     		int TBlockSizeX = CurPtr->CellPosToReal(m_editor->VBlockX + m_editor->VBlockSizeX) - TBlockX;
 
-    		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+    		CurStr = CurPtr->GetStringAddr(Length, &EndSeq);
 
     		if (Length > TBlockX) {
     			int CopySize = Length - TBlockX;
@@ -297,10 +296,7 @@ BOOL FileEditor::SendToPrinter()
 		std::string _tmpstr;
 
 		for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
-			const wchar_t *SaveStr, *EndSeq;
-
-			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
-
+			const wchar_t *SaveStr = CurPtr->GetStringAddr(Length);
 			std::string tb;
 			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {
 				fputs(tb.c_str(), fp);

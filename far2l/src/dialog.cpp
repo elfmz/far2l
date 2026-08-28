@@ -1986,9 +1986,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CW = LenText;
 
 				if (X1 + X + LenText > X2) {
-					int tmpCW = ObjWidth;
+					int tmpCW = ObjWidth();
 
-					if (CW < ObjWidth)
+					if (CW < tmpCW)
 						tmpCW = CW + 1;
 
 					strStr.TruncateByCells(tmpCW - 1);
@@ -2084,9 +2084,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CH = LenStrItem(I, strStr);
 
 				if (Y1 + Y + LenText > Y2) {
-					int tmpCH = ObjHeight;
+					int tmpCH = ObjHeight();
 
-					if (CH < ObjHeight)
+					if (CH < tmpCH)
 						tmpCH = CH + 1;
 
 					strStr.TruncateByCells(tmpCH - 1);
@@ -2198,7 +2198,7 @@ void Dialog::ShowDialog(unsigned ID)
 				LenText = LenStrItem(I, strStr);
 
 				if (X1 + CX1 + LenText > X2)
-					strStr.TruncateByCells(ObjWidth - 1);
+					strStr.TruncateByCells(ObjWidth() - 1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
 					Text(strStr);
@@ -3239,7 +3239,7 @@ int Dialog::ProcessKey(FarKey Key)
 					edt->Xlat();
 
 					// иначе неправильно работает ctrl-end
-					edt->strLastStr = edt->GetStringAddr();
+					edt->GetString(edt->strLastStr);
 					edt->LastPartLength = static_cast<int>(edt->strLastStr.GetLength());
 
 					Redraw();	// Перерисовка должна идти после DN_EDITCHANGE (imho)
@@ -3262,14 +3262,14 @@ int Dialog::ProcessKey(FarKey Key)
 						if ((Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1)
 								&& edt->GetCurPos() == edt->GetLength()) {
 							if (edt->LastPartLength == -1)
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 
 							strStr = edt->strLastStr;
 							int CurCmdPartLength = static_cast<int>(strStr.GetLength());
 							edt->HistoryGetSimilar(strStr, edt->LastPartLength);
 
 							if (edt->LastPartLength == -1) {
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 								edt->LastPartLength = CurCmdPartLength;
 							}
 							edt->DisableAC();

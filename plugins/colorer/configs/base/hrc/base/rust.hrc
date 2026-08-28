@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+>
+
+  <type name='rust'>
+    <annotation>
+      <documentation>Rust syntax description</documentation>
+      <contributors>
+        <![CDATA[
+        Maksim Galkin <maksim.galkin@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]>
+      </contributors>
+    </annotation>
+
+    <!-- 
+    This file is based on the language grammar described here:
+            http://doc.rust-lang.org/1.0.0-beta.2/grammar.html 
+    -->
+
+    <scheme name="rust">
+      <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
+      <block start="/\/\/\//" end="/$/" scheme="doxygen:doxygen" region="def:CommentDoc"/>
+      <block start="/\/\*\*/" end="/\*\//" scheme="doxygen:doxygen" region="def:CommentDoc"
+             region00="def:PairStart" region10="def:PairEnd"/>
+
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <block scheme="def:Comment" region="def:Comment">
+        <start region0="def:PairStart"><![CDATA[/\/\*/]]></start>
+        <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
+      </block>
+
+      <inherit scheme="def:Number"/>
+
+      <block start="/^\s*(#)(\[)/" end="/(\])/" scheme="rust" region="def:Directive"
+             region00="def:DirectiveEdge" region01="def:DirectiveEdge" region02="def:PairStart"
+             region10="def:DirectiveEdge" region11="def:PairEnd"/>
+
+      <block start="/(\{)/" end="/(\})/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\()/" end="/(\))/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+
+      <keywords region="def:Keyword">
+        <word name='abstract'/>
+        <word name='alignof'/>
+        <word name='as'/>
+        <word name='become'/>
+        <word name='box'/>
+        <word name='break'/>
+        <word name='const'/>
+        <word name='continue'/>
+        <word name='crate'/>
+        <word name='do'/>
+        <word name='else'/>
+        <word name='enum'/>
+        <word name='extern'/>
+        <word name='false'/>
+        <word name='final'/>
+        <word name='fn'/>
+        <word name='for'/>
+        <word name='if'/>
+        <word name='impl'/>
+        <word name='in'/>
+        <word name='let'/>
+        <word name='loop'/>
+        <word name='match'/>
+        <word name='mod'/>
+        <word name='move'/>
+        <word name='mut'/>
+        <word name='offsetof'/>
+        <word name='once'/>
+        <word name='override'/>
+        <word name='priv'/>
+        <word name='proc'/>
+        <word name='pub'/>
+        <word name='pure'/>
+        <word name='ref'/>
+        <word name='return'/>
+        <word name='sizeof'/>
+        <word name='static'/>
+        <word name='self'/>
+        <word name='struct'/>
+        <word name='super'/>
+        <word name='true'/>
+        <word name='trait'/>
+        <word name='type'/>
+        <word name='typeof'/>
+        <word name='unsafe'/>
+        <word name='unsized'/>
+        <word name='use'/>
+        <word name='virtual'/>
+        <word name='where'/>
+        <word name='while'/>
+        <word name='yield'/>
+      </keywords>
+
+      <keywords region="def:Symbol">
+        <symb name="::" />
+        <symb name="->" />
+        <symb name="#" />
+        <symb name="," />
+        <symb name=";" />
+      </keywords>
+
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) Maksim Galkin <maksim.galkin@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

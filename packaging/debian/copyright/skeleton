@@ -34,7 +34,7 @@ Copyright: 2003-2005 WARP ItSelf
            2005 Alex Yaroslavsky
 License: BSD-3-clause
 
-Files: plugins/compare/* plugins/drawline/* plugins/editcase/* plugins/align/* plugins/autowrap/* plugins/farftp/* FARStdlib/* plugins/filecase/* plugins/multiarc/* plugins/SimpleIndent/* plugins/tmppanel/*
+Files: plugins/compare/* plugins/drawline/* plugins/editcase/* plugins/align/* plugins/autowrap/* plugins/farftp/* plugins/filecase/* plugins/multiarc/* plugins/SimpleIndent/* plugins/tmppanel/*
 Copyright: 1996-2000 Eugene Roshal
            2000-2021 Far Group
 License: BSD-3-clause

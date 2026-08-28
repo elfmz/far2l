@@ -517,7 +517,7 @@ public:
 		Dlg.SetHelp(L"FarConfig");
 		Dlg.Process();
 
-		if (Dlg.GetExitCode() == 40) {
+		if (Dlg.GetExitCode() == 42) {
 			switch (_opt.type) {
 				case ConfigOpt::T_BOOL:
 					if (*_opt.value.b != (bool) AdvancedConfigDlg[27].Selected ) {

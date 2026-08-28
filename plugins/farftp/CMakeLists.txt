@@ -62,15 +62,50 @@ lib/Progress/cbFmt.cpp
 lib/Progress/TraficCB.cpp
 lib/Progress/Main.cpp
 lib/Progress/Utils.cpp
+
+fstd/fstd_scr.cpp
+fstd/fstd_stdlibCS.cpp
+fstd/fstd_asrt.cpp
+fstd/fstd_Patt.cpp
+fstd/fstd_OEM.cpp
+fstd/fstd_SText.cpp
+fstd/fstd_exSCHC.cpp
+fstd/fstd_Reg.cpp
+fstd/fstd_plg.cpp
+fstd/fstd_Con.cpp
+fstd/fstd_exSCPY.cpp
+fstd/fstd_menu.cpp
+fstd/fstd_exSCAT.cpp
+fstd/fstd_log.cpp
+fstd/fstd_mklog.cpp
+fstd/fstd_String.cpp
+fstd/fstd_err.cpp
+fstd/fstd_mesg.cpp
+fstd/fstd_SCol.cpp
+fstd/fstd_Msg.cpp
+fstd/fstd_exSCMP.cpp
+fstd/fstd_exSPCH.cpp
+fstd/fstd_crc32.cpp
+fstd/fstd_exit.cpp
+fstd/fstd_exSNCH.cpp
+fstd/fstd_Dialog.cpp
+fstd/fstd_per.cpp
+fstd/fstd_Utils.cpp
+fstd/fstd_ilist.cpp
+fstd/fstd_Arg.cpp
+fstd/fstd_FMsg.cpp
+fstd/fstd_exSPS.cpp
+fstd/fstd_FUtils.cpp
+fstd/fstd_ClpS.cpp
 )
 
 add_library (farftp MODULE ${SOURCES})
 
-target_link_libraries(farftp utils FARStdlib far2l)
+target_link_libraries(farftp utils far2l)
 
 target_include_directories(farftp PRIVATE .)
 target_include_directories(farftp PRIVATE src)
-target_include_directories(farftp PRIVATE ${CMAKE_SOURCE_DIR}/FARStdlib/include)
+target_include_directories(farftp PRIVATE fstd)
 target_include_directories(farftp PRIVATE ${CMAKE_SOURCE_DIR}/WinPort)
 target_include_directories(farftp PRIVATE ${CMAKE_SOURCE_DIR}/far2l/far2sdk)
 

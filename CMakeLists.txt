@@ -388,7 +388,6 @@ endif()
 
 if (DEFINED FARFTP AND FARFTP)
     message(STATUS "FARFTP plugin enabled (obsolete)")
-    add_subdirectory (FARStdlib)
     add_subdirectory (plugins/farftp)
 else()
     install(CODE "

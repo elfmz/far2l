@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
+#include <optional>
+
 #include "dirinfo.hpp"
 #include "plugapi.hpp"
 #include "keys.hpp"
@@ -79,14 +81,13 @@ static void PR_DrawGetDirInfoMsg()
 
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
 		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
-		FileFilter *Filter, DWORD Flags)
+		FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
 {
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
 	SaveScreen SaveScr;
 	UndoGlobalSaveScrPtr UndSaveScr(&SaveScr);
-	TPreRedrawFuncGuard preRedrawFuncGuard(PR_DrawGetDirInfoMsg);
 	wakeful W;
 	ScanTree ScTree(FALSE, TRUE,
 			((Flags & GETDIRINFO_SCANSYMLINKDEF) ? -1 : ((Flags & GETDIRINFO_SCANSYMLINK) != 0)));
@@ -106,7 +107,12 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			ShowDirName = p + 1;
 	}
 
-	ConsoleTitle OldTitle;
+	std::optional<TPreRedrawFuncGuard> preRedrawFuncGuard;
+	std::optional<ConsoleTitle> OldTitle;
+	if (!tracker) {
+		preRedrawFuncGuard.emplace(PR_DrawGetDirInfoMsg);
+		OldTitle.emplace();
+	}
 	RefreshFrameManager frref(ScrX, ScrY, MsgWaitTime, Flags & GETDIRINFO_DONTREDRAWFRAME);
 	// DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
 
@@ -134,13 +140,18 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 
 	while (ScTree.GetNextName(&FindData, strFullName)) {
 		if (can_break) {
-			INPUT_RECORD rec;
-
+			INPUT_RECORD rec{};
 			switch (PeekInputRecord(&rec)) {
 				case 0:
 				case KEY_IDLE:
 					break;
 				case KEY_NONE:
+					if ((Flags & GETDIRINFO_ENHBREAK) != 0 && rec.EventType == MOUSE_EVENT
+							&& rec.Event.MouseEvent.dwEventFlags == MOUSE_WHEELED) {
+						// !!! Its a workaround.
+						// TODO: fix PeekInputRecord - it should return KEY_MSWHEEL_UP/KEY_MSWHEEL_DOWN in such case
+						return -1;
+					}
 				case KEY_ALT:
 				case KEY_CTRL:
 				case KEY_SHIFT:
@@ -169,9 +180,13 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			if (CurTime - StartTime > MsgWaitTime) {
 				StartTime = CurTime;
 				MsgWaitTime = 500;
-				OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
-				SetCursorType(FALSE, 0);
-				DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
+				if (!tracker) {
+					OldTitle->Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
+					SetCursorType(FALSE, 0);
+					DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
+				} else {
+					tracker->OnDirInfoProgress(ShowDirName, FileSize);
+				}
 			}
 		}
 

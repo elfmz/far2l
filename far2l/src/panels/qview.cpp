@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "interf.hpp"
 #include "execute.hpp"
-#include "dirinfo.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "mix.hpp"
@@ -83,10 +82,15 @@ FARString &QuickView::GetTitle(FARString &strTitle, int SubLen, int TruncSize)
 
 void QuickView::DisplayObject()
 {
-	if (Flags.Check(FSCROBJ_ISREDRAWING))
-		return;
+	if (!Flags.Check(FSCROBJ_ISREDRAWING)) {
+		Flags.Set(FSCROBJ_ISREDRAWING);
+		DisplayObjectInner();
+		Flags.Clear(FSCROBJ_ISREDRAWING);
+	}
+}
 
-	Flags.Set(FSCROBJ_ISREDRAWING);
+void QuickView::DisplayObjectInner()
+{
 	FARString strTitle;
 
 	if (!QView && !ProcessingPluginCommand)
@@ -122,7 +126,11 @@ void QuickView::DisplayObject()
 
 	if (Directory) {
 		FormatString FString;
-		FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
+		if (Directory == -1) {
+			FString << Msg::QuickViewFolderEstimating << L" \"" << strCurFileName << L"\" ...";
+		} else {
+			FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
+		}
 		SetFarColor(COL_PANELTEXT);
 		GotoXY(X1 + 2, Y1 + 2);
 		PrintText(FString);
@@ -159,7 +167,7 @@ void QuickView::DisplayObject()
 			}
 		}*/
 
-		if (Directory == 1 || Directory == 4) {
+		if (Directory == 1 || Directory == 4 || Directory == -1) {
 			GotoXY(X1 + 2, Y1 + 4);
 			PrintText(Msg::QuickViewContains);
 			GotoXY(X1 + 2, Y1 + 6);
@@ -208,8 +216,6 @@ void QuickView::DisplayObject()
 		}
 	} else if (QView)
 		QView->Show();
-
-	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
 int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -313,6 +319,8 @@ void QuickView::Update(int Mode)
 
 void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin)
 {
+	if (Directory < 0)
+		return; //recusrion
 	DWORD FileAttr = 0;
 	CloseFile();
 	QView = nullptr;
@@ -352,10 +360,11 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 			else
 				Directory = 3;
 		} else {
+			Directory = -1;
+			DisplayObjectInner();
 			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
 					PhysicalSize, ClusterSize, 500, nullptr,
-					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME);
-
+					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME, this);
 			if (ExitCode == 1)
 				Directory = 1;
 			else if (ExitCode == -1)
@@ -513,6 +522,11 @@ BOOL QuickView::UpdateKeyBar()
 	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::QViewCtrlAltShiftF1, 12);
 	DynamicUpdateKeyBar();
 	return TRUE;
+}
+
+void QuickView::OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size)
+{
+	DisplayObjectInner();
 }
 
 void QuickView::DynamicUpdateKeyBar()

@@ -41,12 +41,17 @@ enum GETDIRINFOFLAGS
 	GETDIRINFO_DONTREDRAWFRAME = 0x00000002,
 	GETDIRINFO_SCANSYMLINK     = 0x00000004,
 	GETDIRINFO_SCANSYMLINKDEF  = 0x00000008,
-	GETDIRINFO_USEFILTER       = 0x00000010,
+	GETDIRINFO_USEFILTER       = 0x00000010
+};
+
+struct DirInfoProgressTracker
+{
+	virtual void OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size) = 0;
 };
 
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
 		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
-		FileFilter *Filter, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);
+		FileFilter *Filter, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
 
 int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
 		uint64_t &FileSize, uint64_t &PhysicalSize);

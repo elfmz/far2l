@@ -36,10 +36,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "CriticalSections.hpp"
 #include "FARString.hpp"
+#include "dirinfo.hpp"
 
 class Viewer;
 
-class QuickView : public Panel
+class QuickView : public Panel, protected DirInfoProgressTracker
 {
 private:
 	Viewer *QView;
@@ -57,6 +58,7 @@ private:
 	int OldWrapMode;
 	int OldWrapType;
 
+	void DisplayObjectInner();
 private:
 	virtual void DisplayObject();
 	void PrintText(const wchar_t *Str);
@@ -64,6 +66,7 @@ private:
 	void SetMacroMode(int Restore = FALSE);
 
 	void DynamicUpdateKeyBar();
+	virtual void OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size);
 
 public:
 	QuickView();

@@ -18687,6 +18687,17 @@ QuickViewFolder
 "Тека"
 "Каталог"
 
+QuickViewFolderEstimating
+"Подсчет папки"
+"Estimating folder"
+"(...) Adresář"
+"(...) Verzeichnis"
+"(...) Mappa"
+"(...) Folder"
+"(...) Directorio"
+"(...) Тека"
+"(...) Каталог"
+
 QuickViewJunction
 "Связь"
 "Junction"

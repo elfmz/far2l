@@ -58,7 +58,9 @@ private:
 	int OldWrapMode;
 	int OldWrapType;
 
-	void DisplayObjectInner();
+	void PrintBox();
+	void PrintFileDirInfo();
+
 private:
 	virtual void DisplayObject();
 	void PrintText(const wchar_t *Str);

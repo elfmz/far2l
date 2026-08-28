@@ -84,22 +84,28 @@ void QuickView::DisplayObject()
 {
 	if (!Flags.Check(FSCROBJ_ISREDRAWING)) {
 		Flags.Set(FSCROBJ_ISREDRAWING);
-		DisplayObjectInner();
+		if (!QView && !ProcessingPluginCommand)
+			CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
+
+		if (QView)
+			QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
+
+		PrintBox();
+		PrintFileDirInfo();
+
+		if (QView)
+			QView->Show();
+
 		Flags.Clear(FSCROBJ_ISREDRAWING);
 	}
 }
 
-void QuickView::DisplayObjectInner()
+void QuickView::PrintBox()
 {
+	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
+
 	FARString strTitle;
 
-	if (!QView && !ProcessingPluginCommand)
-		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
-
-	if (QView)
-		QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
-
-	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
 	SetFarColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 	GetTitle(strTitle);
@@ -110,6 +116,10 @@ void QuickView::DisplayObjectInner()
 	}
 
 	DrawSeparator(Y2 - 2);
+}
+
+void QuickView::PrintFileDirInfo()
+{
 	SetFarColor(COL_PANELTEXT);
 	GotoXY(X1 + 1, Y2 - 1);
 	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
@@ -214,8 +224,7 @@ void QuickView::DisplayObjectInner()
 				PrintText(strSize);
 			}
 		}
-	} else if (QView)
-		QView->Show();
+	}
 }
 
 int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -319,8 +328,6 @@ void QuickView::Update(int Mode)
 
 void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin)
 {
-	if (Directory < 0)
-		return; //recusrion
 	DWORD FileAttr = 0;
 	CloseFile();
 	QView = nullptr;
@@ -361,7 +368,8 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 				Directory = 3;
 		} else {
 			Directory = -1;
-			DisplayObjectInner();
+			PrintBox();
+			PrintFileDirInfo();
 			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
 					PhysicalSize, ClusterSize, 500, nullptr,
 					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME, this);
@@ -526,7 +534,7 @@ BOOL QuickView::UpdateKeyBar()
 
 void QuickView::OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size)
 {
-	DisplayObjectInner();
+	PrintFileDirInfo();
 }
 
 void QuickView::DynamicUpdateKeyBar()

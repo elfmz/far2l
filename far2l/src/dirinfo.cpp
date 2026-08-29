@@ -92,8 +92,6 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	ScanTree ScTree(FALSE, TRUE,
 			((Flags & GETDIRINFO_SCANSYMLINKDEF) ? -1 : ((Flags & GETDIRINFO_SCANSYMLINK) != 0)));
 	FAR_FIND_DATA_EX FindData;
-	clock_t StartTime = GetProcessUptimeMSec();
-	SetCursorType(FALSE, 0);
 	/*
 		$ 20.03.2002 DJ
 		для . - покажем имя родительского каталога
@@ -112,6 +110,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	if (!tracker) {
 		preRedrawFuncGuard.emplace(PR_DrawGetDirInfoMsg);
 		OldTitle.emplace();
+		SetCursorType(FALSE, 0);
 	}
 	RefreshFrameManager frref(ScrX, ScrY, MsgWaitTime, Flags & GETDIRINFO_DONTREDRAWFRAME);
 	// DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
@@ -138,15 +137,15 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		ClusterSize = s.st_blksize;		// TODO: check if its best thing to be used here
 	}
 
-	clock_t LastInputCheckTime = 0;
+	clock_t LastMsgTime = 0, LastInputCheckTime = 0;
 	while (ScTree.GetNextName(&FindData, strFullName)) {
 		clock_t CurTime = GetProcessUptimeMSec();
 		if (can_break && CurTime - LastInputCheckTime > 100) {
-			LastInputCheckTime = CurTime;
 			INPUT_RECORD rec{};
 			switch (PeekInputRecord(&rec)) {
 				case 0:
 				case KEY_IDLE:
+					LastInputCheckTime = CurTime;
 					break;
 				case KEY_NONE:
 					if ((Flags & GETDIRINFO_ENHBREAK) != 0 && rec.EventType == MOUSE_EVENT
@@ -178,8 +177,8 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		}
 
 		if (MsgWaitTime != -1) {
-			if (CurTime - StartTime > MsgWaitTime) {
-				StartTime = CurTime;
+			if (CurTime - LastMsgTime > MsgWaitTime) {
+				LastMsgTime = CurTime;
 				MsgWaitTime = 500;
 				if (!tracker) {
 					OldTitle->Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
@@ -195,10 +194,6 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 
-		if (!is_directory || count_dir_size) {
-			PhysicalSize+= FindData.nPhysicalSize;
-		}
-
 		if (is_reparse_point) {
 			// include symlink's own size to total size
 			if (count_dir_size && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
@@ -212,6 +207,10 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 
 		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
 			continue;
+		}
+
+		if (!is_directory || count_dir_size) {
+			PhysicalSize+= FindData.nPhysicalSize;
 		}
 
 		if (is_directory) {

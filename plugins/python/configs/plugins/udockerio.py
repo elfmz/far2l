@@ -1,4 +1,3 @@
-#!/usr/bin/env vpython3
 import os
 import stat
 import time

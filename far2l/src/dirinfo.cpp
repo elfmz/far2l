@@ -194,65 +194,38 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 
-		if (is_reparse_point) {
-			// include symlink's own size to total size
-			if ((!is_directory || count_dir_size) && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
-				if (scanned_inodes.Put(s.st_dev, s.st_ino)) {
-					FileSize+= s.st_size;
-					PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
-				}
-			}
-
-			FileCount++;
-			if (!scan_symlinks)
-				continue;
-		}
-
-		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
-			continue;
-		}
-
-		if (!is_reparse_point && (!is_directory || count_dir_size)) {
-			PhysicalSize+= FindData.nPhysicalSize;
-		}
-
 		if (is_directory) {
+			/*
+				Если каталог не попадает под фильтр то его надо полностью
+				пропустить - иначе при включенном подсчёте total
+				он учтётся (mantis 551)
+			*/
+			if ((is_reparse_point && !scan_symlinks) || (use_filter && !Filter->FileInFilter(FindData))) {
+				ScTree.SkipDir();
+				continue;
+			}
 			/*
 				Счётчик каталогов наращиваем только если не включен фильтр,
 				в противном случае это будем делать в подсчёте количества файлов
 			*/
 			if (!use_filter) {
 				DirCount++;
-				if (count_dir_size)
-					FileSize+= FindData.nFileSize;
-			} else {
-				/*
-					Если каталог не попадает под фильтр то его надо полностью
-					пропустить - иначе при включенном подсчёте total
-					он учтётся (mantis 551)
-				*/
-				if (Filter->FileInFilter(FindData)) {
-					if (count_dir_size)
-						FileSize+= FindData.nFileSize;	// TODO: add size at same condifion as DirCount increment
-				} else
-					ScTree.SkipDir();
 			}
 		} else {
-			/*
-				$ 17.04.2005 KM
-				Проверка попадания файла в условия фильра
-			*/
 			if (use_filter) {
-				if (!Filter->FileInFilter(FindData))
+				/*
+					$ 17.04.2005 KM
+					Проверка попадания файла в условия фильра
+				*/
+				if (!Filter->FileInFilter(FindData)) {
 					continue;
-			}
+				}
 
-			/*
-				Наращиваем счётчик каталогов при включенном фильтре только тогда,
-				когда в таком каталоге найден файл, удовлетворяющий условиям
-				фильтра.
-			*/
-			if (use_filter) {
+				/*
+					Наращиваем счётчик каталогов при включенном фильтре только тогда,
+					когда в таком каталоге найден файл, удовлетворяющий условиям
+					фильтра.
+				*/
 				strCurDirName = strFullName;
 				CutToSlash(strCurDirName);	//???
 
@@ -263,7 +236,19 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			}
 
 			FileCount++;
-			FileSize+= FindData.nFileSize;
+		}
+
+		if (!is_directory || count_dir_size) {
+			if (is_reparse_point && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
+				if (scanned_inodes.Put(s.st_dev, s.st_ino)) {
+					FileSize+= s.st_size;
+					PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
+				}
+			}
+			if (scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
+				FileSize+= FindData.nFileSize;
+				PhysicalSize+= FindData.nPhysicalSize;
+			}
 		}
 	}
 

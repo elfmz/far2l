@@ -620,7 +620,7 @@ extern "C"
 			wfd->UnixGroup = s.st_gid;
 			wfd->UnixDevice = s.st_dev;
 			wfd->UnixNode = s.st_ino;
-			wfd->nPhysicalSize = ((DWORD64)_st_lnk.st_blocks) * 512;
+			wfd->nPhysicalSize = ((DWORD64)s.st_blocks) * 512; // _st_lnk
 			wfd->nFileSize = (DWORD64)s.st_size;
 			wfd->dwFileAttributes = _attr;
 			wfd->dwUnixMode = s.st_mode;

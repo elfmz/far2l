@@ -40,6 +40,14 @@ $# FarColorer's settings#
   #Syntax#
      Turns on display of syntax
 
+  #Viewer coloring#
+     Controls syntax highlighting in viewers:
+     ~Disabled~ - do not color viewers.
+     ~Quick View only~ - color only the file-panel Quick View (default).
+     ~All viewers~ - color Quick View and regular viewer windows.
+     Hex and processed viewing modes are not colored. Coloring adds parsing work
+     during redraws, so coloring regular viewers is opt-in.
+
   #Classic outline style#
      In classic style displays only the name of the function. Otherwise show
      the beginning of the line number, then the first letter in the function

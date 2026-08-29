@@ -612,7 +612,7 @@ void Viewer::ShowPage(int nMode)
 		if (ViOpt.ClickableURLs)
 			CollectVisibleLinks();
 
-		if (m_bQuickView && !VM.Processed) {
+		if (!VM.Hex && !VM.Processed) {
 			ViewerColors.assign(static_cast<size_t>(lineCount), {});
 			if (ViewerContextCodePage != VM.CodePage) {
 				ViewerContext.clear();

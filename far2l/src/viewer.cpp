@@ -458,6 +458,7 @@ int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 	AdjustWidth();
 	ViewerContext.clear();
 	ViewerContextReady = false;
+	ViewerContextRetained = false;
 	ViewerContextPos = -1;
 	CtrlObject->Plugins.CurViewer = this;	// HostFileViewer;
 	/*
@@ -613,8 +614,12 @@ void Viewer::ShowPage(int nMode)
 
 		if (m_bQuickView && !VM.Processed) {
 			ViewerColors.assign(static_cast<size_t>(lineCount), {});
-			if (ViewerContextPos != Strings[0].nFilePos || ViewerContextCodePage != VM.CodePage) {
+			if (ViewerContextCodePage != VM.CodePage) {
 				ViewerContext.clear();
+				ViewerContextRetained = false;
+				ViewerContextPos = -1;
+			}
+			if (ViewerContextPos != Strings[0].nFilePos) {
 				ViewerContextReady = false;
 			}
 			CtrlObject->Plugins.CurViewer = this;
@@ -697,7 +702,11 @@ void Viewer::ShowPage(int nMode)
 
 void Viewer::PrepareViewerContext()
 {
+	const int64_t previousContextPos = ViewerContextPos;
+	const UINT previousContextCodePage = ViewerContextCodePage;
+	auto previousContext = std::move(ViewerContext);
 	ViewerContextReady = true;
+	ViewerContextRetained = false;
 	ViewerContext.clear();
 	ViewerContextPos = Strings[0].nFilePos;
 	ViewerContextCodePage = VM.CodePage;
@@ -726,6 +735,7 @@ void Viewer::PrepareViewerContext()
 	for (const int64_t position : positions) {
 		vseek(position, SEEK_SET);
 		ViewerString line;
+		line.nFilePos = position;
 		ReadString(line, -1, MAX_VIEWLINE);
 		if (vtell() > visiblePos) {
 			const int64_t distance = visiblePos - position;
@@ -745,6 +755,21 @@ void Viewer::PrepareViewerContext()
 		ViewerContext.emplace_back(std::move(line));
 	}
 
+	// Keep parser line numbers stable while scrolling, but bound retained context.
+	constexpr size_t MaxRetainedContextLines = MaxContextLines * 2;
+	if (previousContextCodePage == VM.CodePage && previousContextPos >= 0 &&
+		visiblePos > previousContextPos && !previousContext.empty() && !ViewerContext.empty()) {
+		auto overlap = std::find_if(previousContext.begin(), previousContext.end(),
+			[&](const ViewerString &line) { return line.nFilePos == ViewerContext.front().nFilePos; });
+		if (overlap != previousContext.end()) {
+			const size_t prefix = static_cast<size_t>(overlap - previousContext.begin());
+			if (prefix + ViewerContext.size() <= MaxRetainedContextLines) {
+				ViewerContext.insert(ViewerContext.begin(), previousContext.begin(), overlap);
+				ViewerContextRetained = true;
+			}
+		}
+	}
+
 	VM.Wrap = savedWrap;
 	FilePos = savedFilePos;
 	LastPage = savedLastPage;
@@ -757,19 +782,32 @@ void Viewer::ApplyColorRanges(int line, int screenY, ViewerPrinter &printer)
 		return;
 
 	const wchar_t *text = Strings[line].Chars();
-	const int length = static_cast<int>(wcslen(text));
-	const int visualLength = printer.Length(text);
-	const auto visualPosition = [&](int64_t position) {
-		return position <= length
-			? static_cast<int64_t>(printer.Length(text, static_cast<int>(position)))
-			: visualLength + position - length;
+	const size_t length = wcslen(text);
+	const bool singleCell = std::all_of(text, text + length,
+		[](wchar_t ch) { return static_cast<uint32_t>(ch) <= 0x7f; });
+	size_t previousPosition = 0;
+	size_t previousVisualPosition = 0;
+	const auto visualPosition = [&](size_t position) {
+		if (singleCell)
+			return position;
+		const size_t target = std::min(position, length);
+		if (target < previousPosition ||
+			(previousPosition && (text[previousPosition - 1] == CharClasses::ZERO_WIDTH_JOINER ||
+				CharClasses::IsXxxfix(text[previousPosition - 1])))) {
+			previousPosition = 0;
+			previousVisualPosition = 0;
+		}
+		previousVisualPosition+= static_cast<size_t>(printer.Length(text + previousPosition,
+			static_cast<int>(target - previousPosition)));
+		previousPosition = target;
+		return previousVisualPosition + position - target;
 	};
 
 	for (const auto &range : ViewerColors[line]) {
-		const int64_t visualStart = visualPosition(range.StartPos);
-		const int64_t visualEnd = visualPosition(static_cast<int64_t>(range.EndPos) + 1);
-		const int64_t visibleStart = std::max<int64_t>(visualStart, LeftPos);
-		const int64_t visibleEnd = std::min<int64_t>(visualEnd, LeftPos + Width);
+		const size_t visualStart = visualPosition(range.StartPos);
+		const size_t visualEnd = visualPosition(range.EndPos + 1);
+		const int64_t visibleStart = std::max<int64_t>(static_cast<int64_t>(visualStart), LeftPos);
+		const int64_t visibleEnd = std::min<int64_t>(static_cast<int64_t>(visualEnd), LeftPos + Width);
 
 		if (visibleStart >= visibleEnd)
 			continue;
@@ -1302,8 +1340,16 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		}
 
 		for (;;) {
-			if (OutPtr >= StrSize - 16)
+			if (OutPtr >= StrSize - 16) {
+				const int64_t position = vtell();
+				if (vgetc(Ch)) {
+					rString.WrapsToNext = Ch != CRSym;
+					if (rString.WrapsToNext && CRSym == L'\n' && Ch == L'\r' && vgetc(Ch2))
+						rString.WrapsToNext = Ch2 != CRSym;
+				}
+				vseek(position, SEEK_SET);
 				break;
+			}
 
 			do { // attach zero-length sequences at the string ending (if any)
 				int64_t SavePosEsc = vtell();
@@ -3887,22 +3933,23 @@ int Viewer::ViewerControl(int Command, void *Param)
 		case VCTL_GETSTRING:
 		case VCTL_GETCONTEXT: {
 			ViewerGetString *string = static_cast<ViewerGetString *>(Param);
-			if (!string || string->StringNumber < 0)
+			if (!string)
 				break;
 
 			const bool context = Command == VCTL_GETCONTEXT;
 			if (context && !ViewerContextReady)
 				PrepareViewerContext();
 			const size_t count = context ? ViewerContext.size() : ViewerColors.size();
-			if (static_cast<size_t>(string->StringNumber) >= count)
+			if (string->StringNumber >= count)
 				break;
 
 			const ViewerString &source = context
 				? ViewerContext[string->StringNumber]
 				: Strings[string->StringNumber];
 			string->StringText = source.Chars();
-			string->StringLength = static_cast<int>(wcslen(string->StringText));
-			string->Flags = source.WrapsToNext ? VGS_WRAPS_TO_NEXT : 0;
+			string->StringLength = wcslen(string->StringText);
+			string->Flags = (source.WrapsToNext ? VGS_WRAPS_TO_NEXT : 0) |
+				(context && ViewerContextRetained ? VGS_CONTEXT_RETAINED : 0);
 			return TRUE;
 		}
 		case VCTL_ADDCOLOR:
@@ -3912,9 +3959,8 @@ int Viewer::ViewerControl(int Command, void *Param)
 			const ViewerColor *color = Command == VCTL_ADDCOLOR
 				? static_cast<const ViewerColor *>(Param)
 				: &static_cast<const ViewerTrueColor *>(Param)->Base;
-			if (!color || color->StringNumber < 0 || color->StartPos < 0 ||
-				color->EndPos < color->StartPos ||
-				static_cast<size_t>(color->StringNumber) >= ViewerColors.size())
+			if (!color || color->EndPos < color->StartPos ||
+				color->StringNumber >= ViewerColors.size())
 				break;
 
 			ViewerColorRange range {color->StartPos, color->EndPos, color->Color};

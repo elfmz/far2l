@@ -1517,22 +1517,23 @@ struct ViewerSelect
 
 struct ViewerGetString
 {
-	int StringNumber;
+	size_t StringNumber;
 	const wchar_t *StringText;
-	int StringLength;
+	size_t StringLength;
 	DWORD Flags;
 };
 
 enum VIEWER_GETSTRING_FLAGS
 {
 	VGS_WRAPS_TO_NEXT=1,
+	VGS_CONTEXT_RETAINED=2,
 };
 
 struct ViewerColor
 {
-	int StringNumber;
-	int StartPos;
-	int EndPos;
+	size_t StringNumber;
+	size_t StartPos;
+	size_t EndPos;
 	uint64_t Color;
 };
 

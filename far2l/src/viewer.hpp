@@ -100,14 +100,15 @@ private:
 
 	struct ViewerColorRange
 	{
-		int StartPos;
-		int EndPos;
+		size_t StartPos;
+		size_t EndPos;
 		DWORD64 Color;
 	};
 
 	std::vector<std::vector<ViewerColorRange>> ViewerColors;
 	std::vector<ViewerString> ViewerContext;
 	bool ViewerContextReady = false;
+	bool ViewerContextRetained = false;
 	int64_t ViewerContextPos = -1;
 	UINT ViewerContextCodePage = 0;
 

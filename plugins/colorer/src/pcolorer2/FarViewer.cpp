@@ -28,7 +28,17 @@ void FarViewer::endJob(size_t lno)
 
 void FarViewer::colorize(const ViewerInfo& vi)
 {
+  const bool positionChanged = filePos != vi.FilePos;
+  filePos = vi.FilePos;
+  auto previousLines = std::move(lines);
   readLines(vi.WindowSizeY);
+
+  size_t firstChanged = 0;
+  const size_t commonSize = std::min(previousLines.size(), lines.size());
+  while (firstChanged < commonSize && previousLines[firstChanged] == lines[firstChanged]) {
+    ++firstChanged;
+  }
+
   baseEditor->lineCountEvent(static_cast<int>(lines.size()));
   baseEditor->visibleTextEvent(firstVisibleLine,
                                static_cast<int>(lines.size()) - firstVisibleLine);
@@ -49,8 +59,10 @@ void FarViewer::colorize(const ViewerInfo& vi)
     defaultFore = fileType->getParamValueHex(DDefFore, defaultFore);
     defaultBack = fileType->getParamValueHex(DDefBack, defaultBack);
     initialized = true;
-  } else {
+  } else if (positionChanged && !contextRetained) {
     baseEditor->modifyEvent(0);
+  } else if (firstChanged < previousLines.size() || firstChanged < lines.size()) {
+    baseEditor->modifyEvent(static_cast<int>(firstChanged));
   }
 
   for (int visualLine = 0; visualLine < static_cast<int>(visualLines.size()); ++visualLine) {
@@ -88,19 +100,24 @@ void FarViewer::readLines(int count)
 {
   lines.clear();
   visualLines.clear();
+  contextRetained = false;
   bool continuation = false;
 
-  for (int lno = 0;; ++lno) {
+  for (size_t lno = 0;; ++lno) {
     ViewerGetString string {lno};
     if (!info->ViewerControl(VCTL_GETCONTEXT, &string)) {
       break;
     }
-    lines.emplace_back(string.StringText, static_cast<size_t>(string.StringLength));
+    if (!continuation) {
+      lines.emplace_back();
+    }
+    contextRetained = (string.Flags & VGS_CONTEXT_RETAINED) != 0;
+    lines.back().append(string.StringText, string.StringLength);
     continuation = (string.Flags & VGS_WRAPS_TO_NEXT) != 0;
   }
   firstVisibleLine = static_cast<int>(lines.size()) - (continuation ? 1 : 0);
 
-  for (int lno = 0; lno < count; ++lno) {
+  for (size_t lno = 0; lno < static_cast<size_t>(count); ++lno) {
     ViewerGetString string {lno};
     if (!info->ViewerControl(VCTL_GETSTRING, &string)) {
       break;
@@ -112,8 +129,9 @@ void FarViewer::readLines(int count)
 
     auto& logicalLine = lines.back();
     visualLines.push_back({static_cast<int>(lines.size()) - 1,
-                           static_cast<int>(logicalLine.size()), string.StringLength});
-    logicalLine.append(string.StringText, static_cast<size_t>(string.StringLength));
+                           static_cast<int>(logicalLine.size()),
+                           static_cast<int>(string.StringLength)});
+    logicalLine.append(string.StringText, string.StringLength);
     continuation = (string.Flags & VGS_WRAPS_TO_NEXT) != 0;
   }
 }
@@ -143,7 +161,7 @@ FarViewer::RegionColor FarViewer::convert(const StyledRegion* region) const
   return color;
 }
 
-void FarViewer::addColor(int lineNumber, int start, int end, const RegionColor& color) const
+void FarViewer::addColor(size_t lineNumber, size_t start, size_t end, const RegionColor& color) const
 {
   if (!trueColor) {
     ViewerColor viewerColor {lineNumber, start, end - 1, color.attributes};

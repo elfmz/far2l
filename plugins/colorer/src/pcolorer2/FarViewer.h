@@ -27,7 +27,7 @@ class FarViewer : public LineSource
   };
 
   RegionColor convert(const StyledRegion* region) const;
-  void addColor(int line, int start, int end, const RegionColor& color) const;
+  void addColor(size_t line, size_t start, size_t end, const RegionColor& color) const;
   void readLines(int count);
 
   struct VisualLine
@@ -47,6 +47,8 @@ class FarViewer : public LineSource
   int defaultFore = -1;
   int defaultBack = -1;
   int firstVisibleLine = 0;
+  int64_t filePos = -1;
+  bool contextRetained = false;
   bool trueColor;
   bool initialized = false;
 };

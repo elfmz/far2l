@@ -100,6 +100,7 @@ struct MenuItemEx
 	DWORD Flags;	// Флаги пункта
 	DWORD AccelKey;
 	FARString strName;
+	FARString strDescription;
 
 	union							// Пользовательские данные:
 	{
@@ -154,6 +155,7 @@ struct MenuItemEx
 		Flags = 0;
 		AccelKey = 0;
 		strName.Clear();
+		strDescription.Clear();
 		FilteredOut = false;
 		UserDataSize = 0;
 		UserData = nullptr;
@@ -178,6 +180,7 @@ struct MenuItemEx
 		if (this != &srcMenu) {
 			Flags = srcMenu.Flags;
 			strName = srcMenu.strName;
+			strDescription = srcMenu.strDescription;
 			AccelKey = srcMenu.AccelKey;
 			UserDataSize = 0;
 			UserData = nullptr;
@@ -243,6 +246,8 @@ class VMenu : public Modal
 private:
 	FARString strTitle;
 	FARString strBottomTitle;
+	int BottomTextLines;
+	int BottomTextLinesMin;
 
 	int SelectPos;
 	int TopPos;
@@ -286,6 +291,14 @@ private:
 	void ShowMenu(bool IsParent, bool ForceFrameRedraw);
 	void DrawEdges();
 	void DrawTitles();
+	void DrawBottomText();
+	int GetListBottom() const;
+	int GetListHeight() const;
+	int GetBottomAreaHeight() const;
+	int GetMaxListHeight() const;
+	int GetBottomTextWidth() const;
+	int GetRequiredBottomTextLines() const;
+	int GetMaxBottomTextLines() const;
 	int GetItemPosition(int Position);
 	static int _SetUserData(MenuItemEx *PItem, const void *Data, int Size);
 	static void *_GetUserData(MenuItemEx *PItem, void *Data, int Size);
@@ -326,6 +339,7 @@ public:
 
 	void SetBottomTitle(const wchar_t *BottomTitle);
 	FARString &GetBottomTitle(FARString &strDest);
+	void SetBottomTextLines(int Lines);
 	void SetDialogStyle(int Style)
 	{
 		ChangeFlags(VMENU_WARNDIALOG, Style);

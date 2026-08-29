@@ -46,12 +46,7 @@ public:
 
 class RefreshFrameManager
 {
-private:
-	int OScrX, OScrY;
-	long MsgWaitTime;
-	BOOL DontRedrawFrame;
-
 public:
-	RefreshFrameManager(int OScrX, int OScrY, int MsgWaitTime, BOOL DontRedrawFrame = FALSE);
+	RefreshFrameManager();
 	~RefreshFrameManager();
 };

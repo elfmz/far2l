@@ -50,7 +50,7 @@ struct DirInfoProgressTracker
 };
 
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
+		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize,
 		FileFilter *Filter, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
 
 int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,

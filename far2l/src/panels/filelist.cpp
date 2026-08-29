@@ -4215,9 +4215,8 @@ void FileList::CountDirSize(DWORD PluginFlags)
 								PhysicalSize))
 					|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
 							&& GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount,
-										FileSize, PhysicalSize, ClusterSize, 0, Filter,
-										GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF)
-									== 1)) {
+										FileSize, PhysicalSize, ClusterSize, Filter,
+										GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) {
 				SelFileSize-= Item->FileSize;
 				SelFileSize+= FileSize;
 				Item->FileSize = FileSize;
@@ -4238,12 +4237,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 							PhysicalSize))
 				|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
 						&& GetDirInfo(Msg::DirInfoViewTitle,
-									TestParentFolderName(ListData[CurFile]->strName)
-											? L"."
-											: ListData[CurFile]->strName,
-									DirCount, DirFileCount, FileSize, PhysicalSize, ClusterSize, 0, Filter,
-									GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF)
-								== 1)) {
+									TestParentFolderName(ListData[CurFile]->strName) ? L"." : ListData[CurFile]->strName,
+									DirCount, DirFileCount, FileSize, PhysicalSize, ClusterSize, Filter,
+									GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) {
 			ListData[CurFile]->FileSize = FileSize;
 			ListData[CurFile]->PhysicalSize = PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;

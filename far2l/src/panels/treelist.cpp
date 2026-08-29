@@ -496,7 +496,7 @@ int TreeList::ReadTree(int depth)
 	TreeCount = 1;
 	int FirstCall = TRUE, AscAbort = FALSE;
 	TreeStartTime = GetProcessUptimeMSec();
-	RefreshFrameManager frref(ScrX, ScrY, TreeStartTime, FALSE);	// DontRedrawFrame);
+	RefreshFrameManager frref;
 
 	if (depth < 0 && Opt.Tree.ScanDepthEnabled)
 		ScTree.SetMaxDepth(Opt.Tree.DefaultScanDepth);

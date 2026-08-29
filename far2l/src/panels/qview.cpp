@@ -373,8 +373,8 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 			Directory = -1;
 			PrintBox();
 			PrintFileDirInfo();
-			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
-					PhysicalSize, ClusterSize, 500, nullptr,
+			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName,
+					DirCount, FileCount, FileSize, PhysicalSize, ClusterSize, nullptr,
 					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME, this);
 			if (ExitCode == 1)
 				Directory = 1;

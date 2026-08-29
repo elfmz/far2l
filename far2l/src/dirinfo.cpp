@@ -54,33 +54,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "config.hpp"
 
-static void DrawGetDirInfoMsg(const wchar_t *Title, const wchar_t *Name, const UINT64 Size)
-{
-	if (Title == nullptr || Name == nullptr) {
-		return;
-	}
-
-	FARString strSize;
-	FileSizeToStr(strSize, Size, 8, COLUMN_FLOATSIZE | COLUMN_COMMAS);
-	RemoveLeadingSpaces(strSize);
-	Message(0, 0, Title, Msg::ScanningFolder, Name, strSize);
-	PreRedrawItem preRedrawItem = PreRedraw.Peek();
-	preRedrawItem.Param.Param1 = (void *)Title;
-	preRedrawItem.Param.Param2 = (void *)Name;
-	preRedrawItem.Param.Param3 = reinterpret_cast<LPCVOID>(Size);
-	PreRedraw.SetParam(preRedrawItem.Param);
-}
-
-static void PR_DrawGetDirInfoMsg()
-{
-	PreRedrawItem preRedrawItem = PreRedraw.Peek();
-	DrawGetDirInfoMsg((const wchar_t *)preRedrawItem.Param.Param1,
-			(const wchar_t *)preRedrawItem.Param.Param2,
-			reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3));
-}
-
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
+		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize,
 		FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
 {
 	FARString strFullDirName;
@@ -100,20 +75,14 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 
 	if (DirName[0] == L'.' && !DirName[1]) {
 		const wchar_t *p = LastSlash(strFullDirName);
-
 		if (p)
 			strShowDirName = p + 1;
 	}
 
-	std::optional<TPreRedrawFuncGuard> preRedrawFuncGuard;
-	std::optional<ConsoleTitle> OldTitle;
-	if (!tracker) {
-		preRedrawFuncGuard.emplace(PR_DrawGetDirInfoMsg);
-		OldTitle.emplace();
-		OldTitle->Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), strFullDirName.CPtr());	// покажем заголовок консоли
-		SetCursorType(FALSE, 0);
+	std::optional<RefreshFrameManager> frref;
+	if ( (Flags & GETDIRINFO_DONTREDRAWFRAME) == 0) {
+		frref.emplace();
 	}
-	RefreshFrameManager frref(ScrX, ScrY, MsgWaitTime, Flags & GETDIRINFO_DONTREDRAWFRAME);
 	// DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
 
 	// Временные хранилища имён каталогов
@@ -141,15 +110,12 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	clock_t LastUpdateTime = 0;
 	while (ScTree.GetNextName(&FindData, strFullName)) {
 		clock_t CurTime = GetProcessUptimeMSec();
-		if (can_break && CurTime - LastUpdateTime > 100) {
+		if ( (can_break || tracker) && CurTime - LastUpdateTime > 100) {
 			INPUT_RECORD rec{};
-			if (!tracker) {
-				SetCursorType(FALSE, 0);
-				DrawGetDirInfoMsg(Title, strShowDirName, FileSize);
-			} else {
+			if (tracker) {
 				tracker->OnDirInfoProgress(strShowDirName);
 			}
-			switch (PeekInputRecord(&rec)) {
+			if (can_break) switch (PeekInputRecord(&rec)) {
 				case 0:
 				case KEY_IDLE:
 					LastUpdateTime = CurTime;

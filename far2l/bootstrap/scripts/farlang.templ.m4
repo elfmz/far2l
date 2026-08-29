@@ -18687,16 +18687,16 @@ QuickViewFolder
 "Тека"
 "Каталог"
 
-QuickViewFolderEstimating
-"Подсчет папки"
-"Estimating folder"
-"(...) Adresář"
-"(...) Verzeichnis"
-"(...) Mappa"
-"(...) Folder"
-"(...) Directorio"
-"(...) Тека"
-"(...) Каталог"
+QuickViewFolderScan
+"Анализируем:"
+"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
+upd:"Scanning:"
 
 QuickViewJunction
 "Связь"

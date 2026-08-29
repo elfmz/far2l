@@ -96,13 +96,13 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		$ 20.03.2002 DJ
 		для . - покажем имя родительского каталога
 	*/
-	const wchar_t *ShowDirName = DirName;
+	FARString strShowDirName = DirName;
 
 	if (DirName[0] == L'.' && !DirName[1]) {
 		const wchar_t *p = LastSlash(strFullDirName);
 
 		if (p)
-			ShowDirName = p + 1;
+			strShowDirName = p + 1;
 	}
 
 	std::optional<TPreRedrawFuncGuard> preRedrawFuncGuard;
@@ -110,6 +110,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	if (!tracker) {
 		preRedrawFuncGuard.emplace(PR_DrawGetDirInfoMsg);
 		OldTitle.emplace();
+		OldTitle->Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), strFullDirName.CPtr());	// покажем заголовок консоли
 		SetCursorType(FALSE, 0);
 	}
 	RefreshFrameManager frref(ScrX, ScrY, MsgWaitTime, Flags & GETDIRINFO_DONTREDRAWFRAME);
@@ -137,15 +138,21 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 		ClusterSize = s.st_blksize;		// TODO: check if its best thing to be used here
 	}
 
-	clock_t LastMsgTime = 0, LastInputCheckTime = 0;
+	clock_t LastUpdateTime = 0;
 	while (ScTree.GetNextName(&FindData, strFullName)) {
 		clock_t CurTime = GetProcessUptimeMSec();
-		if (can_break && CurTime - LastInputCheckTime > 100) {
+		if (can_break && CurTime - LastUpdateTime > 100) {
 			INPUT_RECORD rec{};
+			if (!tracker) {
+				SetCursorType(FALSE, 0);
+				DrawGetDirInfoMsg(Title, strShowDirName, FileSize);
+			} else {
+				tracker->OnDirInfoProgress(strShowDirName);
+			}
 			switch (PeekInputRecord(&rec)) {
 				case 0:
 				case KEY_IDLE:
-					LastInputCheckTime = CurTime;
+					LastUpdateTime = CurTime;
 					break;
 				case KEY_NONE:
 					if ((Flags & GETDIRINFO_ENHBREAK) != 0 && rec.EventType == MOUSE_EVENT
@@ -176,20 +183,6 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			}
 		}
 
-		if (MsgWaitTime != -1) {
-			if (CurTime - LastMsgTime > MsgWaitTime) {
-				LastMsgTime = CurTime;
-				MsgWaitTime = 500;
-				if (!tracker) {
-					OldTitle->Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
-					SetCursorType(FALSE, 0);
-					DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
-				} else {
-					tracker->OnDirInfoProgress(ShowDirName, FileSize);
-				}
-			}
-		}
-
 		const DWORD file_attributes = FindData.dwFileAttributes;
 		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
@@ -211,6 +204,9 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			if (!use_filter) {
 				DirCount++;
 			}
+			if (tracker) {
+				strShowDirName = strFullName;
+			}
 		} else {
 			if (use_filter) {
 				/*
@@ -229,7 +225,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 				strCurDirName = strFullName;
 				CutToSlash(strCurDirName);	//???
 
-				if (StrCmp(strCurDirName, strLastDirName)) {
+				if (strCurDirName != strLastDirName) {
 					DirCount++;
 					strLastDirName = strCurDirName;
 				}

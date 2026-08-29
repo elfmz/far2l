@@ -46,7 +46,7 @@ enum GETDIRINFOFLAGS
 
 struct DirInfoProgressTracker
 {
-	virtual void OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size) = 0;
+	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir) = 0;
 };
 
 int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,

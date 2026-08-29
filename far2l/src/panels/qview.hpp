@@ -59,7 +59,7 @@ private:
 	int OldWrapType;
 
 	void PrintBox();
-	void PrintFileDirInfo();
+	void PrintFileDirInfo(const wchar_t *WalkedNowDir = nullptr);
 
 private:
 	virtual void DisplayObject();
@@ -68,7 +68,7 @@ private:
 	void SetMacroMode(int Restore = FALSE);
 
 	void DynamicUpdateKeyBar();
-	virtual void OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size);
+	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir);
 
 public:
 	QuickView();

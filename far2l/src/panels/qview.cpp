@@ -118,7 +118,7 @@ void QuickView::PrintBox()
 	DrawSeparator(Y2 - 2);
 }
 
-void QuickView::PrintFileDirInfo()
+void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 {
 	SetFarColor(COL_PANELTEXT);
 	GotoXY(X1 + 1, Y2 - 1);
@@ -135,15 +135,17 @@ void QuickView::PrintFileDirInfo()
 	}
 
 	if (Directory) {
-		FormatString FString;
+		FormatString FString; 
 		if (Directory == -1) {
-			FString << Msg::QuickViewFolderEstimating << L" \"" << strCurFileName << L"\" ...";
+			FString << Msg::QuickViewFolderScan << L' ' << (WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
 		} else {
 			FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
 		}
+
 		SetFarColor(COL_PANELTEXT);
 		GotoXY(X1 + 2, Y1 + 2);
-		PrintText(FString);
+		FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 2) << FString.strValue();
+
 
 		/*if ((apiGetFileAttributes(strCurFileName)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
 		{
@@ -178,6 +180,7 @@ void QuickView::PrintFileDirInfo()
 		}*/
 
 		if (Directory == 1 || Directory == 4 || Directory == -1) {
+			FormatString FString;
 			GotoXY(X1 + 2, Y1 + 4);
 			PrintText(Msg::QuickViewContains);
 			GotoXY(X1 + 2, Y1 + 6);
@@ -532,9 +535,9 @@ BOOL QuickView::UpdateKeyBar()
 	return TRUE;
 }
 
-void QuickView::OnDirInfoProgress(const wchar_t *CurPath, const UINT64 Size)
+void QuickView::OnDirInfoProgress(const wchar_t *WalkedNowDir)
 {
-	PrintFileDirInfo();
+	PrintFileDirInfo(WalkedNowDir);
 }
 
 void QuickView::DynamicUpdateKeyBar()

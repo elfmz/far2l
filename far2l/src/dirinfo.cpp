@@ -196,8 +196,11 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 
 		if (is_reparse_point) {
 			// include symlink's own size to total size
-			if (count_dir_size && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
-				FileSize+= s.st_size;
+			if ((!is_directory || count_dir_size) && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
+				if (scanned_inodes.Put(s.st_dev, s.st_ino)) {
+					FileSize+= s.st_size;
+					PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
+				}
 			}
 
 			FileCount++;
@@ -209,7 +212,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			continue;
 		}
 
-		if (!is_directory || count_dir_size) {
+		if (!is_reparse_point && (!is_directory || count_dir_size)) {
 			PhysicalSize+= FindData.nPhysicalSize;
 		}
 

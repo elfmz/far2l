@@ -8,6 +8,8 @@
 #include "FarEditor.h"
 #include "pcolorer.h"
 
+class FarViewer;
+
 // registry keys
 extern const char cRegEnabled[];
 extern const char cRegHrdName[];
@@ -16,6 +18,7 @@ extern const char cRegCatalog[];
 extern const char cRegCrossDraw[];
 extern const char cRegPairsDraw[];
 extern const char cRegSyntaxDraw[];
+extern const char cRegViewerColoring[];
 extern const char cRegOldOutLine[];
 extern const char cRegTrueMod[];
 extern const char cRegChangeBgEditor[];
@@ -30,6 +33,7 @@ extern const wchar_t cCatalogDefault[];
 extern const int cCrossDrawDefault;
 extern const bool cPairsDrawDefault;
 extern const bool cSyntaxDrawDefault;
+extern const int cViewerColoringDefault;
 extern const bool cOldOutLineDefault;
 extern const bool cTrueMod;
 extern const bool cChangeBgEditor;
@@ -40,6 +44,12 @@ extern const UnicodeString DConsole;
 extern const UnicodeString DRgb;
 extern const UnicodeString Ddefault;
 extern const UnicodeString DAutodetect;
+
+enum ViewerColoringMode {
+  VIEWER_COLORING_DISABLED,
+  VIEWER_COLORING_QUICK_VIEW,
+  VIEWER_COLORING_ALL
+};
 
 enum {
   IDX_BOX,
@@ -59,6 +69,8 @@ enum {
   IDX_USERHRD_EDIT,
   IDX_USER_HRC_SETTINGS,
   IDX_USER_HRC_SETTINGS_EDIT,
+  IDX_VIEWER_COLORING_LABEL,
+  IDX_VIEWER_COLORING,
   IDX_TM_BOX,
   IDX_TRUEMOD,
   IDX_TMMESSAGE,
@@ -91,6 +103,7 @@ struct Options
   bool rEnabled;
   bool drawPairs;
   bool drawSyntax;
+  int viewerColoring;
   bool oldOutline;
   bool TrueModOn;
   bool ChangeBgEditor;
@@ -123,6 +136,7 @@ class FarEditorSet
 
   /** Dispatch editor event in the opened editor */
   int editorEvent(int Event, void* Param);
+  int viewerEvent(int Event, void* Param);
   /** Dispatch editor input event in the opened editor */
   int editorInput(const INPUT_RECORD* ir);
   /** Continues background parsing of the current editor on a synchro event. */
@@ -224,6 +238,7 @@ class FarEditorSet
   void SaveChangedValueParam(HANDLE hDlg);
 
   std::unordered_map<intptr_t, std::unique_ptr<FarEditor>> farEditorInstances;
+  std::unordered_map<intptr_t, std::unique_ptr<FarViewer>> farViewerInstances;
   std::unique_ptr<ParserFactory> parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;
 

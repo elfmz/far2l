@@ -136,6 +136,21 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
   return result;
 }
 
+SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event, void* Param)
+{
+  if (inEventProcess) {
+    return 0;
+  }
+
+  inEventProcess = true;
+  if (!editorSet) {
+    editorSet = new FarEditorSet();
+  }
+  int result = editorSet->viewerEvent(Event, Param);
+  inEventProcess = false;
+  return result;
+}
+
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
 {
   if (inEventProcess || inInputProcess) {

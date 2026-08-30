@@ -5,7 +5,7 @@ Both helpers in this directory are **byte-for-byte copies** from f4:
 | File | Upstream | Path | Commit | License |
 |---|---|---|---|---|
 | `helper.sh`  | https://github.com/unxed/f4 | `plugins/netfox/fishplus/helper.sh`  | `9a03d417` (portable `chown` invocation) | BSD-3-Clause (see the f4 repository) |
-| `helper.ps1` | https://github.com/unxed/f4 | `plugins/netfox/fishplus/helper.ps1` | `dcf89fe` (ffind as job)                | BSD-3-Clause (see the f4 repository) |
+| `helper.ps1` | https://github.com/unxed/f4 | `plugins/netfox/fishplus/helper.ps1` | `a2b69c8d` (fix POSIX paths in pwsh background job runspaces on Unix) | BSD-3-Clause (see the f4 repository) |
 
 They are deliberately **not** edited here, not even to remove the parts NetRocks
 does not call yet. f4 is where the protocol is developed, and every local edit

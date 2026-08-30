@@ -1432,7 +1432,10 @@ function Cmd-JStart {
         $body = {
             param($kind, $paths, $jd, $outP, $errP, $rcP, $xa1 = '', $xa2 = '', $xa3 = '')
             $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            $onWindows = ($env:OS -eq 'Windows_NT')
             function Convert-PosixToWin([string]$p) {
+                if ($null -eq $p) { return $null }
+                if (-not $onWindows) { return $p }
                 if ($p -eq '' -or $p -eq '/') { return '' }
                 if ($p.StartsWith('//')) { return '\\' + $p.Substring(2).Replace('/', '\') }
                 if (-not $p.StartsWith('/')) { return $p.Replace('/', '\') }
@@ -1444,6 +1447,7 @@ function Cmd-JStart {
             }
             function Convert-WinToPosix([string]$w) {
                 if ([string]::IsNullOrEmpty($w)) { return '/' }
+                if (-not $onWindows) { return $w }
                 if ($w.StartsWith('\\')) { return '//' + $w.Substring(2).Replace('\', '/').TrimEnd('/') }
                 if ($w.Length -ge 2 -and $w[1] -eq ':') {
                     $dr = [char]::ToLower($w[0])
@@ -1743,6 +1747,7 @@ function Cmd-JStart {
                         KillPath = $killPath
                         EmitMs   = 300
                         ChunkSize = 1MB
+                        OnWindows = $onWindows
                     }
 
                     # Self-contained worker body: runs inside its own
@@ -1755,14 +1760,15 @@ function Cmd-JStart {
                         $latin1 = [System.Text.Encoding]::GetEncoding(28591)
                         $strCmp = if ($cfg.Ci) { [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
                         $chunkSize = $cfg.ChunkSize
-                        $overlap = if ($cfg.Fixed) { [Math]::Max(0, $cfg.BytePat.Length - 1) } else { 8192 }
-                        $emitInterval = [TimeSpan]::FromMilliseconds($cfg.EmitMs)
+                        $overlap = if ($cfg.Fixed) { [System.Math]::Max(0, $cfg.BytePat.Length - 1) } else { 8192 }
+                        $emitInterval = [System.TimeSpan]::FromMilliseconds($cfg.EmitMs)
                         # ISO-8859-1 keeps the WinToPosix conversion
                         # inline: same rule as helper.ps1's top-level
                         # Convert-WinToPosix, minus a bit of the
                         # end-trimming that does not matter for a
                         # full-path emit.
                         function Wp2Wire([string]$w) {
+                            if (-not $cfg.OnWindows) { return $w }
                             if ($w.StartsWith('\\')) { return '//' + $w.Substring(2).Replace('\', '/') }
                             if ($w.Length -ge 2 -and $w[1] -eq ':') {
                                 $dr = [char]::ToLower($w[0])
@@ -1801,7 +1807,7 @@ function Cmd-JStart {
                                         try {
                                             $state.Scanned += $localScanned
                                             $state.LastPath = $fi.FullName.Replace('\', '/')
-                                            $tnow = [DateTime]::UtcNow
+                                            $tnow = [System.DateTime]::UtcNow
                                             if (($tnow - $state.LastEmit) -ge $emitInterval) {
                                                 $state.LastEmit = $tnow
                                                 $writer.WriteLine("P $($state.Scanned) $($state.Count) $($state.LastPath)")
@@ -1918,12 +1924,12 @@ function Cmd-JStart {
                         # Pool cap: min(top-level count, CPU count) so a
                         # wide root uses every core but a narrow one
                         # does not spin up 32 idle runspaces.
-                        $workerCap = [Math]::Max(1, [Environment]::ProcessorCount)
-                        $workerCount = [Math]::Min($topSubs.Count, $workerCap)
+                        $workerCap = [System.Math]::Max(1, [System.Environment]::ProcessorCount)
+                        $workerCount = [System.Math]::Min($topSubs.Count, $workerCap)
                         $pool = $null
                         $workers = New-Object System.Collections.Generic.List[object]
                         if ($workerCount -gt 0) {
-                            $pool = [runspacefactory]::CreateRunspacePool(1, $workerCount)
+                            $pool = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspacePool(1, $workerCount)
                             $pool.Open()
                             foreach ($sd in $topSubs) {
                                 $wps = [System.Management.Automation.PowerShell]::Create()

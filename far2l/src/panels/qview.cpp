@@ -208,7 +208,7 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 				++y;
 				int SizeLen = StrLength(Msg::QuickViewPhysical) + 2;
 				for (const auto &ts : di.ExtraSummary->type_stats) {
-					SizeLen = std::max(SizeLen, int(log10(ts.second.Size)) + 2);
+					SizeLen = std::max(SizeLen, int(FileSizeString(ts.second.Size).size()) + 2);
 				}
 				if (SizeLen > ObjWidth() - FirstColumnLen) {
 					SizeLen = std::max(ObjWidth() - FirstColumnLen, 4);
@@ -232,7 +232,7 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 					if ( y + 3 < Y2) {
 						GotoXY(X1 + 2, y++);
 						Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(FirstColumnLen) << ts.first.c_str();
-						Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeLen) << ts.second.Size;
+						Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeLen) << FileSizeString(ts.second.Size).c_str();
 						Fmt << fmt::LeftAlign() << ts.second.Count;
 					} else {
 						other.Size+= ts.second.Size;
@@ -242,7 +242,7 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 				if (other.Size || other.Count) {
 					GotoXY(X1 + 2, y++);
 					Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(FirstColumnLen) << L"<...>";
-					Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeLen) << other.Size;
+					Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeLen) << FileSizeString(other.Size).c_str();
 					Fmt << fmt::LeftAlign() << other.Count;
 				}
 				SetFarColor(COL_PANELTEXT);

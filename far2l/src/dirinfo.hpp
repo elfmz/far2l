@@ -52,22 +52,23 @@ struct DirInfoProgressTracker
 
 struct DirInfoTypeStats
 {
-	uint32_t Count{};
+	uint64_t Count{};
 	uint64_t Size{};
 };
 
 struct DirInfoExtraSummary
 {
 	std::vector<std::pair<std::wstring, DirInfoTypeStats>> type_stats;
+	size_t filesystems{0};
+	size_t outer_symlinks{0};
 };
 
 struct DirInfo
 {
 	uint64_t FileSize{};
 	uint64_t PhysicalSize{};
-	uint32_t DirCount{};
-	uint32_t FileCount{};
-	uint32_t ClusterSize{};
+	uint64_t DirCount{};
+	uint64_t FileCount{};
 
 	std::unique_ptr<DirInfoExtraSummary> ExtraSummary;
 

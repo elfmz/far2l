@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "dirinfo.hpp"
 #include "plugapi.hpp"
@@ -55,6 +56,52 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "config.hpp"
 
+class ScannedINodes
+{
+	struct Hash
+	{
+		size_t operator()(const std::pair<uint64_t, uint64_t> &inode) const
+		{
+			size_t out = static_cast<size_t>(inode.first);
+			out^= static_cast<size_t>(inode.second + 0x9e3779b97f4a7c15ULL + (inode.first << 6)
+					+ (inode.first >> 2));
+			return out;
+		}
+	};
+
+	std::unordered_map<std::pair<uint64_t, uint64_t>, bool, Hash> _s;
+
+public:
+	ScannedINodes()
+	{
+		_s.reserve(1024);
+	}
+
+	inline bool Visit(uint64_t d, uint64_t ino, bool due_symlink = false)
+	{
+		const auto &ir = _s.emplace(std::make_pair(d, ino), !due_symlink);
+		if (ir.second) {
+			return true;
+		}
+		if (!due_symlink) {
+			ir.first->second = true;
+		}
+		return false;
+	}
+
+	std::pair<size_t, size_t> ExtraStats() const
+	{
+		std::unordered_set<uint64_t> devs;
+		size_t outer_symlinks = 0;
+		for (const auto &it : _s) {
+			devs.emplace(it.first.first);
+			if (!it.second) {
+				outer_symlinks++;
+			}
+		}
+		return std::make_pair(devs.size(), outer_symlinks);
+	}
+};
 
 struct ExtraSummaryCollector
 {
@@ -176,13 +223,12 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 	const bool scan_symlinks = ScTree.IsSymlinksScanEnabled();
 	const bool can_break = !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
 
-	struct stat s = {0};
-	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
-		if (count_dir_size) {	// include size of root dir's node
+	if (count_dir_size) {	// include size of root dir's node
+		struct stat s{};
+		if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
 			FileSize = s.st_size;
 			PhysicalSize = ((DWORD64)s.st_blocks) * 512;
 		}
-		ClusterSize = s.st_blksize;		// TODO: check if its best thing to be used here
 	}
 
 	clock_t LastUpdateTime = 0;
@@ -279,16 +325,19 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 		}
 
 		if (!is_directory || count_dir_size) {
-			if (is_reparse_point && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
-				if (scanned_inodes.Put(s.st_dev, s.st_ino)) {
-					FileSize+= s.st_size;
-					PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
-					if (xsc) {
-						xsc->Add(FindData.strFileName, FindData.dwFileAttributes, ((DWORD64)s.st_blocks) * 512);
+			if (is_reparse_point) {
+				struct stat s{};
+				if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
+					if (scanned_inodes.Visit(s.st_dev, s.st_ino, false)) {
+						FileSize+= s.st_size;
+						PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
+						if (xsc) {
+							xsc->Add(FindData.strFileName, FindData.dwFileAttributes, ((DWORD64)s.st_blocks) * 512);
+						}
 					}
 				}
 			}
-			if (scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
+			if (scanned_inodes.Visit(FindData.UnixDevice, FindData.UnixNode, is_reparse_point)) {
 				FileSize+= FindData.nFileSize;
 				PhysicalSize+= FindData.nPhysicalSize;
 				if (xsc) {
@@ -302,6 +351,9 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 
 	if (xsc) {
 		ExtraSummary = xsc->Summarize();
+		const auto &xs = scanned_inodes.ExtraStats();
+		ExtraSummary->filesystems = xs.first;
+		ExtraSummary->outer_symlinks = xs.second;
 	}
 
 	return 1;

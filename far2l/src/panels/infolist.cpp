@@ -223,8 +223,9 @@ void InfoList::DisplayObject()
 		ConvertNameToReal(strCurDir, strRealDir);
 
 		fprintf(stderr, "apiGetVolumeInformation: %ls\n", strRealDir.CPtr());
+		DWORD ClusterSize = 0;
 		bool b_info = apiGetVolumeInformation(strRealDir, &strVolumeName, &VolumeNumber, &MaxNameLength, &FileSystemFlags,
-					&strFileSystemName, &strFileSystemMountPoint);
+					&ClusterSize, &strFileSystemName, &strFileSystemMountPoint);
 		if (b_info) {
 			//		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 			strTitle = L"(" + strFileSystemName + L")";
@@ -248,6 +249,13 @@ void InfoList::DisplayObject()
 				GotoXY(X1 + 2, CurY++);
 				PrintText(Msg::InfoDiskFree);
 				InsertCommas(UserFree, strOutStr);
+				PrintInfo(strOutStr);
+			}
+
+			if (ClusterSize) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoClusterSize);
+				InsertCommas(ClusterSize, strOutStr);
 				PrintInfo(strOutStr);
 			}
 

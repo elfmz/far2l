@@ -148,18 +148,12 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 		Fmt << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 2) << FString.strValue();
 		auto y = Y1 + 4;
 
-		auto FirstColumnLen = 2 + std::max(StrLength(Msg::QuickViewCluster),
-			1 + MaxStrLength(Msg::QuickViewFolders, Msg::QuickViewFiles, Msg::QuickViewBytes, Msg::QuickViewPhysical, Msg::QuickViewRatio));
-
-		if (di.ClusterSize) {
-			GotoXY(X1 + 2, y++);
-			SetFarColor(COL_PANELTEXT);
-			Fmt << fmt::LeftAlign() << fmt::Size(FirstColumnLen) << Msg::QuickViewCluster;
-			SetFarColor(COL_PANELINFOTEXT);
-			Fmt << fmt::LeftAlign() << InsertCommas(di.ClusterSize);
-		}
-
 		if (Directory == 1 || Directory == 4 || Directory == -1) {
+			auto FirstColumnLen = 2 + std::max(StrLength(Msg::QuickViewContains),
+				1 + MaxStrLength(Msg::QuickViewFolders, Msg::QuickViewFiles,
+						Msg::QuickViewBytes, Msg::QuickViewPhysical, Msg::QuickViewRatio,
+						Msg::QuickViewFilesystems, Msg::QuickViewOuterSymlinks));
+
 			GotoXY(X1 + 2, y++);
 			SetFarColor(COL_PANELTEXT);
 			Fmt << fmt::LeftAlign() << fmt::Size(FirstColumnLen) << Msg::QuickViewContains;
@@ -194,6 +188,22 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 			Fmt << fmt::LeftAlign() << ToPercent64(di.PhysicalSize, di.FileSize) << L"%";
 			SetFarColor(COL_PANELTEXT);
 	
+			if (Directory != -1 && di.ExtraSummary && di.ExtraSummary->filesystems > 1) {
+				GotoXY(X1 + 3, y++);
+				Fmt << fmt::LeftAlign() << fmt::Size(FirstColumnLen - 1) << Msg::QuickViewFilesystems;
+				SetFarColor(COL_PANELINFOTEXT);
+				Fmt << fmt::LeftAlign() << di.ExtraSummary->filesystems;
+				SetFarColor(COL_PANELTEXT);
+			}
+
+			if (Directory != -1 && di.ExtraSummary && di.ExtraSummary->outer_symlinks > 0) {
+				GotoXY(X1 + 3, y++);
+				Fmt << fmt::LeftAlign() << fmt::Size(FirstColumnLen - 1) << Msg::QuickViewOuterSymlinks;
+				SetFarColor(COL_PANELINFOTEXT);
+				Fmt << fmt::LeftAlign() << di.ExtraSummary->outer_symlinks;
+				SetFarColor(COL_PANELTEXT);
+			}
+
 			if (Directory != -1 && di.ExtraSummary && y + 2 < Y2 && ObjWidth() > 16) {
 				++y;
 				int SizeLen = StrLength(Msg::QuickViewPhysical) + 2;

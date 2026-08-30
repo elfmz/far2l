@@ -15335,6 +15335,17 @@ InfoDiskFree
 "Вільних байтів"
 "Вольных байтаў"
 
+InfoClusterSize
+"Размер кластера"
+"Cluster size"
+"Velikost clusteru"
+"Clustergröße"
+"Klaszterméret"
+"Rozmiar klastra"
+"Tamaño cluster"
+"Розмір кластера"
+"Памер кластара"
+
 InfoDiskLabel
 "Метка тома"
 "Volume label"
@@ -18808,16 +18819,27 @@ QuickViewRatio
 "Ступінь стиснення"
 "Ступень сціску"
 
-QuickViewCluster
-"Размер кластера"
-"Cluster size"
-"Velikost clusteru"
-"Clustergröße"
-"Klaszterméret"
-"Rozmiar klastra"
-"Tamaño cluster"
-"Розмір кластера"
-"Памер кластара"
+QuickViewFilesystems
+"Файловых систем"
+"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+upd:"Filesystems"
+
+QuickViewOuterSymlinks
+"Внеших ссылок"
+"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
+upd:"Outer symlinks"
 
 SetAttrTitle
 l:

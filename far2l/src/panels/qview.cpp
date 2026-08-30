@@ -176,7 +176,7 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 						Msg::QuickViewFilesystems, Msg::QuickViewOuterSymlinks));
 
 			if (++y > 0)
-				PrintNamedValue(X1 + 2, y, FirstColumnLen, Msg::QuickViewFolders, nullptr);
+				PrintNamedValue(X1 + 2, y, FirstColumnLen, Msg::QuickViewContains, nullptr);
 			if (++y > 0)
 				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewFolders, InsertCommas(di.DirCount, strTmp));
 			if (++y > 0)
@@ -274,16 +274,18 @@ int QuickView::ProcessKey(FarKey Key)
 		return TRUE;
 	}
 
-	if (Directory && (Key == KEY_HOME || Key == KEY_END || Key == KEY_DOWN || Key == KEY_UP || Key == KEY_PGDN || Key == KEY_PGUP)) {
+	if (Directory && (Key == KEY_HOME || Key == KEY_END
+			|| Key == KEY_DOWN || Key == KEY_UP || Key == KEY_PGDN || Key == KEY_PGUP
+			|| Key == KEY_MSWHEEL_UP || Key == KEY_MSWHEEL_DOWN)) {
 		switch (Key) {
-			case KEY_END: ScrollOffset = 0x4000000; break;
-			case KEY_HOME: ScrollOffset = 0; break;
-			case KEY_DOWN: ScrollOffset++; break;
-			case KEY_UP: ScrollOffset--; break;
-			case KEY_PGDN: ScrollOffset+= std::max(1, Y2 - Y1 - 4); break;
+			case KEY_UP: case KEY_MSWHEEL_UP: ScrollOffset--; break;
+			case KEY_DOWN: case KEY_MSWHEEL_DOWN: ScrollOffset++; break;
 			case KEY_PGUP: ScrollOffset-= std::max(1, Y2 - Y1 - 4); break;
+			case KEY_PGDN: ScrollOffset+= std::max(1, Y2 - Y1 - 4); break;
+			case KEY_HOME: ScrollOffset = 0; break;
+			case KEY_END: ScrollOffset = 0x4000000; break;
 		}
-		if (ScrollOffset <0) {
+		if (ScrollOffset < 0) {
 			ScrollOffset = 0;
 		}
 		auto ScrollOffsetSaved = ScrollOffset;

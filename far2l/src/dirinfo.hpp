@@ -59,8 +59,8 @@ struct DirInfoTypeStats
 struct DirInfoExtraSummary
 {
 	std::vector<std::pair<std::wstring, DirInfoTypeStats>> type_stats;
-	size_t filesystems{0};
-	size_t outer_symlinks{0};
+	uint64_t filesystems{0};
+	uint64_t outer_symlinks{0};
 };
 
 struct DirInfo

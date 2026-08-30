@@ -128,7 +128,7 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 	if (!strCurFileType.IsEmpty()) {
 		FARString strTypeText = L" ";
 		strTypeText+= strCurFileType;
-		strTypeText+= L" ";
+		strTypeText+= L' ';
 		TruncStr(strTypeText, X2 - X1 - 1);
 		SetFarColor(COL_PANELSELECTEDINFO);
 		GotoXY(X1 + (X2 - X1 + 1 - (int)strTypeText.GetLength()) / 2, Y2 - 2);
@@ -136,19 +136,17 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 	}
 
 	if (Directory) {
-		FormatString FString; 
-		if (Directory == -1) {
-			FString << Msg::QuickViewFolderScan << L' ' << (WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
-		} else {
-			FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
-		}
-
 		SetFarColor(COL_PANELTEXT);
 		GotoXY(X1 + 2, Y1 + 2);
-		Fmt << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 2) << FString.strValue();
-		auto y = Y1 + 4;
+		if (Directory == -1 && X2 > X1) {
+			Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1);
+			Fmt << FARString(Msg::QuickViewFolderScan).Append(L' ').Append(WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
+		} else {
+			Fmt << fmt::LeftAlign() << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
+		}
 
 		if (Directory == 1 || Directory == 4 || Directory == -1) {
+			auto y = Y1 + 4;
 			auto FirstColumnLen = 2 + std::max(StrLength(Msg::QuickViewContains),
 				1 + MaxStrLength(Msg::QuickViewFolders, Msg::QuickViewFiles,
 						Msg::QuickViewBytes, Msg::QuickViewPhysical, Msg::QuickViewRatio,

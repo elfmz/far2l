@@ -165,7 +165,6 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 
 	if (Directory) {
 		auto y = int(Y1) - ScrollOffset;
-		fprintf(stderr, "y=%d\n", y);
 		QuickViewFormat Fmt(this);
 		SetFarColor(COL_PANELTEXT);
 		if (Directory == 1 || Directory == 4 || Directory == -1) {
@@ -223,22 +222,26 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 
 				SetFarColor(COL_PANELINFOTEXT);
 				DirInfoTypeStats other;
+				long long other_cnt = 0;
+				FARString str_other_cnt;
 				for (const auto &ts : di.ExtraSummary->type_stats) {
 					if (y + 4 < Y2 && ++y > 0) {
 						if (other.Size || other.Count) {
-							PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, L"<...>", other);
+							PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, str_other_cnt.Format(L"< %lld >", other_cnt), other);
 							other = {};
+							other_cnt = 0;
 							++y;
 						}
 						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, ts.first.c_str(), ts.second);
 					} else {
 						other.Size+= ts.second.Size;
 						other.Count+= ts.second.Count;
+						++other_cnt;
 					}
 				}
 				if (other.Size || other.Count) {
 					if (++y > 0) {
-						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, L"<...>", other);
+						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, str_other_cnt.Format(L"< %lld >", other_cnt), other);
 					}
 				}
 				SetFarColor(COL_PANELTEXT);

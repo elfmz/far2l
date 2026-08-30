@@ -473,20 +473,21 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 
 BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolumeName,
 		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
-		FARString *pFileSystemName, FARString *pFileSystemMountPoint)
+		LPDWORD pClusterSize, FARString *pFileSystemName, FARString *pFileSystemMountPoint)
 {
 	struct statvfs svfs {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
 	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
 		return FALSE;
 	}
-
 	if (lpMaximumComponentLength)
 		*lpMaximumComponentLength = svfs.f_namemax;
 	if (lpVolumeSerialNumber)
 		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
 	if (lpFileSystemFlags)
 		*lpFileSystemFlags = (DWORD)svfs.f_flag;
+	if (pClusterSize)
+		*pClusterSize = svfs.f_bsize;
 
 	if (pVolumeName) {
 		pVolumeName->Clear();

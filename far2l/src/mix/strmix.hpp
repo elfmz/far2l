@@ -99,6 +99,7 @@ bool CheckFileSizeStringFormat(const wchar_t *FileSizeStr);
 uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr);
 FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits = 0);
 FARString &InsertCommas(uint64_t li, FARString &strDest);
+FARString InsertCommas(uint64_t li);
 
 inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) noexcept
 {
@@ -146,3 +147,14 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();
 
+
+inline int MaxStrLength(const wchar_t *str)
+{
+	return StrLength(str);
+}
+
+template <class... OtherT>
+	int MaxStrLength(const wchar_t *str, OtherT... other)
+{
+	return std::max(MaxStrLength(str), MaxStrLength(other...));
+}

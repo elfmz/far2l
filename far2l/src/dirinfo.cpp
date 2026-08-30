@@ -123,6 +123,7 @@ struct ExtraSummaryCollector
 			// foobar.so -> ".so"
 			// foobar.tar.gz -> ".tar.gz"
 			// foobar.so.1.2 -> ".so"
+			// foobar.xxx.yyy -> ".yyy"
 			// foobar.xxx. -> ".xxx"
 			// foobar -> "NOEXT"
 			// foobar. -> "NOEXT"
@@ -146,6 +147,21 @@ struct ExtraSummaryCollector
 			if (dot && dot + 1 < end) {
 				if (dot != name && dot[-1] != '/') {
 					_type.assign(dot, end);
+					while (_type.size() > 1) {
+						auto p =_type.find('.', 1);
+						if (p == std::wstring::npos || p + 1 == _type.size()) {
+							break;
+						}
+						if (p == 4 && wcsncasecmp(_type.c_str(), L".tar", 4) == 0) {
+							break;
+						}
+						_type.erase(0, p);
+					}
+					for (auto &c : _type) {
+						if (c >= L'A' && c <= L'Z') {
+							c+= L'a' - L'A';
+						}
+					}
 				} else {
 					_type = L"DOTFILE";
 				}

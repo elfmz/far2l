@@ -53,9 +53,11 @@ private:
 	FARString strCurFileName;
 	FARString strCurFileType;
 	FARString strTempName;
+	FARString strTmp;
 
 	CriticalSection CS;
 
+	int ScrollOffset{0};
 	int Directory;
 	int PrevMacroMode;
 	DirInfo di;
@@ -63,7 +65,7 @@ private:
 	int OldWrapType;
 
 	void PrintBox();
-	void PrintFileDirInfo(const wchar_t *WalkedNowDir = nullptr);
+	void PrintContent(const wchar_t *WalkedNowDir = nullptr);
 
 private:
 	virtual void DisplayObject();
@@ -73,6 +75,9 @@ private:
 
 	void DynamicUpdateKeyBar();
 	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir);
+
+	void PrintNamedValue(int x, int y, int NameWidth, const wchar_t *Name, const wchar_t *Value);
+	void PrintTypeStat(int x, int y, int NameWidth, int SizeWidth, const wchar_t *Name, const DirInfoTypeStats &ts);
 
 public:
 	QuickView();

@@ -90,8 +90,7 @@ void QuickView::DisplayObject()
 		if (QView)
 			QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
 
-		PrintBox();
-		PrintContent();
+		PrintBoxAndContent();
 
 		if (QView)
 			QView->Show();
@@ -289,11 +288,9 @@ int QuickView::ProcessKey(FarKey Key)
 			ScrollOffset = 0;
 		}
 		auto ScrollOffsetSaved = ScrollOffset;
-		PrintBox();
-		PrintContent();
+		PrintBoxAndContent();
 		if (ScrollOffsetSaved != ScrollOffset) {
-			PrintBox();
-			PrintContent();
+			PrintBoxAndContent();
 		}
 		return TRUE;
 	}
@@ -376,8 +373,6 @@ void QuickView::Update(int Mode)
 
 void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin)
 {
-	ScrollOffset = 0;
-
 	DWORD FileAttr = 0;
 	CloseFile();
 	QView = nullptr;
@@ -401,6 +396,11 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 
 	bool SameFile = !StrCmp(strCurFileName, FileName);
 	strCurFileName = FileName;
+
+	if (!SameFile) {
+		ScrollOffset = 0;
+	}
+
 	//	size_t pos;
 
 	if (hDirPlugin || (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY))) {

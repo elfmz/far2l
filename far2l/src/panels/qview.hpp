@@ -67,6 +67,12 @@ private:
 	void PrintBox();
 	void PrintContent(const wchar_t *WalkedNowDir = nullptr);
 
+	void PrintBoxAndContent()
+	{
+		PrintBox();
+		PrintContent();
+	}
+
 private:
 	virtual void DisplayObject();
 	void PrintText(const wchar_t *Str);

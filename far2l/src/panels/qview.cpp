@@ -187,43 +187,43 @@ void QuickView::PrintFileDirInfo(const wchar_t *WalkedNowDir)
 			PrintText(Msg::QuickViewFolders);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << DirCount;
+			FString << di.DirCount;
 			PrintText(FString);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 7);
 			PrintText(Msg::QuickViewFiles);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << FileCount;
+			FString << di.FileCount;
 			PrintText(FString);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 8);
 			PrintText(Msg::QuickViewBytes);
 			SetFarColor(COL_PANELINFOTEXT);
 			FARString strSize;
-			InsertCommas(FileSize, strSize);
+			InsertCommas(di.FileSize, strSize);
 			PrintText(strSize);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 9);
 			PrintText(Msg::QuickViewPhysical);
 			SetFarColor(COL_PANELINFOTEXT);
-			InsertCommas(PhysicalSize, strSize);
+			InsertCommas(di.PhysicalSize, strSize);
 			PrintText(strSize);
 			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 10);
 			PrintText(Msg::QuickViewRatio);
 			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString << ToPercent64(PhysicalSize, FileSize) << L"%";
+			FString << ToPercent64(di.PhysicalSize, di.FileSize) << L"%";
 			PrintText(FString);
 
-			if (Directory == 1 && ClusterSize) {
+			if (Directory == 1 && di.ClusterSize) {
 				SetFarColor(COL_PANELTEXT);
 				GotoXY(X1 + 2, Y1 + 12);
 				PrintText(Msg::QuickViewCluster);
 				SetFarColor(COL_PANELINFOTEXT);
 				FARString strSize;
-				InsertCommas(ClusterSize, strSize);
+				InsertCommas(di.ClusterSize, strSize);
 				PrintText(strSize);
 			}
 		}
@@ -359,23 +359,21 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 	if (hDirPlugin || (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY))) {
 		//
 		strCurFileType.Clear();
+		Directory = -1;
 
 		if (SameFile && !hDirPlugin) {
 			Directory = 1;
 		} else if (hDirPlugin) {
-			int ExitCode =
-					GetPluginDirInfo(hDirPlugin, strCurFileName, DirCount, FileCount, FileSize, PhysicalSize);
+			int ExitCode = di.FromPlugin(hDirPlugin, strCurFileName);
 			if (ExitCode)
 				Directory = 4;
 			else
 				Directory = 3;
 		} else {
-			Directory = -1;
 			PrintBox();
 			PrintFileDirInfo();
-			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName,
-					DirCount, FileCount, FileSize, PhysicalSize, ClusterSize, nullptr,
-					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME, this);
+			int ExitCode = di.FromFS(strCurFileName, nullptr,
+				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME, this);
 			if (ExitCode == 1)
 				Directory = 1;
 			else if (ExitCode == -1)

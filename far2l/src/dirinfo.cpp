@@ -54,10 +54,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "config.hpp"
 
-int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize,
-		FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
+
+int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
 {
+	operator =(DirInfo{});
+
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
@@ -88,9 +89,6 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	// Временные хранилища имён каталогов
 	strLastDirName.Clear();
 	strCurDirName.Clear();
-	DirCount = FileCount = 0;
-	FileSize = PhysicalSize = 0;
-	ClusterSize = 0;
 	ScTree.SetFindPath(DirName, L"*", 0);
 	ScannedINodes scanned_inodes;
 	const bool count_dir_size = !Opt.OnlyFilesSize;
@@ -217,13 +215,12 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	return 1;
 }
 
-int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize)
+int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter, DWORD Flags)
 {
+	operator = ({});
+
 	PluginPanelItem *PanelItem = nullptr;
 	int ItemsNumber, ExitCode;
-	DirCount = FileCount = 0;
-	FileSize = PhysicalSize = 0;
 	PluginHandle *ph = (PluginHandle *)hPlugin;
 
 	if ((ExitCode = FarGetPluginDirList((INT_PTR)ph->pPlugin, ph->hPlugin, DirName, &PanelItem, &ItemsNumber))

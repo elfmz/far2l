@@ -53,8 +53,7 @@ private:
 
 	int Directory;
 	int PrevMacroMode;
-	uint32_t DirCount, FileCount, ClusterSize;
-	uint64_t FileSize, PhysicalSize;
+	DirInfo di;
 	int OldWrapMode;
 	int OldWrapType;
 

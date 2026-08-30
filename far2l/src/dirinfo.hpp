@@ -49,9 +49,15 @@ struct DirInfoProgressTracker
 	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir) = 0;
 };
 
-int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize,
-		FileFilter *Filter, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
+struct DirInfo
+{
+	uint64_t FileSize{};
+	uint64_t PhysicalSize{};
+	uint32_t DirCount{};
+	uint32_t FileCount{};
+	uint32_t ClusterSize{};
 
-int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
-		uint64_t &FileSize, uint64_t &PhysicalSize);
+	int FromFS(const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
+	int FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);
+};
+

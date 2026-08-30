@@ -3318,13 +3318,10 @@ bool ShellCopy::CalcTotalSize()
 
 		if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 			{
-				uint32_t DirCount, FileCount, ClusterSize;
-				uint64_t PhysicalSize;
+				DirInfo di;
 				CP->SetScanName(strSelName);
-				int __Ret = GetDirInfo(L"", strSelName, DirCount, FileCount, FileSize, PhysicalSize,
-						ClusterSize, Filter,
-						((Flags.SYMLINK == COPY_SYMLINK_ASFILE) ? GETDIRINFO_SCANSYMLINK : 0)
-								| (UseFilter ? GETDIRINFO_USEFILTER : 0));
+				int __Ret = di.FromFS(strSelName, Filter, ((Flags.SYMLINK == COPY_SYMLINK_ASFILE)
+					? GETDIRINFO_SCANSYMLINK : 0) | (UseFilter ? GETDIRINFO_USEFILTER : 0));
 
 				if (__Ret <= 0) {
 					ShowTotalCopySize = false;
@@ -3332,10 +3329,8 @@ bool ShellCopy::CalcTotalSize()
 					return FALSE;
 				}
 
-				if (FileCount > 0) {
-					TotalCopySize+= FileSize;
-					TotalFilesToProcess+= FileCount;
-				}
+				TotalCopySize+= di.FileSize;
+				TotalFilesToProcess+= di.FileCount;
 			}
 		} else {
 			// Подсчитаем количество файлов

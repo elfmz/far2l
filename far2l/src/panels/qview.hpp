@@ -37,12 +37,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CriticalSections.hpp"
 #include "FARString.hpp"
 #include "dirinfo.hpp"
+#include "format.hpp"
 
 class Viewer;
 
 class QuickView : public Panel, protected DirInfoProgressTracker
 {
 private:
+	friend class FormatToPrintText<QuickView>;
+	typedef FormatToPrintText<QuickView> QuickViewFormat;
+
+
 	Viewer *QView;
 
 	FARString strCurFileName;

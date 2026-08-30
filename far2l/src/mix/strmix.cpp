@@ -117,6 +117,12 @@ FARString &InsertCommas(uint64_t li, FARString &strDest)
 	strDest.Format(L"%llu", li);
 	return FormatNumber(strDest, strDest);
 }
+FARString InsertCommas(uint64_t li)
+{
+	FARString out;
+	InsertCommas(li, out);
+	return out;
+}
 
 static wchar_t *WINAPI InsertCustomQuote(wchar_t *Str, wchar_t QuoteChar)
 {

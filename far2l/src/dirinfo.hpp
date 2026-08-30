@@ -41,12 +41,24 @@ enum GETDIRINFOFLAGS
 	GETDIRINFO_DONTREDRAWFRAME = 0x00000002,
 	GETDIRINFO_SCANSYMLINK     = 0x00000004,
 	GETDIRINFO_SCANSYMLINKDEF  = 0x00000008,
-	GETDIRINFO_USEFILTER       = 0x00000010
+	GETDIRINFO_USEFILTER       = 0x00000010,
+	GETDIRINFO_EXTRASUMMARY    = 0x00000020,
 };
 
 struct DirInfoProgressTracker
 {
 	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir) = 0;
+};
+
+struct DirInfoTypeStats
+{
+	uint32_t Count{};
+	uint64_t Size{};
+};
+
+struct DirInfoExtraSummary
+{
+	std::vector<std::pair<std::wstring, DirInfoTypeStats>> type_stats;
 };
 
 struct DirInfo
@@ -56,6 +68,8 @@ struct DirInfo
 	uint32_t DirCount{};
 	uint32_t FileCount{};
 	uint32_t ClusterSize{};
+
+	std::unique_ptr<DirInfoExtraSummary> ExtraSummary;
 
 	int FromFS(const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
 	int FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);

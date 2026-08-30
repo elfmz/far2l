@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include <optional>
+#include <unordered_map>
 
 #include "dirinfo.hpp"
 #include "plugapi.hpp"
@@ -55,9 +56,88 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 
 
+struct ExtraSummaryCollector
+{
+	std::unordered_map<std::wstring, DirInfoTypeStats> _type2stats;
+	std::wstring _type;
+
+	void Add(const wchar_t *name, DWORD attrs, uint64_t size)
+	{
+		if (attrs == 0xffffffff) {
+			_type = L"BAD";
+		} else if (attrs & FILE_ATTRIBUTE_REPARSE_POINT) {
+			_type = (attrs & FILE_ATTRIBUTE_BROKEN) ? L"BAD-LINK" : L"LINK";
+		} else if (attrs & FILE_ATTRIBUTE_DEVICE) {
+			_type = L"DEV";
+			size = 0;
+		} else if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
+			_type = L"DIR";
+		} else {
+			// foobar.so -> ".so"
+			// foobar.tar.gz -> ".tar.gz"
+			// foobar.so.1.2 -> ".so"
+			// foobar.xxx. -> ".xxx"
+			// foobar -> "NOEXT"
+			// foobar. -> "NOEXT"
+			// .gitignore -> "DOTFILE"
+			const wchar_t *dot = nullptr, *end = name + wcslen(name);
+			bool digits_only = true;
+			for (const wchar_t *p = end; p != name;) {
+				--p;
+				if (*p == '.') {
+					if (digits_only) {
+						end = p;
+					}
+					dot = p;
+				} else if (*p < '0' || *p > '9') {
+					digits_only = false;
+				}
+				if (*p == '/') {
+					break;
+				}
+			}
+			if (dot && dot + 1 < end) {
+				if (dot != name && dot[-1] != '/') {
+					_type.assign(dot, end);
+				} else {
+					_type = L"DOTFILE";
+				}
+			} else {
+				_type = L"NOEXT";
+			}
+		}
+		auto &stats = _type2stats[_type];
+		stats.Size+= size;
+		stats.Count++;
+	}
+
+	std::unique_ptr<DirInfoExtraSummary> Summarize() const
+	{
+		auto out = std::make_unique<DirInfoExtraSummary>();
+		for (const auto &ts : _type2stats) {
+			out->type_stats.emplace_back(ts);
+		}
+		// sort by disk usage descending order
+		std::sort(out->type_stats.begin(), out->type_stats.end(), [](const auto &a, const auto &b) {
+		    if (a.second.Size != b.second.Size) {
+				return a.second.Size > b.second.Size;
+			}
+		    if (a.second.Count != b.second.Count) {
+				return a.second.Count > b.second.Count;
+			}
+			return a.first < b.first;
+		});
+		return out;
+	}
+};
+
 int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
 {
 	operator =(DirInfo{});
+	std::optional<ExtraSummaryCollector> xsc;
+	if (Flags & GETDIRINFO_EXTRASUMMARY) {
+		xsc.emplace();
+	}
 
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
@@ -203,13 +283,25 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 				if (scanned_inodes.Put(s.st_dev, s.st_ino)) {
 					FileSize+= s.st_size;
 					PhysicalSize+= ((DWORD64)s.st_blocks) * 512;
+					if (xsc) {
+						xsc->Add(FindData.strFileName, FindData.dwFileAttributes, ((DWORD64)s.st_blocks) * 512);
+					}
 				}
 			}
 			if (scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
 				FileSize+= FindData.nFileSize;
 				PhysicalSize+= FindData.nPhysicalSize;
+				if (xsc) {
+					xsc->Add(FindData.strFileName,
+						FindData.dwFileAttributes & (~FILE_ATTRIBUTE_REPARSE_POINT),
+						FindData.nPhysicalSize);
+				}
 			}
 		}
+	}
+
+	if (xsc) {
+		ExtraSummary = xsc->Summarize();
 	}
 
 	return 1;
@@ -218,6 +310,10 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter, DWORD Flags)
 {
 	operator = ({});
+	std::optional<ExtraSummaryCollector> xsc;
+	if (Flags & GETDIRINFO_EXTRASUMMARY) {
+		xsc.emplace();
+	}
 
 	PluginPanelItem *PanelItem = nullptr;
 	int ItemsNumber, ExitCode;
@@ -227,14 +323,19 @@ int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filt
 			== TRUE)	// INT_PTR - BUGBUG
 	{
 		for (int I = 0; I < ItemsNumber; I++) {
-			if (PanelItem[I].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			auto &FindData = PanelItem[I].FindData;
+			if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				DirCount++;
 			} else {
 				FileCount++;
-				FileSize+= PanelItem[I].FindData.nFileSize;
-				PhysicalSize+= PanelItem[I].FindData.nPhysicalSize
-						? PanelItem[I].FindData.nPhysicalSize
-						: PanelItem[I].FindData.nFileSize;
+				FileSize+= FindData.nFileSize;
+				PhysicalSize+= FindData.nPhysicalSize ? FindData.nPhysicalSize : FindData.nFileSize;
+			}
+			if (xsc) {
+				xsc->Add(FindData.lpwszFileName, FindData.dwFileAttributes,
+					(FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+						? 0 : (FindData.nPhysicalSize ? FindData.nPhysicalSize : FindData.nFileSize)
+				);
 			}
 		}
 	}
@@ -242,5 +343,8 @@ int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filt
 	if (PanelItem)
 		FarFreePluginDirList(PanelItem, ItemsNumber);
 
+	if (xsc) {
+		ExtraSummary = xsc->Summarize();
+	}
 	return (ExitCode);
 }

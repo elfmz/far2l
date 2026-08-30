@@ -4211,7 +4211,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			if ((PanelMode == PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES)
 						&& di.FromPlugin(hPlugin, Item->strName))
 					|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
-							&& di.FromFS(Item->strName, Filter, GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) {
+							&& di.FromFS(Item->strName, GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) { // Filter was here but wasnt used due to missing GETDIRINFO_USEFILTER
 				SelFileSize-= Item->FileSize;
 				SelFileSize+= di.FileSize;
 				Item->FileSize = di.FileSize;
@@ -4231,7 +4231,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 					&& di.FromPlugin(hPlugin, ListData[CurFile]->strName))
 				|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
 						&& di.FromFS(TestParentFolderName(ListData[CurFile]->strName) ? L"." : ListData[CurFile]->strName,
-									Filter, GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) {
+									GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) { // Filter was here but wasnt used due to missing GETDIRINFO_USEFILTER
 			ListData[CurFile]->FileSize = di.FileSize;
 			ListData[CurFile]->PhysicalSize = di.PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;

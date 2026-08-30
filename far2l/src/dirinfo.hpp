@@ -41,7 +41,6 @@ enum GETDIRINFOFLAGS
 	GETDIRINFO_DONTREDRAWFRAME = 0x00000002,
 	GETDIRINFO_SCANSYMLINK     = 0x00000004,
 	GETDIRINFO_SCANSYMLINKDEF  = 0x00000008,
-	GETDIRINFO_USEFILTER       = 0x00000010,
 	GETDIRINFO_EXTRASUMMARY    = 0x00000020,
 };
 
@@ -72,7 +71,7 @@ struct DirInfo
 
 	std::unique_ptr<DirInfoExtraSummary> ExtraSummary;
 
-	int FromFS(const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, DirInfoProgressTracker *tracker = nullptr);
-	int FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter = nullptr, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);
+	int FromFS(const wchar_t *DirName, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF, FileFilter *Filter = nullptr, DirInfoProgressTracker *tracker = nullptr);
+	int FromPlugin(HANDLE hPlugin, const wchar_t *DirName, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);
 };
 

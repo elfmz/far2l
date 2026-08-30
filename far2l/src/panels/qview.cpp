@@ -383,7 +383,7 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 		if (SameFile && !hDirPlugin) {
 			Directory = 1;
 		} else if (hDirPlugin) {
-			int ExitCode = di.FromPlugin(hDirPlugin, strCurFileName, nullptr,
+			int ExitCode = di.FromPlugin(hDirPlugin, strCurFileName,
 				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_EXTRASUMMARY);
 			if (ExitCode)
 				Directory = 4;
@@ -392,8 +392,9 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 		} else {
 			PrintBox();
 			PrintFileDirInfo();
-			int ExitCode = di.FromFS(strCurFileName, nullptr,
-				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_EXTRASUMMARY, this);
+			int ExitCode = di.FromFS(strCurFileName,
+				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_EXTRASUMMARY,
+				nullptr, this);
 			if (ExitCode == 1)
 				Directory = 1;
 			else if (ExitCode == -1)

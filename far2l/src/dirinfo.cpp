@@ -194,7 +194,7 @@ struct ExtraSummaryCollector
 	}
 };
 
-int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, DirInfoProgressTracker *tracker)
+int DirInfo::FromFS(const wchar_t *DirName, DWORD Flags, FileFilter *Filter, DirInfoProgressTracker *tracker)
 {
 	operator =(DirInfo{});
 	std::optional<ExtraSummaryCollector> xsc;
@@ -235,7 +235,6 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 	ScTree.SetFindPath(DirName, L"*", 0);
 	ScannedINodes scanned_inodes;
 	const bool count_dir_size = !Opt.OnlyFilesSize;
-	const bool use_filter = (Flags & GETDIRINFO_USEFILTER) != 0;
 	const bool scan_symlinks = ScTree.IsSymlinksScanEnabled();
 	const bool can_break = !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
 
@@ -299,7 +298,7 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 				пропустить - иначе при включенном подсчёте total
 				он учтётся (mantis 551)
 			*/
-			if ((is_reparse_point && !scan_symlinks) || (use_filter && !Filter->FileInFilter(FindData))) {
+			if ((is_reparse_point && !scan_symlinks) || (Filter && !Filter->FileInFilter(FindData))) {
 				ScTree.SkipDir();
 				continue;
 			}
@@ -307,14 +306,14 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 				Счётчик каталогов наращиваем только если не включен фильтр,
 				в противном случае это будем делать в подсчёте количества файлов
 			*/
-			if (!use_filter) {
+			if (!Filter) {
 				DirCount++;
 			}
 			if (tracker) {
 				strShowDirName = strFullName;
 			}
 		} else {
-			if (use_filter) {
+			if (Filter) {
 				/*
 					$ 17.04.2005 KM
 					Проверка попадания файла в условия фильра
@@ -375,7 +374,7 @@ int DirInfo::FromFS(const wchar_t *DirName, FileFilter *Filter, DWORD Flags, Dir
 	return 1;
 }
 
-int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, FileFilter *Filter, DWORD Flags)
+int DirInfo::FromPlugin(HANDLE hPlugin, const wchar_t *DirName, DWORD Flags)
 {
 	operator = ({});
 	std::optional<ExtraSummaryCollector> xsc;

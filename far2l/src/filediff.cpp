@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -31,6 +32,7 @@
 #include "message.hpp"
 #include "mix.hpp"
 #include "pathmix.hpp"
+#include "scrbuf.hpp"
 #include "strmix.hpp"
 #include "WideCharToMultiByteBuffer.hpp"
 #include "panel.hpp"
@@ -1257,6 +1259,11 @@ public:
 	int CursorLine() const { return m_editor ? m_editor->GetCursorLine() : 0; }
 	int CursorVisualLine() const { return m_editor ? m_editor->GetCursorVisualLine() : 0; }
 	int CursorCol() const { return m_editor ? m_editor->GetCurCol() : 0; }
+	int LineCount()
+	{
+		EditorInfo Info{};
+		return m_editor && m_editor->EditorControl(ECTL_GETINFO, &Info) ? Info.TotalLines : 0;
+	}
 
 private:
 	bool SetEditorPosition(int Line, int Pos)
@@ -1544,26 +1551,34 @@ public:
 				ExecuteStatusAction(StatusAction::NextDiff);
 				return TRUE;
 		}
-		if (ProcessActiveEditorPluginKey(Key)) {
-			ScheduleDiffRefresh(m_activePane);
-			return TRUE;
-		}
-
 		if (m_gutterActive)
 			return TRUE;
 
 		const bool ContentChange = IsEditorContentChangeKey(Key);
 		const bool SearchKey = IsEditorSearchKey(Key);
+		const int OldLineCount = ContentChange ? ActiveEditorPane().LineCount() : 0;
+		std::optional<ConsoleRepaintsDeferScope> RepaintScope;
+		if (ContentChange && !SearchKey)
+			RepaintScope.emplace(nullptr);
 		if (ActiveEditorPane().ProcessKey(Key)) {
-			if (ContentChange)
-				ScheduleDiffRefresh();
+			if (ContentChange) {
+				if (OldLineCount != ActiveEditorPane().LineCount())
+					RebuildDiffFromEditors();
+				else {
+					ScheduleDiffRefresh();
+					EnsureActiveCursorVisible();
+				}
+			}
 
 			if (SearchKey) {
 				FlushPendingDiffRefresh(true);
 				PlaceActiveCursorForSearch();
 			} else {
-				if (ContentChange)
+				if (ContentChange) {
+					Show();
+					ScrBuf.Flush();
 					return TRUE;
+				}
 				EnsureActiveCursorVisible();
 			}
 			Show();
@@ -1634,18 +1649,6 @@ public:
 	}
 
 private:
-	bool ProcessActiveEditorPluginKey(FarKey Key)
-	{
-		const unsigned int KeyCode = static_cast<unsigned int>(Key);
-		if ((KeyCode >= KEY_MACRO_BASE && KeyCode <= KEY_MACRO_ENDBASE)
-				|| (KeyCode >= KEY_OP_BASE && KeyCode <= KEY_OP_ENDBASE)) {
-			return false;
-		}
-
-		INPUT_RECORD *Input = FrameManager->GetLastInputRecord();
-		return Input && Input->EventType == KEY_EVENT && ActiveEditorPane().ProcessPluginInput(Input);
-	}
-
 	void SetPluginEditorContext(bool Active)
 	{
 		if (!CtrlObject || (Active && !IsTopFrame()))

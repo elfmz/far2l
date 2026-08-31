@@ -1016,6 +1016,9 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 
 int CommandLine::ProcessKey(FarKey Key)
 {
+	// local file names have nothing to do with plugin panel's content, see #3485
+	CmdStr.SetFNComplete(CtrlObject->Cp()->ActivePanel->GetMode() != PLUGIN_PANEL);
+
 	switch (Key) {
 		case KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT:
 			ViewConsoleHistory(NULL, false, true);

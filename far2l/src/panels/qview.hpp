@@ -73,6 +73,8 @@ private:
 		PrintContent();
 	}
 
+	int ProcessScroll(int NewOffset);
+
 private:
 	virtual void DisplayObject();
 	void PrintText(const wchar_t *Str);

@@ -184,7 +184,7 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 			if (++y > 0)
 				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewPhysical, InsertCommas(di.PhysicalSize, strTmp));
 			if (++y > 0)
-				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewRatio, InsertCommas(ToPercent64(di.PhysicalSize, di.FileSize), strTmp).Append(L"%"));
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewRatio, InsertCommas(ToPercent64(di.PhysicalSize, di.FileSize, true), strTmp).Append(L"%  "));
 
 			if (Directory != -1 && di.ExtraSummary && di.ExtraSummary->filesystems > 1) {
 				if (++y > 0)
@@ -266,6 +266,18 @@ int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
+
+int QuickView::ProcessScroll(int NewOffset)
+{
+	ScrollOffset = (NewOffset < 0) ? 0 : NewOffset;
+	auto ScrollOffsetSaved = ScrollOffset;
+	PrintBoxAndContent();
+	if (ScrollOffsetSaved != ScrollOffset) {
+		PrintBoxAndContent();
+	}
+	return TRUE;
+}
+
 int QuickView::ProcessKey(FarKey Key)
 {
 	if (!IsVisible())
@@ -276,26 +288,19 @@ int QuickView::ProcessKey(FarKey Key)
 		return TRUE;
 	}
 
-	if (Directory && (Key == KEY_HOME || Key == KEY_END
-			|| Key == KEY_DOWN || Key == KEY_UP || Key == KEY_PGDN || Key == KEY_PGUP
-			|| Key == KEY_MSWHEEL_UP || Key == KEY_MSWHEEL_DOWN)) {
-		switch (Key) {
-			case KEY_UP: case KEY_MSWHEEL_UP: ScrollOffset--; break;
-			case KEY_DOWN: case KEY_MSWHEEL_DOWN: ScrollOffset++; break;
-			case KEY_PGUP: ScrollOffset-= std::max(1, Y2 - Y1 - 4); break;
-			case KEY_PGDN: ScrollOffset+= std::max(1, Y2 - Y1 - 4); break;
-			case KEY_HOME: ScrollOffset = 0; break;
-			case KEY_END: ScrollOffset = 0x4000000; break;
-		}
-		if (ScrollOffset < 0) {
-			ScrollOffset = 0;
-		}
-		auto ScrollOffsetSaved = ScrollOffset;
-		PrintBoxAndContent();
-		if (ScrollOffsetSaved != ScrollOffset) {
-			PrintBoxAndContent();
-		}
-		return TRUE;
+	if (Directory) switch (Key) {
+		case KEY_UP: case KEY_MSWHEEL_UP:
+			return ProcessScroll(ScrollOffset - 1);
+		case KEY_DOWN: case KEY_MSWHEEL_DOWN:
+			return ProcessScroll(ScrollOffset + 1);
+		case KEY_PGUP:
+			return ProcessScroll(ScrollOffset - std::max(1, Y2 - Y1 - 4));
+		case KEY_PGDN:
+			return ProcessScroll(ScrollOffset + std::max(1, Y2 - Y1 - 4));
+		case KEY_HOME:
+			return ProcessScroll(0);
+		case KEY_END:
+			return ProcessScroll(0x40000000);
 	}
 
 	if (Key == KEY_F1) {

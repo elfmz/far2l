@@ -147,8 +147,10 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 	if (!Directory) {
 		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
 	} else if (Directory == -1 && X2 > X1) {
-		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1);
-		FS << FARString(Msg::QuickViewFolderScan).Append(L' ').Append(WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
+		strTmp = Msg::QuickViewFolderScan;
+		strTmp.Append(L' ').Append(WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
+		TruncStrFromCenter(strTmp, X2 - X1 - 1);
+		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1) << strTmp;
 	} else {
 		FS << fmt::LeftAlign() << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
 	}

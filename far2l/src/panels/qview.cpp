@@ -222,7 +222,7 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 					Fmt << fmt::LeftAlign() << Msg::QuickViewCount;
 				}
 
-				SetFarColor(COL_PANELINFOTEXT);
+				bool printed_some = false;
 				DirInfoTypeStats other;
 				long long other_cnt = 0;
 				FARString str_other_cnt;
@@ -234,6 +234,10 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 							other_cnt = 0;
 							++y;
 						}
+						if (!printed_some) {
+							printed_some = true;
+							SetFarColor(COL_PANELINFOTEXT);
+						}
 						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, ts.first.c_str(), ts.second);
 					} else {
 						other.Size+= ts.second.Size;
@@ -241,12 +245,12 @@ void QuickView::PrintContent(const wchar_t *WalkedNowDir)
 						++other_cnt;
 					}
 				}
+				SetFarColor(COL_PANELTEXT);
 				if (other.Size || other.Count) {
 					if (++y > 0) {
 						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, str_other_cnt.Format(L"< %lld >", other_cnt), other);
 					}
 				}
-				SetFarColor(COL_PANELTEXT);
 			}
 			if (ScrollOffset > 0 && y < Y2 - 4) {
 				ScrollOffset-= std::min(ScrollOffset, Y2 - 4 - y);
@@ -296,9 +300,9 @@ int QuickView::ProcessKey(FarKey Key)
 		case KEY_DOWN: case KEY_MSWHEEL_DOWN:
 			return ProcessScroll(ScrollOffset + 1);
 		case KEY_PGUP:
-			return ProcessScroll(ScrollOffset - std::max(1, Y2 - Y1 - 4));
+			return ProcessScroll(ScrollOffset - std::max(1, Y2 - Y1 - 5));
 		case KEY_PGDN:
-			return ProcessScroll(ScrollOffset + std::max(1, Y2 - Y1 - 4));
+			return ProcessScroll(ScrollOffset + std::max(1, Y2 - Y1 - 5));
 		case KEY_HOME:
 			return ProcessScroll(0);
 		case KEY_END:

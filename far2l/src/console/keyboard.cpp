@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include <ctype.h>
+#include "InterThreadCall.hpp"
 #include "keyboard.hpp"
 #include "farqueue.hpp"
 #include "lang.hpp"
@@ -715,6 +716,12 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 			}
 
 #endif
+			if (rec->EventType == NOOP_EVENT) {
+				Console.ReadInput(*rec);
+				DispatchInterThreadCalls();
+				CheckForPendingCtrlHandleEvent();
+				break;
+			}
 			break;
 		}
 

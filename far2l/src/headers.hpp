@@ -44,9 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #include <cctype>
 #include <climits>
-#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
-#include <malloc.h>
-#endif
 #endif	//__GNUC__
 
 #include <search.h>

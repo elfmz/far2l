@@ -5,14 +5,6 @@
 #include <dlfcn.h>
 #include <errno.h>
 
-#if defined(__FreeBSD__) || defined(__DragonFly__)
-# include <malloc_np.h>
-#elif __APPLE__
-# include <malloc/malloc.h>
-#else
-# include <malloc.h>
-#endif
-
 template <class C>
 	static bool TranslateInstallPathT(std::basic_string<C> &path, const C *dir_from, const C *dir_to, const C* prefix)
 {

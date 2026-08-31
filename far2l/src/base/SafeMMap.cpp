@@ -1,4 +1,4 @@
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 # define _XOPEN_SOURCE // macos wants it for ucontext
 #endif
 
@@ -19,7 +19,7 @@
 #include "../WinPort/sudo.h"
 #include <sys/mman.h>
 #include <sys/stat.h>
-#if !defined(__HAIKU__)
+#if !defined(__HAIKU__) && !defined(__OpenBSD__)
 #include <ucontext.h>
 #endif
 
@@ -103,8 +103,13 @@ static void FDWriteSignalInfo(int fd, int num, siginfo_t *info, void *ctx)
 	FDWriteStr(fd, errmsg);
 
 	const ucontext_t *uctx = (const ucontext_t *)ctx;
+#ifdef __OpenBSD__
+	const long *mctx = (const long *)uctx;
+	const size_t mctx_count = sizeof(*uctx) / sizeof(*mctx);
+#else
 	const long *mctx = (const long *)&uctx->uc_mcontext;
 	const size_t mctx_count = sizeof(uctx->uc_mcontext) / sizeof(*mctx);
+#endif
 
 	for (size_t i = 0; i < mctx_count; ++i) {
 		if (i == 0) {

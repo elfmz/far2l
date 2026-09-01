@@ -12,7 +12,7 @@
 #include <utils.h>
 #include "MulDiv64.h"
 #include <string.h>
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__DragonFly__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__OpenBSD__)
 # include <malloc.h>
 #endif
 #include <stddef.h>

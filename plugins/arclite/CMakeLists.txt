@@ -36,6 +36,11 @@ target_compile_definitions(arclite PRIVATE -DNDEBUG)
 
 target_link_libraries(arclite utils far2l)
 
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    find_package(Iconv REQUIRED)
+    target_link_libraries(arclite Iconv::Iconv)
+endif()
+
 target_include_directories(arclite PRIVATE 
     ${CMAKE_SOURCE_DIR}/WinPort
     ${CMAKE_SOURCE_DIR}/utils/include

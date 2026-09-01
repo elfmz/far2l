@@ -761,11 +761,64 @@ int64_t CommandLine::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
+// Plugin panels have no local shell to ask for completions, so use what panel already
+// shows: its items are the very files that command being typed will deal with (#3485).
+// Nested paths (like dir/fi<Tab>) are out of scope: panel lists only current directory.
+static bool GetPanelPossibilities(Panel *panel, const std::string &cmd,
+		std::vector<std::string> &possibilities)
+{
+	std::string parsed = cmd;
+	Environment::Arguments args;
+	Environment::ParseCommandLine(parsed, args, false);
+	if (args.empty())
+		return false;
+
+	std::string prefix;
+	size_t insert_pos;
+	if (!cmd.empty() && cmd.back() == ' ') {	// completing whole next argument
+		insert_pos = cmd.size();
+	} else {
+		const auto &last_arg = args.back();
+		prefix = parsed.substr(last_arg.begin, last_arg.len);
+		insert_pos = last_arg.orig_begin;
+	}
+
+	// "./name" refers to panel's directory as well, so keep that prefix and match by name
+	std::string keep;
+	if (prefix.substr(0, 2) == "./") {
+		keep = prefix.substr(0, 2);
+		prefix.erase(0, 2);
+	}
+	if (prefix.find(GOOD_SLASH) != std::string::npos)
+		return false;
+
+	const long count = panel->GetFileCount();
+	for (long i = 0; i < count; ++i) {
+		FARString str_name;
+		DWORD file_attr = 0;
+		if (!panel->GetFileName(str_name, i, file_attr))
+			continue;
+
+		const std::string &name = str_name.GetMB();
+		if (name == ".." || name == ".")
+			continue;
+
+		if (!prefix.empty() && !StrStartsFrom(name, prefix.c_str()))
+			continue;
+
+		std::string possibility = keep;
+		possibility+= name;
+		QuoteCmdArgIfNeed(possibility);
+		possibility.insert(0, cmd.substr(0, insert_pos));
+		possibilities.emplace_back(possibility);
+	}
+
+	// no sorting here: items are taken in order panel shows them to user
+	return !possibilities.empty();
+}
+
 void CommandLine::ProcessTabCompletion()
 {
-	if (CtrlObject->Cp()->ActivePanel->GetMode() == PLUGIN_PANEL)
-		  return;	// silent workaround for https://github.com/elfmz/far2l/issues/3485
-
 	FARString strStr;
 	CmdStr.GetString(strStr);
 	// show all possibilities on double tab on same input string
@@ -774,6 +827,21 @@ void CommandLine::ProcessTabCompletion()
 
 	if (!strStr.IsEmpty()) {
 		std::string cmd = strStr.GetMB();
+		Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
+		if (ActivePanel->GetMode() == PLUGIN_PANEL) {
+			std::vector<std::string> panel_possibilities;
+			if (GetPanelPossibilities(ActivePanel, cmd, panel_possibilities)) {
+				if (panel_possibilities.size() == 1) {
+					strStr = panel_possibilities.front();
+					CmdStr.SetString(strStr);
+					CmdStr.Show();
+				} else {
+					CmdStr.ShowCustomCompletionList(panel_possibilities);
+				}
+			}
+			return;
+		}
+
 		VTCompletor vtc;
 		if (possibilities) {
 			std::vector<std::string> possibilities;
@@ -1016,6 +1084,9 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 
 int CommandLine::ProcessKey(FarKey Key)
 {
+	// local file names have nothing to do with plugin panel's content, see #3485
+	CmdStr.SetFNComplete(CtrlObject->Cp()->ActivePanel->GetMode() != PLUGIN_PANEL);
+
 	switch (Key) {
 		case KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT:
 			ViewConsoleHistory(NULL, false, true);

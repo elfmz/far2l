@@ -5,6 +5,9 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Quick view panel: directory summary information improvements; colorer on for file preview
+* _colorer plugin_: now working in Viewer (by defauil off) and Quick View panel (by default on), configurable in FarColorer's settings in Viewer coloring combobox
+* Several bugfixes and improvements
 
 ## 2.9.0 beta (2026-08-27)
 * _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)

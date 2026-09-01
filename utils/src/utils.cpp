@@ -9,6 +9,14 @@
 #include <array>
 #include <algorithm>
 
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+# include <malloc_np.h>
+#elif __APPLE__
+# include <malloc/malloc.h>
+#elif !defined(__OpenBSD__)
+# include <malloc.h>
+#endif
+
 ////////////////////////////
 void CheckedCloseFD(int &fd)
 {

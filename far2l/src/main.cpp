@@ -329,7 +329,11 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			if( Opt.IsFirstStart ) {
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 
-				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
+				// Under test control there is no human to answer the OSC52
+				// first-start question, so it would just invisibly swallow all
+				// injected input in its modal loop (same pattern as the
+				// WinPortTesting() guards around FlushInputBuffer in filelist.cpp).
+				DWORD tweaks = WinPortTesting() ? 0 : WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
 				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
 					SetMessageHelp(L"Far2lGettingStarted");
 

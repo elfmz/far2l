@@ -73,8 +73,8 @@ struct FarPidInfo {
 	std::wstring text;
 	std::string name;
 	int pid;
-	long rss;
-	long cpu_ticks;
+	unsigned long rss;
+	unsigned long cpu_ticks;
 };
 
 static int is_pid_dir(const char *name) {
@@ -118,7 +118,7 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         f = fopen(path, "r");
         if (!f) continue;
 
-        long utime, stime, rss;
+        unsigned long utime, stime, rss;
         char commbuf[256], state;
 
         /*
@@ -140,8 +140,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         fscanf(f, "%ld", &rss);
         fclose(f);
 
-        long page_kb = sysconf(_SC_PAGESIZE) / 1024;
-        long rss_kb = rss * page_kb;
+        unsigned long page_kb = sysconf(_SC_PAGESIZE) / 1024;
+        unsigned long rss_kb = rss * page_kb;
 
         char* q = name + strlen(name) - 1;
         while(q > name && isspace(*q)) --q;
@@ -154,7 +154,7 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         printf("RSS: %ld KB\n", rss_kb);
         printf("----\n");
         */
-        long total_time = utime + stime;
+        unsigned long total_time = utime + stime;
         const char* cpuLoad = "?";
 
         if (total_time < 100)        cpuLoad = "idle";

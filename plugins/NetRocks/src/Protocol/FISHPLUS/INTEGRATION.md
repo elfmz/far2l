@@ -264,6 +264,66 @@ Doing both is reasonable: `ways.ini` for reach, libssh for throughput.
 
 ---
 
+## 10. Windows peers via PowerShell
+
+Not every FISH+ peer runs a POSIX shell. Windows OpenSSH with `DefaultShell`
+set to `cmd.exe` (Microsoft's default) or `powershell.exe` reaches PowerShell
+after the ssh login, and `helper.sh` cannot execute there because it is `sh`
+syntax. `Helpers/helper.ps1`, a byte-for-byte copy from f4 pinned in
+`Helpers/UPSTREAM.md`, is the PowerShell counterpart; it speaks the same FISH+
+wire (v1) as `helper.sh` and differs only in how it is uploaded.
+
+Three pieces make this work:
+
+- **The bootstrap variant.** `BootstrapLinePwshB64()` in `FishPlusScript.cpp`
+  is the PowerShell equivalent of `BootstrapLine()`. PowerShell has no `read`
+  builtin that could sip the helper off the wire one line at a time, so the
+  whole helper travels inside the bootstrap itself: base64-encoded, one
+  printable-ASCII line, decoded with `.NET` on the far side and handed to
+  `Invoke-Expression`.  See §8 for why f4 uses the same single-line shape as
+  its base64 bootstrap for POSIX.
+- **The handshake options.** `Session::HandshakeOptions` carries `helper_path`
+  and `base64_pwsh_bootstrap`, so the same session code can bring either
+  helper up. The old `Handshake(helper_path, tty_transport)` signature is a
+  thin shim so no existing caller changes.
+- **The flavor probe.** `ProtocolFISHPLUS::Initialize()` reads the `Flavor`
+  protocol option (`auto` by default; `posix` or `pwsh` skip the probe).
+  Auto tries the POSIX bootstrap first, and on the four handshake failures a
+  wrong-flavor probe produces (never got the ready marker, unexpected banner,
+  handshake refused by remote host, unsupported protocol version) tears the
+  transport down and retries with the pwsh bootstrap. Any error that does not
+  look like a flavor mismatch propagates as itself. The retry costs a fresh
+  ssh login because `WayToShell` owns the ssh child; on peers with
+  `ControlMaster` set up this is one round trip, not a re-authentication.
+
+`ways.ini` gains an `[SSH_PWSH]` section whose `OPT1` picks between two
+launch chains that cover the two `DefaultShell` configurations. Users who
+know their peer can select it directly; the auto probe means the plain
+`[SSH]` way also works against a Windows host, at the cost of one wasted
+POSIX handshake per connect.
+
+Wire paths from a pwsh peer use POSIX-shape (`/c/Users/Foo`) so nothing in
+`FishPlusListing.cpp` needs to change - `BaseName()` and `FinishName()` split
+on `/` alone. The helper announces `flavor:pwsh` in its banner, which
+`Features::Flavor()` exposes; today no code branches on the flavor, but the
+tag is there for future callers that might need to key path translation or a
+peer-specific quoting rule on it.
+
+What this does **not** ship:
+
+- No PowerShell PTY integration in the panel command line. f4 has this
+  (`PtyShellIntegration` for cmd-flavor peers, OSC 133 D return-to-panels
+  detection), but far2l has no `ExecuteCommand` for FISH+ today - see §6.
+- No pwsh-specific `ffind`-as-job. The helper carries the `ffindjob`
+  capability so a future far2l implementation of remote search can use it
+  without touching the helper; today `Client::Find` simply is not part of
+  `IProtocol`.
+- No `SERIAL_PWSH`. The whole `stty raw -echo` incantation is POSIX-only,
+  and PowerShell over a serial line is exotic enough to wait for a
+  motivating use case.
+
+---
+
 ## Reference
 
 - Protocol specification and rationale: f4's `FISH+.md`

@@ -81,6 +81,11 @@ namespace FishPlus
 		std::string ListingMode() const { return Valued("mode:"); }
 		std::string ReadMode() const { return Valued("read:"); }
 		std::string WriteMode() const { return Valued("write:"); }
+
+		// The helper flavor tag from the banner, e.g. "pwsh" for the
+		// PowerShell helper. Empty for a POSIX helper: helper.sh does not
+		// announce a flavor, its absence being the POSIX default.
+		std::string Flavor() const { return Valued("flavor:"); }
 	};
 
 	class Session
@@ -103,10 +108,32 @@ namespace FishPlus
 		Session(std::shared_ptr<WayToShell> way);
 		~Session();
 
-		// Uploads the helper and waits for its banner. helper_path is resolved
-		// relative to the broker's working directory, like SHELL/remote.sh is.
-		// tty_transport tells whether the stream is backed by a pseudo terminal,
-		// which decides whether raw binary payload may be sent at all.
+		// Options that shape a handshake attempt.
+		struct HandshakeOptions
+		{
+			// Path to the helper file. Resolved relative to the broker's
+			// working directory, like SHELL/remote.sh is.
+			const char *helper_path{nullptr};
+
+			// The bootstrap flavor to send:
+			//   false - the POSIX shell one-line bootstrap plus a separate
+			//           helper upload through the shell's read builtin.
+			//   true  - the PowerShell single-line bootstrap that carries
+			//           the helper base64-encoded within itself.
+			// A wrong choice presents itself as a handshake error (never got
+			// the ready marker, unparsable banner, etc.) which the caller
+			// can retry with the other value; see ProtocolFISHPLUS::Initialize.
+			bool base64_pwsh_bootstrap{false};
+
+			// True when the stream is backed by a pseudo terminal, which
+			// decides whether raw binary payload may be sent at all.
+			bool tty_transport{true};
+		};
+
+		// Uploads the helper and waits for its banner. The two overloads share
+		// one implementation: the plain one is what every existing caller uses,
+		// and its behavior is unchanged.
+		void Handshake(const HandshakeOptions &opts);
 		void Handshake(const char *helper_path, bool tty_transport);
 
 		const Features &Feats() const { return _feats; }

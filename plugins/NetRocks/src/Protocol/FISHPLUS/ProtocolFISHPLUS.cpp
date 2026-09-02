@@ -13,13 +13,15 @@
 #include "../../Erroring.h"
 
 #define FISHPLUS_WAYS_INI	"FISHPLUS/ways.ini"
-#define FISHPLUS_HELPER		"FISHPLUS/helper.sh"
+#define FISHPLUS_HELPER_SH	"FISHPLUS/helper.sh"
+#define FISHPLUS_HELPER_PS1	"FISHPLUS/helper.ps1"
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
 {
 	return std::make_shared<ProtocolFISHPLUS>(host, port, username, password, options, fd_ipc_recv);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -269,6 +271,77 @@ void ProtocolFISHPLUS::PerformLogin()
 	fprintf(stderr, "[FISH+] INTERACTIVE LOGIN DONE\n");
 }
 
+bool ProtocolFISHPLUS::LooksLikeWrongFlavor(const std::exception &e)
+{
+	// Handshake errors that could equally mean "the remote spoke a shell we
+	// were not expecting":
+	//
+	//   POSIX bootstrap sent to a cmd.exe login shell parses as
+	//   syntactically invalid commands (single quotes are literal chars,
+	//   `exec` is not a builtin); cmd exits, ssh drops the pty and the
+	//   WayToShell polling loop reports "pty disrupted".
+	//
+	//   POSIX bootstrap sent to a PowerShell login shell parses to a
+	//   greeting Write-Output plus an error - "exec sh" is not a PS
+	//   cmdlet. Depending on how the error surfaces the client sees
+	//   either "unexpected handshake banner" (PS printed its parse
+	//   error where the banner should have gone) or "never reported
+	//   being ready" (the marker never came through the noise).
+	//
+	//   PowerShell bootstrap sent to a POSIX shell parses as garbage
+	//   (`$F4B=` sh reads as an env assignment then a stray hex blob),
+	//   the shell errors out, the marker never comes: "never reported
+	//   being ready", or the child exits: "pty disrupted".
+	//
+	//   An "unsupported protocol version" is the low-probability case
+	//   where a wrong-flavor helper still manages to print a number that
+	//   is not ours; kept in the list for symmetry.
+	//
+	// A working helper that answers with a real diagnostic (permission
+	// denied on the tempdir, missing dependency, etc.) never carries any
+	// of these phrases, so a real failure still bubbles up as itself.
+	const char *msg = e.what();
+	if (msg == nullptr || *msg == 0) {
+		return false;
+	}
+	static const char *phrases[] = {
+		"never reported being ready",
+		"handshake refused by remote host",
+		"unexpected handshake banner",
+		"unsupported protocol version",
+		"pty disrupted",
+	};
+	for (const char *p : phrases) {
+		if (strstr(msg, p) != nullptr) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void ProtocolFISHPLUS::AttemptFlavor(bool pwsh)
+{
+	OpenWay();
+	try {
+		PerformLogin();
+		_sess = std::make_shared<FishPlus::Session>(_way);
+		// Every way in ways.ini reaches the remote shell through a pseudo
+		// terminal, which is why the helper is told to expect one; it tames
+		// the line discipline with POSIX stty and reports "tty" when it
+		// managed to.
+		FishPlus::Session::HandshakeOptions opts;
+		opts.helper_path = pwsh ? FISHPLUS_HELPER_PS1 : FISHPLUS_HELPER_SH;
+		opts.base64_pwsh_bootstrap = pwsh;
+		opts.tty_transport = true;
+		_sess->Handshake(opts);
+	} catch (...) {
+		// Tear down so a retry can start a fresh ssh child.
+		_sess.reset();
+		_way.reset();
+		throw;
+	}
+}
+
 void ProtocolFISHPLUS::Initialize()
 {
 	_way_name = _protocol_options.GetString("Way");
@@ -281,16 +354,65 @@ void ProtocolFISHPLUS::Initialize()
 			throw ProtocolError("Way not specified");
 		}
 	}
-	fprintf(stderr, "[FISH+] INITIALIZE: '%s'\n", _way_name.c_str());
+	_flavor = _protocol_options.GetString("Flavor");
+	if (_flavor.empty()) {
+		_flavor = "auto";
+	}
+	fprintf(stderr, "[FISH+] INITIALIZE: '%s', flavor '%s'\n",
+		_way_name.c_str(), _flavor.c_str());
 
-	OpenWay();
-	PerformLogin();
-
-	_sess = std::make_shared<FishPlus::Session>(_way);
-	// Every way in ways.ini reaches the remote shell through a pseudo terminal,
-	// which is why the helper is told to expect one; it tames the line
-	// discipline with POSIX stty and reports "tty" when it managed to.
-	_sess->Handshake(FISHPLUS_HELPER, true);
+	if (_flavor == "posix") {
+		AttemptFlavor(false);
+	} else if (_flavor == "pwsh") {
+		AttemptFlavor(true);
+	} else if (_way_name == "SSH_PWSH") {
+		// The way name itself declares the peer is PowerShell; probing
+		// POSIX first would just hang waiting for a ready marker no
+		// PowerShell peer will ever emit, since PowerShell reads the
+		// POSIX bootstrap as garbage without producing a diagnostic
+		// that would trip WaitReply's error path.
+		AttemptFlavor(true);
+	} else {
+		// Auto: POSIX first (the common case), pwsh on the specific
+		// handshake failures that a wrong-flavor probe produces. The
+		// re-attempt costs a fresh ssh login; on a peer whose ssh has
+		// ControlMaster set up this is a round trip, not a re-auth.
+		try {
+			AttemptFlavor(false);
+		} catch (std::exception &e1) {
+			if (!LooksLikeWrongFlavor(e1)) {
+				throw;
+			}
+			fprintf(stderr, "[FISH+] POSIX handshake in way '%s' failed as '%s';"
+				" retrying as PowerShell in same way\n",
+				_way_name.c_str(), e1.what());
+			try {
+				AttemptFlavor(true);
+			} catch (std::exception &e2) {
+				// The way itself may not land in a PowerShell prompt
+				// (e.g. [SSH] runs 'exec sh' under cmd.exe, which dies
+				// before either helper flavor gets a chance). If a
+				// PowerShell-oriented way exists and we are not already
+				// on it, jump there and try once more.
+				if (!LooksLikeWrongFlavor(e2) || _way_name == "SSH_PWSH") {
+					throw;
+				}
+				WaysToShell all_ways(FISHPLUS_WAYS_INI);
+				bool has_ssh_pwsh = false;
+				for (const auto &n : all_ways) {
+					if (n == "SSH_PWSH") { has_ssh_pwsh = true; break; }
+				}
+				if (!has_ssh_pwsh) {
+					throw;
+				}
+				fprintf(stderr, "[FISH+] way '%s' also failed as '%s';"
+					" retrying via way 'SSH_PWSH'\n",
+					_way_name.c_str(), e2.what());
+				_way_name = "SSH_PWSH";
+				AttemptFlavor(true);
+			}
+		}
+	}
 
 	// The directory an interactive login would have landed in.
 	auto resp = _sess->Exec("pwd");
@@ -301,7 +423,9 @@ void ProtocolFISHPLUS::Initialize()
 	if (_home.empty()) {
 		_home = "/";
 	}
-	fprintf(stderr, "[FISH+] READY, home '%s'\n", _home.c_str());
+	fprintf(stderr, "[FISH+] READY, home '%s', flavor '%s'\n",
+		_home.c_str(),
+		_sess->Feats().Flavor().empty() ? "posix" : _sess->Feats().Flavor().c_str());
 }
 
 void ProtocolFISHPLUS::KeepAlive(const std::string &path_to_check)

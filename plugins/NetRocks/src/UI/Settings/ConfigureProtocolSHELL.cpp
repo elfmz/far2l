@@ -34,16 +34,36 @@ class ProtocolOptionsSHELL : protected BaseDialog
 	StringConfig &_sc;
 
 	std::string _ways_ini;
+	bool _include_flavor;
 
-	int _i_ok = -1, _i_cancel = -1, _i_way = -1;
+	int _i_ok = -1, _i_cancel = -1, _i_way = -1, _i_flavor = -1;
 
 	FarListWrapper _di_ways;
+	FarListWrapper _di_flavor;
 	struct Option
 	{
 		FarListWrapper di_items;
 		int i_cb;
 	};
 	std::list<Option> _opts;
+
+	// Flavor list positions map to protocol-option string values written
+	// into the site config; ProtocolFISHPLUS reads them back verbatim in
+	// Initialize().
+	static const char *FlavorAt(int pos)
+	{
+		switch (pos) {
+			case 1:  return "posix";
+			case 2:  return "pwsh";
+			default: return "auto";
+		}
+	}
+	static int FlavorIndex(const std::string &value)
+	{
+		if (value == "posix") return 1;
+		if (value == "pwsh")  return 2;
+		return 0;
+	}
 
 	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
@@ -95,8 +115,8 @@ class ProtocolOptionsSHELL : protected BaseDialog
 
 public:
 	ProtocolOptionsSHELL(std::string &way, StringConfig &sc,
-			const char *ways_ini_subpath, int box_title)
-		: _way(way), _sc(sc)
+			const char *ways_ini_subpath, int box_title, bool include_flavor)
+		: _way(way), _sc(sc), _include_flavor(include_flavor)
 	{
 		_ways_ini = StrWide2MB(G.plugin_path);
 		CutToSlash(_ways_ini, true);
@@ -120,6 +140,25 @@ public:
 			const auto &opt = cfg.options[i];
 			const auto &value = _sc.GetString(StrPrintf("OPT%u", i).c_str(), opt.items[opt.def].value.c_str());
 			InitializeOption(opt, value);
+		}
+
+		if (_include_flavor) {
+			// The flavor is a protocol-wide axis, not a way-specific one:
+			// a Windows peer may be reached via any way that arrives at a
+			// PowerShell prompt, so it deserves its own row rather than
+			// being lumped in with the current way's OPTs.
+			_di.NextLine();
+			_di.AddAtLine(DI_TEXT, 4,49, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+			_di.NextLine();
+			_di.AddAtLine(DI_TEXT, 5, 34, 0, MFISHPLUSHelperFlavor);
+			_di_flavor.Add(MFISHPLUSHelperFlavorAuto);
+			_di_flavor.Add(MFISHPLUSHelperFlavorPosix);
+			_di_flavor.Add(MFISHPLUSHelperFlavorPwsh);
+			_di_flavor.SelectIndex(FlavorIndex(_sc.GetString("Flavor")));
+			_i_flavor = _di.AddAtLine(DI_COMBOBOX, 35, 53,
+				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+			_di[_i_flavor].ListItems = _di_flavor.Get();
 		}
 
 		_di.NextLine();
@@ -149,18 +188,21 @@ public:
 				}
 				++i;
 			}
+			if (_include_flavor && _i_flavor >= 0) {
+				_sc.SetString("Flavor", FlavorAt(GetDialogListPosition(_i_flavor)));
+			}
 		}
 		return r == _i_way;
 	}
 };
 
 static void ConfigureWayBasedProtocol(std::string &options,
-	const char *ways_ini_subpath, int box_title)
+	const char *ways_ini_subpath, int box_title, bool include_flavor)
 {
 	try {
 		StringConfig sc(options);
 		std::string way = sc.GetString("Way");
-		while (ProtocolOptionsSHELL(way, sc, ways_ini_subpath, box_title).Configure()) {
+		while (ProtocolOptionsSHELL(way, sc, ways_ini_subpath, box_title, include_flavor).Configure()) {
 			;
 		}
 		options = sc.Serialize();
@@ -171,13 +213,15 @@ static void ConfigureWayBasedProtocol(std::string &options,
 
 void ConfigureProtocolSHELL(std::string &options)
 {
-	ConfigureWayBasedProtocol(options, "SHELL/ways.ini", MSHELLOptionsTitle);
+	ConfigureWayBasedProtocol(options, "SHELL/ways.ini", MSHELLOptionsTitle, false);
 }
 
 // FISH+ reaches its remote shell exactly the way SHELL does, so it gets the
-// same dialog driven by its own ways.ini rather than a copy of this file.
+// same dialog driven by its own ways.ini rather than a copy of this file. It
+// adds a Flavor combobox on top: which helper (helper.sh or helper.ps1) to
+// upload once the transport is up. See ProtocolFISHPLUS::Initialize.
 void ConfigureProtocolFISHPLUS(std::string &options)
 {
-	ConfigureWayBasedProtocol(options, "FISHPLUS/ways.ini", MFISHPLUSOptionsTitle);
+	ConfigureWayBasedProtocol(options, "FISHPLUS/ways.ini", MFISHPLUSOptionsTitle, true);
 }
 

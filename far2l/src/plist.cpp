@@ -187,6 +187,7 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         if (ret <= 0) continue;
 
         // CPU time (user + system) in nanoseconds + RSS
+        unsigned long total_time = task.pti_total_user + task.pti_total_system;
         double cpu_seconds = (task.pti_total_user + task.pti_total_system) / 1e9;
         unsigned long rss_kb = task.pti_resident_size / 1024;
 
@@ -234,6 +235,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         const char *name = p->ki_comm;
 
         // CPU time (user + system) in microseconds
+        unsigned long total_time = p->ki_rusage.ru_utime.tv_sec +
+             p->ki_rusage.ru_stime.tv_sec;
         double cpu_seconds =
             (p->ki_rusage.ru_utime.tv_sec +
              p->ki_rusage.ru_stime.tv_sec) +

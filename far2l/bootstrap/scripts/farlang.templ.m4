@@ -29258,15 +29258,15 @@ upd:"Go to up                            Ctrl+PageUp"
 upd:"Go to up                            Ctrl+PageUp"
 
 PanelGoToMountPoint
-upd:"Go to outer mount point             Ctrl+Alt+\"
-"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
-upd:"Go to outer mount point             Ctrl+Alt+\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
+upd:"Go to outer mount point             Ctrl+Alt+\\"
 
 PanelGoDeeper
 upd:"Go inside                           Ctrl+PageDown"
@@ -29697,17 +29697,6 @@ upd:"Copy to command line                Ctrl+Enter"
 upd:"Copy to command line                Ctrl+Enter"
 upd:"Copy to command line                Ctrl+Enter"
 upd:"Copy to command line                Ctrl+Enter"
-
-PanelCopyClipboard
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
-upd:"Copy to clipboard                   Ctrl+Alt+Ins"
 
 PanelCopyNames
 upd:"Copy file name to clipboard         Ctrl+Ins"

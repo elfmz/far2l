@@ -159,7 +159,18 @@ enum enumWindowMenu {
 
 void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEditor* fileEditor);
 
-struct WindowMenuContext;
+struct WindowMenuContext {
+
+	MenuDataEx WindowMenu[128] = {
+		{Msg::PanelWindowNewEditor,	0,	KEY_SHIFTF4  },
+		{L"",	LIF_SEPARATOR,	0  },
+	};
+
+	int WindowMenuCount { MENU_PANELWINDOW_SEPARATOR2 + 1 };
+	std::vector<int> frameIndexes;
+	std::vector<int> subframeIndexes;
+	std::vector<std::wstring> windowNames;
+};
 
 void initializeWindowMenuContext(WindowMenuContext& ctx);
 void applyMenu(WindowMenuContext& ctx, int VItem);

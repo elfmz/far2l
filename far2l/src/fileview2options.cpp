@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fileview2options.hpp"
 #include "options.hpp"
+#include "fileedit2options.hpp"
 
 void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileViewer* fileView)
 {

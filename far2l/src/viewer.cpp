@@ -4200,3 +4200,32 @@ int Viewer::ProcessTypeWrapMode(int newMode, bool isRedraw)
 	// LastSelPos=FilePos;
 	return oldTypeWrap;
 }
+
+
+std::vector<ViewerBookmark> Viewer::GetActiveBookmarks() 
+{
+	std::vector<ViewerBookmark> v;
+	for(int pos = 0; pos < POSCACHE_BOOKMARK_COUNT; ++pos) {
+		if (BMSavePos.SavePosAddr[pos] != POS_NONE) {
+			ViewerBookmark r { BMSavePos.SavePosAddr[pos], BMSavePos.SavePosLeft[pos], pos };
+
+			if (!ViewFile.Opened()) continue;
+
+			const int buf_size = r.LeftPos + 35;
+			wchar_t* Buf = new wchar_t[buf_size + 1];
+
+			vseek(r.FilePos, SEEK_SET);
+			vread(Buf, buf_size);
+			wchar_t* q = wcschr(Buf + r.LeftPos, '\n');
+			if(q) *q = 0;
+			FARString s, t;
+			s.Format(L"[%lld, %lld] %ls", r.FilePos, r.LeftPos, Buf + r.LeftPos);
+			t.Format(L"%-35.35ls Ctrl+%d", s.CPtr(), r.index);
+			wcscpy(r.preview, t.CPtr());
+			delete[] Buf;
+
+			v.push_back(r);
+		}
+	}
+	return v;
+}

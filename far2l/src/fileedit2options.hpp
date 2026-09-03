@@ -40,7 +40,10 @@ enum enumEditorMenus
 	MENU_FILE,
 	MENU_EDIT,
 	MENU_NAVIGATE,
-	MENU_VIEW
+	MENU_VIEW,
+	MENU_MACRO,
+	MENU_PLUGINS,
+	MENU_WINDOW
 };
 
 enum enumFileMenu
@@ -134,6 +137,7 @@ enum enumViewMenu
 	MENU_VIEW_WORDWRAP,
 	MENU_VIEW_NUMBERS,
 	MENU_VIEW_SPACES,
+	MENU_VIEW_EOL,
 	MENU_VIEW_TABS_TO_SPACES,
 	MENU_VIEW_OVERTYPE,
 	MENU_VIEW_FULL_SCREEN,
@@ -148,5 +152,14 @@ enum enumViewMenu
 	MENU_VIEW_OPTIONS
 };
 
+enum enumWindowMenu {
+	MENU_PANELWINDOWNEWEDITOR,
+	MENU_PANELWINDOW_SEPARATOR2
+};
+
 void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEditor* fileEditor);
 
+struct WindowMenuContext;
+
+void initializeWindowMenuContext(WindowMenuContext& ctx);
+void applyMenu(WindowMenuContext& ctx, int VItem);

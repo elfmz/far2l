@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileview.hpp"
 
 #include "fileview2options.hpp"
+#include "options.hpp"
 
 void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileViewer* fileView)
 {
@@ -117,6 +118,12 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 		{Msg::ViewerMenuNavigatePin9,	0,	KEY_CTRLSHIFT9  },
 	};
 
+	std::vector<ViewerBookmark> bookmarks = fileView->GetActiveBookmarks();
+	for(size_t j = 0; j < bookmarks.size(); ++j) {
+		fprintf(stderr, "filevew bm %d: %lld, %lld, `%ls`\n", bookmarks[j].index, bookmarks[j].FilePos, bookmarks[j].LeftPos, bookmarks[j].preview);
+		NavigateMenu[bookmarks[j].index + MENU_VIEW_NAVIGATE_BM_0].Name = bookmarks[j].preview;
+	}
+
 	MenuDataEx ViewMenu[] = {
 		{Msg::ViewerMenuKeyBar,	0,	KEY_CTRLB  },
 		{Msg::ViewerMenuTitleBar,	0,	KEY_CTRLSHIFTB  },
@@ -135,11 +142,27 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 		{Msg::ViewerMenuFileOptions,	0,	KEY_ALTSHIFTF9  },
 	};
 
+	// plugins menu
+	std::vector<MenuItemData> plugins = CtrlObject->Plugins.GetMenuItems(MODALTYPE_VIEWER);
+	int PluginsMenuSize = std::min(128, (int)plugins.size());
+	MenuDataEx PluginsMenu[128];
+
+	for(size_t i = 0; i < plugins.size() && i < 128; ++i) {
+		PluginsMenu[i].Name = plugins[i].name.c_str();
+		PluginsMenu[i].Flags = 0;
+		PluginsMenu[i].AccelKey = 0;
+	}
+
+	WindowMenuContext wc;
+	initializeWindowMenuContext(wc);
+
 	HMenuData MainMenu[] = {
 		{Msg::ViewerMenuFileTitle,     1, FileMenu,      ARRAYSIZE(FileMenu),       L"Viewer"},
 		{Msg::ViewerMenuToolsTitle,    0, ToolsMenu,     ARRAYSIZE(ToolsMenu),      L"Viewer" },
 		{Msg::ViewerMenuNavigateTitle, 0, NavigateMenu,  ARRAYSIZE(NavigateMenu),   L"Viewer" },
-		{Msg::ViewerMenuViewTitle,     0, ViewMenu,      ARRAYSIZE(ViewMenu),       L"Viewer" }
+		{Msg::ViewerMenuViewTitle,     0, ViewMenu,      ARRAYSIZE(ViewMenu),       L"Viewer" },
+		{Msg::EditorMenuPluginsTitle, 0, PluginsMenu, PluginsMenuSize, L"Viewer" },
+		{Msg::MenuWindowTitle, 0, wc.WindowMenu,     wc.WindowMenuCount,     L"Viewer"      }
 	};
 
 	static int LastHItem = -1, LastVItem = 0;
@@ -159,7 +182,7 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 		HOptMenu.SetPosition(0, gap, ScrX, gap);
 
 		if (LastCommand) {
-			MenuDataEx *VMenuTable[] = {FileMenu, ToolsMenu, NavigateMenu, ViewMenu};
+			MenuDataEx *VMenuTable[] = {FileMenu, ToolsMenu, NavigateMenu, ViewMenu, PluginsMenu, wc.WindowMenu };
 			int HItemToShow = LastHItem;
 
 			MainMenu[0].Selected = 0;
@@ -192,6 +215,14 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 			FrameManager->ProcessKey(KEY_F12);
 			break;
 		}
+	}
+	else if (HItem == MENU_VIEW_PLUGINS) {
+		CtrlObject->Plugins.OpenPlugin(plugins[VItem].pluginItem.pPlugin, OPEN_VIEWER, plugins[VItem].pluginItem.nItem);
+		return;
+	}
+	else if (HItem == MENU_VIEW_WINDOW) {
+		applyMenu(wc, VItem);
+		return;
 	}
 
 	if (HItem >= 0 && VItem >= 0) {

@@ -4973,6 +4973,39 @@ upd:"&View"
 upd:"&View"
 upd:"&View"
 
+EditorMenuMacroTitle
+"&Макрос"
+"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+upd:"&Macro"
+
+EditorMenuPluginsTitle
+"&Плагины"
+"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+upd:"&Plug-ins"
+
+PanelWindowNewEditor
+upd:"Edit new file...                    Shift+F4"
+"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+upd:"Edit new file...                    Shift+F4"
+
 EditorMenuFileOpen
 "&Открыть...                          Shift+F4"
 "&Open...                             Shift+F4"
@@ -5732,6 +5765,17 @@ upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
 
+EditorMenuViewEOL
+"Окончания строк                    Ctrl+Shift+F5"
+"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+"Закінчення рядків                  Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+
 EditorMenuViewTabs
 "Конвертировать табуляции в пробелы  Ctrl+F5"
 "Toggle tabs to spaces conversion    Ctrl+F5"
@@ -5841,6 +5885,17 @@ upd:"S&how title bar"
 upd:"S&how title bar"
 "Показувати &заголовок"
 "Адлюстроўваць &загаловак"
+
+EditorMenuMacroRecord
+"&Записать Макрос                     Ctrl+."
+"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
+upd:"&Record macro                        Ctrl+."
 
 EditShowMenuBar
 "Показывать меню"
@@ -17543,6 +17598,17 @@ MenuRightTitle
 "&Derecho"
 "&Права"
 "&Правая"
+
+MenuWindowTitle
+"&Окна"
+"&Window"
+"upd:&Window"
+"upd:&Window"
+"upd:&Window"
+"upd:&Window"
+"upd:&Window"
+"upd:&Window"
+"upd:&Window"
 
 MenuSortTitle
 l:

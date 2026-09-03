@@ -145,7 +145,6 @@ public:
 private:
 	struct Fields // lazily instantiated and accessed by EcoLazy
 	{
-		EcoVector<ColorItem> ColorList;
 		EcoVector<int> WrapBreaks;
 
 		int LeftPos{0};
@@ -162,11 +161,11 @@ private:
 		bool IsDefault() const
 		{
 			return LeftPos == 0 && CurPos == 0 && PrevCurPos == 0 && CursorPos == 0
-				&& MSelStart == -1 && SelStart == -1 && SelEnd == 0
-				&& WrapBreaks.empty() && ColorList.empty();
+				&& MSelStart == -1 && SelStart == -1 && SelEnd == 0 && WrapBreaks.empty();
 		}
 	};
 	struct MyEcoLazy : EcoLazy<Fields> {} fields;
+	EcoVector<ColorItem> ColorList; // all colors will be fullfilled by colorer as its fast now
 	EcoString Str;
 
 private:
@@ -220,7 +219,8 @@ public:
 	void SetListener(IEditListener *Listener = nullptr);
 	IEditListener *GetListener();
 
-	void Compact();
+	void Compact() { Str.Compact(); }
+	bool IsCompact() const { return Str.IsCompact(); }
 
 	DWORD SetCodePage(UINT codepage);	// BUGBUG
 	UINT GetCodePage();					// BUGBUG
@@ -247,18 +247,46 @@ public:
 
 	void SetShowWhiteSpace(int Mode) { Flags.Change(FEDITLINE_SHOWWHITESPACE, Mode); }
 
-	void GetString(wchar_t *Data, int MaxSize);
-	void GetString(FARString &dst, const wchar_t **EOL = nullptr);
-	void GetString(std::wstring &dst, const wchar_t **EOL = nullptr);
-	std::wstring GetString();
+	void GetString(int Offset, wchar_t *Data, int MaxSize);
+	inline void GetString(wchar_t *Data, int MaxSize)
+	{
+		GetString(0, Data, MaxSize);
+	}
 
-	int GetStringLength(const wchar_t **EOL = nullptr);
+	template <class DST_T>
+		void GetString(DST_T &dst, const wchar_t **EOL = nullptr)
+	{
+		if (EOL)
+			*EOL = GetEOL();
+
+		Str.CopyTo(dst);
+	}
+
+	template <class CMP_T>
+		bool EqualTo(CMP_T &to)
+	{
+		return Str.EqualTo(to);
+	}
+
+	std::wstring GetString()
+	{
+		std::wstring out;
+		Str.CopyTo(out);
+		return out;
+	}
+
+	int GetLength(const wchar_t **EOL = nullptr);
 
 	// NB: GetStringAddr functions have implicit memory overhead due to they forcing uncompacting of underlying string
-	// so prefer use GetString()/GetStringLength() if need to massive-query multiple lines, or use Compact() afterwards
+	// so prefer use GetString()/GetLength() if need to massive-query multiple lines, or use Compact() afterwards
 	// to avoid memory usage surge
 	const wchar_t *GetStringAddr(int &Length, const wchar_t **EOL = nullptr);
 	const wchar_t *GetStringAddr();
+
+	inline const wchar_t GetChar(int Pos) // similar to but faster than GetStringAddr()[Pos]
+	{
+		return Str.At(Pos);
+	}
 
 	void SetHiString(const wchar_t *Str);
 	void SetString(const wchar_t *Str, int Length = -1);
@@ -266,12 +294,11 @@ public:
 	void SetBinaryString(const wchar_t *Str, int Length);
 
 	void SetEOL(const wchar_t *EOL);
+	void SetEOL(const char *EOL);
 	const wchar_t *GetEOL();
 
 	int GetSelString(wchar_t *Data, int MaxSize);
 	int GetSelString(FARString &strStr);
-
-	int GetLength();
 
 	void InsertString(const wchar_t *Str);
 	void InsertBinaryString(const wchar_t *Str, int Length);
@@ -306,15 +333,27 @@ public:
 	int CellPosToReal(int Pos);
 	void Select(int Start, int End);
 	void AddSelect(int Start, int End);
-	void GetSelection(int &Start, int &End);
-	std::pair<int, int> GetSelection()
-	{
-		std::pair<int, int> out;
-		GetSelection(out.first, out.second);
-		return out;
-	}
+
 	bool IsSelection();
-	void GetRealSelection(int &Start, int &End);
+
+	struct Selection { int Start, End; };
+
+	Selection GetSelection();
+	void GetSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
+	Selection GetRealSelection();
+	void GetRealSelection(int &Start, int &End)
+	{
+		const auto &Sel = GetRealSelection();
+		Start = Sel.Start;
+		End = Sel.End;
+	}
+
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
 	void SetWordWrap(int Wrap) { Flags.Change(FEDITLINE_WORDWRAP, Wrap != 0); }
 	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }
@@ -385,6 +424,13 @@ public:
 	void EnableAC(bool Permanent = false);
 	void DisableAC(bool Permanent = false);
 	void RevertAC() { ACState ? EnableAC() : DisableAC(); }
+	void SetFNComplete(bool Enable)
+	{
+		if (Enable)
+			ECFlags.Set(EC_ENABLEFNCOMPLETE);
+		else
+			ECFlags.Clear(EC_ENABLEFNCOMPLETE);
+	}
 	void ShowCustomCompletionList(const std::vector<std::string> &list);
 	void SetOverflowArrowsColor(uint64_t Color) { OverflowArrowsColor = Color; }
 };

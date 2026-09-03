@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
+#include "scrbuf.hpp"
 #include "farcolors.hpp"
 #include "config.hpp"
 #include "processname.hpp"
@@ -60,6 +61,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmdline.hpp"
 #include "UsedChars.hpp"
 #include "help.hpp"
+
+namespace
+{
+FARString MenuDisplayText(const FARString &text)
+{
+	FARString display(text);
+	ReplaceStrings(display, L"\r", L"\x240D", -1);
+	ReplaceStrings(display, L"\n", L"\x21B5", -1);
+	return display;
+}
+}
 
 VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 		MenuDataEx *Data,				// пункты меню
@@ -449,6 +461,8 @@ int VMenu::AddItem(const MenuItemEx *NewItem, int PosAdd)
 	// Item[PosAdd]->AmpPos = NewItem->AmpPos;
 	Item[PosAdd]->AmpPos = -1;
 	Item[PosAdd]->PrefixLen = NewItem->PrefixLen;
+	Item[PosAdd]->HiliteStart = NewItem->HiliteStart;
+	Item[PosAdd]->HiliteLength = NewItem->HiliteLength;
 	// Item[PosAdd]->ShowPos = NewItem->ShowPos;
 	Item[PosAdd]->ShowPos = 0;
 
@@ -481,6 +495,9 @@ int VMenu::UpdateItem(const FarListUpdate *NewItem)
 		FarList2MenuItem(&NewItem->Item, &MItem);
 
 		PItem->strName = MItem.strName;
+		// текст пункта заменён - старая подсветка к нему уже не относится
+		PItem->HiliteStart = 0;
+		PItem->HiliteLength = 0;
 
 		UpdateItemFlags(NewItem->Index, MItem.Flags);
 
@@ -1019,10 +1036,11 @@ int VMenu::ProcessKey(FarKey Key)
 				int _len;
 
 				for (int I = 0; I < ItemCount; ++I) {
+					const FARString itemText = MenuDisplayText(Item[I]->strName);
 					if (CheckFlags(VMENU_SHOWAMPERSAND))
-						_len = static_cast<int>(Item[I]->strName.CellsCount());
+						_len = static_cast<int>(itemText.CellsCount());
 					else
-						_len = HiStrCellsCount(Item[I]->strName);
+						_len = HiStrCellsCount(itemText);
 
 					if (_len >= MaxLineWidth)
 						Item[I]->ShowPos = _len - MaxLineWidth;
@@ -1426,11 +1444,12 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 {
 	int _len;
 	int ItemShowPos = Item[Pos]->ShowPos;
+	const FARString itemText = MenuDisplayText(Item[Pos]->strName);
 
 	if (VMFlags.Check(VMENU_SHOWAMPERSAND))
-		_len = (int)Item[Pos]->strName.CellsCount();
+		_len = (int)itemText.CellsCount();
 	else
-		_len = HiStrCellsCount(Item[Pos]->strName);
+		_len = HiStrCellsCount(itemText);
 
 	if (_len < MaxLineWidth || (Direct < 0 && !ItemShowPos) || (Direct > 0 && ItemShowPos > _len))
 		return false;
@@ -1441,7 +1460,7 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 		else
 			ItemShowPos++;
 	} else {
-		ItemShowPos = HiFindNextVisualPos(Item[Pos]->strName, ItemShowPos, Direct);
+		ItemShowPos = HiFindNextVisualPos(itemText, ItemShowPos, Direct);
 	}
 
 	if (ItemShowPos < 0)
@@ -1696,11 +1715,12 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 	// BUGBUG, this must be optimized
 	for (int i = 0; i < ItemCount; i++) {
 		int ItemLen;
+		const FARString itemText = MenuDisplayText(Item[i]->strName);
 
 		if (CheckFlags(VMENU_SHOWAMPERSAND))
-			ItemLen = static_cast<int>(Item[i]->strName.CellsCount());
+			ItemLen = static_cast<int>(itemText.CellsCount());
 		else
-			ItemLen = HiStrCellsCount(Item[i]->strName);
+			ItemLen = HiStrCellsCount(itemText);
 
 		if (ItemLen > MaxItemLength)
 			MaxItemLength = ItemLen;
@@ -1894,10 +1914,11 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1, Y);
 
 				FARString strMenuLine;
+				FARString itemText = MenuDisplayText(Item[I]->strName);
 
 				int ShowPos =
-						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
+						HiFindRealPos(itemText, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+				FARString strMItemPtr(itemText.CPtr() + ShowPos);
 				const int strMItemPtrLen = CheckFlags(VMENU_SHOWAMPERSAND)
 					? static_cast<int>(strMItemPtr.CellsCount())
 					: HiStrCellsCount(strMItemPtr);
@@ -1971,6 +1992,36 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					int Width = X2 - WhereX() + (BoxType == NO_BOX ? 1 : 0);
 					if (Width > 0)
 						FS << fmt::Expand(Width) << L"";
+				}
+
+				// подсветка произвольного фрагмента пункта (HiliteStart/HiliteLength)
+				if (Item[I]->HiliteLength > 0) {
+					const FARString &ItemName = Item[I]->strName;
+					const int NameLen = (int)ItemName.GetLength();
+					const int HiFrom = std::max(Item[I]->HiliteStart, ShowPos);
+					const int HiTo = std::min(Item[I]->HiliteStart + Item[I]->HiliteLength, NameLen);
+
+					if (HiTo > HiFrom) {
+						// смещения внутри строки заданы в символах, а на экране нужны ячейки;
+						// без VMENU_SHOWAMPERSAND пункт рисуется через HiText(), который съедает
+						// амперсанды, так что и ячейки надо считать точно так же
+						const FARString strUpToFrom(ItemName.CPtr() + ShowPos, HiFrom - ShowPos);
+						const FARString strUpToTo(ItemName.CPtr() + ShowPos, HiTo - ShowPos);
+						const bool ShowAmpersand = CheckFlags(VMENU_SHOWAMPERSAND);
+						const int FromCell = ShowAmpersand
+							? (int)strUpToFrom.CellsCount()
+							: HiStrCellsCount(strUpToFrom);
+						const int ToCell = ShowAmpersand
+							? (int)strUpToTo.CellsCount()
+							: HiStrCellsCount(strUpToTo);
+
+						if (FromCell < MaxLineWidth) {
+							const int TextX = (BoxType != NO_BOX ? X1 + 1 : X1) + 1;	// +1 - место под "галочку"
+							ScrBuf.ApplyColor(TextX + FromCell, Y, TextX + Min(ToCell, MaxLineWidth) - 1, Y,
+									Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorHSelect
+																		: VMenuColorHilite]);
+						}
+					}
 				}
 
 				if (Item[I]->Flags & MIF_SUBMENU) {

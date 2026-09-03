@@ -359,15 +359,11 @@ static ULONG ShellCalcCountOfItemsToDelete(Panel *SrcPanel, bool Wipe)
 				if (!SDMS.Update(strSelName, Wipe))
 					return (ULONG)-1;
 
-				uint32_t CurrentFileCount, CurrentDirCount, ClusterSize;
-				UINT64 FileSize, PhysicalSize;
-
-				if (GetDirInfo(nullptr, strSelName, CurrentDirCount, CurrentFileCount, FileSize, PhysicalSize,
-							ClusterSize, -1, nullptr, 0)
-						<= 0)
+				DirInfo di;
+				if (di.FromFS(strSelName, 0) <= 0)
 					return (ULONG)-1;
 
-				ItemsCount+= CurrentFileCount + CurrentDirCount;
+				ItemsCount+= di.FileCount + di.DirCount;
 			}
 		}
 	}

@@ -287,3 +287,5 @@ public:
 };
 
 const char *PluginsIni();
+
+void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel = false);

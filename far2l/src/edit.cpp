@@ -216,11 +216,6 @@ Edit::~Edit()
 	s_e2s.Dismiss(this);
 }
 
-void Edit::Compact()
-{
-	Str.Compact();
-}
-
 void Edit::SetListener(IEditListener *Listener)
 {
 	if (auto *s = s_e2s.Get(this, Listener != nullptr)) {
@@ -580,7 +575,18 @@ void Edit::FastShow()
 				case 0x2066 ... 0x206F:
 					wc = L'\x2194'; // ↔
 					break;
+				case 0x000A: //line feed
+					wc = L'\x240A'; // ␊
+					break;
+				case 0x000D: //carriage return
+					wc = L'\x240D'; // ␍
+					break;
 			}
+		} else {
+			if (wc == L'\n')
+				wc = L'\x21B5'; // ↵
+			else if (wc == L'\r')
+				wc = L'\x240D'; // ␍
 		}
 
 		if (wc == L'\t') {
@@ -1172,6 +1178,8 @@ int Edit::ProcessKey(FarKey Key)
 
 			my->PrevCurPos = my->CurPos;
 			my->CurPos = CalcPosBwd();
+			if (Mask && *Mask)
+				my->CurPos = GetNextCursorPos(my->CurPos, -1);
 
 			while (my->LeftPos > 0 && RealPosToCell(my->CurPos) <= my->LeftPos) {
 				my->LeftPos-= 15;
@@ -1882,21 +1890,32 @@ void Edit::SetString(const wchar_t *Str, int Length)
 	SetBinaryString(Str, Length == -1 ? (int)StrLength(Str) : Length);
 }
 
-void Edit::SetEOL(const wchar_t *EOL)
-{
-	SetEndType(EOL_NONE);
 
+template <class CHAR_T>
+	int TypeOfEOL(const CHAR_T *EOL)
+{
 	if (EOL && *EOL) {
 		if (EOL[0] == L'\r')
 			if (EOL[1] == L'\n')
-				SetEndType(EOL_CRLF);
+				return EOL_CRLF;
 			else if (EOL[1] == L'\r' && EOL[2] == L'\n')
-				SetEndType(EOL_CRCRLF);
+				return EOL_CRCRLF;
 			else
-				SetEndType(EOL_CR);
+				return EOL_CR;
 		else if (EOL[0] == L'\n')
-			SetEndType(EOL_LF);
+			return EOL_LF;
 	}
+	return EOL_NONE;
+}
+
+void Edit::SetEOL(const wchar_t *EOL)
+{
+	SetEndType(TypeOfEOL(EOL));
+}
+
+void Edit::SetEOL(const char *EOL)
+{
+	SetEndType(TypeOfEOL(EOL));
 }
 
 const wchar_t *Edit::GetEOL()
@@ -2001,7 +2020,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		*/
 		RefreshStrByMask(!*Str);
 	} else {
-		if (!this->Str.Assign(Str, Length, true)) {
+		if (!this->Str.Assign(Str, Length)) {
 			fprintf(stderr, "Edit::SetBinaryString: failed to assign to length of %d\n", Length);
 			return;
 		}
@@ -2029,39 +2048,22 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 	Changed();
 }
 
-void Edit::GetString(wchar_t *Data, int MaxSize)
+void Edit::GetString(int Offset, wchar_t *Data, int MaxSize)
 {
 	if (LIKELY(MaxSize > 0)) {
-		const auto l = std::min(Str.Size(), MaxSize - 1);
-		Str.CopyTo(Data, 0, l);
-		Data[l] = 0;
+		if (Offset < Str.Size()) {
+			const auto l = std::min(Str.Size() - Offset, MaxSize);
+			Str.CopyTo(Data, Offset, l);
+			if (l < MaxSize) {
+				Data[l] = 0;
+			}
+		} else {
+			Data[0] = 0;
+		}
 	}
 }
 
-void Edit::GetString(FARString &dst, const wchar_t **EOL)
-{
-	if (EOL)
-		*EOL = EOL_TYPE_CHARS[GetEndType()];
-
-	Str.CopyTo(dst);
-}
-
-void Edit::GetString(std::wstring &dst, const wchar_t **EOL)
-{
-	if (EOL)
-		*EOL = EOL_TYPE_CHARS[GetEndType()];
-
-	Str.CopyTo(dst);
-}
-
-std::wstring Edit::GetString()
-{
-	std::wstring out;
-	Str.CopyTo(out);
-	return out;
-}
-
-int Edit::GetStringLength(const wchar_t **EOL)
+int Edit::GetLength(const wchar_t **EOL)
 {
 	if (EOL)
 		*EOL = EOL_TYPE_CHARS[GetEndType()];
@@ -2089,7 +2091,6 @@ const wchar_t *Edit::GetStringAddr(int &Length, const wchar_t **EOL)
 	Length = 0;
 	return L"";
 }
-
 
 int Edit::GetSelString(wchar_t *Data, int MaxSize)
 {
@@ -2213,11 +2214,6 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 		/*else
 			MessageBeep(MB_ICONHAND);*/
 	}
-}
-
-int Edit::GetLength()
-{
-	return Str.Size();
 }
 
 // Функция установки маски ввода в объект Edit
@@ -2687,7 +2683,9 @@ void Edit::Select(int Start, int End)
 	my->SelStart = Start;
 	my->SelEnd = End;
 
-	SanitizeSelectionRange();
+	if (Start != -1 || End != 0) {
+		SanitizeSelectionRange();
+	}
 }
 
 void Edit::AddSelect(int Start, int End)
@@ -2711,7 +2709,7 @@ bool Edit::IsSelection()
 	return my->SelStart != -1 || my->SelEnd != 0;
 }
 
-void Edit::GetSelection(int &Start, int &End)
+Edit::Selection Edit::GetSelection()
 {
 	/*
 		$ 17.09.2002 SKV
@@ -2725,22 +2723,21 @@ void Edit::GetSelection(int &Start, int &End)
 		SelStart=Str.Size()+1;
 	*/
 	/* SKV $ */
-	MyEcoLazy::See my(fields);
-	Start = my->SelStart;
-	End = my->SelEnd;
+	Selection Sel = GetRealSelection();
 
-	if (End > Str.Size())
-		End = -1;	// StrSize;
+	if (Sel.End > Str.Size())
+		Sel.End = -1;	// StrSize;
 
-	if (Start > Str.Size())
-		Start = Str.Size();
+	if (Sel.Start > Str.Size())
+		Sel.Start = Str.Size();
+
+	return Sel;
 }
 
-void Edit::GetRealSelection(int &Start, int &End)
+Edit::Selection Edit::GetRealSelection()
 {
 	MyEcoLazy::See my(fields);
-	Start = my->SelStart;
-	End = my->SelEnd;
+	return {my->SelStart, my->SelEnd};
 }
 
 void Edit::DeleteBlock()
@@ -2794,45 +2791,41 @@ void Edit::DeleteBlock()
 
 void Edit::AddColor(const ColorItem *col)
 {
-	MyEcoLazy::Use my(fields);
-	my->ColorList.emplace_back(*col);
+	ColorList.emplace_back(*col);
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	MyEcoLazy::Use my(fields);
-	if (my->ColorList.empty())
+	if (ColorList.empty())
 		return 0;
 
 	size_t Dest, Src;
 
-	for (Src = Dest = 0; Src < my->ColorList.size(); ++Src)
-		if (ColorPos != -1 && my->ColorList[Src].StartPos != ColorPos) {
+	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
+		if (ColorPos != -1 && ColorList[Src].StartPos != ColorPos) {
 			if (Dest != Src)
-				my->ColorList[Dest] = my->ColorList[Src];
+				ColorList[Dest] = ColorList[Src];
 
 			++Dest;
 		}
 
-	const size_t DelCount = my->ColorList.size() - Dest;
-	my->ColorList.resize(Dest);
+	const size_t DelCount = ColorList.size() - Dest;
+	ColorList.resize(Dest);
 	return DelCount;
 }
 
 bool Edit::GetColor(ColorItem *col, int Item)
 {
-	MyEcoLazy::See my(fields);
-	if ((size_t)Item >= my->ColorList.size())
+	if ((size_t)Item >= ColorList.size())
 		return false;
 
-	*col = my->ColorList[Item];
+	*col = ColorList[Item];
 	return true;
 }
 
 void Edit::ApplyColor()
 {
-	MyEcoLazy::Use my(fields);
-	if (my->ColorList.empty())
+	if (ColorList.empty())
 		return;
 
 	uint64_t Color, SelColor, ColorUnChanged;
@@ -2841,8 +2834,9 @@ void Edit::ApplyColor()
 	// Для оптимизации сохраняем вычисленные позиции между итерациями цикла
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
+	MyEcoLazy::See my(fields);
 	// Обрабатываем элементы ракраски
-	for (auto &CurItem : my->ColorList) {
+	for (auto &CurItem : ColorList) {
 
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)

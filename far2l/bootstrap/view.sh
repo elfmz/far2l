@@ -47,6 +47,15 @@ echo "" >>"$2" 2>&1
 echo "$FILE" >> "$2"
 echo "$FILEMIME" >> "$2"
 
+if [[ "$1" = *.md ]] && [[ "$FILE" = *' text'* ]] ; then
+	if command -v glow >/dev/null 2>&1; then
+		CLICOLOR_FORCE=1 COLORTERM=truecolor glow --style dark "$1" >> "$2"
+		exit 0
+	else
+		echo "Install <glow> to see it well-formatted" >>"$2" 2>&1
+	fi
+fi
+
 FILEMIMEALT=""
 
 if command -v exiftool >/dev/null 2>&1; then

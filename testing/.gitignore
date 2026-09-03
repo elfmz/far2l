@@ -1,3 +1,4 @@
 far2l-smoke
 go.sum
 workdir
+!Makefile

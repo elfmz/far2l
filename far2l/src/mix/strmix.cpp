@@ -346,6 +346,13 @@ FARString &WINAPI RemoveLeadingSpaces(FARString &strStr)
 }
 
 // удалить конечные пробелы
+void RemoveTrailingSpaces(std::wstring &Str)
+{
+	while (!Str.empty() && (IsSpace(Str.back()) || IsEol(Str.back()))) {
+		Str.pop_back();
+	}
+}
+
 wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str)
 {
 	if (!Str)

@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bitflags.hpp"
 #include "config.hpp"
 #include <unordered_map>
+#include <vector>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
@@ -66,6 +67,22 @@ struct InternalEditorStackBookMark
 	InternalEditorStackBookMark *prev, *next;
 };
 
+// координаты одного найденного вхождения (поиск по кнопке "Все")
+struct EditorFoundCoord
+{
+	int Line;
+	int Pos;
+	int SearchLen;
+};
+
+// чем закончился сбор вхождений для поиска по кнопке "Все"
+enum class EditorFindAllResult
+{
+	Completed,	// файл просмотрен целиком
+	Aborted,	// пользователь прервал поиск
+	TooMany,	// вхождений больше, чем имеет смысл показывать списком
+};
+
 struct EditorCacheParams
 {
 	int Line;
@@ -81,17 +98,16 @@ struct EditorCacheParams
 
 struct EditorUndoData
 {
-	int Type {0};
+	EcoString Str;
+	char EOL[4]{0};
 	int StrPos {0};
 	int StrNum {0};
-	wchar_t EOL[10]{0};
-	int Length {0};
-	wchar_t *Str {nullptr};
+	short Type {0};
+	bool HasStr{false};
 
 	EditorUndoData() = default;
 	~EditorUndoData()
 	{
-	    delete[] Str;
 	}
 	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
 	{
@@ -99,32 +115,45 @@ struct EditorUndoData
 	}
 	EditorUndoData& operator=(const EditorUndoData &src)
 	{
-		if (this != &src)
-		{
-			SetData(src.Type, src.Str, src.EOL, src.StrNum, src.StrPos, src.Length);
+		if (this != &src) {
+			Type = src.Type;
+			StrPos = src.StrPos;
+			StrNum = src.StrNum;
+			CharArrayCpyZ(EOL, src.EOL);
+			HasStr = src.HasStr;
+			Str = src.Str;
 		}
 		return *this;
 	}
-	void SetData(int Type, const wchar_t *Str, const wchar_t *Eol, int StrNum, int StrPos, int Length = -1)
+	void SetAttributes(short SetType, int SetStrNum, int SetStrPos)
 	{
-		if (Length == -1 && Str)
-			Length = (int)StrLength(Str);
-
-		this->Type = Type;
-		this->StrPos = StrPos;
-		this->StrNum = StrNum;
-		this->Length = Length;
-		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
-
-	    delete[] this->Str;
-
-		if (Str) {
-			this->Str = new (std::nothrow) wchar_t[Length + 1];
-
-			if (this->Str)
-				wmemmove(this->Str, Str, Length);
-		} else
-			this->Str = nullptr;
+		Type = SetType;
+		StrNum = SetStrNum;
+		StrPos = SetStrPos;
+	}
+	void SetData(const wchar_t *SetStr, const wchar_t *Eol, int Length = -1)
+	{
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
+		if (SetStr) {
+			Str.Assign(SetStr, (Length < 0) ? StrLength(SetStr) : Length);
+			HasStr = true;
+		} else {
+			Str.Truncate();
+			HasStr = false;
+		}
+	}
+	void SetData(Edit *Line)
+	{
+		const wchar_t *Eol = nullptr;
+		Line->GetString(this->Str, &Eol);
+		CharArrayCpyZ(EOL, Eol ? Eol : L"");
+		HasStr = true;
+	}
+	void ToEdit(Edit *Line)
+	{
+		Line->SetString(Str.CPtr(), Str.Size());
+		Line->SetEOL(EOL);	// необходимо дополнительно выставлять, т.к. SetString вызывает Edit::SetBinaryString и... дальше по тексту
+		Str.Compact();
 	}
 };
 
@@ -217,6 +246,7 @@ private:
 
 	int XX2;	// scrollbar
 
+	std::wstring strTmp, strGet;
 	FARString strLastSearchStr;
 	/*
 		$ 30.07.2000 KM
@@ -302,8 +332,13 @@ private:
 	void ScrollDown();
 	void ScrollUp();
 	BOOL Search(int Next);
+	BOOL SearchAll(const FARString &strSearchStr, int Case, int WholeWords, int Regexp, int SelectFound);
+	EditorFindAllResult CollectFoundItems(const FARString &strSearchStr, int Case, int WholeWords,
+			int Regexp, std::vector<EditorFoundCoord> &FoundItems);
+	void ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int SelectFound);
+	void SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound);
 
-void GoToVisualLine(int VisualLine);
+	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 
@@ -322,8 +357,10 @@ void GoToVisualLine(int VisualLine);
 	void ProcessPasteEvent();
 	void ProcessPasteEventFromPrimary();
 
-	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
-			int StrPos = 0, int Length = -1);
+	void AddUndoData(short Type, int StrNum, int StrPos, Edit *Line);
+	void AddUndoData(short Type, int StrNum = 0, int StrPos = 0, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int Length = -1);
+	EditorUndoData *BeginAddingUndoData(short Type, int StrNum, int StrPos);
+
 	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();

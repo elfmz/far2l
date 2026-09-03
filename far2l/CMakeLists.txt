@@ -181,6 +181,7 @@ src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 src/mix/GitTools.cpp
+src/mix/WideCharToMultiByteBuffer.cpp
 src/shoco/shoco.c
 )
 
@@ -272,7 +273,7 @@ set_target_properties(far2l
     PROPERTIES
     ENABLE_EXPORTS TRUE)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD|OpenBSD")
     target_link_libraries(far2l
     PRIVATE ${WINPORT}
     PRIVATE c
@@ -287,6 +288,10 @@ else()
     PRIVATE ${WINPORT}
         PRIVATE dl
         PRIVATE ${UCHARDET_LIBRARIES})
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    target_link_libraries(far2l PRIVATE execinfo)
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD

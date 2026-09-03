@@ -14,6 +14,7 @@ class KeyTracker
 	bool _composing = false;
 #ifndef __WXMAC__
 	bool _right_control = false;
+	bool _right_alt = false;
 #endif
 	wxKeyEvent _last_keydown;
 	DWORD _last_keydown_ticks = 0;
@@ -31,6 +32,9 @@ public:
 	bool Shift() const;
 	bool LeftControl() const;
 	bool RightControl() const;
+
+	bool RightAlt() const;
+	bool LeftAlt() const;
 
 	bool Composing() const { return _composing; }
 

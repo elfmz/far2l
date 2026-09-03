@@ -203,8 +203,7 @@ void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx, int Sy, bool Damaged)
 	Rec.Event.WindowBufferSizeEvent.dwSize.X = Sx == -1 ? Size.X : Sx;
 	Rec.Event.WindowBufferSizeEvent.dwSize.Y = Sy == -1 ? Size.Y : Sy;
 	Rec.Event.WindowBufferSizeEvent.bDamaged = Damaged ? TRUE : FALSE;
-	DWORD Writes;
-	Console.WriteInput(Rec, 1, Writes);
+	Console.WriteInput(Rec);
 }
 
 void GetVideoMode(COORD &Size)
@@ -562,7 +561,7 @@ void Text(const WCHAR *Str, size_t Length)
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
 		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses::IsFullWidth(&Str[i])) {
+		if (CharClasses::IsFullWidth(&Str[i], Length - i)) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else if (CharClasses::IsXxxfix(Str[i])) {
@@ -611,7 +610,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 		}
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses::IsFullWidth(&Str[i])) {
+		if (CharClasses::IsFullWidth(&Str[i], Length - i)) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else	if (CharClasses::IsXxxfix(Str[i])) {

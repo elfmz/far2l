@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="verilog">
+      <annotation>
+         <documentation><![CDATA[
+           Verilog
+         ]]></documentation>
+         <contributors><![CDATA[
+           Aliaksei <Aliaksei@neotec.com.tw>
+             Initial revision
+           Igor Russkih - Sat 08 Jan 01:05:50 2005
+             primitive/endprimitive
+           Aleksey Dobrunov <ctapmex@ctapmex.com>
+         ]]></contributors>
+      </annotation>
+
+      <import type="def"/>
+
+      <region name="verWord" parent="Keyword"/>
+      <region name="verSymb" parent="Symbol"/>
+      <region name="verBad" parent="ErrorText"/>
+      <region name="verString" parent="String"/>
+      <region name="verComment" parent="Comment"/>
+      <region name="verNumb" parent="Number"/>
+      <region name="verExpr" parent="Directive"/>
+      <region name="verTask" parent="String"/>
+      <region name="PreprocWord" parent="def:Directive"/>
+      <region name="PreprocInclude" parent="def:Path"/>
+      <region name="PreprocIncludeEdge" parent="def:StringEdge"/>
+
+
+      <scheme name="verComment">
+<!-- Linear Comments -->
+         <regexp match="/\/\/.*$/" region0="Comment"/>
+         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="verComment" region00="PairStart" region10="PairEnd"/>
+      </scheme>
+
+      <scheme name="verNumbers">
+         <regexp match="/\[\`\w+\-1\:0\]/" region0="verNumb" region2="KeywordStrong"/>
+         <regexp match="/\[\w+\]/" region0="verNumb" region2="KeywordStrong"/>
+         <regexp match="/\b\d+\'h[\da-fA-F]+\b/i" region0="verNumb" region1="verNumb"/>
+         <regexp match="/\b\d+\'o[0-7]+\b/" region0="verNumb"/>
+         <regexp match="/\b\d+\'b[01\?xz]+\b/" region0="verNumb"/>
+         <regexp match="/\b\d+\b/" region0="verNumb"/>
+      </scheme>
+
+      <scheme name="verSymbols">
+         <keywords region="verSymb">
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name="["/>
+            <symb name="]"/>
+            <symb name="&lt;"/>
+            <symb name="&gt;"/>
+<!--symb name="("><symb name=")"-->
+            <symb name=","/>
+            <symb name="."/>
+            <symb name=":"/>
+            <symb name=";"/>
+            <symb name="~"/>
+            <symb name="|"/>
+            <symb name="="/>
+            <symb name="&amp;"/>
+            <symb name="?"/>
+            <symb name="^"/>
+            <symb name="-"/>
+            <symb name="+"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="verMacroArgs">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="verMacroArgs"/>
+         </inherit>
+         <inherit scheme="verSymbols"/>
+      </scheme>
+
+      <!-- compiler macros: `name or `name(...) with nested parentheses, like C -->
+      <scheme name="verMacro">
+         <block start="/(`\w+)\s*(\()/" end="/(\))/" scheme="verMacroArgs"
+                region00="PreprocWord" region01="PreprocWord" region02="PairStart"
+                region10="verSymb" region11="PairEnd"/>
+         <regexp match="/`\w+/" region0="PreprocWord"/>
+      </scheme>
+
+      <scheme name="verPreproc">
+         <block start="/`include\s*((&quot;))/" end="/(&quot;)/"
+                scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+                region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+                region02="def:PairStart" region11="def:PairEnd"/>
+         <block start="/`include\s*((&lt;))/" end="/(&gt;)/"
+                scheme="def:Path" region="PreprocInclude" region00="PreprocWord"
+                region01="PreprocIncludeEdge" region10="PreprocIncludeEdge"
+                region02="def:PairStart" region11="def:PairEnd"/>
+         <regexp match="/(`define)\s+([^\s]+)\s+(.*)/x" region1="def:Directive" region2="def:Keyword" region3="def:Identifier"/>
+         <regexp match="/(`timescale)\s+(\d+\w+)\s*\/\s*(\d+\w+)/x" region1="def:Directive" region2="def:Keyword" region3="def:Keyword"/>
+         <inherit scheme="verMacro"/>
+      </scheme>
+
+      <scheme name="verilog2">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="verilog2"/>
+         </inherit>
+         <inherit scheme="verSymbols"/>
+         <keywords region="Keyword">
+            <word name="input"/>
+            <word name="output"/>
+            <word name="inout"/>
+         </keywords>
+<!--
+  <regexp match="/\b\d+\'x[\da-fA-F]+\b/" region0="verNumb"/>
+  <regexp match="/\b[\d\.]+([eE][\-+]?\d+)?\b/" region0="verNumb"/>
+  Strings
+  <regexp match='/"((\\.)|[^\\"])*?"/' region0="verString"/>
+  <regexp match="/'..??'/" region0="verString"/>
+-->
+      </scheme>
+
+      <scheme name="verCase">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <keywords region="verWord">
+            <word name="&lt;="/>
+            <word name="default"/>
+         </keywords>
+         <keywords region="verWord">
+            <symb name="("/>
+            <symb name=")"/>
+            <symb name="{"/>
+            <symb name="}"/>
+            <symb name=","/>
+            <symb name=":"/>
+            <symb name=";"/>
+         </keywords>
+      </scheme>
+
+      <scheme name="verBegin">
+         <block start="/\b (begin) \b/x" end="/\b (end) \b/x" scheme="verBeginCore" region00="Keyword" region10="Keyword" region01="PairStart" region11="PairEnd"/>
+      </scheme>
+
+      <scheme name="verBeginCore">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verBegin"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <block start="/\b (case) \b/x" end="/\b (endcase) \b/x" scheme="verCase" region00="Keyword" region10="Keyword" region01="PairStart" region11="PairEnd"/>
+         <keywords region="verWord">
+            <word name="if"/>
+            <word name="else"/>
+         </keywords>
+         <inherit scheme="verSymbols"/>
+      </scheme>
+
+      <scheme name="verModule">
+         <inherit scheme="verComment"/>
+         <inherit scheme="verNumbers"/>
+         <inherit scheme="verMacro"/>
+         <inherit scheme="verBegin"/>
+<!--block start="/ \b always \s* \@ \s* \((.*)\) \s+ if \s* \((.*)\) /" end="/\;/"-->
+         <regexp match="/\b (always) \s* \@ \s* (\()(.*)(\)) /x" region1="verWord" region3="verString" region2="PairStart" region4="PairEnd"/>
+         <inherit scheme="PairedBrackets">
+            <virtual scheme="PairedBrackets" subst-scheme="verModule"/>
+         </inherit>
+         <block start="/\b (task) \s+ (\w+)/x" end="/\b (endtask) \b/x" scheme="verBeginCore" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b(parameter|wire|reg|assign)/" end="/\;/" scheme="verilog2" region00="Keyword" region10="Keyword"/>
+         <!-- ANSI port lists put input/output inside (...); do not consume ')' -->
+         <block start="/\b(input|output|inout)/" end="/;|\M\)/" scheme="verilog2" region00="Keyword" region10="Keyword"/>
+         <inherit scheme="verSymbols"/>
+<!--block start="/\bdefparam/" end="/\;/" scheme="verilog2"
+    region00="Keyword" region10="Keyword"/-->
+      </scheme>
+
+      <scheme name="verBad">
+         <regexp match="/\S+/" region0="Error" priority="low"/>
+      </scheme>
+
+      <!-- module/primitive whose name is a compiler macro: `name or `name(...) -->
+      <scheme name="verModuleMacroName">
+         <block start="/~\s*(\()/" end="/(\))/" scheme="verMacroArgs"
+                region00="verSymb" region01="PairStart"
+                region10="verSymb" region11="PairEnd"/>
+         <inherit scheme="verModule"/>
+      </scheme>
+
+      <scheme name="verilog">
+         <inherit scheme="verPreproc"/>
+         <inherit scheme="verComment"/>
+         <block start="/\b (module) \s+ (`\w+) /x" end="/\b (endmodule) \b/x" scheme="verModuleMacroName" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (module)\s+ (\w+) /x" end="/\b (endmodule) \b/x" scheme="verModule" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (primitive) \s+ (`\w+) /x" end="/\b (endprimitive) \b/x" scheme="verModuleMacroName" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <block start="/\b (primitive)\s+ (\w+) /x" end="/\b (endprimitive) \b/x" scheme="verModule" region00="verWord" region01="PairStart" region02="Function" region10="verWord" region11="PairEnd"/>
+         <inherit scheme="verBad"/>
+      </scheme>
+
+   </type>
+</hrc>
+<!--
+Copyright (C) 1999-2005 Cail Lomecb <irusskih@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

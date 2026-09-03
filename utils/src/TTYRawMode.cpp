@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "TTYRawMode.h"
 
 TTYRawMode::TTYRawMode(int std_in, int std_out)
@@ -10,14 +11,15 @@ TTYRawMode::TTYRawMode(int std_in, int std_out)
 		if (tcgetattr(std_in, &_ts) != 0) {
 			return;
 		}
-		_fd = std_in;
+		_fd = dup(std_in);
 	} else {
-		_fd = std_out;
+		_fd = dup(std_out);
 	}
 
 	struct termios ts_ne = _ts;
 	cfmakeraw(&ts_ne);
 	if (tcsetattr( _fd, TCSADRAIN, &ts_ne ) != 0) {
+		close(_fd);
 		_fd = -1;
 	}
 }
@@ -28,6 +30,7 @@ TTYRawMode::~TTYRawMode()
 		if (tcsetattr(_fd, TCSADRAIN, &_ts) != 0) {
 			perror("~TTYRawMode - tcsetattr");
 		}
+		close(_fd);
 	}
 }
 

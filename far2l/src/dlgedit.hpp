@@ -53,7 +53,7 @@ enum DLGEDITTYPE
 
 class Dialog;
 
-class DlgEdit : public ScreenObject
+class DlgEdit : public ScreenObject, protected IEditListener
 {
 public:
 	// for CtrlEnd
@@ -70,7 +70,7 @@ public:
 
 	virtual void Show();
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
-	virtual void GetPosition(int &X1, int &Y1, int &X2, int &Y2);
+	void GetPosition(int &X1, int &Y1, int &X2, int &Y2) const override;
 
 	virtual void Hide();
 	virtual void Hide0();
@@ -82,6 +82,7 @@ public:
 	void SetDialogParent(DWORD Sets);
 	void SetDropDownBox(int NewDropDownBox);
 	void SetPasswordMode(int Mode);
+	void SetTabSize(int NewSize);
 
 	int GetMaxLength();
 	void SetMaxLength(int Length);
@@ -140,10 +141,10 @@ public:
 	int GetReadOnly();
 	void SetReadOnly(int NewReadOnly);
 
-	void SetCallbackState(bool Enable)
+	void SetListening(bool Enable)
 	{
 		if (Type == DLGEDIT_SINGLELINE)
-			lineEdit->SetCallbackState(Enable);
+			lineEdit->SetListener(Enable ? this : nullptr);
 	}
 	void AutoComplete(bool Manual, bool DelBlock)
 	{
@@ -183,6 +184,6 @@ private:
 	bool m_dialogEditorOpened;
 
 	virtual void DisplayObject();
-	static void EditChange(void *aParam);
-	void DoEditChange();
+
+	virtual void OnEditChanged(Edit *edit);
 };

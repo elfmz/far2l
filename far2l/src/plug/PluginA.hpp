@@ -166,7 +166,6 @@ public:
 
 	const FARString &GetModuleName() { return m_strModuleName; }
 	const char *GetSettingsName() { return m_strSettingsName.c_str(); }
-	DWORD GetSysID() { return SysID; }
 	bool CheckWorkFlags(DWORD flags) { return WorkFlags.Check(flags) == TRUE; }
 	DWORD GetWorkFlags() { return WorkFlags.Flags; }
 	DWORD GetFuncFlags() { return FuncFlags.Flags; }

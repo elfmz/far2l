@@ -61,6 +61,7 @@ public:
 	static bool InitFarColorsFromFile( const std::string& file ) noexcept;
 
 	void Set() noexcept {
+		AdjustContrastLevels();
 		memcpy(setcolors, colors, sizeof(setcolors[0]) * SIZE_ARRAY_FARCOLORS);
 	}
 
@@ -87,6 +88,8 @@ public:
 		return SIZE_ARRAY_FARCOLORS;
 	}
 
+	void AdjustContrastLevels() noexcept;
+
 	static std::vector<std::string> GetKnownUserThemes ();
 	static std::vector<std::string> GetKnownSystemThemes ();
 };
@@ -99,3 +102,9 @@ inline uint64_t FarColorToReal(unsigned int FarColor)
 extern uint8_t BlackColorsIndex16[SIZE_ARRAY_FARCOLORS];
 extern uint8_t DefaultColorsIndex16[SIZE_ARRAY_FARCOLORS];
 
+#include "Colorspace.h"
+
+void extractColorComponents(int color, int& r, int& g, int& b);
+void extractColor(uint64_t color, RGB& fg, RGB& bg);
+int assembleColorComponents(int r, int g, int b);
+uint64_t assembleColor(RGB& fg, RGB& bg);

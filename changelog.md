@@ -5,13 +5,58 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Quick view panel: directory summary information improvements; colorer on for file preview
+* _colorer plugin_: now working in Viewer (by defauil off) and Quick View panel (by default on), configurable in FarColorer's settings in Viewer coloring combobox
+* Several bugfixes and improvements
+
+## 2.9.0 beta (2026-08-27)
+* _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)
+* _New:_ Added a new option "Auto save panels state" (in "System settings") and details choice of categories in manual config saving (via **Shift+F9**)
+* _New:_ Added a new option "Show startup banner in built-in terminal"
+* Themes:
+added "CRT Classic", "Catpuccin Macchiato", "Fallout Red",  "Hercules Classic", "Hercules Night", "MDA Classic", "Ogres and Goblins",
+fixes to "Gold on Blue" and "DOS Navigator"
+* **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
+* _New:_ Automatic color contrast correction (toggled in **F9**->Options->Interface settings->Auto-adjust colors contrast)
+* _New:_ Colored diff of two files from file panels, editable, mergeable (from file panels **Ctrl+D** and **Ctrl+Shift+D** or **F9**->Commands->File diff)
+* **Ctrl+Enter** supports selected files to be placed in command line (toggled in **F9**->Options->Command line settings)
+* _New:_ Multiline command line support (see: [#3228](https://github.com/elfmz/far2l/issues/3228))
+* Macro Browser (**F9**->Commands->Macro Browser): for Macros now support operations Add, Edit, Delete, Enable/Disable and Show List of Global Constants, Global Variables and MacroFunctions
+* _New_: `--nodetect=e` command line parameter to prevent emoji VS16 suffix detection
+* _New_: Restore initial terminal cursor shape on exit
+* Editor: "All" button in search dialog - list all occurrences at once
+* Editor/Viewer: search/replace dialog: don't start search if search string is empty or regular expression is invalid
+* Viewer: Hex Mode now supports multibyte UTF-8, UTF-16 etc.
+* Viewer: Printing support from viewer (via **Alt+F5**)
+* Fix cmdline autocomplete when commands deduplicated by text
+* Fix AltGr producing uppercase letters in WX backend
+* SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
+* _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system (see [plugins/adb/README.md](https://github.com/elfmz/far2l/blob/master/plugins/adb/README.md))
+* _colorer plugin_: Update colorer schemes to v1.2.0.110 (see: [CHANGELOG.md](https://github.com/elfmz/far2l/blob/master/plugins/colorer/configs/base/CHANGELOG.md))
+* _colorer plugin_: Update colorer library to v1.5.0-19.08.2026: Parser and regexp performance, dramatically increased initial coloring for large files (see: [#3567](https://github.com/elfmz/far2l/issues/3567))
+* _edsort plugin_: Support unique row sorting and preserve dialog values
+* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** or **Ctrl+Shift+G** to open the nearest hunk at the current editor line
+* _jumpword plugin_: New plugin in editor to quick searches the word under the cursor below or above the current location (for use manually add macros, see: [plugins/jumpword/README.md](https://github.com/elfmz/far2l/blob/master/plugins/jumpword/README.md))
+* _MTP plugin_: New panel plugin to browse and manage files on USB-connected MTP/PTP devices (Android, cameras, iOS Camera Roll, media players); see [plugins/mtp/README.md](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md))
+* _multiarc plugin_: Update bundled unrar sources to 7.23
+* _NetRocks plugin_: AWS support with biuld-in custom S3 implementation based on neon (not need aws-sdk-cpp anymore)
+* _NetRocks plugin_: FISH+ protocol: Server-side copy, Recursive delete in one round trip, Remote search / server-side grep, etc. (see: [FISHPLUS/INTEGRATION.md](https://github.com/elfmz/far2l/blob/master/plugins/NetRocks/src/Protocol/FISHPLUS/INTEGRATION.md) and [#3542](https://github.com/elfmz/far2l/issues/3542))
+* _ImageViewer plugin_: New actions: **I** / **F3** - show full EXIF metadata using `exiftool`; **G** / **Alt+F8** - choose a map service and open the GPS location from the current file's EXIF metadata in a browser; **T** / **Ctrl+F10** - exit and move the panel cursor to the currently viewed file. Fix extra commands menu logic and data consistency.
+* _OpenWith plugin_: Update to v1.3. **General**: Added a progress dialog allowing cancellation of application discovery; allow plugin invocation on `..` (treated as the current directory); new option "Display filename in the menu title"; bugfixes and help updates. **Linux/BSD**: new options "Show package qualifiers", "Ignore [Removed Associations] section", "Query system defaults via xdg-mime"; new buttons "GoTo .desktop", "GoTo TryExec", and "GoTo source" in the "Details" dialog. **macOS**: more comprehensive information in the "Details" dialog; new "GoTo bundle location" button in the "Details" dialog; new options "Show UTI instead of MIME types", "Respect system ranking", "Disable ranking and sort alphabetically".
+* _python plugin_: plugin manager (upluginmanager.py), fixes and new subplugins uhashes.py uimgimage.py, uimgpdf.py, ustealer.py (see: [#3346](https://github.com/elfmz/far2l/issues/3346) and [#3439](https://github.com/elfmz/far2l/pull/3439))
+* _Transformer plugin_: New plugin in panel and editor (**F11**->Transform) to generic Unix-filter dispatcher for transforming editor selections, complete editor buffers, and selected panel files with configurable external commands
+* Several bugfixes and improvements
+
+## 2.8.0 beta (2026-03-23)
 * Themes support (change via **F9**->Options->Colors),
   changes only RGB colors of interface (not change palette colors and Colorer in editor)
 * Editor: Word wrap (like in Windows Notepad or HTML textareas), toggled by **F3** or **Alt+W**
 * Editor: Line numbers (toggled by **Ctrl+F3**)
 * Editor: Mouse selection (hold **Alt** to vertical block selection)
 * Editor: Menu in editor (**F9** to open)
+* Editor: Printing support from editor, including text highlighting (via **Alt+F5**)
 * Viewer: Links automatic highlight and clickable for URLs starting with https:, http: or mailto: (toggled on/off in Viewer options)
+* Viewer: Menu in viewer (**F9** to open)
 * File panels: New sort option "executables first" (toggled inside **Ctrl+F12**)
 * File panels: Resume for copy operation
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
@@ -20,7 +65,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   **Left Ctrl+1**...**Left Ctrl+0** expands all branches to the chosen depth (1...10).
 * Dialog edit fields: Visual show trailing spaces/tabs and Select All by **Ctrl+A**
 * _New:_ Colored multiline edit control in "Multiline paste" and "Edit user menu" dialogs
-* _New:_ Options of the special command `edit:[line,col]` for openening file with position
+* _New:_ Options of the special command `edit:[line,col]` for opening file with position
 * _New:_ NetBSD support
 * _New:_ Show Pseudo-graphics on VT100+ terminals
 * _New:_ Macro Browser (**F9**->Commands->Macro Browser)
@@ -29,11 +74,13 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * TTY/Kitty: Map Cmd to Ctrl on macOS for Cmd+C/V/X/Z support
 * _NetRocks plugin_: FTP fixes with date/time, SFTP fixes with quotes
 * _hexitor plugin_: fix broken layout with narrow window
-* _ImageViewer plugin_: New panel plugin (**F11**->**I** to open image/video file).
+* _ImageViewer plugin_: New panel plugin (**F11**->Image Viewer or **Ctrl+PgDn** to open image/video file).
   Uses ImageMagick for graphics operations and ffmpeg for video preview,
   works in GUI and in TTY|F and TTY|k.
+* _memo plugin_: New multi-page scratchpad/memo common plugin
+  (**F11**->Memo or **Ctrl+Alt+S** inside Panel, Dialog, Editor or Viewer; see [plugins/memo/README.md](https://github.com/elfmz/far2l/blob/master/plugins/memo/README.md))
 * _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
-* _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
+* _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at chosen column
 * _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file
 * _multiarc plugin_: Update bundled 7z sources to 26.00
 * _multiarc plugin_: Update bundled unrar sources to 7.20
@@ -42,7 +89,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Several bugfixes and improvements
 
 ## 2.7.0 beta (2025-10-26)
-* Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.
+* Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original unwrapped lines.
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
 * _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
 * _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
@@ -50,7 +97,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
 * _New:_ support (and warning) for pasting and executing multiline text in command line
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
+* Workaround for wxWidgets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
@@ -65,7 +112,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _multiarc plugin_: Update bundled 7z sources to 25.01
 * _multiarc plugin_: Update bundled unrar sources to 7.13
 * _arclite plugin_: New plugin for archives processing
-  (now as experimental version which partially more effective then multiarc;
+  (now as experimental version which partially more effective than multiarc;
   arclite disabled by default, to enable manually turn on
   F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
 * _hexitor plugin_: Hex editor (ported from far3) + preliminary support for viewing and editing UTF-8 characters

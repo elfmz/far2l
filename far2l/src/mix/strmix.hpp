@@ -71,6 +71,7 @@ FARString &InsertRegexpQuote(FARString &strStr);
 void UnquoteExternal(FARString &strStr);
 wchar_t *WINAPI RemoveLeadingSpaces(wchar_t *Str);
 FARString &WINAPI RemoveLeadingSpaces(FARString &strStr);
+void RemoveTrailingSpaces(std::wstring &Str);
 wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str);
 FARString &WINAPI RemoveTrailingSpaces(FARString &strStr, bool keep_escaping=false);
 wchar_t *WINAPI RemoveExternalSpaces(wchar_t *Str);
@@ -141,3 +142,18 @@ ReplaceBrackets(const wchar_t *SearchStr, const FARString &ReplaceStr, RegExpMat
 bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARString &ReplaceStr,
 		int &CurPos, int Position, int Case, int WholeWords, int Reverse, int Regexp, int *SearchLength,
 		const wchar_t *WordDiv = nullptr);
+
+// Clear cached regex pattern (call when search pattern changes significantly)
+void ClearSearchStringCache();
+
+
+inline int MaxStrLength(const wchar_t *str)
+{
+	return StrLength(str);
+}
+
+template <class... OtherT>
+	int MaxStrLength(const wchar_t *str, OtherT... other)
+{
+	return std::max(MaxStrLength(str), MaxStrLength(other...));
+}

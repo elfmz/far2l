@@ -299,7 +299,6 @@ struct VTAnsiContext
 	std::mutex title_mutex;
 	IVTShell *vt_shell = nullptr;
 	std::string cur_title;
-	std::atomic<bool> output_disabled{false};
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
 	std::optional<VTAnsiKitty> vta_kitty;
 	std::mutex vta_kitty_mtx;
@@ -339,15 +338,15 @@ struct VTAnsiContext
 
 // ========== Print Buffer functions
 
-	void ApplyConsoleTitle(HANDLE con_hnd)
+	void ApplyConsoleTitle()
 	{
 		std::wstring title(1, L'[');
 		{
 			std::lock_guard<std::mutex> lock(title_mutex);
-			title+= StrMB2Wide(cur_title);
+			StrMB2Wide(cur_title, title, true);
 		}
 		title+= L']';
-		WINPORT(SetConsoleTitle)(con_hnd, title.c_str());
+		vt_shell->OnSetTitle(title.c_str());
 	}
 
 //-----------------------------------------------------------------------------
@@ -358,18 +357,12 @@ struct VTAnsiContext
 	void WriteConsoleIfEnabled(const WCHAR *str, DWORD len)
 	{
 		DWORD written;
-		if (!output_disabled) {
-			WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
-		}
+		WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
 	}
 
 	void FlushBuffer( void )
 	{
 		DWORD nWritten;
-
-		if (output_disabled) {
-			chars_in_buffer = 0;
-		}
 
 //fprintf(stderr, "FlushBuffer: %u\n", chars_in_buffer);
 		if (chars_in_buffer <= 0)
@@ -531,6 +524,15 @@ struct VTAnsiContext
 		vt_shell->InjectInput(seq);
 	}
 
+	void SendSequenceFmt( const char *fmt, ... )
+	{
+		va_list args;
+		va_start(args, fmt);
+		const auto &seq = StrPrintfV(fmt, args);
+		va_end(args);
+		SendSequence(seq.c_str());
+	}
+
 
 	class AlternativeScreenBuffer
 	{
@@ -573,20 +575,6 @@ struct VTAnsiContext
 
 // ========== Print functions
 
-//-----------------------------------------------------------------------------
-//   InterpretEscSeq()
-// Interprets the last escape sequence scanned by ParseAndPrintString
-//   prefix             escape sequence prefix
-//   es_argc            escape sequence args count
-//   es_argv[]          escape sequence args array
-//   suffix             escape sequence suffix
-//
-// for instance, with \e[33;45;1m we have
-// prefix = '[',
-// es_argc = 3, es_argv[0] = 33, es_argv[1] = 45, es_argv[2] = 1
-// suffix = 'm'
-//-----------------------------------------------------------------------------
-
 	void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 	{
 		size_t pos = 0;
@@ -606,9 +594,8 @@ struct VTAnsiContext
 					fg = bk;
 				}
 				// reply with OSC 4 ; index ; rgb : [red] / [green] / [blue] ST
-				const auto &reply = StrPrintf("\e]4;%d;rgb:%02x/%02x/%02x\a",
+				SendSequenceFmt("\e]4;%d;rgb:%02x/%02x/%02x\a",
 					orig_index, fg & 0xff, (fg >> 8) & 0xff, (fg >> 16) & 0xff);
-				SendSequence(reply.c_str());
 //				abort();
 				return;
 			}
@@ -708,6 +695,21 @@ struct VTAnsiContext
 		fprintf(stderr, "FailedEscSeq: '%s' due to '%s'\n", s.c_str(), why.c_str());
 	}
 
+//-----------------------------------------------------------------------------
+//   InterpretEscSeq()
+// Interprets the last escape sequence scanned by ParseAndPrintString
+//   prefix             escape sequence prefix
+//   es_argc            escape sequence args count
+//   es_argv[]          escape sequence args array
+//   suffix             escape sequence suffix
+//   suffix2            escape sequence extra suffix
+//
+// for instance, with \e[33;45;1m we have
+// prefix = '[',
+// es_argc = 3, es_argv[0] = 33, es_argv[1] = 45, es_argv[2] = 1
+// suffix = 'm'
+//-----------------------------------------------------------------------------
+
 	void InterpretEscSeq( void )
 	{
 		int i;
@@ -720,6 +722,16 @@ struct VTAnsiContext
 		CHAR_INFO  CharInfo;
 		DWORD      mode;
 		HANDLE con_hnd = vt_shell->ConsoleHandle();
+		if (suffix2 != 0) {
+			if (prefix == '[' && suffix == 'p' && suffix2 == '$') {
+				int mode = (es_argc > 0) ? es_argv[0] : 0;
+				int status = vt_shell->OnModeQuery(mode, prefix2 == '?');
+				SendSequenceFmt("\e%s%d;%d$y", (prefix2 == '?') ? "[?" : "[", mode, status);
+			}
+			return;
+		}
+
+
 		if (prefix == '[') {
 			if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 				for (i = 0; i < es_argc; ++i) {
@@ -786,8 +798,6 @@ struct VTAnsiContext
 				return;
 			}
 
-			// kitty keys stuff
-
 			if (suffix == 'u') {
 				if (prefix2 == '=') {
 					DWORD flags = (es_argc > 0) ? es_argv[0] : 0;
@@ -821,9 +831,7 @@ struct VTAnsiContext
 
 				} else if (prefix2 == '?') {
 					// reply with "CSI ? flags u"
-					char buf[64] = {0};
-					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
-					SendSequence( buf );
+					SendSequenceFmt("\x1b[?%du", vt_shell->GetKittyFlags());
 					return;
 				}
 			}
@@ -1147,12 +1155,9 @@ struct VTAnsiContext
 					SendSequence( "\x1b[0n" ); // "OK"
 					return;
 
-				case 6: {	// ESC[6n Report cursor position
-					char buf[64] = {0};
-					snprintf( buf, sizeof(buf), "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
-					SendSequence( buf );
-				}
-				return;
+				case 6: 	// ESC[6n Report cursor position
+					SendSequenceFmt("\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+					return;
 
 				default:
 					return;
@@ -1210,6 +1215,7 @@ struct VTAnsiContext
 				WINPORT(SetConsoleScrollRegion)(con_hnd, es_argv[0] - 1, es_argv[1] - 1);
 				return;
 
+
 			case 'c': // CSI P s c Send Device Attributes (Primary DA)
 				if (prefix2 == 0 && (es_argc < 1 || es_argv[0] == 0)) {
 					SendSequence("\e[?1;2c"); // → CSI ? 1 ; 2 c (‘‘VT100 with Advanced Video Option’’)
@@ -1235,7 +1241,7 @@ struct VTAnsiContext
 					cur_title.swap(os_cmd_arg);
 				}
 				os_cmd_arg.clear();
-				ApplyConsoleTitle(con_hnd);
+				ApplyConsoleTitle();
 
 			} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
@@ -1300,7 +1306,9 @@ struct VTAnsiContext
 				}
 
 			} else {
-				_crds.reset(); // prevent clipboard dialog miss repaints
+				// prevent clipboard dialog miss repaints and discard reference to
+				// console handle which can be invalidated due to start marker arrival
+				_crds.reset();
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}
@@ -1487,8 +1495,6 @@ struct VTAnsiContext
 					prefix2 = *s;
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc = 0;
 					suffix = *s;
@@ -1507,8 +1513,6 @@ struct VTAnsiContext
 					// ignore 'em
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc++;
 					suffix = *s;
@@ -1620,19 +1624,6 @@ VTAnsi::~VTAnsi()
 	_ctx->vt_shell = nullptr;
 }
 
-void VTAnsi::DisableOutput()
-{
-	_ctx->output_disabled = true;
-}
-
-void VTAnsi::EnableOutput()
-{
-	if (_ctx->output_disabled) {
-		_ctx->chars_in_buffer = 0;
-		_ctx->output_disabled = false;
-	}
-}
-
 struct VTAnsiState *VTAnsi::Suspend()
 {
 	VTAnsiState *out = new(std::nothrow) VTAnsiState;
@@ -1690,7 +1681,7 @@ void VTAnsi::OnReattached()
 		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
-	_ctx->ApplyConsoleTitle(con_hnd);
+	_ctx->ApplyConsoleTitle();
 	_ctx->ShowImages();
 }
 
@@ -1749,4 +1740,8 @@ std::string VTAnsi::GetTitle()
 {
 	std::lock_guard<std::mutex> lock(_ctx->title_mutex);
 	return _ctx->cur_title;
+}
+bool VTAnsi::IsCRM()
+{
+	return _ctx->ansi_state.crm;
 }

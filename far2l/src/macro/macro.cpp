@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "macro.hpp"
 #include "macroopcode.hpp"
+#include "macrobrowser.hpp"
 #include "keys.hpp"
 #include "keyboard.hpp"
 #include "lang.hpp"
@@ -85,181 +86,293 @@ struct DlgParam
 };
 
 TMacroKeywords MKeywords[] = {
-		{0, L"Other", MCODE_C_AREA_OTHER, 0},
-		{0, L"Shell", MCODE_C_AREA_SHELL, 0},
-		{0, L"Viewer", MCODE_C_AREA_VIEWER, 0},
-		{0, L"Editor", MCODE_C_AREA_EDITOR, 0},
-		{0, L"Dialog", MCODE_C_AREA_DIALOG, 0},
-		{0, L"Search", MCODE_C_AREA_SEARCH, 0},
-		{0, L"Disks", MCODE_C_AREA_DISKS, 0},
-		{0, L"MainMenu", MCODE_C_AREA_MAINMENU, 0},
-		{0, L"Menu", MCODE_C_AREA_MENU, 0},
-		{0, L"Help", MCODE_C_AREA_HELP, 0},
-		{0, L"Info", MCODE_C_AREA_INFOPANEL, 0},
-		{0, L"QView", MCODE_C_AREA_QVIEWPANEL, 0},
-		{0, L"Tree", MCODE_C_AREA_TREEPANEL, 0},
-		{0, L"FindFolder", MCODE_C_AREA_FINDFOLDER, 0},
-		{0, L"UserMenu", MCODE_C_AREA_USERMENU, 0},
-		{0, L"AutoCompletion", MCODE_C_AREA_AUTOCOMPLETION, 0},
+		{0, L"Other", MCODE_C_AREA_OTHER, 0,
+			L"Area [Boolean]: true if the \"Screen capturing mode\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Shell", MCODE_C_AREA_SHELL, 0,
+			L"Area [Boolean]: true if the \"File panels\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Viewer", MCODE_C_AREA_VIEWER, 0,
+			L"Area [Boolean]: true if the \"Internal viewer\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Editor", MCODE_C_AREA_EDITOR, 0,
+			L"Area [Boolean]: true if the \"Internal editor\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Dialog", MCODE_C_AREA_DIALOG, 0,
+			L"Area [Boolean]: true if the \"Dialog boxes\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Search", MCODE_C_AREA_SEARCH, 0,
+			L"Area [Boolean]: true if the \"Quick file search\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Disks", MCODE_C_AREA_DISKS, 0,
+			L"Area [Boolean]: true if the \"Drive selection menu\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"MainMenu", MCODE_C_AREA_MAINMENU, 0,
+			L"Area [Boolean]: true if the \"Main menu\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Menu", MCODE_C_AREA_MENU, 0,
+			L"Area [Boolean]: true if the \"Other menus\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Help", MCODE_C_AREA_HELP, 0,
+			L"Area [Boolean]: true if the \"Help system\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Info", MCODE_C_AREA_INFOPANEL, 0,
+			L"Area [Boolean]: true if the \"Informational panel\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"QView", MCODE_C_AREA_QVIEWPANEL, 0,
+			L"Area [Boolean]: true if the \"Quick view panel\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"Tree", MCODE_C_AREA_TREEPANEL, 0,
+			L"Area [Boolean]: true if the \"Folder tree panel\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"FindFolder", MCODE_C_AREA_FINDFOLDER, 0,
+			L"Area [Boolean]: true if the \"Folder search panel\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"UserMenu", MCODE_C_AREA_USERMENU, 0,
+			L"Area [Boolean]: true if the \"User menu\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{0, L"AutoCompletion", MCODE_C_AREA_AUTOCOMPLETION, 0,
+			L"Area [Boolean]: true if the \"Auto Completion List\"\nDetection of the current area of execution of the macro command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 
 		// ПРОЧЕЕ
-		{2, L"Bof", MCODE_C_BOF, 0},
-		{2, L"Eof", MCODE_C_EOF, 0},
-		{2, L"Empty", MCODE_C_EMPTY, 0},
-		{2, L"Selected", MCODE_C_SELECTED, 0},
+		{2, L"Bof", MCODE_C_BOF, 0,
+			L"Common [Boolean]: true if the \"Beginning of\"\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{2, L"Eof", MCODE_C_EOF, 0,
+			L"Common Other [Boolean]: true if the \"End of\"\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{2, L"Empty", MCODE_C_EMPTY, 0,
+			L"Common [Boolean]: true if the \"Empty\"\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{2, L"Selected", MCODE_C_SELECTED, 0,
+			L"Common [Boolean]: true if the \"A block is selected\"\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
 
-		{2, L"Far.Width", MCODE_V_FAR_WIDTH, 0},
-		{2, L"Far.Height", MCODE_V_FAR_HEIGHT, 0},
-		{2, L"Far.Title", MCODE_V_FAR_TITLE, 0},
-		{2, L"MacroArea", MCODE_V_MACROAREA, 0},
+		{2, L"Far.Width", MCODE_V_FAR_WIDTH, 0,
+			L"Common [Number]: FAR Manager console width\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{2, L"Far.Height", MCODE_V_FAR_HEIGHT, 0,
+			L"Common [Number]: FAR Manager console height\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{2, L"Far.Title", MCODE_V_FAR_TITLE, 0,
+			L"Common [String]: current title of FAR console window\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{2, L"MacroArea", MCODE_V_MACROAREA, 0,
+			L"Common [String]: name of the current macro area\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 
-		{2, L"ItemCount", MCODE_V_ITEMCOUNT, 0},	// ItemCount - число элементов в текущем объекте
-		{2, L"CurPos", MCODE_V_CURPOS, 0},			// CurPos - текущий индекс в текущем объекте
-		{2, L"Title", MCODE_V_TITLE, 0},
-		{2, L"Height", MCODE_V_HEIGHT, 0},
-		{2, L"Width", MCODE_V_WIDTH, 0},
+		{2, L"ItemCount", MCODE_V_ITEMCOUNT, 0,	// ItemCount - число элементов в текущем объекте
+			L"Common [Number]: number of elements in the current object; delimiters are also counted in the menu\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{2, L"CurPos", MCODE_V_CURPOS, 0,			// CurPos - текущий индекс в текущем объекте
+			L"Common [Number]: position in the current object\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{2, L"Title", MCODE_V_TITLE, 0,
+			L"Common [String]: title of the current object\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{2, L"Height", MCODE_V_HEIGHT, 0,
+			L"Common [Number]\nhttps://api.farmanager.com/ru/macro/macrocmd"},
+		{2, L"Width", MCODE_V_WIDTH, 0,
+			L"Common [Number]\nhttps://api.farmanager.com/ru/macro/macrocmd"},
 
-		{2, L"APanel.Empty", MCODE_C_APANEL_ISEMPTY, 0},
-		{2, L"PPanel.Empty", MCODE_C_PPANEL_ISEMPTY, 0},
-		{2, L"APanel.Bof", MCODE_C_APANEL_BOF, 0},
-		{2, L"PPanel.Bof", MCODE_C_PPANEL_BOF, 0},
-		{2, L"APanel.Eof", MCODE_C_APANEL_EOF, 0},
-		{2, L"PPanel.Eof", MCODE_C_PPANEL_EOF, 0},
-		{2, L"APanel.Root", MCODE_C_APANEL_ROOT, 0},
-		{2, L"PPanel.Root", MCODE_C_PPANEL_ROOT, 0},
-		{2, L"APanel.Visible", MCODE_C_APANEL_VISIBLE, 0},
-		{2, L"PPanel.Visible", MCODE_C_PPANEL_VISIBLE, 0},
-		{2, L"APanel.Plugin", MCODE_C_APANEL_PLUGIN, 0},
-		{2, L"PPanel.Plugin", MCODE_C_PPANEL_PLUGIN, 0},
-		{2, L"APanel.FilePanel", MCODE_C_APANEL_FILEPANEL, 0},
-		{2, L"PPanel.FilePanel", MCODE_C_PPANEL_FILEPANEL, 0},
-		{2, L"APanel.Folder", MCODE_C_APANEL_FOLDER, 0},
-		{2, L"PPanel.Folder", MCODE_C_PPANEL_FOLDER, 0},
-		{2, L"APanel.Selected", MCODE_C_APANEL_SELECTED, 0},
-		{2, L"PPanel.Selected", MCODE_C_PPANEL_SELECTED, 0},
-		{2, L"APanel.Left", MCODE_C_APANEL_LEFT, 0},
-		{2, L"PPanel.Left", MCODE_C_PPANEL_LEFT, 0},
-		{2, L"APanel.LFN", MCODE_C_APANEL_LFN, 0},
-		{2, L"PPanel.LFN", MCODE_C_PPANEL_LFN, 0},
-		{2, L"APanel.Filter", MCODE_C_APANEL_FILTER, 0},
-		{2, L"PPanel.Filter", MCODE_C_PPANEL_FILTER, 0},
+		{2, L"APanel.Empty", MCODE_C_APANEL_ISEMPTY, 0,
+			L"File panels [Boolean]: true if the panel is empty\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Empty", MCODE_C_PPANEL_ISEMPTY, 0,
+			L"File panels [Boolean]: true if the panel is empty\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Bof", MCODE_C_APANEL_BOF, 0,
+			L"File panels [Boolean]: true if the current panel item is the first\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Bof", MCODE_C_PPANEL_BOF, 0,
+			L"File panels [Boolean]: true if the current panel item is the first\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Eof", MCODE_C_APANEL_EOF, 0,
+			L"File panels [Boolean]: true if the current panel item is the last\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Eof", MCODE_C_PPANEL_EOF, 0,
+			L"File panels [Boolean]: true if the current panel item is the last\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Root", MCODE_C_APANEL_ROOT, 0,
+			L"File panels [Boolean]: true if the panel folder is root\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Root", MCODE_C_PPANEL_ROOT, 0,
+			L"File panels [Boolean]: true if the panel folder is root\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Visible", MCODE_C_APANEL_VISIBLE, 0,
+			L"All panels [Boolean]: true if the panel is visible\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Visible", MCODE_C_PPANEL_VISIBLE, 0,
+			L"All panels [Boolean]: true if the panel is visible\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Plugin", MCODE_C_APANEL_PLUGIN, 0,
+			L"File panels [Boolean]: true if the panel is a plugin panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Plugin", MCODE_C_PPANEL_PLUGIN, 0,
+			L"File panels [Boolean]: true if the panel is a plugin panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.FilePanel", MCODE_C_APANEL_FILEPANEL, 0,
+			L"All panels [Boolean]: true if the panel is a file panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.FilePanel", MCODE_C_PPANEL_FILEPANEL, 0,
+			L"All panels [Boolean]: true if the panel is a file panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Folder", MCODE_C_APANEL_FOLDER, 0,
+			L"File panels [Boolean]: true if the current panel item is the folder\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Folder", MCODE_C_PPANEL_FOLDER, 0,
+			L"File panels [Boolean]: true if the current panel item is the folder\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Selected", MCODE_C_APANEL_SELECTED, 0,
+			L"File panels [Boolean]: true if there are any files or folders selected on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Selected", MCODE_C_PPANEL_SELECTED, 0,
+			L"File panels [Boolean]: true if there are any files or folders selected on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Left", MCODE_C_APANEL_LEFT, 0,
+			L"All panels [Boolean]: true if the panel is a left panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Left", MCODE_C_PPANEL_LEFT, 0,
+			L"All panels [Boolean]: true if the panel is a left panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.LFN", MCODE_C_APANEL_LFN, 0,
+			L"File panels [Boolean]: true if LFN (long file names) is enabled for the panel (Windows legacy)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.LFN", MCODE_C_PPANEL_LFN, 0,
+			L"File panels [Boolean]: true if LFN (long file names) is enabled for the panel (Windows legacy)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Filter", MCODE_C_APANEL_FILTER, 0,
+			L"File panels [Boolean]: true if filter is enabled for the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Filter", MCODE_C_PPANEL_FILTER, 0,
+			L"File panels [Boolean]: true if filter is enabled for the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 
-		{2, L"APanel.Type", MCODE_V_APANEL_TYPE, 0},
-		{2, L"PPanel.Type", MCODE_V_PPANEL_TYPE, 0},
-		{2, L"APanel.ItemCount", MCODE_V_APANEL_ITEMCOUNT, 0},
-		{2, L"PPanel.ItemCount", MCODE_V_PPANEL_ITEMCOUNT, 0},
-		{2, L"APanel.CurPos", MCODE_V_APANEL_CURPOS, 0},
-		{2, L"PPanel.CurPos", MCODE_V_PPANEL_CURPOS, 0},
-		{2, L"APanel.Current", MCODE_V_APANEL_CURRENT, 0},
-		{2, L"PPanel.Current", MCODE_V_PPANEL_CURRENT, 0},
-		{2, L"APanel.SelCount", MCODE_V_APANEL_SELCOUNT, 0},
-		{2, L"PPanel.SelCount", MCODE_V_PPANEL_SELCOUNT, 0},
-		{2, L"APanel.Path", MCODE_V_APANEL_PATH, 0},
-		{2, L"PPanel.Path", MCODE_V_PPANEL_PATH, 0},
-		{2, L"APanel.Path0", MCODE_V_APANEL_PATH0, 0},
-		{2, L"PPanel.Path0", MCODE_V_PPANEL_PATH0, 0},
-		{2, L"APanel.UNCPath", MCODE_V_APANEL_UNCPATH, 0},
-		{2, L"PPanel.UNCPath", MCODE_V_PPANEL_UNCPATH, 0},
-		{2, L"APanel.Height", MCODE_V_APANEL_HEIGHT, 0},
-		{2, L"PPanel.Height", MCODE_V_PPANEL_HEIGHT, 0},
-		{2, L"APanel.Width", MCODE_V_APANEL_WIDTH, 0},
-		{2, L"PPanel.Width", MCODE_V_PPANEL_WIDTH, 0},
-		{2, L"APanel.OPIFlags", MCODE_V_APANEL_OPIFLAGS, 0},
-		{2, L"PPanel.OPIFlags", MCODE_V_PPANEL_OPIFLAGS, 0},
-		{2, L"APanel.DriveType", MCODE_V_APANEL_DRIVETYPE, 0},			// APanel.DriveType - активная панель: тип привода
-		{2, L"PPanel.DriveType", MCODE_V_PPANEL_DRIVETYPE, 0},			// PPanel.DriveType - пассивная панель: тип привода
-		{2, L"APanel.ColumnCount", MCODE_V_APANEL_COLUMNCOUNT, 0},		// APanel.ColumnCount - активная панель:  количество колонок
-		{2, L"PPanel.ColumnCount", MCODE_V_PPANEL_COLUMNCOUNT, 0},		// PPanel.ColumnCount - пассивная панель: количество колонок
-		{2, L"APanel.HostFile", MCODE_V_APANEL_HOSTFILE, 0},
-		{2, L"PPanel.HostFile", MCODE_V_PPANEL_HOSTFILE, 0},
-		{2, L"APanel.Prefix", MCODE_V_APANEL_PREFIX, 0},
-		{2, L"PPanel.Prefix", MCODE_V_PPANEL_PREFIX, 0},
+		{2, L"APanel.Type", MCODE_V_APANEL_TYPE, 0,
+			L"All panels [Number]: stores the type of the panel (0 - File panel, 1 - Tree panel, 2 - Quick view panel, 3 - Informational panel)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Type", MCODE_V_PPANEL_TYPE, 0,
+			L"All panels [Number]: stores the type of the panel (0 - File panel, 1 - Tree panel, 2 - Quick view panel, 3 - Informational panel)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.ItemCount", MCODE_V_APANEL_ITEMCOUNT, 0,
+			L"File panels [Number]: stores the number of the elements on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.ItemCount", MCODE_V_PPANEL_ITEMCOUNT, 0,
+			L"File panels [Number]: stores the number of the elements on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.CurPos", MCODE_V_APANEL_CURPOS, 0,
+			L"File panels [Number]: stores the index of an element on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.CurPos", MCODE_V_PPANEL_CURPOS, 0,
+			L"File panels [Number]: stores the index of an element on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Current", MCODE_V_APANEL_CURRENT, 0,
+			L"File panels [String]: stores the name of an element under the cursor\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Current", MCODE_V_PPANEL_CURRENT, 0,
+			L"File panels [String]: stores the name of an element under the cursor\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.SelCount", MCODE_V_APANEL_SELCOUNT, 0,
+			L"File panels [Number]: stores the number of the selected files on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.SelCount", MCODE_V_PPANEL_SELCOUNT, 0,
+			L"File panels [Number]: stores the number of the selected files on the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Path", MCODE_V_APANEL_PATH, 0,
+			L"File panels [String]: stores the path for the panel (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Path", MCODE_V_PPANEL_PATH, 0,
+			L"File panels [String]: stores the path for the panel (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Path0", MCODE_V_APANEL_PATH0, 0,
+			L"Plugin panels [String]: stores the path for the panel for real filesystem before plugin (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Path0", MCODE_V_PPANEL_PATH0, 0,
+			L"Plugin panels [String]: stores the path for the panel for real filesystem before plugin (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.UNCPath", MCODE_V_APANEL_UNCPATH, 0,
+			L"File panels [String]: stores the UNC path for the panel (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.UNCPath", MCODE_V_PPANEL_UNCPATH, 0,
+			L"File panels [String]: stores the UNC path for the panel (without trailing '/')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Height", MCODE_V_APANEL_HEIGHT, 0,
+			L"All panels [Number]: stores the height of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Height", MCODE_V_PPANEL_HEIGHT, 0,
+			L"All panels [Number]: stores the height of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Width", MCODE_V_APANEL_WIDTH, 0,
+			L"All panels [Number]: stores the width of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Width", MCODE_V_PPANEL_WIDTH, 0,
+			L"All panels [Number]: stores the width of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.OPIFlags", MCODE_V_APANEL_OPIFLAGS, 0,
+			L"Plugin panels [Number]: plugin panel flags, can be a combination of the values (if the panel is not a plugin panel then this value is 0)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.OPIFlags", MCODE_V_PPANEL_OPIFLAGS, 0,
+			L"Plugin panels [Number]: plugin panel flags, can be a combination of the values (if the panel is not a plugin panel then this value is 0)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.DriveType", MCODE_V_APANEL_DRIVETYPE, 0,			// APanel.DriveType - активная панель: тип привода
+			L"File panels [Number]: specifies the drive type of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.DriveType", MCODE_V_PPANEL_DRIVETYPE, 0,			// PPanel.DriveType - пассивная панель: тип привода
+			L"File panels [Number]: specifies the drive type of the panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.ColumnCount", MCODE_V_APANEL_COLUMNCOUNT, 0,		// APanel.ColumnCount - активная панель:  количество колонок
+			L"File panels [Number]: number of panel columns\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.ColumnCount", MCODE_V_PPANEL_COLUMNCOUNT, 0,		// PPanel.ColumnCount - пассивная панель: количество колонок
+			L"File panels [Number]: number of panel columns\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.HostFile", MCODE_V_APANEL_HOSTFILE, 0,
+			L"Plugin panels [String]: the name of the plugin panel host file (or empty)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.HostFile", MCODE_V_PPANEL_HOSTFILE, 0,
+			L"Plugin panels [String]: the name of the plugin panel host file (or empty)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"APanel.Prefix", MCODE_V_APANEL_PREFIX, 0,
+			L"Plugin panels [String]: plugin prefix or empty (or multiple prefixes separated by ':')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{2, L"PPanel.Prefix", MCODE_V_PPANEL_PREFIX, 0,
+			L"Plugin panels [String]: plugin prefix or empty (or multiple prefixes separated by ':')\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 
-		{2, L"CmdLine.Bof", MCODE_C_CMDLINE_BOF, 0},	// курсор в начале cmd-строки редактирования?
-		{2, L"CmdLine.Eof", MCODE_C_CMDLINE_EOF, 0},	// курсор в конеце cmd-строки редактирования?
-		{2, L"CmdLine.Empty", MCODE_C_CMDLINE_EMPTY, 0},
-		{2, L"CmdLine.Selected", MCODE_C_CMDLINE_SELECTED, 0},
-		{2, L"CmdLine.ItemCount", MCODE_V_CMDLINE_ITEMCOUNT, 0},
-		{2, L"CmdLine.CurPos", MCODE_V_CMDLINE_CURPOS, 0},
-		{2, L"CmdLine.Value", MCODE_V_CMDLINE_VALUE, 0},
+		{2, L"CmdLine.Bof", MCODE_C_CMDLINE_BOF, 0,	// курсор в начале cmd-строки редактирования?
+			L"Command line [Boolean]: true if the cursor is at the beginning of the command line\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.Eof", MCODE_C_CMDLINE_EOF, 0,	// курсор в конеце cmd-строки редактирования?
+			L"Command line [Boolean]: true if the cursor is at the end of the command line\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.Empty", MCODE_C_CMDLINE_EMPTY, 0,
+			L"Command line [Boolean]: true if the command line is empty\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.Selected", MCODE_C_CMDLINE_SELECTED, 0,
+			L"Command line [Boolean]: true if there is a selected block of text within the command line\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.ItemCount", MCODE_V_CMDLINE_ITEMCOUNT, 0,
+			L"Command line [Number]: number of characters in the command line\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.CurPos", MCODE_V_CMDLINE_CURPOS, 0,
+			L"Command line [Number]: current command line cursor position\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
+		{2, L"CmdLine.Value", MCODE_V_CMDLINE_VALUE, 0,
+			L"Command line [String]: command line content\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/cmdline.html"},
 
-		{2, L"Editor.FileName", MCODE_V_EDITORFILENAME, 0},
-		{2, L"Editor.CurLine", MCODE_V_EDITORCURLINE, 0},		// текущая линия в редакторе (в дополнении к Count)
-		{2, L"Editor.Lines", MCODE_V_EDITORLINES, 0},
-		{2, L"Editor.CurPos", MCODE_V_EDITORCURPOS, 0},
-		{2, L"Editor.RealPos", MCODE_V_EDITORREALPOS, 0},
-		{2, L"Editor.State", MCODE_V_EDITORSTATE, 0},
-		{2, L"Editor.Value", MCODE_V_EDITORVALUE, 0},
-		{2, L"Editor.SelValue", MCODE_V_EDITORSELVALUE, 0},
+		{2, L"Editor.FileName", MCODE_V_EDITORFILENAME, 0,
+			L"Editor [String]: full name of the file being edited\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.CurLine", MCODE_V_EDITORCURLINE, 0,		// текущая линия в редакторе (в дополнении к Count)
+			L"Editor [Number]: current line in the editor (first line is 1)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.Lines", MCODE_V_EDITORLINES, 0,
+			L"Editor [Number]: number of lines in the editor\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.CurPos", MCODE_V_EDITORCURPOS, 0,
+			L"Editor [Number]: current cursor position in the current line in the editor (first column is 1); tab size is accounted\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.RealPos", MCODE_V_EDITORREALPOS, 0,
+			L"Editor [Number]: current cursor position in the current line in the editor (first column is 1); without accounting for tab size\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.State", MCODE_V_EDITORSTATE, 0,
+			L"Editor [Number]: state of the current internal file editor - bit flag set\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.Value", MCODE_V_EDITORVALUE, 0,
+			L"Editor [Value]: contents of the current line in the editor (under the cursor)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{2, L"Editor.SelValue", MCODE_V_EDITORSELVALUE, 0,
+			L"Editor [String]: contents of the currebt selection\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 
-		{2, L"Dlg.ItemType", MCODE_V_DLGITEMTYPE, 0},
-		{2, L"Dlg.ItemCount", MCODE_V_DLGITEMCOUNT, 0},
-		{2, L"Dlg.CurPos", MCODE_V_DLGCURPOS, 0},
-		{2, L"Dlg.Info.Id", MCODE_V_DLGINFOID, 0},
+		{2, L"Dlg.ItemType", MCODE_V_DLGITEMTYPE, 0,
+			L"Dialogs [Number]: type of the element currently in focus\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/dialog.html"},
+		{2, L"Dlg.ItemCount", MCODE_V_DLGITEMCOUNT, 0,
+			L"Dialogs [Number]: number of elements in a dialog box\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/dialog.html"},
+		{2, L"Dlg.CurPos", MCODE_V_DLGCURPOS, 0,
+			L"Dialogs [Number]: the number of the item of a dialog box currently in focus\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/dialog.html"},
+		{2, L"Dlg.Info.Id", MCODE_V_DLGINFOID, 0,
+			L"Dialogs: \nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/dialog.html"},
 
-		{2, L"Help.FileName", MCODE_V_HELPFILENAME, 0},
-		{2, L"Help.Topic", MCODE_V_HELPTOPIC, 0},
-		{2, L"Help.SelTopic", MCODE_V_HELPSELTOPIC, 0},
+		{2, L"Help.FileName", MCODE_V_HELPFILENAME, 0,
+			L"Help [String]: full path to current help file being viewed\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/help.html"},
+		{2, L"Help.Topic", MCODE_V_HELPTOPIC, 0,
+			L"Help [String]: the ID of the topic being viewed (without the leading '@' character)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/help.html"},
+		{2, L"Help.SelTopic", MCODE_V_HELPSELTOPIC, 0,
+			L"Help [String]: the ID of the selected topic (without the leading '@' character)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/help.html"},
 
-		{2, L"Drv.ShowPos", MCODE_V_DRVSHOWPOS, 0},
-		{2, L"Drv.ShowMode", MCODE_V_DRVSHOWMODE, 0},
+		{2, L"Drv.ShowPos", MCODE_V_DRVSHOWPOS, 0,
+			L"Drive (location) menu [Number]: drive menu is shown for the left panel (AltF1, value 1) or the right panel (AltF2, value 2)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
+		{2, L"Drv.ShowMode", MCODE_V_DRVSHOWMODE, 0,
+			L"Drive (location) menu [Number]: drive menu representation flags; bitmask\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
 
-		{2, L"Viewer.FileName", MCODE_V_VIEWERFILENAME, 0},
-		{2, L"Viewer.State", MCODE_V_VIEWERSTATE, 0},
+		{2, L"Viewer.FileName", MCODE_V_VIEWERFILENAME, 0,
+			L"Viewer [String]: full name of the file being viewed\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/viewer.html"},
+		{2, L"Viewer.State", MCODE_V_VIEWERSTATE, 0,
+			L"Viewer [Number]: state of the current internal file viewer - bit flag set\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/viewer.html"},
 
-		{2, L"Menu.Value", MCODE_V_MENU_VALUE, 0},
+		{2, L"Menu.Value", MCODE_V_MENU_VALUE, 0,
+			L"Menu [String]: contents of the current menu item\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
 
-		{2, L"Fullscreen", MCODE_C_FULLSCREENMODE, 0},
-		{2, L"IsUserAdmin", MCODE_C_ISUSERADMIN, 0},
+		{2, L"Fullscreen", MCODE_C_FULLSCREENMODE, 0,
+			L"Common [Boolean]: true if FAR Manager is in the fullscreen mode\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{2, L"IsUserAdmin", MCODE_C_ISUSERADMIN, 0,
+			L"Common [Boolean]: true if FAR Manager is running as Administrator\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 };
 
 TMacroKeywords MKeywordsArea[] = {
-		{0, L"Funcs",          (DWORD)MACRO_FUNCS,          0},
-		{0, L"Consts",         (DWORD)MACRO_CONSTS,         0},
-		{0, L"Vars",           (DWORD)MACRO_VARS,           0},
-		{0, L"Other",          (DWORD)MACRO_OTHER,          0},
-		{0, L"Shell",          (DWORD)MACRO_SHELL,          0},
-		{0, L"Viewer",         (DWORD)MACRO_VIEWER,         0},
-		{0, L"Editor",         (DWORD)MACRO_EDITOR,         0},
-		{0, L"Dialog",         (DWORD)MACRO_DIALOG,         0},
-		{0, L"Search",         (DWORD)MACRO_SEARCH,         0},
-		{0, L"Disks",          (DWORD)MACRO_DISKS,          0},
-		{0, L"MainMenu",       (DWORD)MACRO_MAINMENU,       0},
-		{0, L"Menu",           (DWORD)MACRO_MENU,           0},
-		{0, L"Help",           (DWORD)MACRO_HELP,           0},
-		{0, L"Info",           (DWORD)MACRO_INFOPANEL,      0},
-		{0, L"QView",          (DWORD)MACRO_QVIEWPANEL,     0},
-		{0, L"Tree",           (DWORD)MACRO_TREEPANEL,      0},
-		{0, L"FindFolder",     (DWORD)MACRO_FINDFOLDER,     0},
-		{0, L"UserMenu",       (DWORD)MACRO_USERMENU,       0},
-		{0, L"AutoCompletion", (DWORD)MACRO_AUTOCOMPLETION, 0},
-		{0, L"Common",         (DWORD)MACRO_COMMON,         0},
+		{0, L"Funcs",          (DWORD)MACRO_FUNCS,          0, nullptr},
+		{0, L"Consts",         (DWORD)MACRO_CONSTS,         0, nullptr},
+		{0, L"Vars",           (DWORD)MACRO_VARS,           0, nullptr},
+		{0, L"Other",          (DWORD)MACRO_OTHER,          0, nullptr},
+		{0, L"Shell",          (DWORD)MACRO_SHELL,          0, nullptr},
+		{0, L"Viewer",         (DWORD)MACRO_VIEWER,         0, nullptr},
+		{0, L"Editor",         (DWORD)MACRO_EDITOR,         0, nullptr},
+		{0, L"Dialog",         (DWORD)MACRO_DIALOG,         0, nullptr},
+		{0, L"Search",         (DWORD)MACRO_SEARCH,         0, nullptr},
+		{0, L"Disks",          (DWORD)MACRO_DISKS,          0, nullptr},
+		{0, L"MainMenu",       (DWORD)MACRO_MAINMENU,       0, nullptr},
+		{0, L"Menu",           (DWORD)MACRO_MENU,           0, nullptr},
+		{0, L"Help",           (DWORD)MACRO_HELP,           0, nullptr},
+		{0, L"Info",           (DWORD)MACRO_INFOPANEL,      0, nullptr},
+		{0, L"QView",          (DWORD)MACRO_QVIEWPANEL,     0, nullptr},
+		{0, L"Tree",           (DWORD)MACRO_TREEPANEL,      0, nullptr},
+		{0, L"FindFolder",     (DWORD)MACRO_FINDFOLDER,     0, nullptr},
+		{0, L"UserMenu",       (DWORD)MACRO_USERMENU,       0, nullptr},
+		{0, L"AutoCompletion", (DWORD)MACRO_AUTOCOMPLETION, 0, nullptr},
+		{0, L"Common",         (DWORD)MACRO_COMMON,         0, nullptr},
 };
 
 TMacroKeywords MKeywordsFlags[] = {
 		// ФЛАГИ
-		{1, L"DisableOutput", MFLAGS_DISABLEOUTPUT, 0},
-		{1, L"RunAfterFARStart", MFLAGS_RUNAFTERFARSTART, 0},
-		{1, L"EmptyCommandLine", MFLAGS_EMPTYCOMMANDLINE, 0},
-		{1, L"NotEmptyCommandLine", MFLAGS_NOTEMPTYCOMMANDLINE, 0},
-		{1, L"EVSelection", MFLAGS_EDITSELECTION, 0},
-		{1, L"NoEVSelection", MFLAGS_EDITNOSELECTION, 0},
+		{1, L"DisableOutput", MFLAGS_DISABLEOUTPUT, 0, nullptr},
+		{1, L"RunAfterFARStart", MFLAGS_RUNAFTERFARSTART, 0, nullptr},
+		{1, L"EmptyCommandLine", MFLAGS_EMPTYCOMMANDLINE, 0, nullptr},
+		{1, L"NotEmptyCommandLine", MFLAGS_NOTEMPTYCOMMANDLINE, 0, nullptr},
+		{1, L"EVSelection", MFLAGS_EDITSELECTION, 0, nullptr},
+		{1, L"NoEVSelection", MFLAGS_EDITNOSELECTION, 0, nullptr},
 
-		{1, L"NoFilePanels", MFLAGS_NOFILEPANELS, 0},
-		{1, L"NoPluginPanels", MFLAGS_NOPLUGINPANELS, 0},
-		{1, L"NoFolders", MFLAGS_NOFOLDERS, 0},
-		{1, L"NoFiles", MFLAGS_NOFILES, 0},
-		{1, L"Selection", MFLAGS_SELECTION, 0},
-		{1, L"NoSelection", MFLAGS_NOSELECTION, 0},
+		{1, L"NoFilePanels", MFLAGS_NOFILEPANELS, 0, nullptr},
+		{1, L"NoPluginPanels", MFLAGS_NOPLUGINPANELS, 0, nullptr},
+		{1, L"NoFolders", MFLAGS_NOFOLDERS, 0, nullptr},
+		{1, L"NoFiles", MFLAGS_NOFILES, 0, nullptr},
+		{1, L"Selection", MFLAGS_SELECTION, 0, nullptr},
+		{1, L"NoSelection", MFLAGS_NOSELECTION, 0, nullptr},
 
-		{1, L"NoFilePPanels", MFLAGS_PNOFILEPANELS, 0},
-		{1, L"NoPluginPPanels", MFLAGS_PNOPLUGINPANELS, 0},
-		{1, L"NoPFolders", MFLAGS_PNOFOLDERS, 0},
-		{1, L"NoPFiles", MFLAGS_PNOFILES, 0},
-		{1, L"PSelection", MFLAGS_PSELECTION, 0},
-		{1, L"NoPSelection", MFLAGS_PNOSELECTION, 0},
+		{1, L"NoFilePPanels", MFLAGS_PNOFILEPANELS, 0, nullptr},
+		{1, L"NoPluginPPanels", MFLAGS_PNOPLUGINPANELS, 0, nullptr},
+		{1, L"NoPFolders", MFLAGS_PNOFOLDERS, 0, nullptr},
+		{1, L"NoPFiles", MFLAGS_PNOFILES, 0, nullptr},
+		{1, L"PSelection", MFLAGS_PSELECTION, 0, nullptr},
+		{1, L"NoPSelection", MFLAGS_PNOSELECTION, 0, nullptr},
 
-		{1, L"NoSendKeysToPlugins", MFLAGS_NOSENDKEYSTOPLUGINS, 0},
+		{1, L"NoSendKeysToPlugins", MFLAGS_NOSENDKEYSTOPLUGINS, 0, nullptr},
 };
 
 // транслирующая таблица - имя <-> код макроклавиши
@@ -268,18 +381,30 @@ static struct TKeyCodeName
 	uint32_t Key;
 	int Len;
 	const wchar_t *Name;
+	const wchar_t *Description;
 } KeyMacroCodes[] = {
-		{MCODE_OP_AKEY, 5, L"$AKey"},		// клавиша, которой вызвали макрос
-		{MCODE_OP_CONTINUE, 9, L"$Continue"},
-		{MCODE_OP_ELSE, 5, L"$Else"},
-		{MCODE_OP_END, 4, L"$End"},
-		{MCODE_OP_EXIT, 5, L"$Exit"},
-		{MCODE_OP_IF, 3, L"$If"},
-		{MCODE_OP_REP, 4, L"$Rep"},
-		{MCODE_OP_SELWORD, 8, L"$SelWord"},
-		{MCODE_OP_PLAINTEXT, 5, L"$Text"},		// $Text "Plain Text"
-		{MCODE_OP_WHILE, 6, L"$While"},
-		{MCODE_OP_XLAT, 5, L"$XLat"},
+		{MCODE_OP_AKEY, 5, L"$AKey",		// клавиша, которой вызвали макрос
+			L"The hotkey that was used to call the macro\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_CONTINUE, 9, L"$Continue",
+			L"Go to the next iteration of the loop\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_ELSE, 5, L"$Else",
+			L"Implements a conditional execution operator\n$If (Expr) TruePart [$Else FalsePart] $End\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_END, 4, L"$End",
+			L"End block of command $If or $Rep or $While\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_EXIT, 5, L"$Exit",
+			L"Stops macro command execution\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_IF, 3, L"$If",
+			L"Implements a conditional execution operator\n$If (Expr) TruePart [$Else FalsePart] $End\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_REP, 4, L"$Rep",
+			L"Implements the iterative process - Execute the Sequence Expr number of times\n$Rep (Expr) Sequence $End\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_SELWORD, 8, L"$SelWord",
+			L"Select the word under the cursor\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_PLAINTEXT, 5, L"$Text",		// $Text "Plain Text"
+			L"Insert arbitrary text\n$Text \"string\"\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_WHILE, 6, L"$While",
+			L"Implements an iterative process - Execute the Sequence while condition Expr is true\n$While (Expr) Sequence $End\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
+		{MCODE_OP_XLAT, 5, L"$XLat",
+			L"Invokes the text transliteration function\nhttps://api.farmanager.com/ru/macro/macrocmd/cmds.html"},
 };
 
 static bool absFunc(const TMacroFunction *);
@@ -342,107 +467,181 @@ static bool windowscrollFunc(const TMacroFunction *);
 static bool __CheckCondForSkip(DWORD Op);
 
 static TMacroFunction intMacroFunction[] = {
-		{L"ABS", 1, 0, MCODE_F_ABS, nullptr, 0, nullptr, L"N=Abs(N)", 0, absFunc},
-		{L"AKEY", 2, 1, MCODE_F_AKEY, nullptr, 0, nullptr, L"V=Akey(Mode[,Type])", 0, usersFunc},
-		{L"ASC", 1, 0, MCODE_F_ASC, nullptr, 0, nullptr, L"N=Asc(N)", 0, ascFunc},
-		{L"ATOI", 2, 1, MCODE_F_ATOI, nullptr, 0, nullptr, L"N=Atoi(S[,Radix])", 0, atoiFunc},
-		{L"BEEP", 1, 1, MCODE_F_BEEP, nullptr, 0, nullptr, L"N=Beep([N])", 0, beepFunc},
-		{L"BM.ADD", 0, 0, MCODE_F_BM_ADD, nullptr, 0, nullptr, L"N=BM.Add()", 0, usersFunc},
-		{L"BM.CLEAR", 0, 0, MCODE_F_BM_CLEAR, nullptr, 0, nullptr, L"N=BM.Clear()", 0, usersFunc},
-		{L"BM.DEL", 1, 1, MCODE_F_BM_DEL, nullptr, 0, nullptr, L"N=BM.Del([Idx])", 0, usersFunc},
-		{L"BM.GET", 2, 0, MCODE_F_BM_GET, nullptr, 0, nullptr, L"N=BM.Get(Idx,M)", 0, usersFunc},
-		{L"BM.GOTO", 1, 1, MCODE_F_BM_GOTO, nullptr, 0, nullptr, L"N=BM.Goto([N])", 0, usersFunc},
-		{L"BM.NEXT", 0, 0, MCODE_F_BM_NEXT, nullptr, 0, nullptr, L"N=BM.Next()", 0, usersFunc},
-		{L"BM.POP", 0, 0, MCODE_F_BM_POP, nullptr, 0, nullptr, L"N=BM.Pop()", 0, usersFunc},
-		{L"BM.PREV", 0, 0, MCODE_F_BM_PREV, nullptr, 0, nullptr, L"N=BM.Prev()", 0, usersFunc},
-		{L"BM.BACK", 0, 0, MCODE_F_BM_BACK, nullptr, 0, nullptr, L"N=BM.Back()", 0, usersFunc},
-		{L"BM.PUSH", 0, 0, MCODE_F_BM_PUSH, nullptr, 0, nullptr, L"N=BM.Push()", 0, usersFunc},
-		{L"BM.STAT", 1, 1, MCODE_F_BM_STAT, nullptr, 0, nullptr, L"N=BM.Stat([N])", 0, usersFunc},
+		{L"ABS", 1, 0, MCODE_F_ABS, nullptr, 0, nullptr, L"N=Abs(N)", 0, absFunc,
+			L"[Math] Returns the absolute value of a numeric argument N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"AKEY", 2, 1, MCODE_F_AKEY, nullptr, 0, nullptr, L"V=Akey(Mode[,Type])", 0, usersFunc,
+			L"[Environment] Returns the name or code of the key combination that was used to call this macro. Mode=0 - key code is returned, Mode=1 - key name is returned, Type=0 - the real key is returned, Type=1 - the keys assigned to macros is returned\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"ASC", 1, 0, MCODE_F_ASC, nullptr, 0, nullptr, L"N=Asc(N)", 0, ascFunc,
+			L"[String] Returns the code of character S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"ATOI", 2, 1, MCODE_F_ATOI, nullptr, 0, nullptr, L"N=Atoi(S[,Radix])", 0, atoiFunc,
+			L"[String] Converts string representation of a number N into a number. Radix parameter defines a radix to use during conversion of a string S. The valid Radix values are from 2 to 36. If Radix is omitted, function tries to determine the correct value automatically\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"BEEP", 1, 1, MCODE_F_BEEP, nullptr, 0, nullptr, L"N=Beep([N])", 0, beepFunc,
+			L"[User interaction] Play one of the system sounds N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"BM.ADD", 0, 0, MCODE_F_BM_ADD, nullptr, 0, nullptr, L"N=BM.Add()", 0, usersFunc,
+			L"[Bookmarks] Add current bookmark settings and trim tail\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.CLEAR", 0, 0, MCODE_F_BM_CLEAR, nullptr, 0, nullptr, L"N=BM.Clear()", 0, usersFunc,
+			L"[Bookmarks] Clear all bookmarks\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.DEL", 1, 1, MCODE_F_BM_DEL, nullptr, 0, nullptr, L"N=BM.Del([Idx])", 0, usersFunc,
+			L"[Bookmarks] Delete the bookmark with the specified index Idx (numbering starts with 1). If the Idx parameter is not specified or is equal to 0, the current bookmark is deleted\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.GET", 2, 0, MCODE_F_BM_GET, nullptr, 0, nullptr, L"N=BM.Get(Idx,M)", 0, usersFunc,
+			L"[Bookmarks] Get the parameters of the bookmark with index Idx (numbering starts from 1), Idx=0 is the current bookmark\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.GOTO", 1, 1, MCODE_F_BM_GOTO, nullptr, 0, nullptr, L"N=BM.Goto([N])", 0, usersFunc,
+			L"[Bookmarks] Go to the bookmark with the index N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.NEXT", 0, 0, MCODE_F_BM_NEXT, nullptr, 0, nullptr, L"N=BM.Next()", 0, usersFunc,
+			L"[Bookmarks] Jump to the next bookmark\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.POP", 0, 0, MCODE_F_BM_POP, nullptr, 0, nullptr, L"N=BM.Pop()", 0, usersFunc,
+			L"[Bookmarks] Restore settings from the last tab and delete it\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.PREV", 0, 0, MCODE_F_BM_PREV, nullptr, 0, nullptr, L"N=BM.Prev()", 0, usersFunc,
+			L"[Bookmarks] Jump to the previous bookmark\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.BACK", 0, 0, MCODE_F_BM_BACK, nullptr, 0, nullptr, L"N=BM.Back()", 0, usersFunc,
+			L"[Bookmarks] Go to the previous bookmark. If bm.add was called immediately before this, add the bookmark with the current settings before the transition\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.PUSH", 0, 0, MCODE_F_BM_PUSH, nullptr, 0, nullptr, L"N=BM.Push()", 0, usersFunc,
+			L"[Bookmarks] Add a bookmark with current settings\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"BM.STAT", 1, 1, MCODE_F_BM_STAT, nullptr, 0, nullptr, L"N=BM.Stat([N])", 0, usersFunc,
+			L"[Bookmarks] Get bookmark information\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 		{L"CALLPLUGIN", 2, 1, MCODE_F_CALLPLUGIN, nullptr, 0, nullptr, L"V=CallPlugin(SysID[,param])", 0,
-         callpluginFunc},
+         callpluginFunc,
+			L"[Environment] Call the plugin that has the SysID identifier with the param parameter\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"CHECKHOTKEY", 2, 1, MCODE_F_MENU_CHECKHOTKEY, nullptr, 0, nullptr, L"N=CheckHotkey(S[,N])", 0,
-         usersFunc},
-		{L"CHR", 1, 0, MCODE_F_CHR, nullptr, 0, nullptr, L"S=Chr(N)", 0, chrFunc},
-		{L"CLIP", 2, 1, MCODE_F_CLIP, nullptr, 0, nullptr, L"V=Clip(N[,V])", 0, clipFunc},
-		{L"DATE", 1, 1, MCODE_F_DATE, nullptr, 0, nullptr, L"S=Date([S])", 0, dateFunc},
+         usersFunc,
+			L"[Control] Function checks and gets the position of the element (starting from Pos), which contains hot key S. If S is an empty string, then function will return the position of the element without hot keys. Returns: -1 - if called from the wrong area (MainMenu, Menu, Disks, UserMenu, and Dialog), 0 - nothing was nound, > 0 - if menu/dialog/list contains hot key S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/context_dep.html"},
+		{L"CHR", 1, 0, MCODE_F_CHR, nullptr, 0, nullptr, L"S=Chr(N)", 0, chrFunc,
+			L"[String] Returns the character for the code N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"CLIP", 2, 1, MCODE_F_CLIP, nullptr, 0, nullptr, L"V=Clip(N[,V])", 0, clipFunc,
+			L"[System] Allows to perform miscellaneous manipulations on the Clipboard in accordance with the Cmd command\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"DATE", 1, 1, MCODE_F_DATE, nullptr, 0, nullptr, L"S=Date([S])", 0, dateFunc,
+			L"[String] Returns the current date/time according to the format S, which is similar to that used by the Unix date utility\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"DLG.GETVALUE", 2, 0, MCODE_F_DLG_GETVALUE, nullptr, 0, nullptr, L"V=Dlg.GetValue(ID,N)", 0,
-         dlggetvalueFunc},
+         dlggetvalueFunc,
+			L"[Control] Get misc. values of the current dialog\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/dialog.html"},
 		{L"EDITOR.POS", 3, 1, MCODE_F_EDITOR_POS, nullptr, 0, nullptr, L"N=Editor.Pos(Op,What[,Where])", 0,
-         editorposFunc},
+         editorposFunc,
+			L"[Editor] Getting/setting positions in the editor\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 		{L"EDITOR.SEL", 2, 1, MCODE_F_EDITOR_SEL, nullptr, 0, nullptr, L"V=Editor.Sel(Action[,Opt])", 0,
-         editorselFunc},
+         editorselFunc,
+			L"[Editor] Function allows manipulations with blocks in the text (in editor, input strings in dialogs, command line)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 		{L"EDITOR.SET", 2, 0, MCODE_F_EDITOR_SET, nullptr, 0, nullptr, L"N=Editor.Set(N,Var)", 0,
-         editorsetFunc},
+         editorsetFunc,
+			L"[Editor] Change settings of the current editor instance\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 		{L"EDITOR.SETTITLE", 1, 1, MCODE_F_EDITOR_SETTITLE, nullptr, 0, nullptr,
-         L"N=Editor.SetTitle([Title])", 0, editorsettitleFunc},
+         L"N=Editor.SetTitle([Title])", 0, editorsettitleFunc,
+			L"[Editor] Set the title in the editor status bar\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
 		{L"EDITOR.UNDO", 1, 0, MCODE_F_EDITOR_UNDO, nullptr, 0, nullptr, L"V=Editor.Undo(N)", 0,
-         editorundoFunc},
-		{L"ENV", 1, 0, MCODE_F_ENVIRON, nullptr, 0, nullptr, L"S=Env(S)", 0, environFunc},
-		{L"EVAL", 2, 1, MCODE_F_EVAL, nullptr, 0, nullptr, L"N=Eval(S[,N])", 0, usersFunc},
-		{L"FATTR", 1, 0, MCODE_F_FATTR, nullptr, 0, nullptr, L"N=FAttr(S)", 0, fattrFunc},
-		{L"FEXIST", 1, 0, MCODE_F_FEXIST, nullptr, 0, nullptr, L"N=FExist(S)", 0, fexistFunc},
-		{L"FLOAT", 1, 0, MCODE_F_FLOAT, nullptr, 0, nullptr, L"N=Float(V)", 0, floatFunc},
-		{L"FLOCK", 2, 0, MCODE_F_FLOCK, nullptr, 0, nullptr, L"N=FLock(N,N)", 0, flockFunc},
-		{L"FSPLIT", 2, 0, MCODE_F_FSPLIT, nullptr, 0, nullptr, L"S=FSplit(S,N)", 0, fsplitFunc},
-		{L"GETHOTKEY", 1, 1, MCODE_F_MENU_GETHOTKEY, nullptr, 0, nullptr, L"S=GetHotkey([N])", 0, usersFunc},
-		{L"IIF", 3, 0, MCODE_F_IIF, nullptr, 0, nullptr, L"V=Iif(Condition,V1,V2)", 0, iifFunc},
-		{L"INDEX", 3, 1, MCODE_F_INDEX, nullptr, 0, nullptr, L"S=Index(S1,S2[,Mode])", 0, indexFunc},
-		{L"INT", 1, 0, MCODE_F_INT, nullptr, 0, nullptr, L"N=Int(V)", 0, intFunc},
-		{L"ITOA", 2, 1, MCODE_F_ITOA, nullptr, 0, nullptr, L"S=Itoa(N[,radix])", 0, itowFunc},
-		{L"KBDLAYOUT", 1, 1, MCODE_F_KBDLAYOUT, nullptr, 0, nullptr, L"N=kbdLayout([N])", 0, kbdLayoutFunc},
-		{L"KEY", 1, 0, MCODE_F_KEY, nullptr, 0, nullptr, L"S=Key(V)", 0, keyFunc},
-		{L"LCASE", 1, 0, MCODE_F_LCASE, nullptr, 0, nullptr, L"S=LCase(S1)", 0, lcaseFunc},
-		{L"LEN", 1, 0, MCODE_F_LEN, nullptr, 0, nullptr, L"N=Len(S)", 0, lenFunc},
-		{L"MAX", 2, 0, MCODE_F_MAX, nullptr, 0, nullptr, L"N=Max(N1,N2)", 0, maxFunc},
+         editorundoFunc,
+			L"[Editor] Working with Undo/Redo\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/editor.html"},
+		{L"ENV", 1, 0, MCODE_F_ENVIRON, nullptr, 0, nullptr, L"S=Env(S)", 0, environFunc,
+			L"[System] Returns the value of an environment variable S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"EVAL", 2, 1, MCODE_F_EVAL, nullptr, 0, nullptr, L"N=Eval(S[,N])", 0, usersFunc,
+			L"[Environment] Execute or test a macro sequence\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"FATTR", 1, 0, MCODE_F_FATTR, nullptr, 0, nullptr, L"N=FAttr(S)", 0, fattrFunc,
+			L"[File] Returns the file system attributes of the file or folder S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"FEXIST", 1, 0, MCODE_F_FEXIST, nullptr, 0, nullptr, L"N=FExist(S)", 0, fexistFunc,
+			L"[File] Checks if the file or folder S exists and returns 1 if true or 0 otherwise. Usage of the '*' and '?' mask symbols is allowed in the S argument. In that case the function checks only the first occurrence of the file or folder. This function does not work with the panels\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"FLOAT", 1, 0, MCODE_F_FLOAT, nullptr, 0, nullptr, L"N=Float(V)", 0, floatFunc,
+			L"[Math] Evaluates the V argument to a floating-point number\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"FLOCK", 2, 0, MCODE_F_FLOCK, nullptr, 0, nullptr, L"N=FLock(N,N)", 0, flockFunc,
+			L"[System] Toggles Lock keys state (NumLock, CapsLock, and ScrollLock)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"FSPLIT", 2, 0, MCODE_F_FSPLIT, nullptr, 0, nullptr, L"S=FSplit(S,N)", 0, fsplitFunc,
+			L"[File] Splits the path path into the components and returns theirs combination depending on the flag combination N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"GETHOTKEY", 1, 1, MCODE_F_MENU_GETHOTKEY, nullptr, 0, nullptr, L"S=GetHotkey([N])", 0, usersFunc,
+			L"[Menu] Returns the hot key S for item N, if the item has a hot key and the current \"object\" is a menu. Otherwise 0 is returned. N - item position beginning with 1 (0 - current item)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
+		{L"IIF", 3, 0, MCODE_F_IIF, nullptr, 0, nullptr, L"V=Iif(Condition,V1,V2)", 0, iifFunc,
+			L"[Conditional] if Condition is true then V1-expression is returned, V2-expression otherwise; if Condition is string and non-empty return V1, else return V2\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"INDEX", 3, 1, MCODE_F_INDEX, nullptr, 0, nullptr, L"S=Index(S1,S2[,Mode])", 0, indexFunc,
+			L"[String] Returns the position of the first occurrence of the substring S2 within string S1, -1 otherwise\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"INT", 1, 0, MCODE_F_INT, nullptr, 0, nullptr, L"N=Int(V)", 0, intFunc,
+			L"[Math] Evaluates the V argument to a integer number\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"ITOA", 2, 1, MCODE_F_ITOA, nullptr, 0, nullptr, L"S=Itoa(N[,radix])", 0, itowFunc,
+			L"[String] Converts numeric value N to a string. Radix parameter defines the radix of the numerical representation for the number conversion. The valid Radix values are from 2 to 36. If Radix is omitted, base 10 is implied\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"KBDLAYOUT", 1, 1, MCODE_F_KBDLAYOUT, nullptr, 0, nullptr, L"N=kbdLayout([N])", 0, kbdLayoutFunc,
+			L"[System] Managing keyboard layout\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"KEY", 1, 0, MCODE_F_KEY, nullptr, 0, nullptr, L"S=Key(V)", 0, keyFunc,
+			L"[Environment] Converts parameter V into the string equivalent of the key name. If V is a string, its correctness is checked and returned back, if V is a number, it is converted into the string equivalent of the key name. Function returns empty string in case of any errors\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"LCASE", 1, 0, MCODE_F_LCASE, nullptr, 0, nullptr, L"S=LCase(S1)", 0, lcaseFunc,
+			L"[String] Transforms the string S1 to lower-case\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"LEN", 1, 0, MCODE_F_LEN, nullptr, 0, nullptr, L"N=Len(S)", 0, lenFunc,
+			L"[String] Returns the length of the string S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"MAX", 2, 0, MCODE_F_MAX, nullptr, 0, nullptr, L"N=Max(N1,N2)", 0, maxFunc,
+			L"[Math] Returns the maximal value of two numeric arguments N1 and N2\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"MENU.GETVALUE", 1, 1, MCODE_F_MENU_GETVALUE, nullptr, 0, nullptr, L"S=Menu.GetValue([N])", 0,
-         usersFunc},
+         usersFunc,
+			L"[Menu] Returns the text of the menu item with the number Pos\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
 		{L"MENU.ITEMSTATUS", 1, 1, MCODE_F_MENU_ITEMSTATUS, nullptr, 0, nullptr, L"N=Menu.ItemStatus([N])", 0,
-         usersFunc},
+         usersFunc,
+			L"[Menu] Returns in the low-order word a set of bit flags - the state of the menu item with the number Pos (the current position is Pos=0 or not specified)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
 		{L"MENU.SELECT", 3, 2, MCODE_F_MENU_SELECT, nullptr, 0, nullptr, L"N=Menu.Select(S[,N[,Dir]])", 0,
-         usersFunc},
-		{L"MIN", 2, 0, MCODE_F_MIN, nullptr, 0, nullptr, L"N=Min(N1,N2)", 0, minFunc},
-		{L"MLOAD", 1, 0, MCODE_F_MLOAD, nullptr, 0, nullptr, L"N=MLoad(S)", 0, mloadFunc},
-		{L"MMODE", 2, 1, MCODE_F_MMODE, nullptr, 0, nullptr, L"N=MMode(Action[,Value])", 0, usersFunc},
-		{L"MOD", 2, 0, MCODE_F_MOD, nullptr, 0, nullptr, L"N=Mod(a,b)", 0, modFunc},
-		{L"MSAVE", 1, 0, MCODE_F_MSAVE, nullptr, 0, nullptr, L"N=MSave(S)", 0, msaveFunc},
+         usersFunc,
+			L"[Menu] In the menu, places cursor to the first item that contains S substring. String is searched according to the mode N\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/menus.html"},
+		{L"MIN", 2, 0, MCODE_F_MIN, nullptr, 0, nullptr, L"N=Min(N1,N2)", 0, minFunc,
+			L"[Math] Returns the minimal value of two numeric arguments N1 and N2\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"MLOAD", 1, 0, MCODE_F_MLOAD, nullptr, 0, nullptr, L"N=MLoad(S)", 0, mloadFunc,
+			L"[Environment] Read the value of the global variable named S from the database (Vars area)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"MMODE", 2, 1, MCODE_F_MMODE, nullptr, 0, nullptr, L"N=MMode(Action[,Value])", 0, usersFunc,
+			L"[Environment] Managing the parameters of the current macro\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"MOD", 2, 0, MCODE_F_MOD, nullptr, 0, nullptr, L"N=Mod(a,b)", 0, modFunc,
+			L"[Math] Division of N1 by the modulus N2\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"MSAVE", 1, 0, MCODE_F_MSAVE, nullptr, 0, nullptr, L"N=MSave(S)", 0, msaveFunc,
+			L"[Environment] Stores the value of a global variable with the name S to the Vars area. Returns 0 in case of failure\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"MSGBOX", 3, 3, MCODE_F_MSGBOX, nullptr, 0, nullptr, L"N=MsgBox([Title[,Text[,flags]]])",
-         IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT, msgBoxFunc},
+         IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT, msgBoxFunc,
+			L"[User interaction] Shows up the message box with the Text and the Title. Lines in the Text argument should be delimited by '\\n'\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"PANEL.FATTR", 2, 0, MCODE_F_PANEL_FATTR, nullptr, 0, nullptr, L"N=Panel.FAttr(panelType,fileMask)",
-         0, panelfattrFunc},
+         0, panelfattrFunc,
+			L"[Panel] Returns the file system attributes of the file or folder S from the active (panelType=0) or the passive (panelType=1) panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.FEXIST", 2, 0, MCODE_F_PANEL_FEXIST, nullptr, 0, nullptr,
-         L"N=Panel.FExist(panelType,fileMask)", 0, panelfexistFunc},
+         L"N=Panel.FExist(panelType,fileMask)", 0, panelfexistFunc,
+			L"[Panel] Checks if the file or folder S exists in the active (panelType=0) or the passive (panelType=1) panel (returns 1 if true or 0 otherwise). Usage of the '*' and '?' mask symbols is allowed in the S argument. In that case the function checks only the first occurrence of the file or folder. This function works only with the panels\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.ITEM", 3, 0, MCODE_F_PANELITEM, nullptr, 0, nullptr, L"V=Panel.Item(Panel,Index,TypeInfo)",
-         0, panelitemFunc},
+         0, panelitemFunc,
+			L"[Panel] Queries the information for the panel element itemIndex from the active (panelType=0) or passive (panelType=1) panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.SELECT", 4, 2, MCODE_F_PANEL_SELECT, nullptr, 0, nullptr,
-         L"V=Panel.Select(panelType,Action[,Mode[,Items]])", 0, panelselectFunc},
+         L"V=Panel.Select(panelType,Action[,Mode[,Items]])", 0, panelselectFunc,
+			L"[Panel] Operations with selecting elements on the active (panelType=0) or passive (panelType=1) panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.SETPATH", 3, 1, MCODE_F_PANEL_SETPATH, nullptr, 0, nullptr,
          L"N=panel.SetPath(panelType,pathName[,fileName])", IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT,
-         panelsetpathFunc},
+         panelsetpathFunc,
+			L"[Panel] In the active (panelType=0) or passive (panelType=1) panel changes folder to pathName and sets the cursor on the element with name fileName (if fileName parameter was specified). Returns 1 if folder was changed successfully and 0 if folder does not exist\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.SETPOS", 2, 0, MCODE_F_PANEL_SETPOS, nullptr, 0, nullptr,
          L"N=panel.SetPos(panelType,fileName)", IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT,
-         panelsetposFunc},
+         panelsetposFunc,
+			L"[Panel] Queries the information for the panel element itemIndex from the active (panelType=0) or passive (panelType=1) panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANEL.SETPOSIDX", 3, 1, MCODE_F_PANEL_SETPOSIDX, nullptr, 0, nullptr,
          L"N=Panel.SetPosIdx(panelType,Idx[,InSelection])", IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT,
-         panelsetposidxFunc},
+         panelsetposidxFunc,
+			L"[Panel] Positions the cursor on the element with index indexItem on the active (panelType=0) or the passive (panelType=1) panel. Returns element position or 0 if such element does not exist\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
 		{L"PANELITEM", 3, 0, MCODE_F_PANELITEM, nullptr, 0, nullptr, L"V=PanelItem(Panel,Index,TypeInfo)", 0,
-         panelitemFunc},
-		{L"PRINT", 1, 0, MCODE_F_PRINT, nullptr, 0, nullptr, L"N=Print(Str)", 0, usersFunc},
+         panelitemFunc,
+			L"[Panel] Queries the information for the panel element itemIndex from the active (panelType=0) or passive (panelType=1) panel\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/panels.html"},
+		{L"PRINT", 1, 0, MCODE_F_PRINT, nullptr, 0, nullptr, L"N=Print(Str)", 0, usersFunc,
+			L"[User interaction] Inserting arbitrary text Str into the editor, command line, input elements in dialogs, etc.\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"PROMPT", 5, 4, MCODE_F_PROMPT, nullptr, 0, nullptr,
          L"S=Prompt(Title[,Prompt[,flags[,Src[,History]]]])", IMFF_UNLOCKSCREEN | IMFF_DISABLEINTINPUT,
-         promptFunc},
+         promptFunc,
+			L"[User interaction] Function allows to enter one text string. Parameters: Title - dialog caption, Prompt - prompt for input, Src - initial input string value, History - input history name\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"REPLACE", 5, 2, MCODE_F_REPLACE, nullptr, 0, nullptr, L"S=Replace(Str,Find,Replace[,Cnt[,Mode]])",
-         0, replaceFunc},
-		{L"RINDEX", 3, 1, MCODE_F_RINDEX, nullptr, 0, nullptr, L"S=RIndex(S1,S2[,Mode])", 0, rindexFunc},
-		{L"SLEEP", 1, 0, MCODE_F_SLEEP, nullptr, 0, nullptr, L"N=Sleep(N)", 0, sleepFunc},
-		{L"STRING", 1, 0, MCODE_F_STRING, nullptr, 0, nullptr, L"S=String(V)", 0, stringFunc},
-		{L"SUBSTR", 3, 1, MCODE_F_SUBSTR, nullptr, 0, nullptr, L"S=substr(S,start[,length])", 0, substrFunc},
-		{L"TESTFOLDER", 1, 0, MCODE_F_TESTFOLDER, nullptr, 0, nullptr, L"N=testfolder(S)", 0, testfolderFunc},
-		{L"TRIM", 2, 1, MCODE_F_TRIM, nullptr, 0, nullptr, L"S=Trim(S[,N])", 0, trimFunc},
-		{L"UCASE", 1, 0, MCODE_F_UCASE, nullptr, 0, nullptr, L"S=UCase(S1)", 0, ucaseFunc},
-		{L"WAITKEY", 2, 2, MCODE_F_WAITKEY, nullptr, 0, nullptr, L"V=Waitkey([N,[T]])", 0, waitkeyFunc},
+         0, replaceFunc,
+			L"[String] Replace substing Find in Str with Replace, Cnt times (set Cnt to 0 or omit this parameter to replace all occurrences). Returns the resulting string\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"RINDEX", 3, 1, MCODE_F_RINDEX, nullptr, 0, nullptr, L"S=RIndex(S1,S2[,Mode])", 0, rindexFunc,
+			L"[String] Returns the position of the last occurrence of the substring S2 within string S1, -1 otherwise\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"SLEEP", 1, 0, MCODE_F_SLEEP, nullptr, 0, nullptr, L"N=Sleep(N)", 0, sleepFunc,
+			L"[Environment] Pause macro execution for N milliseconds. Negative sleep time is considered to be an error and the function returns 0\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"STRING", 1, 0, MCODE_F_STRING, nullptr, 0, nullptr, L"S=String(V)", 0, stringFunc,
+			L"[String] Converts the value of the expression V to a string\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"SUBSTR", 3, 1, MCODE_F_SUBSTR, nullptr, 0, nullptr, L"S=substr(S,start[,length])", 0, substrFunc,
+			L"[String] Returns the substring of the expression V beginning from position N1 with the length of N2. If N2 parameter is omitted or equal to -1, function returns the substring from position N1 to the end of the string. If N2 parameter is equal to 0, function returns empty string\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"TESTFOLDER", 1, 0, MCODE_F_TESTFOLDER, nullptr, 0, nullptr, L"N=testfolder(S)", 0, testfolderFunc,
+			L"[File] Testing folder S\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"TRIM", 2, 1, MCODE_F_TRIM, nullptr, 0, nullptr, L"S=Trim(S[,N])", 0, trimFunc,
+			L"[String] Removes whitespace (spaces, tabs, line feeds, and carriage returns) from a string V: leading and trailing (N=0 or omitted), only leading (N=1), or only trailing (N=2)\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"UCASE", 1, 0, MCODE_F_UCASE, nullptr, 0, nullptr, L"S=UCase(S1)", 0, ucaseFunc,
+			L"[String] Transforms the string S1 to upper-case\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"WAITKEY", 2, 2, MCODE_F_WAITKEY, nullptr, 0, nullptr, L"V=Waitkey([N,[T]])", 0, waitkeyFunc,
+			L"[User interaction] Waits until a key is pressed and returns its name (T=0) or value (T=1). When time to wait N (milliseconds) is up, function returns an empty string (T=0) or 0 (T=1). If N is omitted or is equal to 0, function will wait for key press infinitely\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 		{L"WINDOW.SCROLL", 2, 1, MCODE_F_WINDOW_SCROLL, nullptr, 0, nullptr, L"N=Window.Scroll(Lines[,Axis])",
-         0, windowscrollFunc},
-		{L"XLAT", 1, 0, MCODE_F_XLAT, nullptr, 0, nullptr, L"S=Xlat(S)", 0, xlatFunc},
+         0, windowscrollFunc,
+			L"[System] This function allows you to move the console window around the buffer\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
+		{L"XLAT", 1, 0, MCODE_F_XLAT, nullptr, 0, nullptr, L"S=Xlat(S)", 0, xlatFunc,
+			L"[String] Returns the transliterated string. This function is similar to $XLat macro command but can be used in expressions. Argument S is mandatory\nhttps://api.farmanager.com/ru/macro/macrocmd/prop_func/general.html"},
 
 		{}
 };
@@ -4978,7 +5177,7 @@ DWORD KeyMacro::SwitchFlags(DWORD &Flags, DWORD Value)
 	return Flags;
 }
 
-FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName)
+FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName, FARString *pstrConjugateKeyText)
 {
 	FARString strKeyText;
 	KeyToText(MacroLIB[IdxMacro].Key, strKeyText);
@@ -4987,10 +5186,18 @@ FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName)
 	AddEndSlash(strRegKeyName);
 
 	if (MacroLIB[IdxMacro].Flags & MFLAGS_DISABLEMACRO) {
+		if (pstrConjugateKeyText)
+			*pstrConjugateKeyText = strRegKeyName;
 		strRegKeyName+= L"~";
+	}
+	else {
+		if (pstrConjugateKeyText)
+			*pstrConjugateKeyText = strRegKeyName + L"~";
 	}
 
 	strRegKeyName+= strKeyText;
+	if (pstrConjugateKeyText)
+		*pstrConjugateKeyText+= strKeyText;
 	return strRegKeyName;
 }
 
@@ -5059,7 +5266,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer, int BufferSize, const wchar_t *
 // Сохранение ВСЕХ макросов
 void KeyMacro::SaveMacros(BOOL AllSaved)
 {
-	FARString strRegKeyName;
+	FARString strRegKeyName, strConjugateRegKeyName;
 	// WriteVarsConst(MACRO_VARS);
 	// WriteVarsConst(MACRO_CONSTS);
 
@@ -5068,7 +5275,15 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 		if (!AllSaved && !(MacroLIB[I].Flags & MFLAGS_NEEDSAVEMACRO))
 			continue;
 
-		MkRegKeyName(I, strRegKeyName);
+		MacroLIB[I].Flags &= ~MFLAGS_NEEDSAVEMACRO;
+
+		MkRegKeyName(I, strRegKeyName, &strConjugateRegKeyName);
+
+		// always try remove possible Conjugate record for enable/disable pair
+		cfg_writer.SelectSection(strConjugateRegKeyName);
+		cfg_writer.RemoveSection();
+
+		// process macro record
 		cfg_writer.SelectSection(strRegKeyName);
 
 		if (!MacroLIB[I].BufferSize || !MacroLIB[I].Src) {
@@ -5826,11 +6041,11 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 	  +--------------------------+
 	*/
 	DialogDataEx MacroAssignDlgData[] = {
-		{DI_DOUBLEBOX, 3,  1, 70, 7, {}, 0,                      	Msg::DefineMacroTitle},
-		{DI_TEXT,      5,  2, 35, 2, {}, 0, 						Msg::DefineMacroDescription},
-		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
-		{DI_TEXT,      5,  4, 35, 4, {}, 0,                       	Msg::DefineMacro     },
-		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L"" },
+		{DI_DOUBLEBOX, 3,  1, 70, 7, {}, 0,                         Msg::DefineMacroTitle},
+		{DI_TEXT,      5,  2, 35, 2, {}, 0,                         Msg::DefineMacroDescription},
+		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS,                 macroDescription.CPtr()},
+		{DI_TEXT,      5,  4, 35, 4, {}, 0,                         Msg::DefineMacro     },
+		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS,                 L""},
 		{DI_TEXT,      3,  5, 0,  5, {}, DIF_SEPARATOR,             L""},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_CENTERGROUP, Msg::Cancel}
@@ -5847,7 +6062,8 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 	Dlg.Process();
 	IsProcessAssignMacroKey--;
 
-	if (Dlg.GetExitCode() == -1)
+	const int ret =  Dlg.GetExitCode();
+	if (ret == -1 || ret == 7) // -1 - Esc or mouse click out dialog, 7 - Cancel button
 		return KEY_INVALID;
 
 	macroDescription = MacroAssignDlg[2].strData;
@@ -5962,8 +6178,8 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 		{DI_TEXT,      5,  2,  0,  2,  {},  0,                             Msg::MacroSequence                     },
 		{DI_EDIT,      5,  3,  67, 3,  {},  DIF_FOCUS,                     L""                                    },
 
-		{DI_TEXT,      5,  4, 30, 4, {}, 0, 						Msg::DefineMacroDescription},
-		{DI_EDIT,      32, 4, 67, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
+		{DI_TEXT,      5,  4,  30, 4,  {},  0,                             Msg::DefineMacroDescription            },
+		{DI_EDIT,      32, 4,  67, 4,  {},  DIF_FOCUS,                     L""                                    },
 
 		{DI_TEXT,      3,  5,  0,  5,  {},  DIF_SEPARATOR,                 L""                                    },
 		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsEnableOutput         },
@@ -6771,4 +6987,374 @@ BOOL KeyMacro::GetMacroParseError(FARString *Err1, FARString *Err2, FARString *E
 bool KeyMacro::IsOpCode(DWORD p)
 {
 	return (!(p & KEY_MACRO_BASE) || p == MCODE_OP_ENDKEYS) ? false : true;
+}
+
+// Mark macro by index (imacro) as Deleted
+// Note: if macro has !BufferSize or !Src it will remove in SaveMacros()
+//  and we shouldn't remove it from memory because we need to delete it when we save
+bool KeyMacro::MacroDelete(int imacro, bool bfull)
+{
+	if (!MacroLIB || imacro < 0 || imacro >= MacroLIBCount) // check macro index
+		return false; // MacroLIB not initialized or invalid macro index
+	if (IsExecuting() || IsRecording())
+		return false;	// prevent modification during macro execution or recording
+
+	if (MacroLIB[imacro].BufferSize > 1 && MacroLIB[imacro].Buffer)
+		free(MacroLIB[imacro].Buffer);
+
+	if (MacroLIB[imacro].Src)
+		free(MacroLIB[imacro].Src);
+
+	if (MacroLIB[imacro].Description)
+		free(MacroLIB[imacro].Description);
+
+	MacroLIB[imacro].Buffer = nullptr;
+	MacroLIB[imacro].BufferSize = 0;
+	MacroLIB[imacro].Src = nullptr;
+	MacroLIB[imacro].Description = nullptr;
+	MacroLIB[imacro].Flags|= MFLAGS_NEEDSAVEMACRO;
+
+	if (bfull) { // no need sort+save if after clear macro data we continue work with macro record
+		KeyMacro::Sort();
+		if (Opt.AutoSaveSetup)
+			SaveMacros(FALSE);	// записать только изменения!
+	}
+
+	return true; // success: macro mark as deleted
+}
+
+// Replace macro by index (if imacro >=0) or Add new macro (if imacro < 0)
+// Return value: see enum MacroReplaceAddRes in "macrobrowser.hpp"
+int KeyMacro::MacroReplaceAdd(int imacro, int iarea,
+		DWORD Flags, const wchar_t *pstrKey, const wchar_t *pstrSequence, const wchar_t *pstrDescription)
+{
+	// 0) prevent modification during macro execution or recording
+	if (IsExecuting() || IsRecording())
+		return MacroReplaceAddRes::Busy;
+
+	// 1) iarea and imacro check
+	if (iarea >= MACRO_LAST) // if iarea also check macro area
+		return MacroReplaceAddRes::InvalidAreaIndex; // invalid macroarea index
+	if (imacro >= 0) {
+		if (!MacroLIB || imacro >= MacroLIBCount) // for Replace check macro index
+			return MacroReplaceAddRes::InvalidMacroIndex; // MacroLIB not initialized or invalid macro index
+		if (iarea < 0)
+			iarea = (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK); // use area of current macro
+	}
+	else {
+		if (iarea < 0)
+			return MacroReplaceAddRes::AreaRequired; // for Add iarea are mandatory
+	}
+
+	// 2) new macros data check
+	MacroRecord mr{};
+
+	FARString strtmp = pstrKey;
+	RemoveExternalSpaces(strtmp);
+	mr.Key = KeyNameToKey(strtmp); // Назначенная клавиша
+	if (mr.Key == KEY_INVALID)
+		return MacroReplaceAddRes::InvalidKey; // Некорректная комбинация клавиш
+
+	strtmp = pstrSequence;
+	RemoveExternalSpaces(strtmp);
+	if (strtmp.IsEmpty())
+		return MacroReplaceAddRes::EmptySequence; // Пустая последовательность макрокоманды
+	while (strtmp.Contains(L" \n")) // removing TrailingSpaces in each string
+		ReplaceStrings(strtmp, L" \n", L"\n");
+	while (strtmp.Contains(L"\t\n")) // removing TrailingTabs in each string
+		ReplaceStrings(strtmp, L"\t\n", L"\n");
+
+	FARString strDescription = pstrDescription;
+	RemoveExternalSpaces(strDescription);
+	while (strDescription.Contains(L"  "))
+		ReplaceStrings(strDescription, L"  ", L" ");
+
+	mr.BufferSize = 0;			// Размер буфера компилированной последовательности
+	mr.Buffer = nullptr;		// компилированная последовательность (OpCode) макроса
+	mr.Flags = (Flags & ~MFLAGS_MODEMASK) | iarea;
+	if (!ParseMacroString(&mr, strtmp.CPtr())) {
+		if (mr.BufferSize > 1)
+			free(mr.Buffer);
+		return MacroReplaceAddRes::InvalidSequence; // Некорректная последовательность макрокоманды
+	}
+
+	// 3) if Replace, changes check
+	if (imacro >= 0) {
+		if (MacroLIB[imacro].Key == mr.Key
+				&& (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK) == iarea
+				&& (MacroLIB[imacro].Flags & ~MFLAGS_MODEMASK & ~MFLAGS_NEEDSAVEMACRO)
+					== (Flags & ~MFLAGS_MODEMASK & ~MFLAGS_NEEDSAVEMACRO)
+				&& MacroLIB[imacro].BufferSize == mr.BufferSize
+				&& (mr.BufferSize > 1
+					? !memcmp(MacroLIB[imacro].Buffer, mr.Buffer, mr.BufferSize * sizeof(*mr.Buffer))
+					: MacroLIB[imacro].Buffer == mr.Buffer)
+				&& !StrCmp(MacroLIB[imacro].Src, strtmp)
+				&& ((!MacroLIB[imacro].Description && strDescription.IsEmpty())
+					|| (MacroLIB[imacro].Description && !StrCmp(MacroLIB[imacro].Description, strDescription))) ) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			return MacroReplaceAddRes::NoChanges; // Изменения полностью эквивалентны исходному => не трогаем
+		}
+	}
+
+	// 4) Duplicate check
+	int ipos = -1, iold2del = -1;
+	if (MacroLIB && MacroLIBCount > 0) {
+		// check dublicates by Key in macro area
+		// used part of code from GetIndex()
+		MacroRecord *mptr = &MacroLIB[IndexMode[iarea][0]];
+		for (int i = 0; i < IndexMode[iarea][1]; ++i, ++mptr) {
+			if (!((mptr->Key ^ mr.Key) & ~0xFFFFu)
+					&& (Upper(static_cast<WCHAR>(mptr->Key)) == Upper(static_cast<WCHAR>(mr.Key)))) {
+				ipos = IndexMode[iarea][0] + i;
+				break;
+			}
+		}
+		// В выбранной области уже присутствует другой макрос с такой же комбинацией клавиш
+		if (ipos != -1 && ipos != imacro) {
+			if (!MacroLIB[ipos].BufferSize || !MacroLIB[ipos].Src) { // другой макрос помечен как удаленный => работаем поверх него
+				if (imacro >= 0) { // редактирование, т.е. есть текущий
+					iold2del = imacro; // текущий надо будет удалить, когда успешно выделим всю нужную память
+				}
+				imacro = ipos;						//  и работаем далее поверх того
+			}
+			else {
+				if (mr.BufferSize > 1)
+					free(mr.Buffer);
+				 // В выбранной области уже присутствует другой активный макрос с такой же комбинацией клавиш
+				return MacroReplaceAddRes::DuplicateAreaKey;
+			}
+		}
+	}
+
+	// 5) Allocation strings for new macro
+	wchar_t* newSrc = wcsdup(strtmp.GetBuffer()); // pstrSequence
+	if (!newSrc) {
+		if (mr.BufferSize > 1)
+			free(mr.Buffer);
+		return MacroReplaceAddRes::ReallocationFailed;
+	}
+	wchar_t* newDescription;
+	if (strDescription.IsEmpty())
+		newDescription = nullptr;
+	else {
+		newDescription = wcsdup(strDescription.GetBuffer());
+		if (!newDescription) {
+			free(newSrc);
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			return MacroReplaceAddRes::ReallocationFailed;
+		}
+	}
+
+	// 6) for Add or Replace with New Key and/or New Area need memory allocation
+	if (imacro < 0 || !MacroLIB
+			|| mr.Key != MacroLIB[imacro].Key
+			|| iarea != (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK)) {
+		MacroRecord *NewMacroLIB =
+				(MacroRecord *)realloc(MacroLIB, sizeof(*MacroLIB) * (MacroLIBCount + 1));
+		if (!NewMacroLIB) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			free(newSrc);
+			free(newDescription);
+			return MacroReplaceAddRes::ReallocationFailed; // Error memory reallocation
+		}
+		ipos = MacroLIBCount; // new macro add to end
+		MacroLIB = NewMacroLIB;
+		MacroLIBCount++;
+	}
+	else
+		ipos = imacro;
+
+	// 7) Deleting old existing ones
+	if (iold2del >= 0) { // был текущий, который надо удалить
+		if (!MacroDelete(iold2del, false)) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			free(newSrc);
+			free(newDescription);
+			return MacroReplaceAddRes::DeleteFailed; // Delete error
+		}
+	}
+
+	if (imacro >= 0) { // before Replace we need free macro data without sort
+		if (!MacroDelete(imacro, false)) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			free(newSrc);
+			free(newDescription);
+			return MacroReplaceAddRes::DeleteFailed; // Delete error
+		}
+	}
+
+	// 8) Set data to macro
+	MacroLIB[ipos].Key = mr.Key;
+
+	if (!mr.BufferSize)
+		MacroLIB[ipos].Buffer = nullptr;
+	else
+		MacroLIB[ipos].Buffer = mr.Buffer;
+	MacroLIB[ipos].BufferSize = mr.BufferSize;
+
+	MacroLIB[ipos].Src = newSrc;
+
+	MacroLIB[ipos].Description = newDescription;
+
+	MacroLIB[ipos].Flags = (Flags & ~MFLAGS_MODEMASK) | iarea | MFLAGS_NEEDSAVEMACRO;
+
+	// 9) Sort always and Save changes if AutoSave is On
+	KeyMacro::Sort();
+	if (Opt.AutoSaveSetup)
+		SaveMacros(FALSE);	// записать только изменения!
+
+	return MacroReplaceAddRes::Success; // success: macro Added / Replaced
+}
+
+// used in MacroBrowser
+const wchar_t *MacroLib_GetFunctionType(const TMacroFunction *tmf)
+{
+	if (!tmf)
+		return L"Incorrect";
+	if (tmf->Code == MCODE_F_NOFUNC)
+		return L"Unregistered";
+	// (!) see last in enum MACRO_OP_CODE in macroopcode.hpp
+	if (tmf->Code > MCODE_F_NOFUNC && tmf->Code <= MCODE_F_WINDOW_SCROLL)
+		return L"Internal";
+	if (tmf->Func == pluginsFunc)
+		return L"Plugins";
+	return L"User";
+}
+
+// used in MacroBrowser
+size_t MacroLib_KeywordsFunctions2Items(class KeyMacro *KMacro,
+	std::vector<FarListItem> &Items, std::vector<FARString> &Descriptions)
+{
+	size_t i;
+
+	Items.clear();
+	Descriptions.clear();
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Macro-commands";
+	Descriptions.emplace_back();
+	for(i = 0; i < ARRAYSIZE(KeyMacroCodes); i++) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = KeyMacroCodes[i].Name;
+		Descriptions.emplace_back();
+		Descriptions.back().Format(L"=== Macro-command \"%ls\" ===", KeyMacroCodes[i].Name);
+		if (KeyMacroCodes[i].Description && *KeyMacroCodes[i].Description)
+			Descriptions.back().AppendFormat(L"\n%ls", KeyMacroCodes[i].Description);
+	}
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Keywords";
+	Descriptions.emplace_back();
+	for(i = 0; i < ARRAYSIZE(MKeywords); i++) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = MKeywords[i].Name;
+		Descriptions.emplace_back();
+		Descriptions.back().Format(L"=== Keyword \"%ls\" ===", MKeywords[i].Name);
+		if (MKeywords[i].Description && *MKeywords[i].Description)
+			Descriptions.back().AppendFormat(L"\n%ls", MKeywords[i].Description);
+	}
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Internal Functions";
+	Descriptions.emplace_back();
+	// (!) need here check last range in future, because now intMacroFunction has empty last
+	for(i = 0; i < ARRAYSIZE(intMacroFunction) - 1; i++) {
+		if (!intMacroFunction[i].Name || !intMacroFunction[i].Name[0])
+			continue;
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = (intMacroFunction[i].Syntax && intMacroFunction[i].Syntax[0])
+			? intMacroFunction[i].Syntax : intMacroFunction[i].Name;
+		Descriptions.emplace_back();
+		Descriptions.back().Format(L"=== Internal Function \"%ls\" ===", intMacroFunction[i].Name);
+		Descriptions.back().AppendFormat(L"\n      Type: \"%ls\"", MacroLib_GetFunctionType(&intMacroFunction[i]));
+		if (intMacroFunction[i].fnGUID && intMacroFunction[i].fnGUID[0])
+			Descriptions.back().AppendFormat(L"\n    fnGUID: \"%ls\"", intMacroFunction[i].fnGUID);
+		if (intMacroFunction[i].Syntax && intMacroFunction[i].Syntax[0])
+			Descriptions.back().AppendFormat(L"\n    Syntax: \"%ls\"", intMacroFunction[i].Syntax);
+		Descriptions.back().AppendFormat(L"\nParameters: %d (all), %d (optional)",
+			intMacroFunction[i].nParam, intMacroFunction[i].oParam);
+		if (intMacroFunction[i].Description && *intMacroFunction[i].Description)
+			Descriptions.back().AppendFormat(L"\n%ls", intMacroFunction[i].Description);
+	}
+
+	for (int ia = MACRO_CONSTS; ia <= MACRO_VARS; ia++) {
+		const wchar_t *glbTxt = (ia == MACRO_VARS) ? L"Global Variable" : L"Global Constant";
+		TVarTable *t = (ia == MACRO_VARS) ? &glbVarTable : &glbConstTable;
+
+		Items.emplace_back();
+		Items.back().Flags = LIF_SEPARATOR;
+		Items.back().Text = (ia == MACRO_VARS) ? L"Global Variables" : L"Global Constants";
+		Descriptions.emplace_back();
+
+		for (int I = 0; I < V_TABLE_SIZE; I++) {
+			for (int J = 0;; ++J) {
+				TVarSet *var = varEnum(*t, I, J);
+				if (!var)
+					break;
+				Items.emplace_back();
+				Items.back().Flags = 0;
+				Items.back().Text = var->str;
+				Descriptions.emplace_back();
+				Descriptions.back().Format(L"=== %ls \"%ls\" ===\n", glbTxt, var->str);
+				switch (var->value.type()) {
+					case vtInteger:
+						Descriptions.back().AppendFormat(L" Type: Integer\nValue: %ls\n", var->value.s());
+						break;
+					case vtDouble:
+						Descriptions.back().AppendFormat(L" Type: Double\nValue: %ls\n", var->value.s());
+						break;
+					case vtString:
+						Descriptions.back().AppendFormat(L" Type: String\nValue: \"%ls\"\n", var->value.s());
+						break;
+					case vtUnknown:
+					default:
+						Descriptions.back().Append(L" Type: Unknown");
+						break;
+				}
+			}
+		}
+	}
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"External (Users) Functions";
+	Descriptions.emplace_back();
+	// (!) need here check ininial range in future, because now intMacroFunction has empty last
+	for(i = ARRAYSIZE(intMacroFunction)-1; i < KMacro->GetCountMacroFunction(); i++) {
+		const TMacroFunction *mf = KMacro->GetMacroFunction(i);
+		if (!mf->Name || !mf->Name[0])
+			continue;
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = (mf->Syntax && mf->Syntax[0]) ? mf->Syntax : mf->Name;
+		Descriptions.emplace_back();
+		Descriptions.back().Format(L"=== External (Users) Function \"%ls\" ===", mf->Name);
+		Descriptions.back().AppendFormat(L"\n      Type: \"%ls\"", MacroLib_GetFunctionType(mf));
+		if (mf->fnGUID && mf->fnGUID[0])
+			Descriptions.back().AppendFormat(L"\n    fnGUID: \"%ls\"", mf->fnGUID);
+		if (mf->Syntax && mf->Syntax[0])
+			Descriptions.back().AppendFormat(L"\n    Syntax: \"%ls\"", mf->Syntax);
+		Descriptions.back().AppendFormat(L"\nParameters: %d (all), %d (optional)",
+			mf->nParam, mf->oParam);
+	}
+
+	const size_t n = Items.size();
+	size_t len = 0, len1;
+	for(i = 0; i < n; i++) {
+		len1 = wcslen(Items[i].Text);
+		if (len1 > len)
+			len = len1;
+	}
+	return len;
 }

@@ -5,11 +5,14 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
+// uncomment line below to enable self-contradiction check and some extra logging on startup
+// #define TTY_DEBUG
+
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
-#if 0 // change to 1 to enable self-contradiction check on startup
+#ifdef TTY_DEBUG
 
 template <typename Last> static void AssertNoConflictsBetween(const Last &last) { }
 
@@ -52,7 +55,9 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 	int r = vsnprintf (&tmp[0], sizeof(tmp), fmt, va);
 	va_end(va);
 
+#ifdef TTY_DEBUG
 	fprintf(stderr, "TTYInputSequenceParser::AddStr(0x%x, 0x%x, '%s'): '%s' r=%d\n", vk, control_keys, fmt, tmp, r);
+#endif
 
 	TTYInputKey k = {vk, control_keys};
 	switch (r) {
@@ -294,16 +299,31 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 
 void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 {
-	if (strncmp(s, "f2l", 3) == 0) {
+	if (l >= 3 && strncmp(s, "f2l", 3) == 0) {
 		_tmp_stk_ser.FromBase64(s + 3, l - 3);
 		_handler->OnFar2lEvent(_tmp_stk_ser);
 
-	} else if (strncmp(s, "far2l", 5) == 0) {
+	} else if (l >= 5 && strncmp(s, "far2l", 5) == 0) {
 		_tmp_stk_ser.FromBase64(s + 5, l - 5);
 		_handler->OnFar2lReply(_tmp_stk_ser);
 
-	} else if (*s == 'G') {
+	} else if (l != 0 && *s == 'G') {
 		_handler->OnKittyGraphicsResponse(std::string(s + 1, l - 1));
+	}
+}
+
+void TTYInputSequenceParser::ParseDCS(const char *s, size_t l)
+{
+	if (l >= 4 && s[0] == '1' && s[1] == '$' && s[2] == 'r' && s[l - 1] == 'q') {
+		unsigned int shape = 0;
+		for (size_t i = 3; i < l - 1; ++i) {
+			if (s[i] >= '0' && s[i] <= '9') {
+				shape = shape * 10 + (s[i] - '0');
+			} else if (s[i] != ' ') {
+				break;
+			}
+		}
+		_handler->OnCursorShape(shape);
 	}
 }
 
@@ -341,6 +361,20 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return TTY_PARSED_WANTMORE;
 	}
 
+	if (l > 0 && s[0] == 'P') {
+		for (size_t i = 1; i < l; ++i) {
+			if (s[i] == '\x07') {
+				ParseDCS(s + 1, i - 1);
+				return i + 1;
+			}
+			if (s[i] == '\e' && i + 1 < l && s[i + 1] == '\\' ) {
+				ParseDCS(s + 1, i - 1);
+				return i + 2;
+			}
+		}
+		return TTY_PARSED_WANTMORE;
+	}
+
 	if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && (s[3] == '0' || s[3] == '1') && s[4] == '~') {
 		OnBracketedPaste(s[3] == '0');
 		return 5;
@@ -366,7 +400,8 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 
 	if (l > 5 && s[0] == '[' && s[1] == '6' && s[2] == ';') { // Response to ESC [ 16 t
 		unsigned int h=0, w=0;
-		if (sscanf(s, "[6;%u;%ut", &h, &w) == 2) {
+		const std::string response(s, l);
+		if (sscanf(response.c_str(), "[6;%u;%ut", &h, &w) == 2) {
 			_handler->OnGetCellSize(w, h);
 			// find 't'
 			for (size_t i = 3; i < l; ++i) {
@@ -438,7 +473,7 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 			AddPendingKeyEvent(TTYInputKey{VK_SPACE, LEFT_CTRL_PRESSED});
 			return 1;
 
-		case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07: case 0x08:
+		case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
 		case 0x0a: case 0x0b: case 0x0c: case 0x0e: case 0x0f: case 0x10: case 0x11: case 0x12:
 		case 0x13: case 0x14: case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1a:
 
@@ -449,6 +484,10 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 			}
 
 			AddPendingKeyEvent(TTYInputKey{WORD('A' + (*s - 0x01)), LEFT_CTRL_PRESSED});
+			return 1;
+
+		case 0x08:
+			AddPendingKeyEvent(TTYInputKey{VK_BACK, 0});
 			return 1;
 
 		case 0x09:

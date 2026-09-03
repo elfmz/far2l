@@ -141,6 +141,7 @@ struct TMacroFunction
 
 	DWORD IntFlags;			// флаги из INTMF_FLAGS (в основном отвечающие "как вызывать функцию")
 	INTMACROFUNC Func;		// функция
+	const wchar_t  *Description;	// описание макросфункции
 };
 
 struct MacroRecord
@@ -237,7 +238,7 @@ private:
 	void ReleaseWORKBuffer(BOOL All = FALSE);	// удалить временный буфер
 
 	DWORD SwitchFlags(DWORD &Flags, DWORD Value);
-	FARString &MkRegKeyName(int IdxMacro, FARString &strRegKeyName);
+	FARString &MkRegKeyName(int IdxMacro, FARString &strRegKeyName, FARString *pstrConjugateKeyText = nullptr);
 
 	BOOL CheckEditSelected(DWORD CurFlags);
 	BOOL CheckInsidePlugin(DWORD CurFlags);
@@ -249,6 +250,12 @@ private:
 	TVar FARPseudoVariable(DWORD Flags, DWORD Code, DWORD &Err);
 	DWORD GetOpCode(struct MacroRecord *MR, int PC);
 	DWORD SetOpCode(struct MacroRecord *MR, int PC, DWORD OpCode);
+
+	// Mark macro by index (imacro) as Deleted
+	bool MacroDelete(int imacro, bool bfull = true);
+	// Replace macro by index (if imacro >=0) or Add new macro (if imacro < 0)
+	int MacroReplaceAdd(int imacro, int iarea,
+			DWORD Flags, const wchar_t *pstrKey, const wchar_t *pstrSequence, const wchar_t *pstrDescription);
 
 private:
 	static LONG_PTR WINAPI AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);

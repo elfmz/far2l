@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <set>
 #include <list>
 #include <WinCompat.h>
 #include "FARString.hpp"
@@ -62,14 +61,6 @@ enum
 	FSCANTREE_NODEVICES        = 0x00040000,	// Don't return devices
 	FSCANTREE_NOLINKS          = 0x00080000,	// Don't return symlinks
 	FSCANTREE_CASE_INSENSITIVE = 0x00100000		// Currently affects only english characters
-};
-
-class ScannedINodes
-{
-	std::set<std::pair<uint64_t, uint64_t>> _s;
-
-public:
-	inline bool Put(uint64_t d, uint64_t ino) { return _s.emplace(ino, d).second; }
 };
 
 class ScanTree

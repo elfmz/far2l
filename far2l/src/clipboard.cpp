@@ -191,6 +191,21 @@ bool Clipboard::Copy(const wchar_t *Data, bool IsVertical)
 	return true;
 }
 
+bool Clipboard::CopyWithHtml(const wchar_t *Data, const char *Html)
+{
+	Empty();
+
+	if (!AddData(CF_HTML, Html, strlen(Html) + 1)) {
+		return false;
+	}
+
+	if (!AddData(CF_UNICODETEXT, Data, (wcslen(Data) + 1) * sizeof(wchar_t))) {
+		return false;
+	}
+
+	return true;
+}
+
 bool Clipboard::AddData(UINT FormatType, const void *Data, size_t Size)
 {
 	if (!Data || !Size)
@@ -219,15 +234,20 @@ wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
 	if (!ClipData)
 		return nullptr;
 
-	size_t CharsCount =
-			wcsnlen((const wchar_t *)ClipData, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
+	const wchar_t *ClipChars = (const wchar_t *)ClipData;
+	size_t CharsCount = wcsnlen(ClipChars, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
 
-	if (MaxChars >= 0 && CharsCount < (size_t)MaxChars)
+	if (CharsCount > 0 && ClipChars[0] == L'\xFEFF') {
+		++ClipChars;
+		--CharsCount;
+	}
+
+	if (MaxChars >= 0 && CharsCount > (size_t)MaxChars)
 		CharsCount = (size_t)MaxChars;
 
 	wchar_t *ClipText = (wchar_t *)malloc((CharsCount + 1) * sizeof(wchar_t));
 	if (ClipText) {
-		wmemcpy(ClipText, (const wchar_t *)ClipData, CharsCount);
+		wmemcpy(ClipText, ClipChars, CharsCount);
 		ClipText[CharsCount] = 0;
 	}
 

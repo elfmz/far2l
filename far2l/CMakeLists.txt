@@ -26,6 +26,7 @@ src/EditorConfigOrg.cpp
 src/execute.cpp
 src/farwinapi.cpp
 src/fileattr.cpp
+src/filediff.cpp
 src/fileedit.cpp
 src/fileedit2options.cpp
 src/filefilter.cpp
@@ -156,6 +157,7 @@ src/base/InterThreadCall.cpp
 src/base/SafeMMap.cpp
 src/base/farqueue.cpp
 src/base/FARString.cpp
+src/base/EcoString.cpp
 src/base/farrtl.cpp
 src/base/DList.cpp
 
@@ -179,6 +181,7 @@ src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 src/mix/GitTools.cpp
+src/mix/WideCharToMultiByteBuffer.cpp
 src/shoco/shoco.c
 
 src/powerline.cpp
@@ -272,7 +275,7 @@ set_target_properties(far2l
     PROPERTIES
     ENABLE_EXPORTS TRUE)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD|OpenBSD")
     target_link_libraries(far2l
     PRIVATE ${WINPORT}
     PRIVATE c
@@ -289,6 +292,10 @@ else()
         PRIVATE ${UCHARDET_LIBRARIES})
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+    target_link_libraries(far2l PRIVATE execinfo)
+endif()
+
 add_custom_command(TARGET far2l POST_BUILD
     COMMAND ln -sf ${EXECUTABLE_NAME} ${INSTALL_DIR}/far2l_askpass
     COMMAND ln -sf ${EXECUTABLE_NAME} ${INSTALL_DIR}/far2l_sudoapp
@@ -300,6 +307,7 @@ else()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2lma.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2lma.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop")
 
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/DE/icons" DESTINATION "share" USE_SOURCE_PERMISSIONS COMPONENT desktop FILES_MATCHING PATTERN "*")
@@ -309,6 +317,7 @@ else()
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop"
                   "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop"
                   "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2lma.desktop"
                   "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop"
         DESTINATION "share/applications"
         COMPONENT desktop

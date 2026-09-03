@@ -85,6 +85,21 @@ public:
 	WCHAR GetValue() const { return Value; }
 };
 
+class Hex
+{
+	uint64_t Value;
+	size_t Width;
+	bool Prefix;
+
+public:
+	Hex(uint64_t Value, size_t Width = 0, bool Prefix = false)
+		: Value(Value), Width(Width), Prefix(Prefix) {}
+
+	uint64_t GetValue() const { return Value; }
+	size_t GetWidth() const { return Width; }
+	bool HasPrefix() const { return Prefix; }
+};
+
 class LeftAlign{};
 
 class RightAlign{};
@@ -151,6 +166,7 @@ public:
 	BaseFormat &operator<<(const fmt::LeftAlign &Manipulator);
 	BaseFormat &operator<<(const fmt::RightAlign &Manipulator);
 	BaseFormat &operator<<(const fmt::FillChar &Manipulator);
+	BaseFormat &operator<<(const fmt::Hex &Manipulator);
 };
 
 class FormatString : public BaseFormat
@@ -168,4 +184,18 @@ public:
 class FormatScreen : public BaseFormat
 {
 	void Commit(const FARString &Data);
+};
+
+template <class T>
+	class FormatToPrintText : public BaseFormat
+{
+	T *_t;
+
+public:
+	FormatToPrintText(T *t) : _t(t) {}
+
+	void Commit(const FARString &Data)
+	{
+		_t->PrintText(Data);
+	}
 };

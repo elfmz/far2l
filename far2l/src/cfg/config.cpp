@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "AllXLats.hpp"
 #include "xlat.hpp"
 
@@ -193,9 +194,9 @@ void SystemSettings()
 			&Opt.FoldersHistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
 	DialogBuilderListItem CAHistRemoveListItems[] = {
-			{Msg::ConfigHistoryRemoveDupsRuleNever, 0},
-			{Msg::ConfigHistoryRemoveDupsRuleByName, 1},
-			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, 2},
+			{Msg::ConfigHistoryRemoveDupsRuleNever, HISTORY_REMOVE_DUPS_NEVER},
+			{Msg::ConfigHistoryRemoveDupsRuleByName, HISTORY_REMOVE_DUPS_BY_NAME},
+			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, HISTORY_REMOVE_DUPS_BY_NAME_EXTRA},
 	};
 	auto HistRemove =
 		Builder.AddComboBox((int *)&Opt.HistoryRemoveDupsRule, 20, CAHistRemoveListItems, ARRAYSIZE(CAHistRemoveListItems),
@@ -205,10 +206,14 @@ void SystemSettings()
 	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
 	Builder.AddSeparator();
 
-	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSaveSetup = Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSavePanels = Builder.AddCheckbox(Msg::ConfigAutoSavePanels, &Opt.AutoSavePanels);
+	AutoSavePanels->Indent(4);
+	Builder.LinkFlags(AutoSaveSetup, AutoSavePanels, DIF_DISABLE, false, false);
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
+		ConfigOptSaveAutoOptions();
 		SanitizeHistoryCounts();
 		ApplySudoConfiguration();
 	}
@@ -713,6 +718,8 @@ void InterfaceSettings()
 			Builder.AddCheckbox(Msg::ConfigTTYPaletteOverride, &Opt.TTYPaletteOverride);
 		}
 
+		Builder.AddCheckbox(Msg::EnforceColorCorrection, (BOOL *)&Opt.Dialogs.EnforceColorCorrection);
+
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);
 
@@ -724,6 +731,7 @@ void InterfaceSettings()
 		Builder.AddOKCancel();
 
 		int clicked_id = -1;
+		bool oldColorCC = Opt.Dialogs.EnforceColorCorrection;
 		if (Builder.ShowDialog(&clicked_id)) {
 			if (Opt.CMOpt.CopyTimeRule)
 				Opt.CMOpt.CopyTimeRule = 3;
@@ -740,6 +748,10 @@ void InterfaceSettings()
 			CtrlObject->Cp()->SetScreenPosition();
 			// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
 			CtrlObject->Cp()->Redraw();
+
+			if (Opt.Dialogs.EnforceColorCorrection != oldColorCC) {
+				FarColors::FARColors.Set();
+			}
 
 			ApplyConsoleTweaks();
 			WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
@@ -837,18 +849,18 @@ void InterfaceSettings()
 			em.Add(L"From system locale");
 			em.AddFormat(L"Date format from locale:      \"%s\"", format_date.c_str());
 			em.AddFormat(L"  Date order:        %s (order %d)",
-				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_date_2 != std::string::npos) ? "imported" : "unchanged",
 				DateFormatIndex);
 			em.AddFormat(L"  Date separator:    %s (\'%ls\')",
-				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_date_2 != std::string::npos) ? "imported" : "unchanged",
 				strDateSeparator.CPtr());
 			em.AddFormat(L"Time format from locale:      \"%s\"", format_time.c_str());
 			em.AddFormat(L"  Time separator:    %s (\'%ls\')",
-				(pos_time_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_time_2 != std::string::npos) ? "imported" : "unchanged",
 				 strTimeSeparator.CPtr());
 			em.AddFormat(L"DecimalSeparator from locale: \"%s\"", format_decimal.c_str());
 			em.AddFormat(L"  Decimal separator: %s (\'%ls\')",
-				length_decimal>0 ? "imported" : "did not changed",
+				length_decimal>0 ? "imported" : "unchanged",
 				strDecimalSeparator.CPtr());
 			em.Add(Msg::Ok);
 			em.Show(MSG_LEFTALIGN |
@@ -970,6 +982,7 @@ void CmdlineSettings()
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
 	Builder.AddCheckbox(Msg::ConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(Msg::ConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
+	Builder.AddCheckbox(Msg::CtrlEnterMultipleItems, &Opt.CmdLine.CtrlEnterMultipleItems);
 	Builder.AddCheckbox(Msg::ConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
 	Builder.AddCheckbox(Msg::ConfigCmdlineSplitter, &Opt.CmdLine.Splitter);
 
@@ -989,6 +1002,7 @@ void CmdlineSettings()
 	auto Shell = Builder.AddEditField(&Opt.CmdLine.strShell, 19);
 	Shell->Indent(4);
 	Builder.LinkFlags(UseShell, Shell, DIF_DISABLE);
+	Builder.AddCheckbox(Msg::ConfigShowStartupBanner, &Opt.ShowStartupBanner);
 	Builder.AddOKCancel();
 
 	int oldUseShell = Opt.CmdLine.UseShell;

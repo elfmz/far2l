@@ -228,6 +228,7 @@ struct EditorOptions
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
 	int ShowLineNumbers;
+	int ShowGutterMarks;
 
 	int WordWrap;
 	FARString strWordDiv;
@@ -276,6 +277,7 @@ struct DialogsOptions
 	int DelRemovesBlocks;
 	int CBoxMaxHeight;		// максимальный размер открываемого списка (по умолчанию=8)
 	bool ShowArrowsInEdit;	// show arrows on text overflow in edit controls
+	bool EnforceColorCorrection; // for default themes, update colors to make it more contrast
 };
 
 struct VMenuOptions
@@ -299,6 +301,7 @@ struct CommandLineOptions
 	FARString strPromptFormat;
 	FARString strShell;
 	bool AskOnMultilinePaste;
+	BOOL CtrlEnterMultipleItems;
 };
 
 struct NowellOptions
@@ -398,6 +401,13 @@ struct MacroOptions
 	FARString strDateFormat;		// Для $Date
 };
 
+enum HistoryRemoveDupsRule
+{
+	HISTORY_REMOVE_DUPS_NEVER = 0,
+	HISTORY_REMOVE_DUPS_BY_NAME = 1,
+	HISTORY_REMOVE_DUPS_BY_NAME_EXTRA = 2,
+};
+
 struct Options
 {
 	int Clock;
@@ -473,6 +483,7 @@ struct Options
 	FARString strQuotedSymbols;
 	DWORD QuotedName;
 	int AutoSaveSetup;
+	int AutoSavePanels;
 	int SetupArgv;	// количество каталогов в ком.строке ФАРа
 	int ChangeDriveMode;
 	int ChangeDriveDisconnectMode;
@@ -507,6 +518,7 @@ struct Options
 	int ShowScreensNumber;
 	int ShowSortMode;
 	int ShowMenuBar;
+	int ShowStartupBanner;
 	int FormatNumberSeparators;
 	int CleanAscii;
 	int NoGraphics;

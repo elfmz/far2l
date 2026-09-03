@@ -7,10 +7,15 @@
 #include <utils.h>
 #include <dlfcn.h>
 
-// #698: Mac: Copying to clipboard stopped working in wx 3.1 (not 100% sure about exact version).
-// The fix is submitted, supposedly, into 3.2: https://github.com/wxWidgets/wxWidgets/pull/1623/files
-// Guess the problem is only present in 3.1.
-#if defined(__APPLE__) && (wxMAJOR_VERSION == 3) && (wxMINOR_VERSION == 1)
+// wxOSX 3.3.3 pastes text with interleaved NULs, see https://github.com/wxWidgets/wxWidgets/issues/26680
+#if defined(__APPLE__) && (wxMAJOR_VERSION == 3) && (wxMINOR_VERSION == 3) && (wxRELEASE_NUMBER == 3)
+#define CLIPBOARD_NATIVE_ONLY 1
+#else
+#define CLIPBOARD_NATIVE_ONLY 0
+#endif
+
+// #698: Mac: Copying to clipboard stopped working in wx 3.1.
+#if defined(__APPLE__) && (wxMAJOR_VERSION == 3) && ((wxMINOR_VERSION == 1) || CLIPBOARD_NATIVE_ONLY)
 #define CLIPBOARD_HACK 1
 #include "Mac/pasteboard.h"
 #else
@@ -110,7 +115,7 @@ void wxClipboardBackend::OnClipboardClose()
 		fprintf(stderr, "CloseClipboard without data\n");
 	}
 
-#if !defined(__WXGTK__)
+#if !defined(__WXGTK__) && !CLIPBOARD_NATIVE_ONLY
 	// it never did what supposed to, and under Ubuntu 22.04/Wayland it started to kill gnome-shell
 	wxTheClipboard->Flush();
 #endif
@@ -160,17 +165,22 @@ bool wxClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		return CallInMain<bool>(fn);
 	}
 
-	if (format==CF_UNICODETEXT || format==CF_TEXT) {
-		return wxTheClipboard->IsSupported( wxDF_TEXT ) ? TRUE : FALSE;
+	switch (format) {
+		case CF_UNICODETEXT: case CF_TEXT:
+			return wxTheClipboard->IsSupported(wxDF_TEXT) ? TRUE : FALSE;
 
-	} else {
-		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
-		if (!data_format) {
-			fprintf(stderr, "IsClipboardFormatAvailable(%u) - unrecognized format\n", format);
-			return FALSE;
+		case CF_HTML:
+			return wxTheClipboard->IsSupported(wxDF_HTML) ? TRUE : FALSE;
+
+		default: {
+			const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
+			if (!data_format) {
+				fprintf(stderr, "IsClipboardFormatAvailable(%u) - unrecognized format\n", format);
+				return FALSE;
+			}
+
+			return wxTheClipboard->IsSupported(*data_format) ? TRUE : FALSE;
 		}
-
-		return wxTheClipboard->IsSupported(*data_format) ? TRUE : FALSE;
 	}
 }
 
@@ -200,13 +210,21 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return CallInMain<void *>(fn);
 	}
 
+#if CLIPBOARD_NATIVE_ONLY
+	if (format == CF_UNICODETEXT)
+		CopyToPasteboard((const wchar_t *)data);
+	else if (format == CF_TEXT)
+		CopyToPasteboard((const char *)data);
+	return data;
+#endif
+
 	size_t len = WINPORT(ClipboardSize)(data);
 	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
 
-	if (format==CF_UNICODETEXT) {
+	if (format == CF_UNICODETEXT) {
 
 		wxString wx_str((const wchar_t *)data);
 
@@ -222,8 +240,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
-	} else if (format==CF_TEXT) {
-
+	} else if (format == CF_TEXT) {
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
@@ -233,6 +250,10 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
 #endif
+
+	} else if (format == CF_HTML) {
+		auto *cdo = new wxHTMLDataObject(wxString::FromUTF8((const char *)data));
+		g_wx_data_to_clipboard->Add(cdo);
 
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
@@ -258,7 +279,19 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 	}
 
 	PVOID p = nullptr;
-	if (format==CF_UNICODETEXT || format==CF_TEXT) {
+	if (format == CF_HTML) {
+		if (!wxTheClipboard->IsSupported(wxDF_HTML)) {
+			return nullptr;
+		}
+		wxHTMLDataObject data;
+		if (!wxTheClipboard->GetData(data)) {
+			return nullptr;
+		}
+		wxString wx_str = data.GetHTML();
+		const auto &utf8 = wx_str.utf8_str();
+		p = ClipboardAllocFromZeroTerminatedString<char>(utf8);
+
+	} else if (format == CF_UNICODETEXT || format == CF_TEXT) {
 
 		wxString wx_str;
 		bool data_found = false;

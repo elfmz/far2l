@@ -19,9 +19,13 @@ void VT_ComposeMarker(std::string &marker)
 
 std::string VT_ComposeMarkerCommand(const std::string &marker)
 {
-	// marker contains $FARVTRESULT and thus must be in double quotes
-	std::string out = "printf '\\033_far2l_%s\\007' \"";
-	out+= marker;
+	// split marker by two parts, separating leading character to avoid echoed
+	// command affecting us, as we want to react only on command's output
+	// there is $FARVTRESULT at the end sometimes so tailing part must be in double quotes
+	std::string out = "printf '\\033_far2l_%s%s\\007' '";
+	out+= marker.front();
+	out+= "' \"";
+	out+= marker.c_str() + 1;
 	out+= "\"";
 	return out;
 }
@@ -80,12 +84,25 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 	return out;
 }
 
+static bool VT_CommandNeedsTerminatingNewline(const char *cmd)
+{
+	const size_t length = strlen(cmd);
+	if (!length || cmd[length - 1] != '\n')
+		return true;
+
+	size_t backslashes = 0;
+	for (size_t i = length - 1; i && cmd[i - 1] == '\\'; --i)
+		++backslashes;
+
+	return backslashes & 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 static std::atomic<bool> s_shown_tip_exit{false};
 static std::atomic<unsigned int> s_vt_script_id{0};
 
-VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker, const std::string &exit_marker)
 {
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
@@ -96,12 +113,12 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bo
 	const auto &name = StrPrintf("vtcmd/%x_%u", (unsigned int)getpid(), id);
 	_cmd_script = InMyTemp(name.c_str());
 	_pwd_file = _cmd_script + pwd_file_ext;
-	Create(cd, cmd, need_sudo, start_marker);
+	Create(cd, cmd, need_sudo, start_marker, exit_marker);
 	if (!_created) {
 		Cleanup();
 		_cmd_script = InMyCache(name.c_str());
 		_pwd_file = _cmd_script + pwd_file_ext;
-		Create(cd, cmd, need_sudo, start_marker);
+		Create(cd, cmd, need_sudo, start_marker, exit_marker);
 	}
 }
 
@@ -132,11 +149,13 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 	return buf;
 }
 
-void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker, const std::string &exit_marker)
 {
 	std::string content;
-	content+= "trap \"printf ''\" INT\n"; // need marker to be printed even after Ctrl+C pressed
-	content+= "PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
+	// set PS1 to marker ensures marker printed in case user stopped complex command like 'while true; ... done' with Ctrl+C
+	content+= "PS1='\\033''_far2l_''"; // that '' inside prevent mistreating as control sequence if command accidentally echoed to terminal
+	content+= exit_marker;
+	content+= "$FARVTRESULT\\007'; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
 	if (strcmp(cmd, "exit")!=0) {
 		content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
 	}
@@ -158,19 +177,29 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 
 	if (*last_ch != '&') { // don't update curdir in case of background command
-		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
+		pwd_suffix = StrPrintf("if [ $FARVTRESULT -eq 0 ]; then pwd >'%s'; fi\n", _pwd_file.c_str());
 	}
 
+	content+= "FARVTRESULT=1\n";
 	if (need_sudo) {
 		content+= Opt.SudoEnabled ? "sudo -A " : "sudo ";
-		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s%s\"\n",
-			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
+		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s", EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str());
 	} else {
-		content+= StrPrintf("cd \"%s\" && %s%s\n",
-			EscapeCmdStr(cd).c_str(), cmd, pwd_suffix.c_str());
+		content+= StrPrintf("cd \"%s\" && %s", EscapeCmdStr(cd).c_str(), cmd);
 	}
 
-	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+	if (VT_CommandNeedsTerminatingNewline(cmd)) {
+		content+= '\n';
+	}
+	content+= "FARVTRESULT=$?\n";
+
+	if (need_sudo) {
+		content+= pwd_suffix;
+		content+= "exit $FARVTRESULT\"\n";
+		content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+	} else {
+		content+= pwd_suffix;
+	}
 
 	static std::string vthook = InMyConfig("/vtcmd.sh");
 	if (TestPath(vthook).Exists()) {

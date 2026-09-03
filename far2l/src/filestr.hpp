@@ -42,11 +42,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class OldGetFileString
 {
 private:
+	static constexpr size_t READ_BUF_SIZE = 65536;
+
 	FILE *SrcFile;
 	int ReadPos, ReadSize;
 
-	char ReadBuf[8192];
-	wchar_t wReadBuf[8192];
+	std::vector<char> ReadBuf;
+	std::vector<wchar_t> wReadBuf;
 
 	int m_nStrLength;
 	char *Str;

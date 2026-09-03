@@ -110,6 +110,10 @@ struct MenuItemEx
 	int UserDataSize;				// Размер пользовательских данных
 	int PrefixLen;	// Length of 'grayed' unimportant prefix
 	int ShowPos;
+	// Подсвечиваемый фрагмент пункта (в символах strName), HiliteLength=0 - нет подсветки.
+	// В отличие от AmpPos работает и при VMENU_SHOWAMPERSAND и подсвечивает не один символ.
+	int HiliteStart;
+	int HiliteLength;
 	short AmpPos;	// Позиция автоназначенной подсветки
 	bool FilteredOut;
 
@@ -156,6 +160,8 @@ struct MenuItemEx
 		AmpPos = 0;
 		PrefixLen = 0;
 		ShowPos = 0;
+		HiliteStart = 0;
+		HiliteLength = 0;
 	}
 
 	MenuItemEx() { Clear(); }
@@ -178,6 +184,8 @@ struct MenuItemEx
 			AmpPos = srcMenu.AmpPos;
 			PrefixLen = srcMenu.PrefixLen;
 			ShowPos = srcMenu.ShowPos;
+			HiliteStart = srcMenu.HiliteStart;
+			HiliteLength = srcMenu.HiliteLength;
 		}
 
 		return *this;

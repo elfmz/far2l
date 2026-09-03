@@ -933,10 +933,9 @@ int Manager::ProcessKey(DWORD Key)
 					if ((TypeFrame != MODALTYPE_HELP && TypeFrame != MODALTYPE_DIALOG) || CurFrame->GetCanLoseFocus())
 					{
 						DeactivateFrame(FrameMenu(),0);
-						return TRUE;
 					}
 
-					break;	// отдадим F12 дальше по цепочке
+					return TRUE; // the current modal dialog/help cannot lose focus, so F12 is a no-op
 				}
 
 				case KEY_CTRLALTSHIFTPRESS:
@@ -1037,6 +1036,10 @@ int Manager::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 void Manager::PluginsMenu()
 {
 	_MANAGER(SysLog(1));
+	if (CurrentFrame->ProcessPluginMenu()) {
+		_MANAGER(SysLog(-1));
+		return;
+	}
 	int curType = CurrentFrame->GetType();
 
 	if (curType == MODALTYPE_PANELS || curType == MODALTYPE_EDITOR || curType == MODALTYPE_VIEWER

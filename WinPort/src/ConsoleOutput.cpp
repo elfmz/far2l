@@ -66,6 +66,7 @@ void ConsoleOutput::DeferredRepaints::Add(const SMALL_RECT *areas, size_t cnt)
 	}
 }
 
+static std::atomic<int> s_conout_cnt{0};
 
 ConsoleOutput::ConsoleOutput() :
 	_backend(NULL),
@@ -80,6 +81,19 @@ ConsoleOutput::ConsoleOutput() :
 	_scroll_region.top = 0;
 	_scroll_region.bottom = MAXSHORT;
 	SetSize(80, 25);
+	int cnt = ++s_conout_cnt;
+	if (cnt > 4) {
+		fprintf(stderr, "ConsoleOutput: instances count increased to %d %s\n",
+			cnt, (cnt > 100) ? "!!!" : ((cnt > 10) ? "!" : ""));
+	}
+}
+
+ConsoleOutput::~ConsoleOutput()
+{
+	int cnt = --s_conout_cnt;
+	if (cnt >= 4) {
+		fprintf(stderr, "ConsoleOutput: instances count decreased to %d\n", cnt);
+	}
 }
 
 
@@ -437,16 +451,19 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 
 			} else if (CharClasses::IsSuffix(*sm.str)) {
 				out = 0;
-				if (*sm.str == CharClasses::VARIATION_SELECTOR_16) {
-					// The previous character should be rendered as an image
-					out = 1;
-					needs_trailing_blank=true;
-				}
 				if (!readPrevChar(ch)) {
 					return false;
 				}
 				pos = _prev_pos;
 				std::wstring tmp  = extractString(ch);
+				if (*sm.str == CharClasses::VARIATION_SELECTOR_16
+						&& tmp.find(CharClasses::ZERO_WIDTH_JOINER) == std::wstring::npos) {
+					// A standalone VS16 changes its preceding narrow character into a
+					// two-cell emoji.  A ZWJ sequence has already reserved the width of
+					// its first character, so advancing here would widen the cluster.
+					out = 1;
+					needs_trailing_blank = true;
+				}
 				tmp+= *sm.str;
 				CI_SET_COMPOSITE(ch, tmp.c_str());
 			} else if (*sm.str == L'\t' && (_mode & ENABLE_PROCESSED_OUTPUT) != 0) {
@@ -955,12 +972,16 @@ unsigned int ConsoleOutput::WaitForChange(unsigned int prev_change_id, unsigned 
 
 const char *ConsoleOutput::BackendInfo(int entity)
 {
-	return _backend->OnConsoleBackendInfo(entity);
+	return _backend ? _backend->OnConsoleBackendInfo(entity) : nullptr;
 }
 
 void ConsoleOutput::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	_backend->OnGetConsoleImageCaps(wgi);
+	if (_backend) {
+		_backend->OnGetConsoleImageCaps(wgi);
+	} else {
+		memset(wgi, 0, sizeof(*wgi));
+	}
 }
 
 bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
@@ -969,7 +990,7 @@ bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL
 	fprintf(stderr,
 		"OnSetConsoleImage: id='%s' flags=0x%llx area={%d:%d %d:%d} width=%d height=%d %s\n",
 		id, flags, area->Left, area->Top, area->Right, area->Bottom, width, height, bad ? "- BAD ARGS" : "");
-	if (bad) {
+	if (bad || !_backend) {
 		return false;
 	}
 	return _backend->OnSetConsoleImage(id, flags, area, width, height, buffer);
@@ -979,11 +1000,11 @@ bool ConsoleOutput::OnTransformConsoleImage(const char *id, const SMALL_RECT *ar
 {
 	fprintf(stderr, "OnTransformConsoleImage: id='%s' area={%d:%d %d:%d} tf=%u\n",
 		id, area->Left, area->Top, area->Right, area->Bottom, tf);
-	return _backend->OnTransformConsoleImage(id, area, tf);
+	return _backend ? _backend->OnTransformConsoleImage(id, area, tf) : false;
 }
 
 bool ConsoleOutput::OnDeleteConsoleImage(const char *id)
 {
 	fprintf(stderr, "OnDeleteConsoleImage: id='%s'\n", id);
-	return _backend->OnDeleteConsoleImage(id);
+	return _backend ? _backend->OnDeleteConsoleImage(id) : false;
 }

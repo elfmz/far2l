@@ -1,0 +1,49 @@
+.Language=English,English
+
+"Image Viewer"
+
+"&Ok"
+"&Cancel"
+"E&xtra commands"
+"Extra commands"
+
+"Command name"
+"Input command name"
+
+"Command line"
+"Input command line"
+
+"Navigate: PGUP PGDN HOME"
+"Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F5"
+"Selection: SPACE BS INS"
+"F4 | F9 | ENTER | ESC | I | G | T"
+
+"Respect EXIF o&rientation info"
+"Open by &Enter on file"
+"Open by Ctrl+Pg&Dn on file"
+"Open automatically in &Quick View panel"
+"Open automatically in &File Viewer"
+
+"Potential &image file masks"
+"Potential &video file masks"
+
+": metadata"
+"No EXIF metadata or unsupported format"
+"No GPS metadata found in this image"
+"Open (%ls) in..."
+
+"The command list has been modified. Save changes?"
+
+"Failed to load image file:"
+"ImageViewer requires a file panel with real local file paths."
+"Command output size mismatch:"
+" bytes expected, got "
+"Command failed"
+"Failed to run tool:"
+"Please install package:"
+" - operation details"
+"Package: "
+"Command:"
+"File of %s: "
+"&Skip"
+"&Info"

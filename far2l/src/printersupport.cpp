@@ -228,3 +228,56 @@ FarTrueColor ColorspaceSupport::ConvertForPrintLAB(const FarTrueColor& in, const
     LABtoXYZ(lab, X, Y, Z);
     return XYZtoRGB(X, Y, Z);
 }
+
+FILE* PrinterSupport::BeginPrint() 
+{
+	fprintf(stderr, "Printer caps: HTML=%c, preview=%c, setup dialog=%c\n",
+		IsReducedHTMLSupported() ? 'Y' : 'N',
+		IsPrintPreviewSupported() ? 'Y' : 'N',
+		IsPrinterSetupDialogSupported() ?  'Y' : 'N');
+
+	_fileName = InMyTemp(StrPrintf("print/%d", getpid()).c_str());
+
+	FILE* fp = fopen(_fileName.c_str(), "a+");
+	if (fp && IsReducedHTMLSupported()) {
+		fputs(HTML_PRE_HEADER, fp);
+	}
+
+	return fp;
+}
+
+void PrinterSupport::EndPrint(FILE* fp) 
+{
+	if (IsReducedHTMLSupported()) {
+		fputs(HTML_PRE_FOOTER, fp);
+	}
+	fclose(fp);
+    
+    std::wstring ws_fileName;
+    StrMB2Wide(_fileName, ws_fileName);
+
+	if (IsPrintPreviewSupported()) {
+		if (IsReducedHTMLSupported()) 
+			ShowPreviewForHtmlFile(ws_fileName);
+		else 
+			ShowPreviewForTextFile(ws_fileName);
+	}
+	else {
+		if (IsReducedHTMLSupported()) 
+			PrintHtmlFile(ws_fileName);
+		else
+			PrintTextFile(ws_fileName);
+	}
+
+	_fileName.clear();
+}
+
+void PrinterSupport::PrintRawFile(const wchar_t* fileName)
+{
+	if (IsPrintPreviewSupported()) {
+		ShowPreviewForTextFile(fileName);
+	} else {
+		PrintTextFile(fileName);
+	}
+}
+

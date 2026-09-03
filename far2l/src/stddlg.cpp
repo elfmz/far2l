@@ -39,16 +39,55 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dialog.hpp"
 #include "ctrlobj.hpp"
 #include "strmix.hpp"
+#include "message.hpp"
+#include "RegExp.hpp"
+
+static int PosSearchText = 2;
+static int PosCheckBoxRegexp;
+
+static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+{
+	if (Msg == DN_CLOSE && Param1 >= 0
+			&& ((unsigned)(Param1) + 1) != reinterpret_cast<Dialog*>(hDlg)->GetAllItemCount()) // button Cancel is the last element
+	{
+		const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, PosSearchText, 0);
+		if (*Txt == 0)
+		{
+			SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
+			Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditEmptySearchField, Msg::Ok);
+			return FALSE;
+		}
+
+		if (PosCheckBoxRegexp >= 0
+				&& SendDlgMessage(hDlg, DM_GETCHECK, PosCheckBoxRegexp, 0) == BSTATE_CHECKED)
+		{
+			RegExp Re;
+			FARString strSlash(Txt);
+			InsertRegexpQuote(strSlash);
+			if (!Re.Compile(strSlash, OP_PERLSTYLE | OP_OPTIMIZE)) {
+				SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
+				FARString strMsg(Txt);
+				InsertQuote(strMsg);
+				Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditInvalidRegexp, strMsg, Msg::Ok);
+				return FALSE;
+			}
+		}
+	}
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
+}
 
 int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARString *pReplaceStr,
 		const wchar_t *TextHistoryName, const wchar_t *ReplaceHistoryName, int *Case, int *WholeWords,
-		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic)
+		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic, bool ShowAllButton)
 {
 	if (!pSearchStr || (IsReplaceMode && !pReplaceStr))
-		return FALSE;
+		return SEARCHDLG_CANCEL;
 
 	static const wchar_t *TextHistoryName0 = L"SearchText", *ReplaceHistoryName0 = L"ReplaceText";
 	int HeightDialog, DeltaCol1, DeltaCol2, DeltaCol, I;
+	int Result = SEARCHDLG_OK;
+
+	PosCheckBoxRegexp = -1;
 
 	if (!TextHistoryName)
 		TextHistoryName = TextHistoryName0;
@@ -153,8 +192,10 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			}
 		}
 
-		if (Regexp)
+		if (Regexp) {
+			PosCheckBoxRegexp = 9;
 			ReplaceDlg[9].Selected = *Regexp;
+		}
 		else {
 			DeltaCol2++;
 			ReplaceDlg[9].Flags |= DIF_HIDDEN;
@@ -187,7 +228,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 		}
 
 		{
-			Dialog Dlg(ReplaceDlg, ARRAYSIZE(ReplaceDlgData));
+			Dialog Dlg(ReplaceDlg, ARRAYSIZE(ReplaceDlgData), SearchReplaceDlgProc);
 			Dlg.SetPosition(-1, -1, 76, HeightDialog);
 
 			if (HelpTopic && *HelpTopic)
@@ -196,7 +237,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			Dlg.Process();
 
 			if (Dlg.GetExitCode() != 11)
-				return FALSE;
+				return SEARCHDLG_CANCEL;
 		}
 
 		*pSearchStr = ReplaceDlg[2].strData;
@@ -228,7 +269,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 		06   | [ ] Whole words                    [ ] Select found                |
 		07   | [ ] Reverse search                                                 |
 		08   +--------------------------------------------------------------------+
-		09   |                       [ Search ]  [ Cancel ]                       |
+		09   |                  [ Search ]  [ All ]  [ Cancel ]                   |
 		10   +--------------------------------------------------------------------+
 		*/
 		DialogDataEx SearchDlgData[] = {
@@ -243,6 +284,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			{DI_CHECKBOX,  40, 6, 0,  6,  {}, 0, Msg::EditSearchSelFound},
 			{DI_TEXT,      3,  8, 0,  8,  {}, DIF_SEPARATOR, L""},
 			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::EditSearchSearch},
+			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_CENTERGROUP, Msg::EditSearchAll},
 			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_CENTERGROUP, Msg::EditSearchCancel}
 		};
 		// индекс самого нижнего чекбокса каждой колонки в диалоге.
@@ -299,8 +341,10 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			}
 		}
 
-		if (Regexp)
+		if (Regexp) {
+			PosCheckBoxRegexp = 7;
 			SearchDlg[7].Selected = *Regexp;
+		}
 		else {
 			DeltaCol2++;
 			SearchDlg[7].Flags |= DIF_HIDDEN;
@@ -344,8 +388,18 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			}
 		}
 
+		const int PosButtonSearch = 10, PosButtonAll = 11, PosButtonCancel = 12;
+		int SearchDlgItemCount = (int)ARRAYSIZE(SearchDlg);
+
+		if (!ShowAllButton) {
+			// кнопку "Все" не прячем, а выкидываем совсем - спрятанные элементы
+			// всё равно учитываются при центрировании группы кнопок
+			SearchDlg[PosButtonAll] = SearchDlg[PosButtonCancel];
+			SearchDlgItemCount--;
+		}
+
 		{
-			Dialog Dlg(SearchDlg, ARRAYSIZE(SearchDlg));
+			Dialog Dlg(SearchDlg, SearchDlgItemCount, SearchReplaceDlgProc);
 			Dlg.SetPosition(-1, -1, 76, HeightDialog);
 
 			if (HelpTopic && *HelpTopic)
@@ -353,8 +407,13 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 
 			Dlg.Process();
 
-			if (Dlg.GetExitCode() != 10)
-				return FALSE;
+			const int ExitCode = Dlg.GetExitCode();
+
+			if (ExitCode != PosButtonSearch && !(ShowAllButton && ExitCode == PosButtonAll))
+				return SEARCHDLG_CANCEL;
+
+			if (ExitCode == PosButtonAll)
+				Result = SEARCHDLG_ALL;
 		}
 
 		*pSearchStr = SearchDlg[2].strData;
@@ -378,7 +437,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			*SelectFound = SearchDlg[8].Selected;
 	}
 
-	return TRUE;
+	return Result;
 }
 
 // Функция для коррекции аля Shift-F4 Shift-Enter без отпускания Shift ;-)
@@ -496,67 +555,4 @@ int WINAPI GetString(const wchar_t *Title, const wchar_t *Prompt, const wchar_t 
 	}
 
 	return FALSE;
-}
-
-/*
-	Стандартный диалог ввода пароля.
-	Умеет сам запоминать последнего юзвера и пароль.
-
-	Name      - сюда будет помещен юзвер (max 256 символов!!!)
-	Password  - сюда будет помещен пароль (max 256 символов!!!)
-	Title     - заголовок диалога (может быть nullptr)
-	HelpTopic - тема помощи (может быть nullptr)
-	Flags     - флаги (GNP_*)
-*/
-int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARString &strPassword,
-		const wchar_t *HelpTopic, DWORD Flags)
-{
-	static FARString strLastName, strLastPassword;
-	int ExitCode;
-	/*
-	  0         1         2         3         4         5         6         7
-	  0123456789012345678901234567890123456789012345678901234567890123456789012345
-	|0                                                                             |
-	|1   +------------------------------- Title -------------------------------+   |
-	|2   | User name                                                           |   |
-	|3   | ******************************************************************* |   |
-	|4   | User password                                                       |   |
-	|5   | ******************************************************************* |   |
-	|6   +---------------------------------------------------------------------+   |
-	|7   |                         [ Ok ]   [ Cancel ]                         |   |
-	|8   +---------------------------------------------------------------------+   |
-	|9                                                                             |
-	*/
-	DialogDataEx PassDlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, 72, 8, {}, 0, NullToEmpty(Title)},
-		{DI_TEXT,      5, 2, 0,  2, {}, 0, Msg::NetUserName},
-		{DI_EDIT,      5, 3, 70, 3, {}, DIF_FOCUS | DIF_USELASTHISTORY | DIF_HISTORY, (Flags & GNP_USELAST) ? strLastName : strUserName},
-		{DI_TEXT,      5, 4, 0,  4, {}, 0, Msg::NetUserPassword},
-		{DI_PSWEDIT,   5, 5, 70, 5, {}, 0, (Flags & GNP_USELAST) ? strLastPassword : strPassword},
-		{DI_TEXT,      3, 6, 0,  6, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
-	};
-	MakeDialogItemsEx(PassDlgData, PassDlg);
-
-	{
-		Dialog Dlg(PassDlg, ARRAYSIZE(PassDlg));
-		Dlg.SetPosition(-1, -1, 76, 10);
-
-		if (HelpTopic)
-			Dlg.SetHelp(HelpTopic);
-
-		Dlg.Process();
-		ExitCode = Dlg.GetExitCode();
-	}
-
-	if (ExitCode != 6)
-		return FALSE;
-
-	// запоминаем всегда.
-	strUserName = PassDlg[2].strData;
-	strLastName = strUserName;
-	strPassword = PassDlg[4].strData;
-	strLastPassword = strPassword;
-	return TRUE;
 }

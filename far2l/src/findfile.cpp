@@ -572,47 +572,6 @@ static void ReleaseInFileSearch()
 	}
 }
 
-static void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel = false)
-{
-	if (DirName && *DirName) {
-		FARString strName(DirName);
-		wchar_t *DirPtr = strName.GetBuffer();
-		wchar_t *NamePtr = (wchar_t *)PointToName(DirPtr);
-
-		if (NamePtr != DirPtr) {
-			*(NamePtr - 1) = 0;
-			// force plugin to update its file list (that can be empty at this time)
-			// if not done SetDirectory may fail
-			{
-				int FileCount = 0;
-				PluginPanelItem *PanelData = nullptr;
-
-				if (CtrlObject->Plugins.GetFindData(hPlugin, &PanelData, &FileCount, OPM_SILENT)) {
-					CtrlObject->Plugins.FreeFindData(hPlugin, PanelData, FileCount);
-				}
-			}
-
-			if (*DirPtr) {
-				if (*DirPtr != GOOD_SLASH)	// fix #182
-					CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
-
-				CtrlObject->Plugins.SetDirectory(hPlugin, DirPtr, OPM_SILENT);
-			} else {
-				CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
-			}
-		}
-
-		// Отрисуем панель при необходимости.
-		if (UpdatePanel) {
-			CtrlObject->Cp()->ActivePanel->Update(UPDATE_KEEP_SELECTION);
-			CtrlObject->Cp()->ActivePanel->GoToFile(NamePtr);
-			CtrlObject->Cp()->ActivePanel->Show();
-		}
-
-		// strName.ReleaseBuffer(); Не надо. Строка все равно удаляется, лишний вызов StrLength.
-	}
-}
-
 static LONG_PTR WINAPI AdvancedDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch (Msg) {
@@ -1075,8 +1034,7 @@ static bool ScanFileByMapping(const char *Name)
 	return false;
 }
 
-static void
-AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex);
+static void AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex);
 
 struct ScanFileWorkItem : IThreadedWorkItem
 {
@@ -1179,10 +1137,9 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem *FileItem, const wchar_
 			FarMkTempEx(strTempDir);
 			apiCreateDirectory(strTempDir, nullptr);
 
-			bool GetFileResult = false;
-			GetFileResult = CtrlObject->Plugins.GetFile(hPlugin, FileItem, strTempDir, FileToScan,
-										OPM_SILENT | OPM_FIND)
-						!= FALSE;
+			bool GetFileResult = CtrlObject->Plugins.GetFile(hPlugin,
+				FileItem, strTempDir, FileToScan, OPM_SILENT | OPM_FIND) != FALSE;
+
 			if (!GetFileResult) {
 				apiRemoveDirectory(strTempDir);
 				return;
@@ -1313,9 +1270,9 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 				if (!strFindStr.IsEmpty()) {
 					FARString strFStr(strFindStr);
 					TruncStrFromEnd(strFStr, 10);
-					FARString strTemp(L" \"");
-					strTemp+= strFStr+= "\"";
-					strSearchStr.Format(Msg::FindSearchingIn, strTemp.CPtr());
+					strFStr.Insert(0, L" \"");
+					strFStr+= L'\"';
+					strSearchStr.Format(Msg::FindSearchingIn, strFStr.CPtr());
 				} else
 					strSearchStr.Format(Msg::FindSearchingIn, L"");
 
@@ -1833,12 +1790,8 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static void
-AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex)
+static int AddMenuRecordSynched(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex)
 {
-	if (!hDlg)
-		return;
-
 	VMenu *ListBox = reinterpret_cast<Dialog *>(hDlg)->GetAllItem()[FD_LISTBOX]->ListPtr;
 
 	if (!ListBox->GetItemCount()) {
@@ -2031,6 +1984,16 @@ AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &Find
 	itd.SetFileCount(FC);
 	itd.SetDirCount(DC);
 	itd.SetLastFoundNumber(LF);
+	return 0;
+}
+
+static void AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex)
+{
+	if (!hDlg) {
+		fprintf(stderr, "%s: !hDlg\n", __FUNCTION__);
+	} else if (InterThreadCall<int, -1>(std::bind(AddMenuRecordSynched, hDlg, FullName, FindData, ArcIndex)) < 0) {
+		fprintf(stderr, "%s: InterThreadCall failed\n", __FUNCTION__);
+	}
 }
 
 static void DoPreparePluginList(HANDLE hDlg);
@@ -2496,6 +2459,7 @@ static bool FindFilesProcess(Vars &v)
 	// Надо бы показать диалог, а то инициализация элементов запаздывает
 	// иногда при поиске и первые элементы не добавляются
 	Dlg.InitDialog();
+	Dlg.SetRegularIdle(true);
 	Dlg.Show();
 
 	strLastDirName.Clear();

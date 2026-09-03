@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="go-mod">
+    <annotation>
+      <documentation>
+        Go module file syntax (go.mod)
+        https://go.dev/ref/mod#go-mod-file
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="Directive" parent="def:Directive"/>
+    <region name="ModulePath" parent="def:String"/>
+    <region name="Version" parent="def:Number"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="LineComment" parent="def:LineComment"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="Error" parent="def:Error"/>
+
+    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
+    <entity name="localPath" value="[\.\/][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
+    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
+
+    <scheme name="comment">
+      <regexp match="/\/\/\s*indirect\s*$/" region="Keyword"/>
+      <regexp match="/\/\/.*$/" region="LineComment"/>
+    </scheme>
+
+    <scheme name="common">
+      <inherit scheme="comment"/>
+      <keywords region="Symbol">
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="["/>
+        <symb name="]"/>
+        <symb name=","/>
+        <symb name="=>"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="requireItem">
+      <inherit scheme="common"/>
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="requireBlock">
+      <inherit scheme="requireItem"/>
+    </scheme>
+
+    <scheme name="replaceItem">
+      <inherit scheme="common"/>
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
+              region1="ModulePath" region2="Version" region3="Symbol" region4="ModulePath" region5="Version"/>
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
+              region1="ModulePath" region2="Version" region3="Symbol" region4="ModulePath"/>
+      <regexp match="/^\s*(%modulePath;)\s*(=>)\s*(%modulePath;)/"
+              region1="ModulePath" region2="Symbol" region3="ModulePath"/>
+      <regexp match="/^\s*(%modulePath;)\s*(=>)\s*(%localPath;)/"
+              region1="ModulePath" region2="Symbol" region3="ModulePath"/>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="replaceBlock">
+      <inherit scheme="replaceItem"/>
+    </scheme>
+
+    <scheme name="excludeItem">
+      <inherit scheme="common"/>
+      <regexp match="/^\s*(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="excludeBlock">
+      <inherit scheme="excludeItem"/>
+    </scheme>
+
+    <scheme name="retractItem">
+      <inherit scheme="common"/>
+      <regexp match="/^\s*\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
+              region1="Version" region2="Version"/>
+      <regexp match="/^\s*(%version;)/" region1="Version"/>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="retractBlock">
+      <inherit scheme="retractItem"/>
+    </scheme>
+
+    <scheme name="go-mod">
+      <inherit scheme="common"/>
+
+      <!-- module directive -->
+      <regexp match="/^\s*(module)\s+(%modulePath;)/"
+              region1="Keyword" region2="ModulePath"/>
+
+      <!-- go directive -->
+      <regexp match="/^\s*(go)\s+(\d+(?:\.\d+){1,2})/"
+              region1="Keyword" region2="Version"/>
+
+      <!-- toolchain directive -->
+      <regexp match="/^\s*(toolchain)\s+(go\d+(?:\.\d+){1,2})/"
+              region1="Keyword" region2="Version"/>
+
+      <!-- single-line require -->
+      <regexp match="/^\s*(require)\s+(%modulePath;)\s+(%version;)/"
+              region1="Keyword" region2="ModulePath" region3="Version"/>
+
+      <!-- require block -->
+      <block start="/^\s*(require)\s*\(\s*$/"
+             end="/^\s*\)\s*$/"
+             scheme="requireBlock"
+             region00="Symbol" region01="Keyword" region10="Symbol"/>
+
+      <!-- single-line replace -->
+      <regexp match="/^\s*(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
+              region1="Keyword" region2="ModulePath" region3="Version" region4="Symbol" region5="ModulePath" region6="Version"/>
+      <regexp match="/^\s*(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
+              region1="Keyword" region2="ModulePath" region3="Version" region4="Symbol" region5="ModulePath"/>
+      <regexp match="/^\s*(replace)\s+(%modulePath;)\s*(=>)\s*(%modulePath;)/"
+              region1="Keyword" region2="ModulePath" region3="Symbol" region4="ModulePath"/>
+      <regexp match="/^\s*(replace)\s+(%modulePath;)\s*(=>)\s*(%localPath;)/"
+              region1="Keyword" region2="ModulePath" region3="Symbol" region4="ModulePath"/>
+
+      <!-- replace block -->
+      <block start="/^\s*(replace)\s*\(\s*$/"
+             end="/^\s*\)\s*$/"
+             scheme="replaceBlock"
+             region00="Symbol" region01="Keyword" region10="Symbol"/>
+
+      <!-- single-line exclude -->
+      <regexp match="/^\s*(exclude)\s+(%modulePath;)\s+(%version;)/"
+              region1="Keyword" region2="ModulePath" region3="Version"/>
+
+      <!-- exclude block -->
+      <block start="/^\s*(exclude)\s*\(\s*$/"
+             end="/^\s*\)\s*$/"
+             scheme="excludeBlock"
+             region00="Symbol" region01="Keyword" region10="Symbol"/>
+
+      <!-- single-line retract -->
+      <regexp match="/^\s*(retract)\s+\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
+              region1="Keyword" region2="Version" region3="Version"/>
+      <regexp match="/^\s*(retract)\s+(%version;)/"
+              region1="Keyword" region2="Version"/>
+
+      <!-- retract block -->
+      <block start="/^\s*(retract)\s*\(\s*$/"
+             end="/^\s*\)\s*$/"
+             scheme="retractBlock"
+             region00="Symbol" region01="Keyword" region10="Symbol"/>
+
+      <!-- catch any unexpected non-whitespace as error -->
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

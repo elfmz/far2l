@@ -129,6 +129,8 @@ public:
 	void ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey);
 	int MenuBarPosition();
 	int IsOptionActive(int hMenu, int vMenu);
+
+	bool SendToPrinter();
 };
 
 void ModalViewFile(const std::string &pathname);

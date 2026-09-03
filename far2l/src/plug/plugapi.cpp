@@ -240,7 +240,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 {
 	if (ACTL_SYNCHRO == Command)	// must be first
 	{
-		PluginSynchroManager.Synchro(true, ModuleNumber, Param1);
+		PluginSynchroManager.Synchro(true, ModuleNumber, Param1, (LONG_PTR)Param2);
 		return 0;
 	}
 
@@ -2036,10 +2036,10 @@ static int FarEditorControlSynched(int Command, void *Param)
 	if (FrameManager->ManagerIsDown())
 		return 0;
 
-	if (CtrlObject->Plugins.CurEditor)
-		return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
 	if (CtrlObject->Plugins.CurDialogEditor)
 		return (CtrlObject->Plugins.CurDialogEditor->EditorControl(Command, Param));
+	if (CtrlObject->Plugins.CurEditor)
+		return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
 	return 0;
 }
 

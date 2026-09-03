@@ -44,6 +44,7 @@ class FilePanels : public Frame
 {
 private:
 	virtual void DisplayObject();
+	void RetryActivePanelRead();
 	typedef class Frame inherited;
 
 public:

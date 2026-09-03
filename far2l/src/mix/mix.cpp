@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "InterThreadCall.hpp"
 
-int ToPercent(uint32_t N1, uint32_t N2)
+int ToPercent(uint32_t N1, uint32_t N2, bool unlimited)
 {
 	if (N1 > 10000) {
 		N1/= 100;
@@ -51,13 +51,13 @@ int ToPercent(uint32_t N1, uint32_t N2)
 	if (!N2)
 		return 0;
 
-	if (N2 < N1)
+	if (N2 < N1 && !unlimited)
 		return (100);
 
 	return ((int)(N1 * 100 / N2));
 }
 
-int ToPercent64(uint64_t N1, uint64_t N2)
+int ToPercent64(uint64_t N1, uint64_t N2, bool unlimited)
 {
 	if (N1 > 10000) {
 		N1/= 100;
@@ -67,7 +67,7 @@ int ToPercent64(uint64_t N1, uint64_t N2)
 	if (!N2)
 		return 0;
 
-	if (N2 < N1)
+	if (N2 < N1 && !unlimited)
 		return 100;
 
 	return static_cast<int>(N1 * 100 / N2);

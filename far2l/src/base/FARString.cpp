@@ -649,6 +649,18 @@ size_t FARString::TruncateByCells(size_t nCount)
 	return ng;
 }
 
+void FARString::FitToCells(size_t nCount, wchar_t Ch)
+{
+	size_t cells = CellsCount();
+	if (cells > nCount) {
+		TruncateByCells(nCount);
+		cells = CellsCount();
+	}
+	if (cells < nCount) {
+		Append(Ch, nCount - cells);
+	}
+}
+
 
 // Definition of DumpValue for FARString
 namespace Dumper {

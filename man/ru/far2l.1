@@ -1,6 +1,6 @@
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Topics:"
-.TH FAR2L 1 "October 2025" "FAR2L Version 2.7.0" "Linux fork of FAR Manager v2"
+.TH FAR2L 1 "August 2026" "FAR2L Version 2.9.0" "Linux fork of FAR Manager v2"
 .\"SKIP_SECTION"
 .SH "НАИМЕНОВАНИЕ"
 far2l \- Двухпанельный файловый менеджер, работающий в текстовом режиме, со встроенным терминалом и другими полезными функциями.
@@ -85,10 +85,10 @@ far2l \- Двухпанельный файловый менеджер, рабо�
 \fB\-\-norgb\fP
 Не использовать полноцветную (24-битную) палитру цветов
 .TP
-\fB\-\-nodetect\fP, \fB\-\-nodetect\fP=[x|xi][f][w][a][k]
+\fB\-\-nodetect\fP, \fB\-\-nodetect\fP=[x|xi][f][w][a][k][e]
 По умолчанию far2l пытается на запуске определить, не работает ли он в терминале другого far2l. В этом случае far2l автоматически использует режим TTY с расширениями терминала far2l (f). В случае отсутствия таких расширений терминала, far2l проверяет наличие доступа к X11 сессии или Xi расширению и использует их для улучшения возможностей интерфейса, если был собран с опцией TTYX.
-Кроме того, по умолчанию используются и доступны для отключения w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes.
-Данный ключ без параметров выключает всю перечисленную функциональность, предотвращая авто определение наличия расширений и разрешает к использованию лишь базовые возможности обычного терминала в TTY режиме.
+Кроме того, по умолчанию используются и доступны для отключения w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes, e=emodjie VS16 suffix.
+Данный ключ без параметров выключает всю перечисленную функциональность, предотвращая автоопределение наличия расширений и разрешает к использованию лишь базовые возможности обычного терминала в TTY режиме.
 .TP
 \fB\-\-mortal\fP
 Завершить работу вместо перехода в фоновый режим при получении сигнала SIGHUP (по умолчанию, если в Linux TTY).
@@ -102,6 +102,9 @@ far2l \- Двухпанельный файловый менеджер, рабо�
 \fB\-\-wayland\fP
 Принудительная работа режима GUI под Wayland (принудительно выставляет GDK_BACKEND=wayland)
 .TP
+\fB\-\-SDL\fP
+Принудительный запуск GUI под SDL вместо WX
+.TP
 \fB\-\-ee\fP=\fI\,N\/\fR
 Срок действия ESC в мсек (по умолчанию 100, укажите 0 для отключения), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
 .TP
@@ -113,6 +116,9 @@ force maximize window upon launch (only for GUI backend)
 .TP
 \fB\-\-nomaximize\fP
 dont maximize window upon launch even if its has saved maximized state (only for GUI backend)
+.TP
+\fB\-\-size=\fI\,WxH\/\fR\fP
+set initial window size in characters (only for GUI backend)
 .TP
 \fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
 use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout

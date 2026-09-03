@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info);
+int TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info);
 
 //////////////////////////////////////////////
 
@@ -15,4 +15,4 @@ struct TTYRevivableInstance
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances);
 
-int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty);
+int TTYReviveIt(pid_t pid, int std_in, int std_out);

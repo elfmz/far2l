@@ -366,6 +366,8 @@ enum FarMessagesProc
 	DM_SETCOLOR = DM_SETTRUECOLOR,
 
 	DM_SETTEXTPTRSILENT,
+	// Set tab size for dialog edit controls (Param1 = Item ID, Param2 = tab size).
+	DM_SETEDITTABSIZE = 0x3FF0,
 
 	DN_FIRST=0x1000,
 	DN_BTNCLICK,
@@ -1017,6 +1019,11 @@ enum FarHelpFlags
 	FHELP_USECONTENTS = 0x40000000,
 };
 
+enum FarSynchroFlags
+{
+	FCTL_SYNCHRO_IDLE = 0x00000001,
+};
+
 typedef BOOL (WINAPI *FARAPISHOWHELP)(
 	const wchar_t *ModuleName,
 	const wchar_t *Topic,
@@ -1465,12 +1472,17 @@ enum VIEWER_CONTROL_COMMANDS
 	VCTL_SETPOSITION,
 	VCTL_SELECT,
 	VCTL_SETMODE,
+	VCTL_GETSTRING,
+	VCTL_ADDCOLOR,
+	VCTL_ADDTRUECOLOR,
+	VCTL_GETCONTEXT,
 };
 
 enum VIEWER_OPTIONS
 {
 	VOPT_SAVEFILEPOSITION=1,
 	VOPT_AUTODETECTCODEPAGE=2,
+	VOPT_QUICKVIEW=4,
 };
 
 enum VIEWER_SETMODE_TYPES
@@ -1501,6 +1513,34 @@ struct ViewerSelect
 {
 	int64_t BlockStartPos;
 	int     BlockLen;
+};
+
+struct ViewerGetString
+{
+	size_t StringNumber;
+	const wchar_t *StringText;
+	size_t StringLength;
+	DWORD Flags;
+};
+
+enum VIEWER_GETSTRING_FLAGS
+{
+	VGS_WRAPS_TO_NEXT=1,
+	VGS_CONTEXT_RETAINED=2,
+};
+
+struct ViewerColor
+{
+	size_t StringNumber;
+	size_t StartPos;
+	size_t EndPos;
+	uint64_t Color;
+};
+
+struct ViewerTrueColor
+{
+	struct ViewerColor Base;
+	struct FarTrueColorForeAndBack TrueColor;
 };
 
 enum VIEWER_SETPOS_FLAGS
@@ -1552,6 +1592,7 @@ enum VIEWER_EVENTS
 {
 	VE_READ       =0,
 	VE_CLOSE      =1,
+	VE_REDRAW     =2,
 
 	VE_GOTFOCUS   =6,
 	VE_KILLFOCUS  =7,
@@ -1623,6 +1664,7 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_GETFILENAME,
 	ECTL_ADDTRUECOLOR,
 	ECTL_GETTRUECOLOR,
+	ECTL_SETGUTTERMARKS,
 };
 //#ifdef FAR_USE_INTERNALS
 //	ECTL_SERVICEREGION, // WTF
@@ -1642,6 +1684,7 @@ enum EDITOR_SETPARAMETER_TYPES
 	ESPT_GETWORDDIV,
 	ESPT_SHOWWHITESPACE,
 	ESPT_SETBOM,
+	ESPT_SHOWGUTTER,
 };
 
 #ifdef FAR_USE_INTERNALS
@@ -1726,6 +1769,9 @@ enum EDITOR_OPTIONS
 	EOPT_EXPANDONLYNEWTABS = 0x00000080,
 	EOPT_SHOWWHITESPACE    = 0x00000100,
 	EOPT_BOM               = 0x00000200,
+	EOPT_SHOWNUMBERS       = 0x00000400,
+	EOPT_SHOWGUTTER        = 0x00000800,
+	EOPT_MEMOEDIT          = 0x00001000,
 };
 
 
@@ -1763,7 +1809,9 @@ struct EditorInfo
 	int BookMarkCount;
 	DWORD CurState;
 	UINT CodePage;
-	DWORD Reserved[5];
+	int WindowX;
+	int WindowY;
+	DWORD Reserved[3];
 };
 
 struct EditorBookMarks
@@ -1822,6 +1870,18 @@ struct EditorTrueColor
 {
 	struct EditorColor Base;
 	struct FarTrueColorForeAndBack TrueColor;
+};
+
+struct EditorGutterMark
+{
+	int Line; // 0-based logical line number
+	uint64_t Color; // Far color attributes
+};
+
+struct EditorGutterMarks
+{
+	size_t Count;
+	const struct EditorGutterMark *Marks;
 };
 
 struct EditorSaveFile
@@ -2278,11 +2338,7 @@ struct PluginInfo
 	const wchar_t * const *PluginConfigStrings;
 	int PluginConfigStringsNumber;
 	const wchar_t *CommandPrefix;
-#ifdef FAR_USE_INTERNALS
 	DWORD SysID;
-#else // ELSE FAR_USE_INTERNALS
-	DWORD Reserved;
-#endif // END FAR_USE_INTERNALS
 #ifdef FAR_USE_INTERNALS
 #if defined(PROCPLUGINMACROFUNC)
 	int MacroFunctionNumber;
@@ -2412,6 +2468,7 @@ struct OpenPluginInfo
 	const struct KeyBarTitles *KeyBar;
 	const wchar_t           *ShortcutData;
 	const wchar_t           *CurURL;
+	const wchar_t           *CurPath;
 	long                  Reserved;
 };
 
@@ -2603,4 +2660,3 @@ extern "C"
 #define EXP_NAME(p) _export p ## W
 
 #endif /* __FAR2SDK_FARPLUG_WIDE_H__ */
-

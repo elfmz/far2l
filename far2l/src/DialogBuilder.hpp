@@ -68,7 +68,7 @@ private:
 
 	const wchar_t *HelpTopic;
 
-	void LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags);
+	void LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags, bool bParentChecked);
 
 protected:
 	virtual void InitDialogItem(DialogItemEx *Item, const TCHAR *Text);
@@ -98,12 +98,17 @@ public:
 	// Добавляет выпадающий список с code pages.
 	ItemReference AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
 
-	// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
-	// false, устанавливает флаги Flags у элемента Target; когда равно true -
-	// сбрасывает флаги.
+	// Связывает состояние элементов Parent и Target.
+	// При bParentChecked == true:
+	//   Когда Parent->Selected равно false, устанавливает флаги Flags у элемента Target;
+	//   когда Parent->Selected равно true - сбрасывает флаги.
+	// При bParentChecked == false:
+	//   Когда Parent->Selected равно true, устанавливает флаги Flags у элемента Target;
+	//   когда Parent->Selected равно false - сбрасывает флаги.
 	// Если LinkLabels установлено в true, то текстовые элементы, добавленные к элементу Target
 	// методами AddTextBefore и AddTextAfter, также связываются с элементом Parent.
-	void LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels = true);
+	void LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels = true,
+			bool bParentChecked = true);
 
 	void AddOKCancel() { DialogBuilderBase<DialogItemEx>::AddOKCancel(Msg::Ok, Msg::Cancel); }
 };

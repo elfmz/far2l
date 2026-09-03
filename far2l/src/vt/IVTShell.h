@@ -17,10 +17,12 @@ struct IVTShell
 	virtual void OnBracketedPasteExpectation(bool enabled)              = 0;
 	virtual void OnFocusChangeExpectation(bool enabled)                 = 0;
 	virtual void OnWin32InputMode(bool enabled)                         = 0;
+	virtual int  OnModeQuery(int mode, bool is_dec)                     = 0;
 	virtual void SetKittyFlags(int flags)                               = 0;
 	virtual int  GetKittyFlags()                                        = 0;
 	virtual void OnApplicationProtocolCommand(const char *str)          = 0;
 	virtual bool OnOSCommand(int id, std::string &str)                  = 0;
+	virtual void OnSetTitle(const wchar_t *title)                       = 0;
 	virtual void InjectInput(const char *str)                           = 0;
 	virtual void OnKeypadChange(unsigned char keypad)                   = 0;
 	virtual void OnTerminalResized()                                    = 0;

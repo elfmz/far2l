@@ -4,10 +4,17 @@
 #include <mutex>
 #include <set>
 #include "headers.hpp"
+#include "ctrlobj.hpp"
 #include "delete.hpp"
+#include "dirmix.hpp"
 #include "farwinapi.hpp"
+#include "filepanels.hpp"
 #include "fileholder.hpp"
+#include "filelist.hpp"
+#include "message.hpp"
+#include "panelmix.hpp"
 #include "pathmix.hpp"
+#include "plugins.hpp"
 
 static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 {
@@ -127,5 +134,95 @@ void TempFileUploadHolder::CheckForChanges()
 		if (UploadTempFile()) {
 			_mtim = s.st_mtim;
 		}
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+
+PluginTempFileHolder::PluginTempFileHolder(const FARString &temp_file_name, HANDLE hPlugin_)
+	:
+	TempFileUploadHolder(temp_file_name), hPlugin(hPlugin_)
+{
+	OpenPluginInfo plugin_info{};
+	CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &plugin_info);
+	if (plugin_info.CurDir) {
+		_plug_dir = plugin_info.CurDir;
+		AddEndSlash(_plug_dir);
+	}
+	CtrlObject->Plugins.RetainPlugin(hPlugin);
+}
+
+PluginTempFileHolder::~PluginTempFileHolder()
+{
+	CtrlObject->Plugins.ClosePlugin(hPlugin);
+}
+
+bool PluginTempFileHolder::UploadTempFile()
+{
+	PutCode = 0;
+	FARString strSaveDir;
+	apiGetCurrentDirectory(strSaveDir);
+
+	FARString strPath = _file_path_name;
+
+	if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES) {
+		FARString strFindName;
+		CutToSlash(strPath, false);
+		strFindName = strPath + L"*";
+		FAR_FIND_DATA_EX FindData;
+		::FindFile Find(strFindName);
+		while (Find.Get(FindData)) {
+			if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				strPath+= FindData.strFileName;
+				break;
+			}
+		}
+	}
+
+	bool out = false;
+
+	PluginPanelItem PanelItem;
+	if (FileList::FileNameToPluginItem(strPath, &PanelItem)) {
+		OpenPluginInfo plugin_info{};
+		FARString cur_dir;
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &plugin_info);
+		if (plugin_info.CurDir) {
+			cur_dir = plugin_info.CurDir;
+			AddEndSlash(cur_dir);
+		}
+		fprintf(stderr, "PluginTempFileHolder: upload into '%ls' while cur '%ls' file '%ls'\n",
+			_plug_dir.CPtr(), cur_dir.CPtr(), PanelItem.FindData.lpwszFileName);
+		if (cur_dir != _plug_dir) {
+			SetPluginDirectory(_plug_dir, hPlugin);
+		}
+		PutCode = CtrlObject->Plugins.PutFiles(hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
+		if (cur_dir != _plug_dir) {
+			SetPluginDirectory(cur_dir, hPlugin);
+		}
+		if (PutCode != 0)
+			out = true;
+
+		FileList::FreePluginPanelItem(&PanelItem);
+	}
+
+	if (!out) {
+		Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, strPath.CPtr(),
+				Msg::Ok);
+	}
+
+	FarChDir(strSaveDir);
+
+	if (out) {
+		CheckPanelUpdate(CtrlObject->Cp()->LeftPanel);
+		CheckPanelUpdate(CtrlObject->Cp()->RightPanel);
+	}
+
+	return out;
+}
+
+void PluginTempFileHolder::CheckPanelUpdate(Panel *panel)
+{
+	if (panel && panel->GetPluginHandle() == hPlugin) {
+		ShellUpdatePanels(panel, FALSE);
 	}
 }

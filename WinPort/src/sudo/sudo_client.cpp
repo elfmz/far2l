@@ -137,13 +137,20 @@ namespace Sudo
 
 		int r = fork();
 		if (r == 0) {
+			// Keep cached sudo dispatcher out of the interactive TTY session: sudo's
+			// pty monitor can otherwise race far2l's own input reader while alive.
+			if (setsid() == -1) {
+				perror("setsid");
+			}
+
 			// sudo closes all descriptors except std, so put leash[1] into stdin to make it survive
 			dup2(leash[1], STDIN_FILENO);
 
-			// override stdout handle otherwise TTY detach doesnt work while sudo client runs
+			// Avoid exposing the interactive TTY through stdio to sudo.
 			int fd = open("/dev/null", O_RDWR);
 			if (fd != -1) {
 				dup2(fd, STDOUT_FILENO);
+				dup2(fd, STDERR_FILENO);
 				close(fd);
 			}
 

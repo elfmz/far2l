@@ -55,6 +55,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filestr.hpp"
 #include "stddlg.hpp"
 #include "farversion.h"
+#include <algorithm>
+#include <map>
+#include <utility>
 
 // Стек возврата
 class CallBackStack
@@ -108,6 +111,20 @@ static const wchar_t *FoundContents = L"__FoundContents__";
 static const wchar_t *PluginContents = L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic = L":Help";
 static const wchar_t *HelpContents = L"Contents";
+static constexpr int HelpWindowSideMargin = 4;
+static constexpr int MinimumHelpTextWidth = 20;
+static constexpr size_t MaximumHelpRecords = 16384;
+static constexpr size_t MaximumHelpParsePasses = MaximumHelpRecords * 8;
+
+static bool HasWindowedHelpSpace()
+{
+	return !Opt.FullScreenHelp && ScrX - 2 * HelpWindowSideMargin - 1 >= MinimumHelpTextWidth;
+}
+
+static bool CanReformatHelp()
+{
+	return Opt.FullScreenHelp ? ScrX - 1 >= MinimumHelpTextWidth : HasWindowedHelpSpace();
+}
 
 void SubstituteRuntimePlaceholders(FARString& line)
 {
@@ -146,13 +163,21 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 	TopScreen = new SaveScreen;
 	StackData.strHelpTopic = Topic;
 
-	if (Opt.FullScreenHelp)
+	if (Opt.FullScreenHelp || !HasWindowedHelpSpace())
 		SetPosition(0, 0, ScrX, ScrY);
 	else
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
 
 	if (!ReadHelp(StackData.strHelpMask) && (Flags & FHELP_USECONTENTS)) {
 		StackData.strHelpTopic = Topic;
+
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
 
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			size_t pos;
@@ -167,7 +192,7 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 		ReadHelp(StackData.strHelpMask);
 	}
 
-	if (HelpList.getSize()) {
+	if (!HelpList.empty()) {
 		ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
 		InitKeyBar();
 		MacroMode = MACRO_HELP;
@@ -210,6 +235,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	int Formatting = TRUE, RepeatLastLine, BreakProcess;
 	const int MaxLength = X2 - X1 - 1;
 	FARString strPath;
+	std::map<std::wstring, int> anchorMap; // name -> line number in HelpList
 
 	if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 		strPath = StackData.strHelpTopic.CPtr() + 1;
@@ -227,7 +253,20 @@ int Help::ReadHelp(const wchar_t *Mask)
 		strPath = !StackData.strHelpPath.IsEmpty() ? StackData.strHelpPath : g_strFarPath;
 	}
 
+	// Extract anchor from topic name (only when opening a new topic).
+	// Syntax: "TopicName??anchor_name" - "??" separates topic from anchor.
+	if (IsNewTopic) {
+		const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+		if (sep) {
+			StackData.strHelpAnchor = sep + 2;
+			StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		} else {
+			StackData.strHelpAnchor.Clear();
+		}
+	}
+
 	if (!StrCmp(StackData.strHelpTopic, PluginContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for plugin contents
 		strFullHelpPathName.Clear();
 		ReadDocumentsHelp(HIDX_PLUGINS);
 		return TRUE;
@@ -277,9 +316,10 @@ int Help::ReadHelp(const wchar_t *Mask)
 	if (!GetLangParam(HelpFile, L"PluginContents", &strCurPluginContents, nullptr, nCodePage))
 		strCurPluginContents.Clear();
 
-	HelpList.Free();
+	HelpList.clear();
 
 	if (!StrCmp(StackData.strHelpTopic, FoundContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for search results
 		Search(HelpFile, nCodePage);
 		fclose(HelpFile);
 		return TRUE;
@@ -302,8 +342,14 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 	OldGetFileString GetStr(HelpFile);
 	int nStrLength, GetCode;
+	size_t ParsePasses = 0;
 
 	for (;;) {
+		// A malformed help file or an invalid wrap state must not let an input
+		// event create an unbounded number of records.
+		if (++ParsePasses > MaximumHelpParsePasses || HelpList.size() >= MaximumHelpRecords)
+			break;
+
 		if (StartPos != (DWORD)-1)
 			RealMaxLength = MaxLength - StartPos;
 		else
@@ -398,6 +444,18 @@ int Help::ReadHelp(const wchar_t *Mask)
 				if (!StrCmp(strReadStr, L"@-")) {
 					Formatting = FALSE;
 					PrevSymbol = 0;
+					continue;
+				}
+
+				// Anchor marker: "@??anchor_name" - record line index, do not add to HelpList
+				if (strReadStr.GetLength() >= 3 && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+					if (!strSplitLine.IsEmpty()) {
+						AddLine(strSplitLine.CPtr());
+						strSplitLine.Clear();
+					}
+					FARString anchorName = strReadStr.CPtr() + 3;
+					anchorMap[anchorName.CPtr()] = StrCount;
+					PrevSymbol = L'@';
 					continue;
 				}
 
@@ -564,6 +622,15 @@ int Help::ReadHelp(const wchar_t *Mask)
 	if (IsNewTopic) {
 		StackData.CurX = StackData.CurY = 0;
 		StackData.TopStr = 0;
+		// If an anchor was requested, scroll to its line index
+		if (!StackData.strHelpAnchor.IsEmpty()) {
+			auto it = anchorMap.find(StackData.strHelpAnchor.CPtr());
+			if (it != anchorMap.end()) {
+				int anchorLine = it->second;
+				StackData.TopStr = (anchorLine >= FixCount) ? (anchorLine - FixCount) : 0;
+			}
+			StackData.strHelpAnchor.Clear();
+		}
 	}
 
 	return TopicFound;
@@ -586,30 +653,33 @@ void Help::AddLine(const wchar_t *Line)
 	strLine+= Line;
 	SubstituteRuntimePlaceholders(strLine);
 
-	{
-		HelpRecord AddRecord(strLine);
-		HelpList.addItem(AddRecord);
-	}
+	HelpList.emplace_back(std::move(strLine));
 
 	StrCount++;
 }
 
 void Help::AddTitle(const wchar_t *Title)
 {
+	FARString strEscaped = Title;
+	// Escape special .hlf markup characters
+	ReplaceStrings(strEscaped, L"@", L"@@", -1);
+	ReplaceStrings(strEscaped, L"~", L"~~", -1);
+	ReplaceStrings(strEscaped, L"#", L"##", -1);
+
 	FARString strIndexHelpTitle;
-	strIndexHelpTitle.Format(L"^ #%ls#", Title);
+	strIndexHelpTitle.Format(L"^ # %ls #", strEscaped.CPtr());
 	AddLine(strIndexHelpTitle);
 }
 
 void Help::HighlightsCorrection(FARString &strStr)
 {
-	int I, Count;
+	size_t Count = 0;
 
-	for (I = 0, Count = 0; strStr.At(I); I++)
+	for (size_t I = 0, Length = strStr.GetLength(); I < Length; ++I)
 		if (strStr.At(I) == L'#')
-			Count++;
+			++Count;
 
-	if ((Count & 1) && strStr.At(0) != L'$')
+	if ((Count & 1) && !strStr.IsEmpty() && strStr.At(0) != L'$')
 		strStr.Insert(0, L'#');
 }
 
@@ -684,8 +754,8 @@ void Help::FastShow()
 		}
 
 		if (StrPos < StrCount) {
-			const HelpRecord *rec = GetHelpItem(StrPos);
-			const wchar_t *OutStr = rec ? rec->HelpStr : nullptr;
+			const FARString *rec = GetHelpItem(StrPos);
+			const wchar_t *OutStr = rec ? rec->CPtr() : nullptr;
 
 			if (!OutStr)
 				OutStr = L"";
@@ -840,11 +910,12 @@ void Help::OutString(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 
@@ -922,11 +993,12 @@ int Help::StringLen(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 
@@ -1006,7 +1078,10 @@ int Help::ProcessKey(FarKey Key)
 
 	switch (Key) {
 		case KEY_NONE:
+			break;
 		case KEY_IDLE: {
+			if (ReformatPending)
+				Reformat();
 			break;
 		}
 		case KEY_F5: {
@@ -1241,6 +1316,7 @@ int Help::ProcessKey(FarKey Key)
 
 				if (!JumpTopic()) {
 					Stack->Pop(&StackData);
+					IsNewTopic = FALSE;
 					ReadHelp(StackData.strHelpMask);	// вернем то, что отображали.
 				}
 
@@ -1263,6 +1339,11 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	if (JumpTopic)
 		StackData.strSelTopic = JumpTopic;
+
+	// Expand short intra-topic anchor links (e.g., "??anchor") to absolute paths
+	if (StackData.strSelTopic.GetLength() >= 2 && StackData.strSelTopic.At(0) == L'?' && StackData.strSelTopic.At(1) == L'?') {
+			StackData.strSelTopic = StackData.strHelpTopic + StackData.strSelTopic;
+	}
 
 	/*
 		$ 14.07.2002 IS
@@ -1372,6 +1453,14 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	if (!ReadHelp(StackData.strHelpMask)) {
 		StackData.strHelpTopic = strNewTopic;
 
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
+
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			if (StackData.strHelpTopic.RPos(pos, HelpEndLink)) {
 				StackData.strHelpTopic.Truncate(pos + 1);
@@ -1385,7 +1474,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
 
-	if (!HelpList.getSize()) {
+	if (HelpList.empty()) {
 		ErrorHelp = TRUE;
 
 		if (!(StackData.Flags & FHELP_NOSHOWERROR)) {
@@ -1531,15 +1620,15 @@ int Help::IsReferencePresent()
 		return FALSE;
 	}
 
-	const HelpRecord *rec = GetHelpItem(StrPos);
-	wchar_t *OutStr = rec ? rec->HelpStr : nullptr;
+	const FARString *rec = GetHelpItem(StrPos);
+	const wchar_t *OutStr = rec ? rec->CPtr() : nullptr;
 	return (OutStr && wcschr(OutStr, L'@') && wcschr(OutStr, L'~'));
 }
 
-const HelpRecord *Help::GetHelpItem(int Pos)
+const FARString *Help::GetHelpItem(int Pos)
 {
-	if ((unsigned int)Pos < HelpList.getSize())
-		return HelpList.getItem(Pos);
+	if (Pos >= 0 && static_cast<size_t>(Pos) < HelpList.size())
+		return &HelpList[Pos];
 	return nullptr;
 }
 
@@ -1609,20 +1698,6 @@ void Help::MoveToReference(int Forward, int CurScreen)
 	FastShow();
 }
 
-static int __cdecl CmpItems(const HelpRecord **el1, const HelpRecord **el2)
-{
-	if (el1 == el2)
-		return 0;
-
-	int result = StrCmpI((**el1).HelpStr, (**el2).HelpStr);
-	if (!result)
-		return 0;
-	else if (result < 0)
-		return -1;
-	else
-		return 1;
-}
-
 void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 {
 	StrCount = 0;
@@ -1652,6 +1727,10 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		strReadStr = ReadStr;
 		RemoveTrailingSpaces(strReadStr);
 
+		if (strReadStr.GetLength() >= 3 && strReadStr.At(0) == L'@' && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+			continue; // skip anchor markers "@??..."
+		}
+
 		if (strReadStr.At(0) == L'@' && !(strReadStr.At(1) == L'+' || strReadStr.At(1) == L'-')
 				&& !strReadStr.Contains(L'='))		// && !TopicFound)
 		{
@@ -1665,16 +1744,20 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		} else if (TopicFound && strReadStr.At(0) == L'$' && strReadStr.At(1) && !strCurTopic.IsEmpty()) {
 			strEntryName = strReadStr.CPtr() + 1;
 			RemoveExternalSpaces(strEntryName);
+			if (strEntryName.At(0) == L'^') {
+				strEntryName.Remove(0); // skip centering prefix (not displayed)
+			}
 			RemoveChar(strEntryName, L'#', false);
 		}
 
 		if (TopicFound && !strEntryName.IsEmpty()) {
-			// !!!BUGBUG: необходимо "очистить" строку strReadStr от элементов разметки !!!
+			FARString strSearchable = SanitizeHelpString(strReadStr);
+
 
 			FARString ReplaceStr;
 			int CurPos = 0;
 			int SearchLength;
-			bool Result = SearchString(strReadStr, (int)strReadStr.GetLength(), strLastSearchStr, ReplaceStr,
+			bool Result = SearchString(strSearchable, (int)strSearchable.GetLength(), strLastSearchStr, ReplaceStr,
 					CurPos, 0, LastSearchCase, LastSearchWholeWords, false, LastSearchRegexp, &SearchLength);
 
 			if (Result) {
@@ -1692,9 +1775,74 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 	MoveToReference(1, 1);
 }
 
+FARString Help::SanitizeHelpString(const FARString& input) const
+{
+	FARString result;
+	const wchar_t *p   = input.CPtr();
+	const wchar_t *end = input.CEnd();
+	bool atStart = true;
+
+	while (p < end) {
+		// Remove CtrlStartPosChar marker (e.g. "^<wrap>", position hint, not displayed)
+		if (!strCtrlStartPosChar.IsEmpty()
+				&& (size_t)(end - p) >= strCtrlStartPosChar.GetLength()
+				&& wcsncmp(p, strCtrlStartPosChar.CPtr(), strCtrlStartPosChar.GetLength()) == 0) {
+			p += strCtrlStartPosChar.GetLength();
+			continue;
+		}
+
+		// Skip leading '$' (fixed-line prefix, not displayed)
+		if (atStart && *p == L'$') {
+			p++;
+			continue;
+		}
+
+		// Skip leading '^' (centering prefix, not displayed)
+		if (atStart && *p == L'^') {
+			p++;
+			continue;
+		}
+		atStart = false;
+
+		// Escaped pairs "~~", "##", "@@" -> output one literal character
+		if (p + 1 < end
+				&& ((*p == L'~' && *(p+1) == L'~')
+					|| (*p == L'#' && *(p+1) == L'#')
+					|| (*p == L'@' && *(p+1) == L'@'))) {
+			result += *p;
+			p += 2;
+			continue;
+		}
+
+		// Skip link target "@Topic@" (not displayed)
+		if (*p == L'@') {
+			p++;
+			while (p < end && !(*p == L'@' && *(p-1) != L'@'))
+				p++;
+			if (p < end) p++;
+			continue;
+		}
+
+		// Skip '~' (link text delimiter, not displayed)
+		if (*p == L'~') {
+			p++;
+			continue;
+		}
+
+		// Skip '#' (highlight toggle, not displayed)
+		if (*p == L'#') {
+			p++;
+			continue;
+		}
+
+		result += *p++;
+	}
+	return result;
+}
+
 void Help::ReadDocumentsHelp(int TypeIndex)
 {
-	HelpList.Free();
+	HelpList.clear();
 
 	strCurPluginContents.Clear();
 	StrCount = 0;
@@ -1754,7 +1902,9 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 	}
 
 	// сортируем по алфавиту
-	HelpList.Sort(reinterpret_cast<TARRAYCMPFUNC>(CmpItems), OldStrCount);
+	std::sort(HelpList.begin() + OldStrCount, HelpList.end(), [](const FARString &lhs, const FARString &rhs) {
+		return StrCmpI(lhs.CPtr(), rhs.CPtr()) < 0;
+	});
 
 	// $ 26.06.2000 IS - Устранение глюка с хелпом по f1, shift+f2, end (решение предложил IG)
 	AddLine(L"");
@@ -1824,11 +1974,11 @@ FARString &Help::MkTopic(INT_PTR PluginNumber, const wchar_t *HelpTopic, FARStri
 
 void Help::SetScreenPosition()
 {
-	if (Opt.FullScreenHelp) {
+	if (Opt.FullScreenHelp || !HasWindowedHelpSpace()) {
 		HelpKeyBar.Hide();
 		SetPosition(0, 0, ScrX, ScrY);
 	} else {
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
 	}
 
 	Show();
@@ -1859,29 +2009,43 @@ void Help::OnChangeFocus(int Focus)
 	}
 }
 
-void Help::ResizeConsole()
+void Help::Reformat()
 {
+	if (!CanReformatHelp()) {
+		ReformatPending = false;
+		return;
+	}
+
 	int OldIsNewTopic = IsNewTopic;
 	BOOL ErrCannotOpenHelp = ScreenObject::Flags.Check(FHELPOBJ_ERRCANNOTOPENHELP);
 	ScreenObject::Flags.Set(FHELPOBJ_ERRCANNOTOPENHELP);
 	IsNewTopic = FALSE;
-	delete TopScreen;
-	TopScreen = nullptr;
-	Hide();
-
-	if (Opt.FullScreenHelp) {
-		HelpKeyBar.Hide();
-		SetPosition(0, 0, ScrX, ScrY);
-	} else
-		SetPosition(4, 2, ScrX - 4, ScrY - 2);
-
 	ReadHelp(StackData.strHelpMask);
 	ErrorHelp = FALSE;
-	// StackData.CurY--; // ЭТО ЕСМЬ КОСТЫЛЬ (пусть пока будет так!)
 	StackData.CurX--;
 	MoveToReference(1, 1);
 	IsNewTopic = OldIsNewTopic;
 	ScreenObject::Flags.Change(FHELPOBJ_ERRCANNOTOPENHELP, ErrCannotOpenHelp);
+	ReformatPending = false;
+}
+
+void Help::ResizeConsole()
+{
+	delete TopScreen;
+	TopScreen = nullptr;
+	Hide();
+
+	const bool Reformat = CanReformatHelp();
+	if (Opt.FullScreenHelp || !Reformat) {
+		HelpKeyBar.Hide();
+		SetPosition(0, 0, ScrX, ScrY);
+	} else
+		SetPosition(HelpWindowSideMargin, 2, ScrX - HelpWindowSideMargin, ScrY - 2);
+
+	// Reflow after resize events settle; do not parse help synchronously in
+	// the console-resize input handler.
+	ReformatPending = Reformat;
+	CorrectPosition();
 	FrameManager->ImmediateHide();
 	FrameManager->RefreshFrame();
 }

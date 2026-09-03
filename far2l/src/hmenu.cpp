@@ -172,12 +172,18 @@ int HMenu::ProcessKey(FarKey Key)
 			FrameManager->ProcessKey(KEY_ALTF9);
 			break;
 		case KEY_OP_PLAINTEXT: {
-			const wchar_t *str = eStackAsString();
+			FARString strText;
+			if (!GPastedText.IsEmpty()) {
+				strText = GPastedText;
+				GPastedText.Clear();
+			} else {
+				strText = eStackAsString();
+			}
 
-			if (!*str)
+			if (strText.IsEmpty())
 				return FALSE;
 
-			Key = *str;
+			Key = strText[0];
 			break;
 		}
 		case KEY_NONE:

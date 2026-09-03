@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 // #include "farexcpt.hpp"
 #include "fileedit.hpp"
-#include "RefreshFrameManager.hpp"
 #include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginA.hpp"
@@ -1012,6 +1011,12 @@ void PluginA::FreeOpenPluginInfo()
 	if (OPI.PanelTitle)
 		free((void *)OPI.PanelTitle);
 
+	if (OPI.CurURL)
+		free((void *)OPI.CurURL);
+
+	if (OPI.CurPath)
+		free((void *)OPI.CurPath);
+
 	if (OPI.InfoLines && OPI.InfoLinesNumber) {
 		FreeUnicodeInfoPanelLines((InfoPanelLine *)OPI.InfoLines, OPI.InfoLinesNumber);
 	}
@@ -1052,6 +1057,12 @@ void PluginA::ConvertOpenPluginInfo(oldfar::OpenPluginInfo &Src, OpenPluginInfo 
 
 	if (Src.PanelTitle)
 		OPI.PanelTitle = AnsiToUnicode(Src.PanelTitle);
+
+	if (Src.CurURL)
+		OPI.CurURL = AnsiToUnicode(Src.CurURL);
+
+	if (Src.CurPath)
+		OPI.CurPath = AnsiToUnicode(Src.CurPath);
 
 	if (Src.InfoLines && Src.InfoLinesNumber) {
 		ConvertInfoPanelLinesA(Src.InfoLines, (InfoPanelLine **)&OPI.InfoLines, Src.InfoLinesNumber);
@@ -1146,6 +1157,7 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 {
 	FreePluginInfo();
 	PI.StructSize = sizeof(PI);
+	PI.SysID = Src.SysID;
 	PI.Flags = Src.Flags;
 
 	if (Src.DiskMenuStringsNumber) {

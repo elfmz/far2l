@@ -749,6 +749,9 @@ int PluginManager::ProcessEditorInput(INPUT_RECORD *Rec)
 
 int PluginManager::ProcessEditorEvent(int Event, void *Param)
 {
+	if (FrameManager->ManagerIsDown())  // https://github.com/shmuz/far2m/issues/98
+		return 0;
+
 	int nResult = 0;
 
 	if (CtrlObject->Plugins.CurEditor || CtrlObject->Plugins.CurDialogEditor) {
@@ -1554,7 +1557,7 @@ struct PluginData
 	DWORD PluginFlags;
 };
 
-int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target)
+int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target, bool AllowPathPrefix)
 {
 	size_t PrefixLength = 0, slash_pos = 0;
 	FARString strPrefix;
@@ -1562,16 +1565,32 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target
 	UnquoteExternal(strCommand);
 	RemoveLeadingSpaces(strCommand);
 
-	std::wstring command(strCommand.CPtr());
-	PrefixLength = command.find(L':');
-	if (PrefixLength == std::wstring::npos)
-		return FALSE;
+	if (AllowPathPrefix) {
+		std::wstring command(strCommand.CPtr());
+		PrefixLength = command.find(L':');
+		if (PrefixLength == std::wstring::npos)
+			return FALSE;
 
-	slash_pos = command.rfind(L'/',PrefixLength);
-	if (slash_pos == std::wstring::npos)
-		strPrefix = command.substr(0, PrefixLength);
-	else
-		strPrefix = command.substr(slash_pos + 1, PrefixLength - slash_pos - 1);
+		slash_pos = command.rfind(L'/', PrefixLength);
+		if (slash_pos == std::wstring::npos)
+			strPrefix = command.substr(0, PrefixLength);
+		else
+			strPrefix = command.substr(slash_pos + 1, PrefixLength - slash_pos - 1);
+	} else {
+		for (;;) {
+			const wchar_t Ch = strCommand.At(PrefixLength);
+			if (!Ch || IsSpace(Ch) || Ch == L'/' || Ch == L'\'' || Ch == L'"' || PrefixLength > 64)
+				return FALSE;
+			if (Ch == L':' && PrefixLength > 0)
+				break;
+			PrefixLength++;
+		}
+
+		strPrefix = FARString(strCommand, PrefixLength);
+	}
+
+	if (strPrefix.IsEmpty())
+		return FALSE;
 	
 	LoadIfCacheAbsent();
 	FARString strPluginPrefix;
@@ -1715,13 +1734,14 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 			HANDLE hNewPlugin = OpenPlugin(pPlugin, OpenFrom, (INT_PTR)Data);
 			bool process = false;
 
-			if (OpenFrom & OPEN_FROMMACRO) {
+			/*if (OpenFrom & OPEN_FROMMACRO) {
 				// <????>
 				;
 				// </????>
 			} else {
 				process = OpenFrom == OPEN_PLUGINSMENU || OpenFrom == OPEN_FILEPANEL;
-			}
+			}*/
+			process = OpenFrom & OPEN_PLUGINSMENU || OpenFrom & OPEN_FILEPANEL;
 
 			if (hNewPlugin != INVALID_HANDLE_VALUE && process) {
 				int CurFocus = CtrlObject->Cp()->ActivePanel->GetFocus();
@@ -1738,8 +1758,8 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
 					Если что-то не так - раскомментировать!!!
 				*/
-				// NewPanel->Update(0);
-				// NewPanel->Show();
+				NewPanel->Update(0);
+				NewPanel->Show();
 			}
 
 			if (Ret) {
@@ -1869,3 +1889,47 @@ std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
 	std::lock_guard<std::mutex> lock(BgTasks);
 	return BgTasks;
 }
+
+
+void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel)
+{
+	if (DirName && *DirName) {
+		FARString strName(DirName);
+		wchar_t *DirPtr = strName.GetBuffer();
+		wchar_t *NamePtr = (wchar_t *)PointToName(DirPtr);
+
+		if (NamePtr != DirPtr) {
+			*(NamePtr - 1) = 0;
+			// force plugin to update its file list (that can be empty at this time)
+			// if not done SetDirectory may fail
+			{
+				int FileCount = 0;
+				PluginPanelItem *PanelData = nullptr;
+
+				if (CtrlObject->Plugins.GetFindData(hPlugin, &PanelData, &FileCount, OPM_SILENT)) {
+					CtrlObject->Plugins.FreeFindData(hPlugin, PanelData, FileCount);
+				}
+			}
+
+			fprintf(stderr, "DirPtr=%ls\n", DirPtr);
+			if (*DirPtr) {
+				if (*DirPtr != GOOD_SLASH)	// fix #182
+					CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
+
+				CtrlObject->Plugins.SetDirectory(hPlugin, DirPtr, OPM_SILENT);
+			} else {
+				CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
+			}
+		}
+
+		// Отрисуем панель при необходимости.
+		if (UpdatePanel) {
+			CtrlObject->Cp()->ActivePanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->ActivePanel->GoToFile(NamePtr);
+			CtrlObject->Cp()->ActivePanel->Show();
+		}
+
+		// strName.ReleaseBuffer(); Не надо. Строка все равно удаляется, лишний вызов StrLength.
+	}
+}
+

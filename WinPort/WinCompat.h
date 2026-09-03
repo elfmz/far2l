@@ -583,6 +583,7 @@ typedef struct _INPUT_RECORD {
 #define COMMON_LVB_REVERSE_VIDEO   0x4000 // Reverse fore/back ground attribute.
 #define COMMON_LVB_UNDERSCORE      0x8000 // Underscore.
 #define COMMON_LVB_STRIKEOUT       0x2000 // Striekout.
+#define COMMON_LVB_BOLD            0x1000 // Bold.
 
 #define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
 #define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
@@ -1559,6 +1560,7 @@ typedef struct WinportGraphicsInfo1
 #define CF_WAVE             12
 #define CF_UNICODETEXT      13
 #define CF_ENHMETAFILE      14
+#define CF_HTML             15
 
 #define REG_CREATED_NEW_KEY         (0x00000001L)   // New Registry Key created
 #define REG_OPENED_EXISTING_KEY     (0x00000002L)   // Existing Key opened

@@ -320,6 +320,7 @@ int Printer::Length(const wchar_t *str, int limit)
 {
 	Parser tmp_parser;
 	size_t out = 0;
+	bool joining = false;
 	for (const wchar_t *ch = str; *ch && limit != 0;) {
 		const wchar_t *end_of_esc = tmp_parser.Parse(ch);
 		if (end_of_esc) {
@@ -336,7 +337,15 @@ int Printer::Length(const wchar_t *str, int limit)
 			}
 		} else {
 			if (!ShouldSkip(*ch)) {
-				++out;
+				if (*ch == CharClasses::ZERO_WIDTH_JOINER) {
+					joining = true;
+				} else if (CharClasses::IsFullWidth(ch)) {
+					if (!joining) out+= 2;
+					joining = false;
+				} else if (!CharClasses::IsXxxfix(*ch)) {
+					if (!joining) ++out;
+					joining = false;
+				}
 			}
 			++ch;
 			--limit;

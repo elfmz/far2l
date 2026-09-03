@@ -237,9 +237,10 @@ bool console::ReadInput(INPUT_RECORD &Buffer)
 	return true;
 }
 
-bool console::WriteInput(INPUT_RECORD &Buffer, DWORD Length, DWORD &NumberOfEventsWritten)
+bool console::WriteInput(const INPUT_RECORD &Buffer)
 {
-	return WINPORT(WriteConsoleInput)(GetInputHandle(), &Buffer, Length, &NumberOfEventsWritten) != FALSE;
+	DWORD NumberOfEventsWritten;
+	return WINPORT(WriteConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsWritten) != FALSE;
 }
 
 // пишем/читаем порциями по 32 K, иначе проблемы.

@@ -67,6 +67,12 @@ extern "C" {
 	// true means far2l runs under smoke testing and code must
 	// not skip events from input queue that sometimes used to make UX smoother
 	BOOL WinPortTesting();
+
+	// if stderr is not printed to terminal or file:
+	// - returns buffer that _may_ contain last stderr printed messages
+	//   and *len set to valid data size in that buffer.
+	// - otherwise returns NULL and zero *len
+	const char *WinPortStderrTrace(size_t *len);
 #endif /* FAR_PYTHON_GEN */
 
 #ifndef FAR_PYTHON_GEN

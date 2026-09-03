@@ -18588,15 +18588,15 @@ DragCopy
 
 ProcessListTitle
 l:
-"Список задач (PID, Name, CPU, RSS)"
-"Task list (PID, Name, CPU, RSS)"
-"Seznam úloh (PID, Name, CPU, RSS)"
-"Taskliste (PID, Name, CPU, RSS)"
-"Futó programok (PID, Name, CPU, RSS)"
-"Lista zadań (PID, Name, CPU, RSS)"
-"Lista de tareas (PID, Name, CPU, RSS)"
-"Список завдань (PID, Name, CPU, RSS)"
-"Спіс &заданняў (PID, Name, CPU, RSS)"
+"Список задач (PID, User, Name, Command, CPU, RSS)"
+"Task list (PID, User, Name, Command, CPU, RSS)"
+"Seznam úloh (PID, User, Name, Command, CPU, RSS)"
+"Taskliste (PID, User, Name, Command, CPU, RSS)"
+"Futó programok (PID, User, Name, Command, CPU, RSS)"
+"Lista zadań (PID, User, Name, Command, CPU, RSS)"
+"Lista de tareas (PID, User, Name, Command, CPU, RSS)"
+"Список завдань (PID, User, Name, Command, CPU, RSS)"
+"Спіс &заданняў (PID, User, Name, Command, CPU, RSS)"
 
 ProcessListBottom
 "Редактирование: Del Ctrl+R, Sort: t/T name, i/I PID, p/P CPU, m/M RSS, Search: ^⌥F"

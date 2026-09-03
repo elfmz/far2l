@@ -61,6 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef __linux__
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 #endif
 
 #if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
@@ -106,7 +108,19 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         FILE *f = fopen(path, "r");
         if (!f) continue;
 
+        char shortname[256];
+        if (!fgets(shortname, sizeof(shortname), f)) {
+            fclose(f);
+            continue;
+        }
+        fclose(f);
+
+        snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
+        f = fopen(path, "r");
+        if (!f) continue;
+
         char name[256];
+        *name = 0;
         if (!fgets(name, sizeof(name), f)) {
             fclose(f);
             continue;
@@ -143,8 +157,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
         unsigned long page_kb = sysconf(_SC_PAGESIZE) / 1024;
         unsigned long rss_kb = rss * page_kb;
 
-        char* q = name + strlen(name) - 1;
-        while(q > name && isspace(*q)) --q;
+        char* q = shortname + strlen(shortname) - 1;
+        while(q > shortname && isspace(*q)) --q;
         q[1] = 0;
 
         /*
@@ -162,8 +176,38 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		else if (total_time < 10000) cpuLoad = "medium";
 		else                         cpuLoad = "high";
 
+		char uid_name[128];
+		char gid_name[128];
+		*uid_name = *gid_name = 0;
+        int ruid, euid, suid, fsuid;
+        int rgid, egid, sgid, fsgid;
+
+		snprintf(path, sizeof(path), "/proc/%d/status", pid);
+		f = fopen(path, "r");
+		if (f) {
+		    char line[256];
+		    while (fgets(line, sizeof(line), f)) {
+		        if (strncmp(line, "Uid:", 4) == 0) {
+		            sscanf(line + 4, "%d %d %d %d", &ruid, &euid, &suid, &fsuid);
+		            // printf("UID: %d (real), %d (effective)\n", ruid, euid);
+					struct passwd* pw = getpwuid(ruid);
+					if (pw) strcpy(uid_name, pw->pw_name);
+		        }
+		        if (strncmp(line, "Gid:", 4) == 0) {
+		            sscanf(line + 4, "%d %d %d %d", &rgid, &egid, &sgid, &fsgid);
+		            //printf("GID: %d (real), %d (effective)\n", rgid, egid);
+					struct group* gr = getgrgid(rgid);
+					if (gr) strcpy(gid_name, gr->gr_name);
+		        }
+		    }
+		    fclose(f);
+		}
+
 		FARString strStr;
-		strStr.Format(L"%8d %lc %-40.40s %lc %6s %lc %'8ld Mb", pid, BoxSymbols[BS_V1], name, BoxSymbols[BS_V1], cpuLoad, BoxSymbols[BS_V1], rss_kb / 1024);
+		strStr.Format(L"%8d %lc %-12.12s %lc %-16.16s %lc %-40.40s %lc %6s %lc %'8ld Mb", 
+			pid, BoxSymbols[BS_V1], uid_name, BoxSymbols[BS_V1], 
+			shortname, BoxSymbols[BS_V1], name, BoxSymbols[BS_V1], 
+			cpuLoad, BoxSymbols[BS_V1], rss_kb / 1024);
 		v.push_back({ strStr.GetWide(), name, pid, rss_kb, total_time });
     }
     closedir(d);
@@ -340,7 +384,8 @@ void ShowProcessList()
 			break;
 		case KEY_NUMDEL:
 		case KEY_DEL: 
-			kill(v[ProcList.GetSelectPos()].pid, SIGTERM);
+			if(!kill(v[ProcList.GetSelectPos()].pid, SIGTERM))
+				ProcList.DeleteItem(ProcList.GetSelectPos());
 			break;
 		default:
 			ProcList.ProcessInput();

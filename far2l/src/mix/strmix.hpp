@@ -141,7 +141,7 @@ ReplaceBrackets(const wchar_t *SearchStr, const FARString &ReplaceStr, RegExpMat
 
 bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARString &ReplaceStr,
 		int &CurPos, int Position, int Case, int WholeWords, int Reverse, int Regexp, int *SearchLength,
-		const wchar_t *WordDiv = nullptr);
+		const wchar_t *WordDiv = nullptr, int RegexpOptions = 0);
 
 // Clear cached regex pattern (call when search pattern changes significantly)
 void ClearSearchStringCache();

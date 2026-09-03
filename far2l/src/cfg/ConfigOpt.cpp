@@ -374,6 +374,8 @@ const ConfigOpt g_cfg_opts[] {
 		L"EditorSettings", L"Enables word wrapping in the editor" },
 	{OST_COMMON, NSecEditor, "ShowWhiteSpace", &Opt.EdOpt.ShowWhiteSpace, 0,
 		L"EditorSettings", L"Shows whitespace markers in the editor" },
+	{OST_COMMON, NSecEditor, "ShowEOL", &Opt.EdOpt.ShowEOL, 0,
+		L"EditorSettings", L"Shows physical line-ending markers in the editor" },
 	{OST_COMMON, NSecEditor, "ShowLineNumbers", &Opt.EdOpt.ShowLineNumbers, 0,
 		L"EditorSettings", L"Shows line numbers in the editor" },
 

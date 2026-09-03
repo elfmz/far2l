@@ -8641,14 +8641,14 @@ EditF1
 l:
 l://functional keys - 6 characters max, 12 keys, "OEM" is F8 dupe!
 "Помощь    Контекстная помощь"
-"Help      Contexct help window"
-"Pomoc     Contexct help window"
-"Hilfe     Contexct help window"
-"Súgó      Contexct help window"
-"Pomoc     Contexct help window"
-"Ayuda     Contexct help window"
-"Допомога  Contexct help window"
-"Дапамога  Contexct help window"
+"Help      Context help window"
+"Pomoc     Context help window"
+"Hilfe     Context help window"
+"Súgó      Context help window"
+"Pomoc     Context help window"
+"Ayuda     Context help window"
+"Допомога  Context help window"
+"Дапамога  Context help window"
 
 EditF2
 "Сохран    Сохранить файл"

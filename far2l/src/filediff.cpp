@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -18,16 +19,22 @@
 #include "exitcode.hpp"
 #include "farcolors.hpp"
 #include "farwinapi.hpp"
+#include "fileholder.hpp"
+#include "filelist.hpp"
 #include "filepanels.hpp"
 #include "filestr.hpp"
 #include "format.hpp"
 #include "frame.hpp"
+#include "help.hpp"
 #include "interf.hpp"
 #include "lang.hpp"
 #include "manager.hpp"
 #include "message.hpp"
+#include "mix.hpp"
 #include "pathmix.hpp"
+#include "scrbuf.hpp"
 #include "strmix.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 #include "panel.hpp"
 
 namespace
@@ -63,6 +70,15 @@ struct ScreenRow
 	size_t Part = 0;
 };
 
+struct DiffFileSource
+{
+	FARString Name;
+	FARString LocalPath;
+	FARString DisplayPath;
+	FileHolderPtr Holder;
+	std::shared_ptr<PluginTempFileHolder> UploadHolder;
+};
+
 struct InlineRange
 {
 	int Start = 0;
@@ -87,7 +103,7 @@ void StripEol(FARString &Line)
 
 bool LoadTextFile(const FARString &Path, std::vector<FARString> &Lines,
 		std::vector<FARString> *EditorLines = nullptr, UINT *DetectedCodePage = nullptr,
-		bool *DetectedSignature = nullptr)
+		bool *DetectedSignature = nullptr, bool *DetectedByHeuristics = nullptr)
 {
 	File Src;
 	if (!Src.Open(Path.CPtr(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
@@ -101,12 +117,18 @@ bool LoadTextFile(const FARString &Path, std::vector<FARString> &Lines,
 
 	UINT CodePage = 0;
 	bool SignatureFound = false;
-	if (!GetFileFormat(Src, CodePage, &SignatureFound, Opt.EdOpt.AutoDetectCodePage != 0) || !IsCodePageSupported(CodePage))
+	// A comparison must decode both sides as accurately as possible, regardless
+	// of the editor's interactive auto-detection preference.
+	const bool FormatDetected = GetFileFormat(Src, CodePage, &SignatureFound, true);
+	const bool HeuristicallyDetected = FormatDetected && !SignatureFound && IsCodePageSupported(CodePage);
+	if (!FormatDetected || !IsCodePageSupported(CodePage))
 		CodePage = Opt.EdOpt.DefaultCodePage;
 	if (DetectedCodePage)
 		*DetectedCodePage = CodePage;
 	if (DetectedSignature)
 		*DetectedSignature = SignatureFound;
+	if (DetectedByHeuristics)
+		*DetectedByHeuristics = HeuristicallyDetected;
 
 	if (!IsUnicodeOrUtfCodePage(CodePage))
 		Src.SetPointer(0, nullptr, FILE_BEGIN);
@@ -225,14 +247,9 @@ bool WriteEncoded(File &Dst, UINT CodePage, const wchar_t *Data, int Length)
 		return WriteAll(Dst, Utf8.data(), Utf8.size());
 	}
 
-	const int Bytes = WINPORT(WideCharToMultiByte)(CodePage, 0, Data, Length, nullptr, 0, nullptr, nullptr);
-	if (Bytes <= 0)
-		return false;
+	WideCharToMultiByteBuffer Buffer(CodePage, Data, Length);
 
-	std::vector<char> Buffer(Bytes);
-	const int Written = WINPORT(WideCharToMultiByte)(CodePage, 0, Data, Length, Buffer.data(),
-			static_cast<int>(Buffer.size()), nullptr, nullptr);
-	return Written > 0 && WriteAll(Dst, Buffer.data(), static_cast<size_t>(Written));
+	return !Buffer.empty() && WriteAll(Dst, Buffer.data(), Buffer.size());
 }
 
 bool IsEditorContentChangeKey(FarKey Key)
@@ -294,21 +311,102 @@ bool IsEditorSearchKey(FarKey Key)
 	}
 }
 
-bool ResolvePanelFile(Panel *Source, FARString &Path)
+bool ResolvePluginPanelFile(Panel *Source, DiffFileSource &File, const wchar_t *forceName = nullptr)
 {
-	if (!Source || !Source->IsVisible() || Source->GetType() != FILE_PANEL || Source->GetMode() != NORMAL_PANEL)
+	if (!Source || Source->GetType() != FILE_PANEL || Source->GetMode() != PLUGIN_PANEL)
+		return false;
+
+	HANDLE hPlugin = Source->GetPluginHandle();
+	if (hPlugin == INVALID_HANDLE_VALUE)
+		return false;
+
+	FileList *FilePanel = static_cast<FileList *>(Source);
+	const int FilePos = (!forceName || !*forceName)
+		? FilePanel->GetCurrentPos() // use from panel current name
+		: FilePanel->FindFile(forceName); // use forceName in panel direcrory
+	if (FilePos < 0)
+		return false;
+	const size_t ItemSize = FilePanel->PluginGetPanelItem(FilePos, nullptr);
+	if (!ItemSize)
+		return false;
+
+	std::unique_ptr<void, decltype(&free)> ItemStorage(malloc(ItemSize), free);
+	if (!ItemStorage)
+		return false;
+	PluginPanelItem *Item = static_cast<PluginPanelItem *>(ItemStorage.get());
+	if (FilePanel->PluginGetPanelItem(FilePos, Item) != ItemSize || !Item->FindData.lpwszFileName)
+		return false;
+
+	if (Item->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		return false;
+
+	FARString TempDir;
+	if (!FarMkTempEx(TempDir))
+		return false;
+	apiCreateDirectory(TempDir, nullptr);
+
+	FARString LocalPath = Item->FindData.lpwszFileName;
+	const int Result = CtrlObject->Plugins.GetFile(hPlugin, Item, TempDir, LocalPath, OPM_SILENT | OPM_EDIT);
+	if (!Result) {
+		apiRemoveDirectory(TempDir);
+		return false;
+	}
+
+	FARString DisplayPath;
+	Source->GetCurDirPluginAware(DisplayPath);
+	if (!DisplayPath.IsEmpty())
+		AddEndSlash(DisplayPath);
+	DisplayPath+= Item->FindData.lpwszFileName;
+
+	auto Holder = std::make_shared<PluginTempFileHolder>(LocalPath, hPlugin);
+	File.Name = Item->FindData.lpwszFileName;
+	File.LocalPath = LocalPath;
+	File.DisplayPath = DisplayPath;
+	File.Holder = Holder;
+	File.UploadHolder = Holder;
+	return true;
+}
+
+bool ResolvePanelFile(Panel *Source, DiffFileSource &File, const wchar_t *forceName = nullptr)
+{
+	if (!Source || !Source->IsVisible() || Source->GetType() != FILE_PANEL)
+		return false;
+
+	if (Source->GetMode() == PLUGIN_PANEL) {
+		HANDLE hPlugin = Source->GetPluginHandle();
+		if (hPlugin == INVALID_HANDLE_VALUE)
+			return false;
+		if (!CtrlObject->Plugins.UseFarCommand(hPlugin, PLUGIN_FARGETFILE))
+			return ResolvePluginPanelFile(Source, File, forceName);
+	}
+
+	if (Source->GetMode() != NORMAL_PANEL && Source->GetMode() != PLUGIN_PANEL)
 		return false;
 
 	FARString Name;
-	if (!Source->GetCurName(Name) || Name.IsEmpty())
-		return false;
+	if (!forceName || !*forceName) {
+		if (!Source->GetCurName(Name) || Name.IsEmpty()) // use from panel current name
+			return false;
+	}
+	else
+		Name = forceName; // use forceName in panel direcrory
 
-	Source->GetCurDir(Path);
+	FARString Path;
+	if(!Source->GetCurDir(Path) || Path.IsEmpty())
+		return false;
 	AddEndSlash(Path);
 	Path+= Name;
 
 	const DWORD Attr = apiGetFileAttributes(Path.CPtr());
-	return Attr != INVALID_FILE_ATTRIBUTES && !(Attr & FILE_ATTRIBUTE_DIRECTORY);
+	if (Attr == INVALID_FILE_ATTRIBUTES || (Attr & FILE_ATTRIBUTE_DIRECTORY))
+		return false;
+
+	File.Name = Name;
+	File.LocalPath = Path;
+	File.DisplayPath = Path;
+	File.Holder = std::make_shared<FileHolder>(Path);
+	File.UploadHolder.reset();
+	return true;
 }
 
 constexpr size_t MaxInlineLcsCells = 65536;
@@ -791,8 +889,13 @@ class DiffEditorPane
 {
 	ScreenObject *m_owner = nullptr;
 	FARString m_path;
+	FARString m_displayPath;
+	FileHolderPtr m_holder;
+	std::shared_ptr<PluginTempFileHolder> m_uploadHolder;
 	UINT m_codepage = CP_AUTODETECT;
 	bool m_signatureFound = false;
+	bool m_codepageDetectedByHeuristics = false;
+	bool m_heuristicEncodingSaveConfirmed = false;
 	std::vector<FARString> m_lines;
 	std::unique_ptr<Editor> m_editor;
 	bool m_colorerOpened = false;
@@ -806,27 +909,39 @@ class DiffEditorPane
 	class PluginEditorScope
 	{
 		Editor *m_prev = nullptr;
+		FileEditor *m_prevEditor = nullptr;
 
 	public:
 		PluginEditorScope(Editor *EditorPtr)
 		{
 			if (CtrlObject) {
 				m_prev = CtrlObject->Plugins.CurDialogEditor;
+				m_prevEditor = CtrlObject->Plugins.CurEditor;
 				CtrlObject->Plugins.CurDialogEditor = EditorPtr;
+				CtrlObject->Plugins.CurEditor = nullptr;
 			}
 		}
 
 		~PluginEditorScope()
 		{
-			if (CtrlObject)
+			if (CtrlObject) {
 				CtrlObject->Plugins.CurDialogEditor = m_prev;
+				CtrlObject->Plugins.CurEditor = m_prevEditor;
+			}
 		}
 	};
 
 public:
-	DiffEditorPane(ScreenObject *Owner, const FARString &Path)
-		: m_owner(Owner), m_path(Path)
+	DiffEditorPane(ScreenObject *Owner, const DiffFileSource &Source)
+		:
+		m_owner(Owner),
+		m_path(Source.LocalPath),
+		m_displayPath(Source.DisplayPath),
+		m_holder(Source.Holder),
+		m_uploadHolder(Source.UploadHolder)
 	{
+		if (m_displayPath.IsEmpty())
+			m_displayPath = m_path;
 	}
 
 	~DiffEditorPane()
@@ -840,10 +955,11 @@ public:
 		if (!m_editor)
 			return false;
 
-		m_editor->SetVirtualFileName(m_path.CPtr());
+		m_editor->SetVirtualFileName(m_displayPath.CPtr());
 
 		std::vector<FARString> EditorLines;
-		if (!LoadTextFile(m_path, m_lines, &EditorLines, &m_codepage, &m_signatureFound))
+		if (!LoadTextFile(m_path, m_lines, &EditorLines, &m_codepage, &m_signatureFound,
+					&m_codepageDetectedByHeuristics))
 			return false;
 
 		m_editor->FreeAllocatedData(false);
@@ -882,9 +998,23 @@ public:
 		}
 	}
 
-	const FARString &Path() const { return m_path; }
+	const FARString &Path() const { return m_displayPath; }
 	const std::vector<FARString> &Lines() const { return m_lines; }
 	bool Modified() const { return m_editor && m_editor->IsFileModified(); }
+	bool ConfirmSaveWithDetectedEncoding() const
+	{
+		if (!m_codepageDetectedByHeuristics || m_heuristicEncodingSaveConfirmed)
+			return true;
+
+		FARString CodePageName;
+		ShortReadableCodepageName(m_codepage, CodePageName);
+		FARString DetectedEncoding;
+		DetectedEncoding.Format(Msg::FileDiffHeuristicEncoding, CodePageName.CPtr());
+		FARString FileName(Msg::FileDiffFile.CPtr());
+		FileName+= m_displayPath;
+		return Message(MSG_WARNING, 2, Msg::FileDiffTitle, DetectedEncoding.CPtr(), FileName.CPtr(),
+				Msg::HYes, Msg::HNo) == 0;
+	}
 	void SetActive(bool Active)
 	{
 		if (m_editor)
@@ -948,6 +1078,44 @@ public:
 		PluginEditorScope Scope(m_editor.get());
 		return m_editor->ProcessKey(Key) != 0;
 	}
+	bool ProcessPluginInput(INPUT_RECORD *Input, int MouseLine = -1)
+	{
+		if (!m_editor || !CtrlObject || !Input)
+			return false;
+
+		INPUT_RECORD Translated;
+		if (Input->EventType == MOUSE_EVENT && MouseLine >= 0) {
+			EditorInfo Info{};
+			if (!m_editor->EditorControl(ECTL_GETINFO, &Info))
+				return false;
+			Translated = *Input;
+			Translated.Event.MouseEvent.dwMousePosition.Y = static_cast<SHORT>(
+					Info.WindowY + MouseLine - Info.TopScreenLine);
+			Input = &Translated;
+		}
+
+		PluginEditorScope Scope(m_editor.get());
+		return CtrlObject->Plugins.ProcessEditorInput(Input) != 0;
+	}
+	void OpenPluginsMenu()
+	{
+		if (!m_editor || !CtrlObject)
+			return;
+
+		PluginEditorScope Scope(m_editor.get());
+		CtrlObject->Plugins.CommandsMenu(MODALTYPE_EDITOR, 0, L"Editor");
+	}
+	Editor *PluginEditor() const { return m_editor.get(); }
+	int TopScreenLine()
+	{
+		EditorInfo Info{};
+		return m_editor && m_editor->EditorControl(ECTL_GETINFO, &Info) ? Info.TopScreenLine : -1;
+	}
+	void InvalidateViewport()
+	{
+		m_syncedTopLine = -1;
+		m_syncedTopVisualLine = -1;
+	}
 	bool RefreshLinesFromEditor()
 	{
 		if (!m_editor)
@@ -993,9 +1161,17 @@ public:
 		}
 
 		free(RawData);
+		if (Ok && m_holder) {
+			if (m_uploadHolder)
+				m_uploadHolder->PutCode = -1;
+			m_holder->OnFileEdited(m_path.CPtr());
+			if (m_uploadHolder && m_uploadHolder->PutCode == 0)
+				Ok = false;
+		}
 		if (Ok) {
 			RefreshLinesFromEditor();
 			m_editor->MarkSaved();
+			m_heuristicEncodingSaveConfirmed = true;
 		}
 		return Ok;
 	}
@@ -1013,33 +1189,35 @@ public:
 		StartLine = std::clamp(StartLine, 0, TotalLines);
 		DeleteCount = std::clamp(DeleteCount, 0, TotalLines - StartLine);
 
-		if (NewLines.empty()) {
-			if (!DeleteLines(StartLine, DeleteCount))
-				return false;
-			RefreshLinesFromEditor();
-			return true;
-		}
-
-		const bool ReuseFirstLine = DeleteCount > 0 || (m_lines.empty() && TotalLines == 1);
-		size_t FirstInsertedLine = 0;
-		if (ReuseFirstLine) {
-			if (!SetLine(StartLine, NewLines.front()))
-				return false;
-			if (!DeleteLines(StartLine + 1, DeleteCount > 0 ? DeleteCount - 1 : 0))
-				return false;
-			FirstInsertedLine = 1;
-			++StartLine;
-		} else if (!DeleteLines(StartLine, DeleteCount)) {
+		EditorUndoRedo Undo{};
+		Undo.Command = EUR_BEGIN;
+		if (!m_editor->EditorControl(ECTL_UNDOREDO, &Undo))
 			return false;
+
+		bool Ok = true;
+		if (NewLines.empty()) {
+			Ok = DeleteLines(StartLine, DeleteCount);
+		} else {
+			const bool ReuseFirstLine = DeleteCount > 0 || (m_lines.empty() && TotalLines == 1);
+			size_t FirstInsertedLine = 0;
+			if (ReuseFirstLine) {
+				Ok = SetLine(StartLine, NewLines.front())
+						&& DeleteLines(StartLine + 1, DeleteCount > 0 ? DeleteCount - 1 : 0);
+				FirstInsertedLine = 1;
+				++StartLine;
+			} else {
+				Ok = DeleteLines(StartLine, DeleteCount);
+			}
+
+			for (size_t I = FirstInsertedLine; Ok && I < NewLines.size(); ++I)
+				Ok = InsertLine(StartLine + static_cast<int>(I - FirstInsertedLine), NewLines[I]);
 		}
 
-		for (size_t I = FirstInsertedLine; I < NewLines.size(); ++I) {
-			if (!InsertLine(StartLine + static_cast<int>(I - FirstInsertedLine), NewLines[I]))
-				return false;
-		}
-
-		RefreshLinesFromEditor();
-		return true;
+		Undo.Command = EUR_END;
+		m_editor->EditorControl(ECTL_UNDOREDO, &Undo);
+		if (Ok)
+			RefreshLinesFromEditor();
+		return Ok;
 	}
 	void SetCursorByVisualLine(int Line, int VisualLine, int CellOffset)
 	{
@@ -1081,6 +1259,11 @@ public:
 	int CursorLine() const { return m_editor ? m_editor->GetCursorLine() : 0; }
 	int CursorVisualLine() const { return m_editor ? m_editor->GetCursorVisualLine() : 0; }
 	int CursorCol() const { return m_editor ? m_editor->GetCurCol() : 0; }
+	int LineCount()
+	{
+		EditorInfo Info{};
+		return m_editor && m_editor->EditorControl(ECTL_GETINFO, &Info) ? Info.TotalLines : 0;
+	}
 
 private:
 	bool SetEditorPosition(int Line, int Pos)
@@ -1177,6 +1360,7 @@ class FileDiffFrame : public Frame
 {
 	enum class ActivePane
 	{
+		None,
 		Left,
 		Right
 	};
@@ -1189,6 +1373,7 @@ class FileDiffFrame : public Frame
 
 	enum class StatusAction
 	{
+		Help,
 		Save,
 		Merge,
 		PrevDiff,
@@ -1230,12 +1415,17 @@ class FileDiffFrame : public Frame
 	size_t m_selectedHunk = InvalidIndex;
 	MergeDirection m_selectedDirection = MergeDirection::LeftToRight;
 	bool m_pendingDiffRefresh = false;
+	ActivePane m_pluginViewportPane = ActivePane::None;
 	DWORD m_lastEditTick = 0;
 	std::vector<StatusButton> m_statusButtons;
 
 public:
-	FileDiffFrame(const FARString &LeftPath, const FARString &RightPath)
-		: m_leftPath(LeftPath), m_rightPath(RightPath), m_leftPane(this, m_leftPath), m_rightPane(this, m_rightPath)
+	FileDiffFrame(const DiffFileSource &Left, const DiffFileSource &Right)
+		:
+		m_leftPath(Left.DisplayPath),
+		m_rightPath(Right.DisplayPath),
+		m_leftPane(this, Left),
+		m_rightPane(this, Right)
 	{
 		SetCanLoseFocus(TRUE);
 		SetRestoreScreenMode(TRUE);
@@ -1244,7 +1434,7 @@ public:
 
 		if (!m_leftPane.Load() || !m_rightPane.Load()) {
 			SetExitCode(XC_OPEN_ERROR);
-			Message(MSG_WARNING, 1, L"Compare files", L"Cannot open one of the selected files.", Msg::Ok);
+			Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffCannotOpen, Msg::Ok);
 			return;
 		}
 		UpdateActivePane();
@@ -1252,43 +1442,64 @@ public:
 		SetExitCode(TRUE);
 		FrameManager->InsertFrame(this);
 	}
+	~FileDiffFrame() override { SetPluginEditorContext(false); }
 
-	virtual const wchar_t *GetTypeName() { return L"[FileDiff]"; }
-	virtual int GetType() { return MODALTYPE_USER; }
-	virtual int GetTypeAndName(FARString &strType, FARString &strName)
+	const wchar_t *GetTypeName() override { return L"[FileDiff]"; }
+	int GetType() override { return MODALTYPE_USER; }
+	bool ProcessPluginMenu() override
+	{
+		ActiveEditorPane().OpenPluginsMenu();
+		RebuildDiffFromEditors();
+		ScheduleDiffRefresh(m_activePane);
+		Show();
+		return true;
+	}
+	int GetTypeAndName(FARString &strType, FARString &strName) override
 	{
 		strType = L"FileDiff";
 		strName = m_leftPath;
 		return MODALTYPE_USER;
 	}
 
-	virtual FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0)
+	FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0) override
 	{
-		Title = L"Compare files";
+		Title = Msg::FileDiffTitle;
 		return Title;
 	}
 
-	virtual void ResizeConsole()
+	void ResizeConsole() override
 	{
 		SetPosition(0, 0, ScrX, ScrY);
 		RebuildScreenRows();
 	}
 
-	virtual void OnChangeFocus(int focus)
+	void OnChangeFocus(int focus) override
 	{
+		if (!focus)
+			SetPluginEditorContext(false);
 		Frame::OnChangeFocus(focus);
+		if (focus)
+			SetPluginEditorContext(true);
 	}
 
-	virtual int ProcessKey(FarKey Key)
+	int ProcessKey(FarKey Key) override
 	{
+		if (Key == KEY_IDLE) {
+			if (FlushPendingDiffRefresh(false))
+				Show();
+			return TRUE;
+		}
+
+		if (m_pluginViewportPane != ActivePane::None)
+			FlushPendingDiffRefresh(true);
+
 		switch (Key) {
-			case KEY_IDLE:
-				if (FlushPendingDiffRefresh(false))
-					Show();
-				return TRUE;
 			case KEY_ESC:
 			case KEY_F10:
 				Close();
+				return TRUE;
+			case KEY_F1:
+				ExecuteStatusAction(StatusAction::Help);
 				return TRUE;
 			case KEY_F2:
 				ExecuteStatusAction(StatusAction::Save);
@@ -1345,16 +1556,29 @@ public:
 
 		const bool ContentChange = IsEditorContentChangeKey(Key);
 		const bool SearchKey = IsEditorSearchKey(Key);
+		const int OldLineCount = ContentChange ? ActiveEditorPane().LineCount() : 0;
+		std::optional<ConsoleRepaintsDeferScope> RepaintScope;
+		if (ContentChange && !SearchKey)
+			RepaintScope.emplace(nullptr);
 		if (ActiveEditorPane().ProcessKey(Key)) {
-			if (ContentChange)
-				ScheduleDiffRefresh();
+			if (ContentChange) {
+				if (OldLineCount != ActiveEditorPane().LineCount())
+					RebuildDiffFromEditors();
+				else {
+					ScheduleDiffRefresh();
+					EnsureActiveCursorVisible();
+				}
+			}
 
 			if (SearchKey) {
 				FlushPendingDiffRefresh(true);
 				PlaceActiveCursorForSearch();
 			} else {
-				if (ContentChange)
+				if (ContentChange) {
+					Show();
+					ScrBuf.Flush();
 					return TRUE;
+				}
 				EnsureActiveCursorVisible();
 			}
 			Show();
@@ -1363,8 +1587,11 @@ public:
 		return FALSE;
 	}
 
-	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
+	int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent) override
 	{
+		if (m_pluginViewportPane != ActivePane::None)
+			FlushPendingDiffRefresh(true);
+
 		const int X = MouseEvent->dwMousePosition.X;
 		const int Y = MouseEvent->dwMousePosition.Y;
 
@@ -1379,6 +1606,22 @@ public:
 
 		if (MouseInsideGutter(X) && Y >= Y1 + 1 && Y <= Y2 - 1)
 			return ProcessGutterMouse(*MouseEvent);
+
+		if (Y >= Y1 + 1 && Y <= Y2 - 1) {
+			const ActivePane MousePane = X >= RightPaneX1() ? ActivePane::Right : ActivePane::Left;
+			const ScreenRow *Screen = ScreenRowAt(Y);
+			const int MouseLine = Screen ? RowLine(m_rows[Screen->Row], MousePane) : -1;
+			INPUT_RECORD *Input = FrameManager->GetLastInputRecord();
+			if (MouseLine >= 0 && Input && Input->EventType == MOUSE_EVENT
+					&& Pane(MousePane).ProcessPluginInput(Input, MouseLine)) {
+				m_activePane = MousePane;
+				m_gutterActive = false;
+				UpdateActivePane();
+				ScheduleDiffRefresh(MousePane);
+				Show();
+				return TRUE;
+			}
+		}
 
 		if (IsFocusClick(*MouseEvent) && Y >= Y1 + 1 && Y <= Y2 - 1 && !MouseInsideGutter(X)) {
 			const ActivePane NewPane = X >= RightPaneX1() ? ActivePane::Right : ActivePane::Left;
@@ -1406,9 +1649,23 @@ public:
 	}
 
 private:
+	void SetPluginEditorContext(bool Active)
+	{
+		if (!CtrlObject || (Active && !IsTopFrame()))
+			return;
+
+		if (Active) {
+			CtrlObject->Plugins.CurDialogEditor = ActiveEditorPane().PluginEditor();
+			CtrlObject->Plugins.CurEditor = nullptr;
+		} else if (CtrlObject->Plugins.CurDialogEditor == m_leftPane.PluginEditor()
+				|| CtrlObject->Plugins.CurDialogEditor == m_rightPane.PluginEditor()) {
+			CtrlObject->Plugins.CurDialogEditor = nullptr;
+		}
+	}
+
 	size_t VisibleRows() const
 	{
-		return ObjHeight > 2 ? static_cast<size_t>(ObjHeight - 2) : 0;
+		return ObjHeight() > 2 ? static_cast<size_t>(ObjHeight() - 2) : 0;
 	}
 
 	size_t MaxTop() const
@@ -1565,6 +1822,7 @@ private:
 		m_rightPane.SetActive(!m_gutterActive && m_activePane == ActivePane::Right);
 		if (m_gutterActive)
 			SetCursorType(FALSE, 0);
+		SetPluginEditorContext(true);
 	}
 
 	DiffEditorPane &ActiveEditorPane()
@@ -1639,7 +1897,13 @@ private:
 
 	bool CanMergeDirection(size_t HunkIndex, MergeDirection Direction) const
 	{
-		return HunkRange(HunkIndex, SourcePane(Direction)).HasLines;
+		return HunkRange(HunkIndex, SourcePane(Direction)).HasLines
+				|| HunkRange(HunkIndex, TargetPane(Direction)).HasLines;
+	}
+
+	bool MergeDeletesTarget(size_t HunkIndex, MergeDirection Direction) const
+	{
+		return !HunkRange(HunkIndex, SourcePane(Direction)).HasLines;
 	}
 
 	bool CanMergeHunk(size_t HunkIndex) const
@@ -1744,6 +2008,8 @@ private:
 	bool StatusActionEnabled(StatusAction Action) const
 	{
 		switch (Action) {
+			case StatusAction::Help:
+				return true;
 			case StatusAction::Save:
 				return CanSaveActivePane();
 			case StatusAction::Merge:
@@ -1795,7 +2061,7 @@ private:
 
 		DiffEditorPane &Target = Pane(TargetPane(Direction));
 		if (!Target.ReplaceLines(TargetRange.Begin, TargetRange.End - TargetRange.Begin, NewLines)) {
-			Message(MSG_WARNING | MSG_ERRORTYPE, 1, L"Compare files", L"Cannot merge hunk.",
+			Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::FileDiffTitle, Msg::FileDiffCannotMerge,
 					Target.Path().CPtr(), Msg::Ok);
 			return;
 		}
@@ -1835,8 +2101,10 @@ private:
 		RebuildScreenRows();
 	}
 
-	void ScheduleDiffRefresh()
+	void ScheduleDiffRefresh(ActivePane PluginPane = ActivePane::None)
 	{
+		if (PluginPane != ActivePane::None)
+			m_pluginViewportPane = PluginPane;
 		m_pendingDiffRefresh = true;
 		m_lastEditTick = WINPORT(GetTickCount)();
 	}
@@ -1855,13 +2123,18 @@ private:
 		const bool LeftChanged = m_leftPane.RefreshLinesFromEditor();
 		const bool RightChanged = m_rightPane.RefreshLinesFromEditor();
 		m_pendingDiffRefresh = false;
-		if (!LeftChanged && !RightChanged)
-			return false;
-
-		RebuildDiffModel();
-		SyncActiveCursorByLine(CursorLine, CursorVisualLine, CursorCol);
-		EnsureActiveCursorVisible();
-		return true;
+		const bool Changed = LeftChanged || RightChanged;
+		if (Changed) {
+			RebuildDiffModel();
+			SyncActiveCursorByLine(CursorLine, CursorVisualLine, CursorCol);
+			EnsureActiveCursorVisible();
+		}
+		if (m_pluginViewportPane != ActivePane::None) {
+			SyncPluginViewport();
+			m_pluginViewportPane = ActivePane::None;
+			return true;
+		}
+		return Changed;
 	}
 
 	void RebuildDiffFromEditors()
@@ -1877,20 +2150,36 @@ private:
 		EnsureActiveCursorVisible();
 	}
 
+	void SyncPluginViewport()
+	{
+		const int TopLine = Pane(m_pluginViewportPane).TopScreenLine();
+		if (TopLine < 0)
+			return;
+
+		const size_t Top = ScreenIndexForLine(m_pluginViewportPane, TopLine, 0);
+		if (Top != InvalidIndex)
+			m_top = std::min(Top, MaxTop());
+
+		m_leftPane.InvalidateViewport();
+		m_rightPane.InvalidateViewport();
+	}
+
 	void SaveActivePane()
 	{
 		if (!CanSaveActivePane())
 			return;
 
-		FARString SaveFile = m_activePane == ActivePane::Left ? L"Left file: " : L"Right file: ";
+		FARString SaveFile((m_activePane == ActivePane::Left ? Msg::FileDiffLeftFile : Msg::FileDiffRightFile).CPtr());
 		SaveFile+= ActiveEditorPane().Path();
-		const int Choice = Message(MSG_WARNING, 2, L"Compare files", L"Save file?",
+		const int Choice = Message(MSG_WARNING, 2, Msg::FileDiffTitle, Msg::FileDiffSaveFile,
 				SaveFile.CPtr(), Msg::HYes, Msg::HNo);
 		if (Choice != 0)
 			return;
+		if (!ActiveEditorPane().ConfirmSaveWithDetectedEncoding())
+			return;
 
 		if (!ActiveEditorPane().Save()) {
-			Message(MSG_WARNING | MSG_ERRORTYPE, 1, L"Compare files", L"Cannot save file.",
+			Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::FileDiffTitle, Msg::FileDiffCannotSave,
 					ActiveEditorPane().Path().CPtr(), Msg::Ok);
 			return;
 		}
@@ -1909,37 +2198,45 @@ private:
 		FARString HunkStatus;
 		const size_t CurrentHunk = HunkIndexForRow(CurrentDiffRow());
 		if (CurrentHunk != InvalidIndex) {
-			HunkStatus.Format(L"Hunk: %u/%u", static_cast<unsigned>(CurrentHunk + 1),
+			HunkStatus.Format(Msg::FileDiffHunkCurrent, static_cast<unsigned>(CurrentHunk + 1),
 					static_cast<unsigned>(m_hunks.size()));
 		} else {
-			HunkStatus.Format(L"Hunks: %u", static_cast<unsigned>(m_hunks.size()));
+			HunkStatus.Format(Msg::FileDiffHunksTotal, static_cast<unsigned>(m_hunks.size()));
 		}
 
-		const wchar_t *ActiveName = m_gutterActive ? L"gutter" :
-				m_activePane == ActivePane::Left ? L"left" : L"right";
+		const wchar_t *ActiveName = m_gutterActive ? Msg::FileDiffGutter.CPtr() :
+				m_activePane == ActivePane::Left ? Msg::FileDiffLeft.CPtr() : Msg::FileDiffRight.CPtr();
 		FormatString Info;
-		Info << L"Active: " << ActiveName << (!m_gutterActive && ActiveEditorPane().Modified() ? L"*" : L"")
+		Info << Msg::FileDiffActive << ActiveName << (!m_gutterActive && ActiveEditorPane().Modified() ? L"*" : L"")
 				<< L"  " << HunkStatus
-				<< L"  Modified: " << (m_leftPane.Modified() ? L"L" : L"-")
+				<< L"  " << Msg::FileDiffModified << (m_leftPane.Modified() ? L"L" : L"-")
 				<< (m_rightPane.Modified() ? L"R" : L"-")
-				<< L"  Lines: " << static_cast<UINT64>(m_leftPane.Lines().size()) << L'/'
+				<< L"  " << Msg::FileDiffLines << static_cast<UINT64>(m_leftPane.Lines().size()) << L'/'
 				<< static_cast<UINT64>(m_rightPane.Lines().size())
-				<< L"  Diff rows: " << static_cast<UINT64>(m_rows.size());
+				<< L"  " << Msg::FileDiffRows << static_cast<UINT64>(m_rows.size());
 		return std::move(Info.strValue());
 	}
 
 	bool SaveModifiedPanes()
 	{
-		if (m_leftPane.Modified() && !m_leftPane.Save()) {
-			Message(MSG_WARNING | MSG_ERRORTYPE, 1, L"Compare files", L"Cannot save file.",
-					m_leftPane.Path().CPtr(), Msg::Ok);
-			return false;
+		if (m_leftPane.Modified()) {
+			if (!m_leftPane.ConfirmSaveWithDetectedEncoding())
+				return false;
+			if (!m_leftPane.Save()) {
+				Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::FileDiffTitle, Msg::FileDiffCannotSave,
+						m_leftPane.Path().CPtr(), Msg::Ok);
+				return false;
+			}
 		}
 
-		if (m_rightPane.Modified() && !m_rightPane.Save()) {
-			Message(MSG_WARNING | MSG_ERRORTYPE, 1, L"Compare files", L"Cannot save file.",
-					m_rightPane.Path().CPtr(), Msg::Ok);
-			return false;
+		if (m_rightPane.Modified()) {
+			if (!m_rightPane.ConfirmSaveWithDetectedEncoding())
+				return false;
+			if (!m_rightPane.Save()) {
+				Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::FileDiffTitle, Msg::FileDiffCannotSave,
+						m_rightPane.Path().CPtr(), Msg::Ok);
+				return false;
+			}
 		}
 
 		RebuildDiffFromEditors();
@@ -1954,15 +2251,15 @@ private:
 		}
 
 		FARString LeftModified, RightModified;
-		Messager MessageBuilder(L"Compare files");
-		MessageBuilder.Add(L"Save changed files before closing?");
+		Messager MessageBuilder(Msg::FileDiffTitle);
+		MessageBuilder.Add(Msg::FileDiffSaveChanged);
 		if (m_leftPane.Modified()) {
-			LeftModified = L"Left file: ";
+			LeftModified = Msg::FileDiffLeftFile;
 			LeftModified+= m_leftPane.Path();
 			MessageBuilder.Add(LeftModified.CPtr());
 		}
 		if (m_rightPane.Modified()) {
-			RightModified = L"Right file: ";
+			RightModified = Msg::FileDiffRightFile;
 			RightModified+= m_rightPane.Path();
 			MessageBuilder.Add(RightModified.CPtr());
 		}
@@ -2093,6 +2390,9 @@ private:
 	void ExecuteStatusAction(StatusAction Action)
 	{
 		switch (Action) {
+			case StatusAction::Help:
+				Help::Present(L"FileDiff");
+				break;
 			case StatusAction::Save:
 				if (CanSaveActivePane())
 					SaveActivePane();
@@ -2154,16 +2454,11 @@ private:
 
 	bool ProcessPaneMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
-		const int Y = MouseEvent.dwMousePosition.Y;
-		if (Y < Y1 + 1 || Y > Y2 - 1)
+		const ScreenRow *Screen = ScreenRowAt(MouseEvent.dwMousePosition.Y);
+		if (!Screen)
 			return false;
 
-		const size_t ScreenIndex = m_top + static_cast<size_t>(Y - (Y1 + 1));
-		if (ScreenIndex >= m_screenRows.size())
-			return false;
-
-		const ScreenRow &Screen = m_screenRows[ScreenIndex];
-		const DiffRow &Row = m_rows[Screen.Row];
+		const DiffRow &Row = m_rows[Screen->Row];
 		const int Line = m_activePane == ActivePane::Left ? Row.Left : Row.Right;
 		if (Line < 0)
 			return false;
@@ -2171,8 +2466,16 @@ private:
 		int FirstLine = -1;
 		int FirstVisualLine = -1;
 		FirstVisiblePosition(m_activePane, FirstLine, FirstVisualLine);
-		return ActiveEditorPane().ProcessMouseAtLine(MouseEvent, Line, static_cast<int>(Screen.Part),
+		return ActiveEditorPane().ProcessMouseAtLine(MouseEvent, Line, static_cast<int>(Screen->Part),
 				FirstLine, FirstVisualLine);
+	}
+
+	const ScreenRow *ScreenRowAt(int Y) const
+	{
+		if (Y < Y1 + 1 || Y > Y2 - 1)
+			return nullptr;
+		const size_t Index = m_top + static_cast<size_t>(Y - (Y1 + 1));
+		return Index < m_screenRows.size() ? &m_screenRows[Index] : nullptr;
 	}
 
 	bool MouseInsideActivePane(const MOUSE_EVENT_RECORD &MouseEvent) const
@@ -2279,56 +2582,35 @@ private:
 		EnsureActiveCursorVisible();
 	}
 
-	void SyncActiveCursorByLine(int CursorLine, int CursorVisualLine, int CursorCol)
+	size_t ScreenIndexForLine(ActivePane PaneSide, int Line, int VisualLine) const
 	{
-		size_t Candidate = InvalidIndex;
-		size_t CandidatePart = 0;
+		size_t First = InvalidIndex;
 		for (size_t I = 0; I < m_screenRows.size(); ++I) {
 			const ScreenRow &Screen = m_screenRows[I];
-			const DiffRow &Row = m_rows[Screen.Row];
-			const int Line = m_activePane == ActivePane::Left ? Row.Left : Row.Right;
-			if (Line != CursorLine)
+			if (RowLine(m_rows[Screen.Row], PaneSide) != Line)
 				continue;
-
-			if (static_cast<int>(Screen.Part) == CursorVisualLine) {
-				Candidate = I;
-				CandidatePart = Screen.Part;
-				break;
-			}
-			if (Candidate == InvalidIndex) {
-				Candidate = I;
-				CandidatePart = Screen.Part;
-			}
+			if (static_cast<int>(Screen.Part) == VisualLine)
+				return I;
+			if (First == InvalidIndex)
+				First = I;
 		}
+		return First;
+	}
 
+	void SyncActiveCursorByLine(int CursorLine, int CursorVisualLine, int CursorCol)
+	{
+		const size_t Candidate = ScreenIndexForLine(m_activePane, CursorLine, CursorVisualLine);
 		if (Candidate != InvalidIndex) {
-			ActiveEditorPane().SetCursorByVisualLine(CursorLine, static_cast<int>(CandidatePart), CursorCol);
+			ActiveEditorPane().SetCursorByVisualLine(CursorLine,
+					static_cast<int>(m_screenRows[Candidate].Part), CursorCol);
 			EnsureActiveCursorVisible();
 		}
 	}
 
 	size_t ActiveCursorScreenIndex() const
 	{
-		const int CursorLine = ActiveEditorPane().CursorLine();
-		const int CursorVisualLine = ActiveEditorPane().CursorVisualLine();
-		size_t Candidate = InvalidIndex;
-
-		for (size_t I = 0; I < m_screenRows.size(); ++I) {
-			const ScreenRow &Screen = m_screenRows[I];
-			const DiffRow &Row = m_rows[Screen.Row];
-			const int Line = m_activePane == ActivePane::Left ? Row.Left : Row.Right;
-			if (Line != CursorLine)
-				continue;
-
-			if (static_cast<int>(Screen.Part) == CursorVisualLine) {
-				Candidate = I;
-				break;
-			}
-			if (Candidate == InvalidIndex)
-				Candidate = I;
-		}
-
-		return Candidate;
+		return ScreenIndexForLine(m_activePane, ActiveEditorPane().CursorLine(),
+				ActiveEditorPane().CursorVisualLine());
 	}
 
 	bool ActiveCursorVisible() const
@@ -2358,7 +2640,7 @@ private:
 
 	void RebuildScreenRows()
 	{
-		const int TotalWidth = std::max(1, ObjWidth);
+		const int TotalWidth = std::max(1, ObjWidth());
 		m_gutterWidth = TotalWidth >= 5 ? PreferredGutterWidth : TotalWidth >= 3 ? 1 : 0;
 		const int PanesWidth = std::max(1, TotalWidth - m_gutterWidth);
 		m_leftWidth = std::max(1, PanesWidth / 2);
@@ -2542,18 +2824,21 @@ private:
 		int DrawX = X;
 		const int MaxX = X + Width - 1;
 		bool NeedSpace = false;
-		DrawStatusButton(DrawX, MaxX, L"F2 Save", StatusAction::Save,
+		DrawStatusButton(DrawX, MaxX, Msg::FileDiffStatusHelp, StatusAction::Help,
+				StatusActionEnabled(StatusAction::Help), NeedSpace);
+		DrawStatusButton(DrawX, MaxX, Msg::FileDiffStatusSave, StatusAction::Save,
 				StatusActionEnabled(StatusAction::Save), NeedSpace);
-		DrawStatusButton(DrawX, MaxX, L"F5 Merge", StatusAction::Merge,
+		DrawStatusButton(DrawX, MaxX, Msg::FileDiffStatusMerge, StatusAction::Merge,
 				StatusActionEnabled(StatusAction::Merge), NeedSpace);
-		DrawStatusButton(DrawX, MaxX, L"Ctrl-^ Prev", StatusAction::PrevDiff,
+		DrawStatusButton(DrawX, MaxX, Msg::FileDiffStatusPrev, StatusAction::PrevDiff,
 				StatusActionEnabled(StatusAction::PrevDiff), NeedSpace);
-		DrawStatusButton(DrawX, MaxX, L"Ctrl-v Next", StatusAction::NextDiff,
+		DrawStatusButton(DrawX, MaxX, Msg::FileDiffStatusNext, StatusAction::NextDiff,
 				StatusActionEnabled(StatusAction::NextDiff), NeedSpace);
 
 		const int TailWidth = MaxX - DrawX + 1;
 		if (TailWidth > 0) {
-			FARString Tail = NeedSpace ? L"  Tab Focus" : L"Tab Focus";
+			FARString Tail = NeedSpace ? L"  " : L"";
+			Tail+= Msg::FileDiffStatusFocus;
 			GotoXY(DrawX, Y2);
 			SetFarColor(COL_VIEWERSTATUS);
 			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(TailWidth) << Tail;
@@ -2608,9 +2893,9 @@ private:
 			const bool DrawAction = ScreenIndex == VisibleHunkActionScreenIndex(HunkIndex);
 			if (DrawAction) {
 				if (CanMergeDirection(HunkIndex, MergeDirection::RightToLeft))
-					Gutter[0] = L'\x25C2';
+					Gutter[0] = MergeDeletesTarget(HunkIndex, MergeDirection::RightToLeft) ? L'\x00D7' : L'\x25C2';
 				if (CanMergeDirection(HunkIndex, MergeDirection::LeftToRight))
-					Gutter[2] = L'\x25B8';
+					Gutter[2] = MergeDeletesTarget(HunkIndex, MergeDirection::LeftToRight) ? L'\x00D7' : L'\x25B8';
 			}
 			Text(GutterX1(), Y, Color, Gutter, ARRAYSIZE(Gutter));
 			ApplyDiffOverlay(GutterX1(), Y, m_gutterWidth, Kind);
@@ -2626,7 +2911,7 @@ private:
 		ApplyDiffOverlay(GutterX1(), Y, m_gutterWidth, Kind);
 	}
 
-	virtual void DisplayObject()
+	void DisplayObject() override
 	{
 		RebuildScreenRows();
 		SyncPaneViewports();
@@ -2668,7 +2953,7 @@ private:
 };
 }
 
-void PresentFileDiff()
+void PresentFileDiff(bool bSameName)
 {
 	if (!CtrlObject || !CtrlObject->Cp())
 		return;
@@ -2676,15 +2961,33 @@ void PresentFileDiff()
 	Panel *Active = CtrlObject->Cp()->ActivePanel;
 	Panel *Passive = CtrlObject->Cp()->GetAnotherPanel(Active);
 
-	FARString LeftPath, RightPath;
-	if (!ResolvePanelFile(Active, LeftPath) || !ResolvePanelFile(Passive, RightPath)) {
-		Message(MSG_WARNING, 1, L"Compare files", L"Select regular local files on both file panels.", Msg::Ok);
+	DiffFileSource LeftSource;
+	DiffFileSource RightSource;
+	if (!ResolvePanelFile(Active, LeftSource)) {
+		Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffSelectBoth, Msg::Ok);
+		return;
+	}
+	if (!bSameName) {
+		if (!ResolvePanelFile(Passive, RightSource)) {
+			Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffSelectBoth, Msg::Ok);
+			return;
+		}
+	}
+	else {
+		if (!ResolvePanelFile(Passive, RightSource, LeftSource.Name)) {
+			Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffSelectPassiveNotSameName, LeftSource.Name, Msg::Ok);
+			return;
+		}
+	}
+
+	if (LeftSource.LocalPath == RightSource.LocalPath) {
+		Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffSameBoth, LeftSource.LocalPath, Msg::Ok);
 		return;
 	}
 
-	FileDiffFrame *Diff = new (std::nothrow) FileDiffFrame(LeftPath, RightPath);
+	FileDiffFrame *Diff = new (std::nothrow) FileDiffFrame(LeftSource, RightSource);
 	if (!Diff) {
-		Message(MSG_WARNING, 1, L"Compare files", L"Cannot allocate compare view.", Msg::Ok);
+		Message(MSG_WARNING, 1, Msg::FileDiffTitle, Msg::FileDiffCannotAllocate, Msg::Ok);
 		return;
 	}
 	if (Diff->GetExitCode() == XC_OPEN_ERROR)

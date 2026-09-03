@@ -451,6 +451,7 @@ void Dialog::Init(FARWINDOWPROC DlgProc,	// Диалоговая процеду�
 	SetDropDownOpened(FALSE);
 	IsEnableRedraw = 0;
 	InCtlColorDlgItem = 0;
+	SuppressCloseOnInactiveResize = false;
 	FocusPos = (unsigned)-1;
 	PrevFocusPos = (unsigned)-1;
 
@@ -1010,9 +1011,9 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				}
 			}
 
-			DialogEdit->SetCallbackState(false);
+			DialogEdit->SetListening(false);
 			DialogEdit->SetString(CurItem->strData);
-			DialogEdit->SetCallbackState(true);
+			DialogEdit->SetListening(true);
 
 			if (Type == DI_FIXEDIT)
 				DialogEdit->SetCurPos(0);
@@ -1370,9 +1371,9 @@ void Dialog::GetDialogObjectsData()
 						// как бы грязный хак, нам нужно обновить строку чтоб отдавалась правильная строка
 						// для различных DM_* после закрытия диалога, но ни в коем случае нельзя чтоб
 						// высылался DN_EDITCHANGE для этого изменения, ибо диалог уже закрыт.
-						EditPtr->SetCallbackState(false);
+						EditPtr->SetListening(false);
 						EditPtr->SetString(strData);
-						EditPtr->SetCallbackState(true);
+						EditPtr->SetListening(true);
 					}
 
 					CurItem->strData = strData;
@@ -1985,9 +1986,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CW = LenText;
 
 				if (X1 + X + LenText > X2) {
-					int tmpCW = ObjWidth;
+					int tmpCW = ObjWidth();
 
-					if (CW < ObjWidth)
+					if (CW < tmpCW)
 						tmpCW = CW + 1;
 
 					strStr.TruncateByCells(tmpCW - 1);
@@ -2083,9 +2084,9 @@ void Dialog::ShowDialog(unsigned ID)
 					CH = LenStrItem(I, strStr);
 
 				if (Y1 + Y + LenText > Y2) {
-					int tmpCH = ObjHeight;
+					int tmpCH = ObjHeight();
 
-					if (CH < ObjHeight)
+					if (CH < tmpCH)
 						tmpCH = CH + 1;
 
 					strStr.TruncateByCells(tmpCH - 1);
@@ -2197,7 +2198,7 @@ void Dialog::ShowDialog(unsigned ID)
 				LenText = LenStrItem(I, strStr);
 
 				if (X1 + CX1 + LenText > X2)
-					strStr.TruncateByCells(ObjWidth - 1);
+					strStr.TruncateByCells(ObjWidth() - 1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
 					Text(strStr);
@@ -3238,7 +3239,7 @@ int Dialog::ProcessKey(FarKey Key)
 					edt->Xlat();
 
 					// иначе неправильно работает ctrl-end
-					edt->strLastStr = edt->GetStringAddr();
+					edt->GetString(edt->strLastStr);
 					edt->LastPartLength = static_cast<int>(edt->strLastStr.GetLength());
 
 					Redraw();	// Перерисовка должна идти после DN_EDITCHANGE (imho)
@@ -3261,14 +3262,14 @@ int Dialog::ProcessKey(FarKey Key)
 						if ((Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1)
 								&& edt->GetCurPos() == edt->GetLength()) {
 							if (edt->LastPartLength == -1)
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 
 							strStr = edt->strLastStr;
 							int CurCmdPartLength = static_cast<int>(strStr.GetLength());
 							edt->HistoryGetSimilar(strStr, edt->LastPartLength);
 
 							if (edt->LastPartLength == -1) {
-								edt->strLastStr = edt->GetStringAddr();
+								edt->GetString(edt->strLastStr);
 								edt->LastPartLength = CurCmdPartLength;
 							}
 							edt->DisableAC();
@@ -4697,6 +4698,15 @@ void Dialog::SetExitCode(int Code)
 
 void Dialog::OnChangeFocus(int focus)
 {
+	// A resize may have been deferred while this dialog was below another modal
+	// frame. Apply it only after it becomes the active frame again.
+	if (focus && DialogMode.Check(DMODE_RESIZED)) {
+		ResizeConsole();
+		if (DialogMode.Check(DMODE_ENDLOOP)) {
+			return;
+		}
+	}
+
 	Frame::OnChangeFocus(focus);
 	if (GetCanLoseFocus())
 		DlgProc(this, focus ? DN_GOTFOCUS : DN_KILLFOCUS, -1, 0);
@@ -4734,13 +4744,24 @@ void Dialog::ResizeConsole()
 	CriticalSectionLock Lock(CS);
 
 	DialogMode.Set(DMODE_RESIZED);
+	const bool IsInactive = !IsTopFrame();
 
-	if (IsVisible()) {
+	if (!IsInactive && IsVisible()) {
 		Hide();
 	}
 
 	COORD c = {(SHORT)(ScrX + 1), (SHORT)(ScrY + 1)};
+	// Inactive modal dialogs still need the notification to update their
+	// layout.  A close requested from that notification must wait until the
+	// dialog becomes active; OnChangeFocus() will then notify it again.
+	const bool WasSuppressingClose = SuppressCloseOnInactiveResize;
+	SuppressCloseOnInactiveResize = IsInactive;
 	SendDlgMessage(reinterpret_cast<HANDLE>(this), DN_RESIZECONSOLE, 0, reinterpret_cast<LONG_PTR>(&c));
+	SuppressCloseOnInactiveResize = WasSuppressingClose;
+
+	if (DialogMode.Check(DMODE_ENDLOOP)) {
+		return;
+	}
 
 	int x1, y1, x2, y2;
 	GetPosition(x1, y1, x2, y2);
@@ -5137,6 +5158,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 		/*****************************************************************/
 		case DM_CLOSE: {
+			if (Dlg->SuppressCloseOnInactiveResize) {
+				return TRUE;
+			}
+
 			if (Param1 == -1)
 				Dlg->ExitCode = Dlg->FocusPos;
 			else
@@ -5723,7 +5748,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			INT_PTR I = 0;
 			if (CurItem->Type == DI_EDIT || CurItem->Type == DI_COMBOBOX || CurItem->Type == DI_FIXEDIT
 					|| CurItem->Type == DI_PSWEDIT) {
-				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(false);
+				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(false);
 				const wchar_t *original_PtrData = Item.PtrData;
 				I = Dlg->CallDlgProc(DN_EDITCHANGE, Param1, (LONG_PTR)&Item);
 				if (I) {
@@ -5732,7 +5757,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				}
 				if (original_PtrData)
 					free((void *)original_PtrData);
-				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(true);
+				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(true);
 			}
 
 			return I;
@@ -5911,7 +5936,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 								did->PtrData[Len - 1] = 0;
 							}
 						}
-						break;
+						return Len;
 					case DI_COMBOBOX:
 					case DI_EDIT:
 					case DI_PSWEDIT:
@@ -6039,10 +6064,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			if (CurItem->Type != DI_FIXEDIT && CurItem->Type != DI_EDIT)
 				return 0;
 
-			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(false);
+			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(false);
 			FarDialogItemData IData = {(size_t)StrLength((wchar_t *)Param2), (wchar_t *)Param2};
 			intptr_t rv = SendDlgMessage(hDlg, DM_SETTEXT, Param1, (LONG_PTR)&IData);
-			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetCallbackState(true);
+			reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->SetListening(true);
 
 			return rv;
 		}

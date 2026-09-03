@@ -13,10 +13,9 @@
 # include <malloc_np.h>
 #elif __APPLE__
 # include <malloc/malloc.h>
-#else
+#elif !defined(__OpenBSD__)
 # include <malloc.h>
 #endif
-
 
 ////////////////////////////
 void CheckedCloseFD(int &fd)

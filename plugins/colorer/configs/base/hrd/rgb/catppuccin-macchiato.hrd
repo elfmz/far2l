@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrd PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN"
+  "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+
+  <assign name="def:Text" fore="#cad3f5" back="#24273a"/>
+  <assign name="def:HorzCross" fore="#b7bdf8" back="#363a4f"/>
+  <assign name="def:VertCross" fore="#b7bdf8" back="#363a4f"/>
+
+  <assign name="def:Number" fore="#7dc4e4"/>
+  <assign name="def:NumberDec" fore="#f5a97f"/>
+  <assign name="def:NumHex" fore="#f5a97f"/>
+  <assign name="def:NumberBin" fore="#f5a97f"/>
+  <assign name="def:NumberOct" fore="#f5a97f"/>
+  <assign name="def:NumberFloat" fore="#f5a97f"/>
+  <assign name="def:NumberSuffix" fore="#f5a97f"/>
+
+  <assign name="def:String" fore="#a6da95"/>
+  <assign name="def:StringContent" fore="#b7bdf8"/>
+  <assign name="def:StringEdge" fore="#eed49f"/>
+  <assign name="def:Character" fore="#91d7e3"/>
+
+  <assign name="def:Comment" fore="#5b6078"/>
+  <assign name="def:CommentContent" fore="#8087a2"/>
+  <assign name="def:CommentDoc" fore="#6e738d"/>
+
+  <assign name="def:Symbol" fore="#ed8796"/>
+  <assign name="def:SymbolStrong" fore="#ed8796"/>
+  <assign name="def:Prefix" fore="#8bd5ca"/>
+  <assign name="def:PrefixStrong" fore="#8bd5ca"/>
+
+  <assign name="def:Operator" fore="#eed49f"/>
+
+  <!-- C++ color -->
+  <assign name="c:KeywordANSI" fore="#c6a0f6"/>
+  <assign name="c:KeywordANSI.typenames" fore="#8aadf4"/>
+  <!-- End C++ color -->
+
+  <assign name="def:ClassKeyword" fore="#7dc4e4"/>
+  <assign name="def:Keyword" fore="#eed49f"/>
+  <assign name="def:KeywordStrong" fore="#eed49f"/>
+  <assign name="def:TypeKeyword" fore="#8aadf4"/>
+
+  <assign name="def:Function"/>
+  <assign name="def:Register" fore="#91d7e3"/>
+  <assign name="def:Constant" fore="#b7bdf8"/>
+  <assign name="def:BooleanConstant" fore="#f0c6c6"/>
+
+  <assign name="def:Var"/>
+  <assign name="def:VarStrong" fore="#91d7e3"/>
+  <assign name="def:Identifier" fore="#a6da95"/>
+
+  <assign name="def:Directive" fore="#c6a0f6"/>
+  <assign name="def:Param" fore="#a6da95"/>
+
+  <assign name="def:Tag" fore="#f4dbd6"/>
+  <assign name="def:OpenTag" fore="#f5a97f"/>
+  <assign name="def:CloseTag" fore="#f5a97f"/>
+
+  <assign name="def:Label" fore="#f0c6c6"/>
+  <assign name="def:LabelStrong"/>
+
+  <assign name="def:Insertion" fore="#f5bde6" back="#494d64"/>
+  <assign name="def:InsertionStart" fore="#f5a97f" back="#363a4f"/>
+  <assign name="def:InsertionEnd" fore="#f5a97f" back="#363a4f"/>
+
+  <assign name="def:Error" fore="#ed8796" back="#181926"/>
+  <assign name="def:ErrorText" fore="#ed8796"/>
+  <assign name="def:TODO" fore="#f5bde6" back="#363a4f"/>
+  <assign name="def:Debug"/>
+
+  <assign name="def:Path" fore="#8bd5ca"/>
+  <assign name="def:URL" fore="#8aadf4"/>
+  <assign name="def:EMail" fore="#f5bde6"/>
+
+  <assign name="def:Date"/>
+  <assign name="def:Time"/>
+
+  <assign name="def:PairStart" fore="#f5a97f"/>
+  <assign name="def:PairEnd" fore="#f5a97f"/>
+
+</hrd>

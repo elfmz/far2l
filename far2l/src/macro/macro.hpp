@@ -141,6 +141,7 @@ struct TMacroFunction
 
 	DWORD IntFlags;			// флаги из INTMF_FLAGS (в основном отвечающие "как вызывать функцию")
 	INTMACROFUNC Func;		// функция
+	const wchar_t  *Description;	// описание макросфункции
 };
 
 struct MacroRecord

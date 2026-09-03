@@ -102,7 +102,8 @@ to obtain file group
 * See several additional with arclie in farplug-wide.h in [3b60489](https://github.com/elfmz/far2l/commit/3b6048914bd025a61b24cf6ed237f0e0da2e364c)
 
 ### Added following entries to 	struct OpenPluginInfo:
-* `CurURL` pointer to retrieve URL path from plugin. Not always useful, but for network-related plugins it allows to provide URLs useful in external utilites.
+* `CurURL` pointer to retrieve URL path from plugin. Not always useful, but for network-related plugins it allows to provide URLs useful in external utilites. Pasted on Ctrl+Alt+F.
+* `CurPath` pointer to retrieve the bare absolute path (no scheme/host) from plugin. For network-related plugins this is the server-side absolute path, useful as an argument to remote commands. Pasted on Ctrl+F.
 
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
@@ -128,6 +129,9 @@ Size of colors array is `DLG_ITEM_MAX_CUST_COLORS` which is currently 5.
     - `LIFIND_KEEPAMPERSAND` (in `enum FARLISTFINDFLAGS`);
 * Flags in `enum PROCESSNAME_FLAGS` (added in #2452):
     - `PN_GENERATENAME`, `PN_CHECKMASK`, `PN_SHOWERRORMESSAGE`, `PN_RESERVED1`, `PN_CASESENSITIVE`, `PN_NONE`
+* Flags in `enum EDITOR_OPTIONS` (used in `struct EditorInfo.Options`, added in #3248 and #3449):
+    - `EOPT_SHOWNUMBERS`, `EOPT_SHOWGUTTER`. `EOPT_MEMOEDIT`
+
 
 ### Non-modal dialogs:
  `FDLG_NONMODAL` is now available (see https://github.com/elfmz/far2l/issues/2867#issuecomment-3368134072).
@@ -145,3 +149,9 @@ which uses a modeless dialog to function.
     ```
 
 * You delete the instance when the handler is called with the `DN_CLOSE` parameter. Remember to set `DM_SETDLGDATA` to null at end.
+
+### Help language:
+* Anchor support in **.hlf** files (since [PR #3437](https://github.com/elfmz/far2l/pull/3437)):
+    - **Define an anchor:** Place `@??anchor_name` on its own line immediately before the target text.
+    - **Standard link:** `~LinkTitle~@TopicId??anchor_name@` scrolls to the specific anchor in a target topic.
+    - **Intra-topic shorthand:** `~LinkTitle~@??anchor_name@` allows for cleaner navigation within the current topic by omitting the `TopicId`.

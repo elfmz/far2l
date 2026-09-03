@@ -116,15 +116,20 @@ void ControlObject::Init()
 	FrameManager->InsertFrame(FPanels);
 	FrameManager->PluginCommit();
 
-	Cp()->LeftPanel->Update(0);
-	Cp()->RightPanel->Update(0);
+	{
+		// A cancelled elevation applies to both startup panel reads.  Do not
+		// prompt again for the other panel during the same initialization.
+		SudoClientRegion sdc_rgn;
+		Cp()->LeftPanel->Update(0);
+		Cp()->RightPanel->Update(0);
 
-	Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
-	Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
+		Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
+		Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
 
-	FARString strStartCurDir;
-	Cp()->ActivePanel->GetCurDir(strStartCurDir);
-	FarChDir(strStartCurDir);
+		FARString strStartCurDir;
+		Cp()->ActivePanel->GetCurDir(strStartCurDir);
+		FarChDir(strStartCurDir);
+	}
 	Cp()->ActivePanel->SetFocus();
 	{
 		FARString strOldTitle;

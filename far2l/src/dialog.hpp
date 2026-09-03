@@ -282,6 +282,7 @@ private:
 	int IsEnableRedraw;			// Разрешена перерисовка диалога? ( 0 - разрешена)
 	int InCtlColorDlgItem;
 	BitFlags DialogMode;		// Флаги текущего режима диалога
+	bool SuppressCloseOnInactiveResize;
 
 	LONG_PTR DataDialog;		// Данные, специфические для конкретного экземпляра диалога
 								//                                     (первоначально здесь параметр, переданный в конструктор)

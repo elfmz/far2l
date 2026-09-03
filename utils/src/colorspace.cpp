@@ -478,15 +478,10 @@ HoverResult ComputeHoverColors(const RGB& bg, const RGB& fg)
     return out;
 }
 
-// ------------------------------------------------------------
-// Final evaluation function
-// ------------------------------------------------------------
-ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
+ContrastLevel AnazlyzeContrastLevel(const RGB& fg, const RGB& bg) {
     // --- Method A: Lab-based perceptual contrast ---
-    LAB labFg = RGBtoLAB(fg);   // you already have this
+    LAB labFg = RGBtoLAB(fg);
     LAB labBg = RGBtoLAB(bg);
-
-    newFg = fg;
 
     double dL  = deltaL(labFg, labBg);
     double dE  = deltaE2000(labFg, labBg); // or deltaE76(labFg, labBg);
@@ -507,6 +502,45 @@ ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
 
     bool goodWcag  = ratio >= 7.0;
     bool warnWcag  = ratio >= 4.5;
+
+    if (goodLab && goodWcag)
+        return ContrastLevel::Good;
+
+    if (warnLab || warnWcag)
+        return ContrastLevel::Warning;
+
+    return ContrastLevel::Bad;
+}
+
+// ------------------------------------------------------------
+// Final evaluation function
+// ------------------------------------------------------------
+ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
+    // --- Method A: Lab-based perceptual contrast ---
+    LAB labFg = RGBtoLAB(fg);   // you already have this
+    LAB labBg = RGBtoLAB(bg);
+
+    newFg = fg;
+
+    double dL  = deltaL(labFg, labBg);
+    double dE  = deltaE2000(labFg, labBg); // or deltaE76(labFg, labBg);
+
+    // --- Method B: WCAG contrast ratio ---
+    double ratio = wcagComputeContrast(fg, bg);
+
+    // --------------------------------------------------------
+    // Thresholds (tweak to taste)
+    // --------------------------------------------------------
+    bool goodLab   = (dL >= 40.0) || (dE >= 50.0);
+    //bool warnLab   = (dL >= 25.0) || (dE >= 30.0);
+
+    // for E2000 it will be
+	//   ΔE2000 ≥ 30 → good
+	//   ΔE2000 ≥ 20 → warning
+	//   ΔE2000 < 20 → poor
+
+    bool goodWcag  = ratio >= 7.0;
+    //bool warnWcag  = ratio >= 4.5;
 
     // --------------------------------------------------------
     // Combine both methods

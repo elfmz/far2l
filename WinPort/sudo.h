@@ -2,7 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__OpenBSD__)
 	#include <sys/mount.h>
 #elif defined(__NetBSD__)
 	struct statfs : statvfs {

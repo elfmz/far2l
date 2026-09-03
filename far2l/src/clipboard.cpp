@@ -234,15 +234,20 @@ wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
 	if (!ClipData)
 		return nullptr;
 
-	size_t CharsCount =
-			wcsnlen((const wchar_t *)ClipData, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
+	const wchar_t *ClipChars = (const wchar_t *)ClipData;
+	size_t CharsCount = wcsnlen(ClipChars, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
 
-	if (MaxChars >= 0 && CharsCount < (size_t)MaxChars)
+	if (CharsCount > 0 && ClipChars[0] == L'\xFEFF') {
+		++ClipChars;
+		--CharsCount;
+	}
+
+	if (MaxChars >= 0 && CharsCount > (size_t)MaxChars)
 		CharsCount = (size_t)MaxChars;
 
 	wchar_t *ClipText = (wchar_t *)malloc((CharsCount + 1) * sizeof(wchar_t));
 	if (ClipText) {
-		wmemcpy(ClipText, (const wchar_t *)ClipData, CharsCount);
+		wmemcpy(ClipText, ClipChars, CharsCount);
 		ClipText[CharsCount] = 0;
 	}
 

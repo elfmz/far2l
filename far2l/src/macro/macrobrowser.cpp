@@ -148,23 +148,6 @@ inline static bool IsEditChanged(HANDLE hDlg, int EditControl, const wchar_t *Or
 	return 0 != StrCmp(Cur, Original);
 }
 
-static bool IsMemoEditChanged(HANDLE hDlg, int EditControl, const wchar_t *Original)
-{
-	const wchar_t *Cur = reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, EditControl, 0));
-	if (!Cur && !Original)
-		return false;
-	if (!Cur || !Original)
-		return true;
-	FARString strCur = Cur; // DI_MEMOEDIT always add trailing newline
-	size_t last = strCur.GetLength();
-	if (last > 0) {
-		last--;
-		if (strCur[last] == '\n')
-			strCur.Truncate(last);
-	}
-	return 0 != StrCmp(strCur, Original);
-}
-
 inline static void DlgDefaultMark(HANDLE hDlg, int id, bool nodefault)
 {
 	// id - id of DI_TEXT for non-default marker
@@ -272,6 +255,8 @@ static LONG_PTR WINAPI MacroEditDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					if (i < MEParam->Descriptions->size())
 						SendDlgMessage(hDlg, DM_SETTEXTPTR, ME_MEMOEDIT_MLIB_DESC,
 								reinterpret_cast<LONG_PTR>(MEParam->Descriptions->at(i).CPtr()));
+
+					SendDlgMessage(hDlg, DM_LISTSETMOUSEREACTION, ME_COMBO_MLIB, (LONG_PTR)LMRT_NEVER);
 				}
 				break;
 
@@ -292,7 +277,7 @@ static LONG_PTR WINAPI MacroEditDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 						break;
 					case ME_MEMOEDIT_SEQUENCE:
 						DlgDefaultMark(hDlg, ME_MEMOEDIT_SEQUENCE-1, // mark (un)changed
-							IsMemoEditChanged(hDlg, ME_MEMOEDIT_SEQUENCE, MEParam->mr->Src) );
+							IsEditChanged(hDlg, ME_MEMOEDIT_SEQUENCE, MEParam->mr->Src) );
 						break;
 				}
 				break;
@@ -388,7 +373,7 @@ static LONG_PTR WINAPI MacroEditDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 
 							// workaround because DI_MEMOEDIT not process DN_EDITCHANGE properly
 							DlgDefaultMark(hDlg, ME_MEMOEDIT_SEQUENCE-1, // mark (un)changed
-								IsMemoEditChanged(hDlg, ME_MEMOEDIT_SEQUENCE, MEParam->mr->Src) );
+								IsEditChanged(hDlg, ME_MEMOEDIT_SEQUENCE, MEParam->mr->Src) );
 
 							// workaround to activate cursor in DI_MEMOEDIT after change mark
 							SendDlgMessage(hDlg, DM_SETFOCUS, ME_MEMOEDIT_SEQUENCE, 0);
@@ -683,7 +668,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_DOUBLEBOX].X2 = DLG_WIDTH - 4;
 		MacroEditDlgData[ME_COMBO_MLIB].X2 = DLG_WIDTH - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Y1 = 2;
-		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 4;
+		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Type = DI_LISTBOX;
 		MacroEditDlgData[ME_COMBO_MLIB].Flags|= DIF_LISTNOCLOSE;
 		if (MacroEditDlgData[ME_COMBO_MLIB].X2 - MacroEditDlgData[ME_COMBO_MLIB].X1 > x_mlib) {
@@ -699,7 +684,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X1 = MacroEditDlgData[ME_COMBO_MLIB].X1;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X2 = MacroEditDlgData[ME_COMBO_MLIB].X2;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y1 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 1;
-		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 4;
+		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 6;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Flags = DIF_FOCUS | DIF_READONLY; // clear DIF_HIDDEN
 	}
 	MakeDialogItemsEx(MacroEditDlgData, MacroEditDlg);
@@ -726,7 +711,7 @@ bool MacroBrowser::Edit(int imacro)
 
 	Dialog Dlg(MacroEditDlg, ARRAYSIZE(MacroEditDlg), MacroEditDlgProc, (LONG_PTR)&Param);
 	Dlg.SetPosition(-1, -1, DLG_WIDTH, DLG_HEIGHT);
-	Dlg.SetHelp(L"KeyMacroSetting"/*KeyMacroLang"*/);
+	Dlg.SetHelp(L"KeyMacroLang"/*KeyMacroSetting"*/);
 	{
 		LockBottomFrame LBF;	// временно отменим прорисовку фрейма
 		Dlg.Process();
@@ -1027,8 +1012,8 @@ void MacroBrowser::PrepareVMenu()
 	fs2copy += "\n" + mi.strName;
 	v_menu_macroindex.emplace_back(-1, -1);
 
-	mi.strName.Format(L" Global: Constants=%d, Variables=%d, MacroFunctions=%d",
-		stat_glbConsts, stat_glbVars, Macro->CMacroFunction);
+	mi.strName.Format(L" Global: Constants=%d, Variables=%d, MacroFunctions=%zu",
+		stat_glbConsts, stat_glbVars, Macro->GetCountMacroFunction());
 	mi.Flags = 0;
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n" + mi.strName;

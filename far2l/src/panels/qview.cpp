@@ -45,8 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "interf.hpp"
 #include "execute.hpp"
-#include "dirinfo.hpp"
 #include "pathmix.hpp"
+#include "strmix.hpp"
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "syslog.hpp"
@@ -82,22 +82,34 @@ FARString &QuickView::GetTitle(FARString &strTitle, int SubLen, int TruncSize)
 
 void QuickView::DisplayObject()
 {
-	if (Flags.Check(FSCROBJ_ISREDRAWING))
-		return;
+	if (!Flags.Check(FSCROBJ_ISREDRAWING)) {
+		Flags.Set(FSCROBJ_ISREDRAWING);
+		if (!QView && !ProcessingPluginCommand)
+			CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
 
-	Flags.Set(FSCROBJ_ISREDRAWING);
+		if (QView)
+			QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
+
+		PrintBoxAndContent();
+
+		if (QView)
+			QView->Show();
+
+		Flags.Clear(FSCROBJ_ISREDRAWING);
+	}
+}
+
+void QuickView::PrintBox()
+{
+	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
+
 	FARString strTitle;
 
-	if (!QView && !ProcessingPluginCommand)
-		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
-
-	if (QView)
-		QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
-
-	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
 	SetFarColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 	GetTitle(strTitle);
+
+	strTitle.Append(L"[").Append(strCurFileName).Append(L"] ");
 
 	if (!strTitle.IsEmpty()) {
 		GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, Y1);
@@ -105,14 +117,48 @@ void QuickView::DisplayObject()
 	}
 
 	DrawSeparator(Y2 - 2);
+}
+
+void QuickView::PrintNamedValue(int x, int y, int NameWidth, const wchar_t *Name, const wchar_t *Value)
+{
+	QuickViewFormat Fmt(this);
+	GotoXY(x, y);
+	Fmt << fmt::LeftAlign() << fmt::Size(NameWidth) << Name;
+	if (Value) {
+		SetFarColor(COL_PANELINFOTEXT);
+		Fmt << fmt::LeftAlign() << Value;
+		SetFarColor(COL_PANELTEXT);
+	}
+}
+
+void QuickView::PrintTypeStat(int x, int y, int NameWidth, int SizeWidth, const wchar_t *Name, const DirInfoTypeStats &ts)
+{
+	QuickViewFormat Fmt(this);
+	GotoXY(x, y);
+	Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(NameWidth) << Name;
+	Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeWidth) << FileSizeString(ts.Size).c_str();
+	Fmt << fmt::LeftAlign() << InsertCommas(ts.Count, strTmp);
+}
+
+void QuickView::PrintContent(const wchar_t *WalkedNowDir)
+{
 	SetFarColor(COL_PANELTEXT);
 	GotoXY(X1 + 1, Y2 - 1);
-	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
+	if (!Directory) {
+		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
+	} else if (Directory == -1 && X2 > X1) {
+		strTmp = Msg::QuickViewFolderScan;
+		strTmp.Append(L' ').Append(WalkedNowDir ? WalkedNowDir : strCurFileName.CPtr());
+		TruncStrFromCenter(strTmp, X2 - X1 - 1);
+		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2 - X1 - 1) << strTmp;
+	} else {
+		FS << fmt::LeftAlign() << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
+	}
 
 	if (!strCurFileType.IsEmpty()) {
 		FARString strTypeText = L" ";
 		strTypeText+= strCurFileType;
-		strTypeText+= L" ";
+		strTypeText+= L' ';
 		TruncStr(strTypeText, X2 - X1 - 1);
 		SetFarColor(COL_PANELSELECTEDINFO);
 		GotoXY(X1 + (X2 - X1 + 1 - (int)strTypeText.GetLength()) / 2, Y2 - 2);
@@ -120,95 +166,97 @@ void QuickView::DisplayObject()
 	}
 
 	if (Directory) {
-		FormatString FString;
-		FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
+		auto y = int(Y1) - ScrollOffset;
+		QuickViewFormat Fmt(this);
 		SetFarColor(COL_PANELTEXT);
-		GotoXY(X1 + 2, Y1 + 2);
-		PrintText(FString);
+		if (Directory == 1 || Directory == 4 || Directory == -1) {
+			auto FirstColumnLen = 2 + std::max(StrLength(Msg::QuickViewContains),
+				1 + MaxStrLength(Msg::QuickViewFolders, Msg::QuickViewFiles,
+						Msg::QuickViewBytes, Msg::QuickViewPhysical, Msg::QuickViewRatio,
+						Msg::QuickViewFilesystems, Msg::QuickViewOuterSymlinks));
 
-		/*if ((apiGetFileAttributes(strCurFileName)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
-		{
-			FARString strJuncName;
-			DWORD ReparseTag=0;
+			if (++y > 0)
+				PrintNamedValue(X1 + 2, y, FirstColumnLen, Msg::QuickViewContains, nullptr);
+			if (++y > 0)
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewFolders, InsertCommas(di.DirCount, strTmp));
+			if (++y > 0)
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewFiles, InsertCommas(di.FileCount, strTmp));
+			if (++y > 0)
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewBytes, InsertCommas(di.FileSize, strTmp));
+			if (++y > 0)
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewPhysical, InsertCommas(di.PhysicalSize, strTmp));
+			if (++y > 0)
+				PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewRatio, InsertCommas(ToPercent64(di.PhysicalSize, di.FileSize, true), strTmp).Append(L"%  "));
 
-			if (GetReparsePointInfo(strCurFileName, strJuncName,&ReparseTag))
-			{
-				int ID_Msg=Msg::QuickViewJunction;
+			if (Directory != -1 && di.ExtraSummary && di.ExtraSummary->filesystems > 1) {
+				if (++y > 0)
+					PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewFilesystems, InsertCommas(di.ExtraSummary->filesystems, strTmp));
+			}
 
-				if (ReparseTag==IO_REPARSE_TAG_MOUNT_POINT)
-				{
-					if (IsLocalVolumeRootPath(strJuncName))
-					{
-						ID_Msg=Msg::QuickViewVolMount;
+			if (Directory != -1 && di.ExtraSummary && di.ExtraSummary->outer_symlinks > 0) {
+				if (++y > 0)
+					PrintNamedValue(X1 + 3, y, FirstColumnLen - 1, Msg::QuickViewOuterSymlinks, InsertCommas(di.ExtraSummary->outer_symlinks, strTmp));
+			}
+
+			if (Directory != -1 && di.ExtraSummary && y + 2 < Y2 && ObjWidth() > 16) {
+				int SizeLen = StrLength(Msg::QuickViewPhysical) + 2;
+				for (size_t i = 0; i < di.ExtraSummary->type_stats.size(); ++i) {
+					if (y + 4 + (int)i > 0 && y + 5 + (int)i < Y2) {
+						const auto &ts = di.ExtraSummary->type_stats[i];
+						SizeLen = std::max(SizeLen, int(FileSizeString(ts.second.Size).size()) + 2);
+						auto w = std::min(ObjWidth() / 2, int(ts.first.size() + 2));
+						if (FirstColumnLen < w) {
+							FirstColumnLen = w;
+						}
 					}
 				}
-				else if (ReparseTag==IO_REPARSE_TAG_SYMLINK)
-				{
-					ID_Msg=Msg::QuickViewSymlink;
+
+				if (SizeLen > ObjWidth() - FirstColumnLen) {
+					SizeLen = std::max(ObjWidth() - FirstColumnLen, 4);
+				}
+				++y;
+				if (++y > 0) {
+					GotoXY(X1 + 2, y);
+					Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(FirstColumnLen) << L" ";
+					Fmt << fmt::LeftAlign() << fmt::Cells() << fmt::Size(SizeLen) << Msg::QuickViewPhysical;
+					Fmt << fmt::LeftAlign() << Msg::QuickViewCount;
 				}
 
-				//"\??\D:\Junc\Src\"
-				NormalizeSymlinkName(strJuncName);
-				TruncPathStr(strJuncName,X2-X1-1-StrLength((ID_Msg)));
-				FString.Clear();
-				FString<<(ID_Msg)<<L" \""<<strJuncName<<L"\"";
+				bool printed_some = false;
+				DirInfoTypeStats other;
+				long long other_cnt = 0;
+				FARString str_other_cnt;
+				for (const auto &ts : di.ExtraSummary->type_stats) {
+					if (y + 4 < Y2 && ++y > 0) {
+						if (other.Size || other.Count) {
+							PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, str_other_cnt.Format(L"< %lld >", other_cnt), other);
+							other = {};
+							other_cnt = 0;
+							++y;
+						}
+						if (!printed_some) {
+							printed_some = true;
+							SetFarColor(COL_PANELINFOTEXT);
+						}
+						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, ts.first.c_str(), ts.second);
+					} else {
+						other.Size+= ts.second.Size;
+						other.Count+= ts.second.Count;
+						++other_cnt;
+					}
+				}
 				SetFarColor(COL_PANELTEXT);
-				GotoXY(X1+2,Y1+3);
-				PrintText(FString);
+				if (other.Size || other.Count) {
+					if (++y > 0) {
+						PrintTypeStat(X1 + 2, y, FirstColumnLen, SizeLen, str_other_cnt.Format(L"< %lld >", other_cnt), other);
+					}
+				}
 			}
-		}*/
-
-		if (Directory == 1 || Directory == 4) {
-			GotoXY(X1 + 2, Y1 + 4);
-			PrintText(Msg::QuickViewContains);
-			GotoXY(X1 + 2, Y1 + 6);
-			PrintText(Msg::QuickViewFolders);
-			SetFarColor(COL_PANELINFOTEXT);
-			FString.Clear();
-			FString << DirCount;
-			PrintText(FString);
-			SetFarColor(COL_PANELTEXT);
-			GotoXY(X1 + 2, Y1 + 7);
-			PrintText(Msg::QuickViewFiles);
-			SetFarColor(COL_PANELINFOTEXT);
-			FString.Clear();
-			FString << FileCount;
-			PrintText(FString);
-			SetFarColor(COL_PANELTEXT);
-			GotoXY(X1 + 2, Y1 + 8);
-			PrintText(Msg::QuickViewBytes);
-			SetFarColor(COL_PANELINFOTEXT);
-			FARString strSize;
-			InsertCommas(FileSize, strSize);
-			PrintText(strSize);
-			SetFarColor(COL_PANELTEXT);
-			GotoXY(X1 + 2, Y1 + 9);
-			PrintText(Msg::QuickViewPhysical);
-			SetFarColor(COL_PANELINFOTEXT);
-			InsertCommas(PhysicalSize, strSize);
-			PrintText(strSize);
-			SetFarColor(COL_PANELTEXT);
-			GotoXY(X1 + 2, Y1 + 10);
-			PrintText(Msg::QuickViewRatio);
-			SetFarColor(COL_PANELINFOTEXT);
-			FString.Clear();
-			FString << ToPercent64(PhysicalSize, FileSize) << L"%";
-			PrintText(FString);
-
-			if (Directory == 1 && ClusterSize) {
-				SetFarColor(COL_PANELTEXT);
-				GotoXY(X1 + 2, Y1 + 12);
-				PrintText(Msg::QuickViewCluster);
-				SetFarColor(COL_PANELINFOTEXT);
-				FARString strSize;
-				InsertCommas(ClusterSize, strSize);
-				PrintText(strSize);
+			if (ScrollOffset > 0 && y < Y2 - 4) {
+				ScrollOffset-= std::min(ScrollOffset, Y2 - 4 - y);
 			}
 		}
-	} else if (QView)
-		QView->Show();
-
-	Flags.Clear(FSCROBJ_ISREDRAWING);
+	}
 }
 
 int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -224,6 +272,18 @@ int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
+
+int QuickView::ProcessScroll(int NewOffset)
+{
+	ScrollOffset = (NewOffset < 0) ? 0 : NewOffset;
+	auto ScrollOffsetSaved = ScrollOffset;
+	PrintBoxAndContent();
+	if (ScrollOffsetSaved != ScrollOffset) {
+		PrintBoxAndContent();
+	}
+	return TRUE;
+}
+
 int QuickView::ProcessKey(FarKey Key)
 {
 	if (!IsVisible())
@@ -232,6 +292,21 @@ int QuickView::ProcessKey(FarKey Key)
 	if (Key >= KEY_RCTRL0 && Key <= KEY_RCTRL9) {
 		ExecShortcutFolder(Key - KEY_RCTRL0);
 		return TRUE;
+	}
+
+	if (Directory) switch (Key) {
+		case KEY_UP: case KEY_MSWHEEL_UP:
+			return ProcessScroll(ScrollOffset - 1);
+		case KEY_DOWN: case KEY_MSWHEEL_DOWN:
+			return ProcessScroll(ScrollOffset + 1);
+		case KEY_PGUP:
+			return ProcessScroll(ScrollOffset - std::max(1, Y2 - Y1 - 5));
+		case KEY_PGDN:
+			return ProcessScroll(ScrollOffset + std::max(1, Y2 - Y1 - 5));
+		case KEY_HOME:
+			return ProcessScroll(0);
+		case KEY_END:
+			return ProcessScroll(0x40000000);
 	}
 
 	if (Key == KEY_F1) {
@@ -335,26 +410,33 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 
 	bool SameFile = !StrCmp(strCurFileName, FileName);
 	strCurFileName = FileName;
+
+	if (!SameFile) {
+		ScrollOffset = 0;
+	}
+
 	//	size_t pos;
 
 	if (hDirPlugin || (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY))) {
 		//
 		strCurFileType.Clear();
+		Directory = -1;
 
 		if (SameFile && !hDirPlugin) {
 			Directory = 1;
 		} else if (hDirPlugin) {
-			int ExitCode =
-					GetPluginDirInfo(hDirPlugin, strCurFileName, DirCount, FileCount, FileSize, PhysicalSize);
+			int ExitCode = di.FromPlugin(hDirPlugin, strCurFileName,
+				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_EXTRASUMMARY);
 			if (ExitCode)
 				Directory = 4;
 			else
 				Directory = 3;
 		} else {
-			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
-					PhysicalSize, ClusterSize, 500, nullptr,
-					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME);
-
+			PrintBox();
+			PrintContent();
+			int ExitCode = di.FromFS(strCurFileName,
+				GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_EXTRASUMMARY,
+				nullptr, this);
 			if (ExitCode == 1)
 				Directory = 1;
 			else if (ExitCode == -1)
@@ -454,6 +536,8 @@ void QuickView::SetTitle()
 		} else {
 			FARString strCmdText;
 			CtrlObject->CmdLine->GetString(strCmdText);
+			ReplaceStrings(strCmdText, L"\r", L"\x240D", -1);
+			ReplaceStrings(strCmdText, L"\n", L"\x21B5", -1);
 			strTitleDir+= strCmdText;
 		}
 
@@ -510,6 +594,11 @@ BOOL QuickView::UpdateKeyBar()
 	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::QViewCtrlAltShiftF1, 12);
 	DynamicUpdateKeyBar();
 	return TRUE;
+}
+
+void QuickView::OnDirInfoProgress(const wchar_t *WalkedNowDir)
+{
+	PrintContent(WalkedNowDir);
 }
 
 void QuickView::DynamicUpdateKeyBar()

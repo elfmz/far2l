@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+    "http://colorer.sf.net/2003/hrc.dtd">
+<hrc
+    version="take5"
+    xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="json">
+
+    <annotation><documentation>
+        json scheme
+    </documentation><contributors><![CDATA[
+        Aliaksei Chapyzhenka <alex.drom@gmail.com>
+        Konstantin Kushnir <chpock@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+    ]]></contributors></annotation>
+
+    <import type="def"/>
+
+    <region name="Key" parent="def:Keyword" description="JSON object key"/>
+
+    <scheme name="jsonCommentInternal">
+    </scheme>
+
+    <scheme name="jsonComment">
+        <block start="/\/\//" end="/\M(&lt;\/scr|$)/i" scheme="jsonComment" region="Comment"/>
+        <block start="/\/\*/" end="/\*\//"             scheme="jsonComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+    </scheme>
+
+    <scheme name='jsonQuote'>
+        <regexp match="/\\u[\dA-Fa-f]{4}/" region0="StringContent"/>
+        <regexp match="/\\x[\dA-Fa-f]{2}/" region0="StringContent"/>
+        <regexp match="/\\[\\bfnrtv]/"     region0="StringContent"/>
+    </scheme>
+
+    <scheme name="jsonMETA">
+        <inherit scheme='jsonQuote'/>
+        <regexp match="/\\[&quot;&apos;/]/" region0="StringContent"/>
+    </scheme>
+
+    <scheme name="String">
+        <inherit scheme="jsonMETA"/>
+    </scheme>
+
+    <scheme name="Key">
+        <inherit scheme="jsonMETA"/>
+    </scheme>
+
+    <scheme name="RE">
+        <inherit scheme="regexp:pcre.regexp">
+            <virtual scheme="regexp:string" subst-scheme="jsonMETA"/>
+            <virtual scheme="regexp:pcre.regexp" subst-scheme="RE"/>
+        </inherit>
+    </scheme>
+
+    <scheme name="Object">
+        <regexp match="/\s+/"/>
+        <inherit scheme="jsonComment"/>
+        <!-- object value -->
+        <block start="/:/" end="/\M,|\}/" region00="SymbolStrong" scheme="json"/>
+        <!-- object key -->
+        <block start="/(&quot;)/" end="/(&quot;)/"
+            scheme="Key" region="Key"
+            region00='StringEdge' region01='PairStart'
+            region10='StringEdge' region11='PairEnd'
+        />
+        <keywords region="def:Symbol">
+            <symb name=","/>
+        </keywords>
+        <regexp match="/[^\}]/" region="def:Error" priority="low" />
+    </scheme>
+
+    <scheme name="json.float">
+        <regexp match="/(-)? \B    (\.)\d+ (e[\-+]?\d+)? \b/ix" region0="NumberFloat" region1="def:Symbol" region2="def:Symbol" region3="NumberSuffix"/>
+        <regexp match="/(-)? \b \d+(\.)\d* (e[\-+]?\d+)? \b/ix" region0="NumberFloat" region1="def:Symbol" region2="def:Symbol" region3="NumberSuffix"/>
+        <regexp match="/(-)? \b \d+        (e[\-+]?\d+)  \b/ix" region0="NumberFloat" region1="def:Symbol"                      region2="NumberSuffix"/>
+    </scheme>
+    <scheme name="json.decimal">
+        <regexp match="/(-)?\b\d+ (ul{0,2}|l{1,2}u?|i64|i128)?\b/ix" region0="NumberDec" region1="def:Symbol" region2="NumberSuffix"/>
+    </scheme>
+    <!-- JSON only allows integers and floats -->
+    <scheme name="json.numbers">
+      <inherit scheme="json.float"/>
+      <inherit scheme="json.decimal"/>
+    </scheme>
+
+    <!-- JSON only allows double quotes (not single quotes) -->
+    <scheme name="jsonString">
+        <block start="/(&quot;)/" end="/(&quot;)/"
+            scheme="String" region="String"
+            region00='StringEdge' region01='PairStart'
+            region10='StringEdge' region11='PairEnd'
+        />
+    </scheme>
+    <scheme name="booleans">
+        <keywords region="def:BooleanConstant">
+            <word name="false"/>
+            <word name="true"/>
+        </keywords>
+    </scheme>
+    <scheme name="null">
+        <keywords region="def:Keyword">
+            <word name="null"/>
+        </keywords>
+    </scheme>
+
+    <scheme name="json">
+
+        <regexp match="/\s+/"/>
+
+        <inherit scheme="jsonComment"/>
+
+        <block start="/(\{)/" end="/(\})/" scheme="Object"
+            region00="SymbolStrong" region10="SymbolStrong"
+            region01="PairStart"    region11="PairEnd"/>
+
+        <block start="/(\[)/" end="/(\])/" scheme="json"
+            region00="Symbol"    region10="Symbol"
+            region01="PairStart" region11="PairEnd"/>
+
+        <inherit scheme="json.numbers"/>
+        <inherit scheme="jsonString"/>
+        <inherit scheme="booleans"/>
+        <inherit scheme="null"/>
+        <keywords region="def:Symbol">
+            <symb name=","/>
+        </keywords>
+        <keywords region="def:SymbolStrong">
+            <symb name=":"/>
+        </keywords>
+        <block scheme="RE" region="String">
+            <start region1="Symbol" region2="StringEdge" region3="PairStart">
+            <![CDATA[
+                /
+                ( [\=\!]\~ | && | \|\| |
+                [^<\]\}\)\+\-\w\s\/\;] |
+                \bif | ~ | ^)
+                \s* ((\/))\M[^\/\*>] /x
+            ]]>
+            </start>
+            <end region0="StringEdge" region1="PairEnd" region2="regexp:SpecArea">
+                <![CDATA[
+                /(\y2([cmiogxes]*))/x
+                ]]>
+            </end>
+        </block>
+        <regexp match="/[^\s]/" region="def:Error" priority="low" />
+    </scheme>
+
+</type>
+</hrc>
+<!--
+Copyright (C) 1999-2005 Aliaksei Chapyzhenka <alex.drom@gmail.com>
+Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

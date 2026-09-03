@@ -6,6 +6,20 @@
 #undef utimens
 #define utimens(PATH, TIMES) utimensat(AT_FDCWD, PATH, TIMES, 0)
 
+#ifdef __OpenBSD__
+static inline int lutimes_compat(const char *path, const struct timeval times[2])
+{
+	struct timespec ts[2] = {};
+	ts[0].tv_sec = times[0].tv_sec;
+	ts[0].tv_nsec = times[0].tv_usec * 1000;
+	ts[1].tv_sec = times[1].tv_sec;
+	ts[1].tv_nsec = times[1].tv_usec * 1000;
+	return utimensat(AT_FDCWD, path, ts, AT_SYMLINK_NOFOLLOW);
+}
+# undef lutimes
+# define lutimes lutimes_compat
+#endif
+
 #ifdef __APPLE__
 # include "Availability.h"
 # if !defined(MAC_OS_X_VERSION_10_13) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_13

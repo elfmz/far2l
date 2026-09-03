@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="dart">
+    <annotation>
+      <documentation>
+        Dart language syntax
+        https://dart.dev/language
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="String" parent="def:String"/>
+    <region name="StringEscape" parent="def:StringContent"/>
+    <region name="StringInterpolation" parent="def:Insertion"/>
+    <region name="LineComment" parent="def:LineComment"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="KeywordModifier" parent="def:Keyword"/>
+    <region name="KeywordType" parent="def:TypeKeyword"/>
+    <region name="Attribute" parent="def:Directive"/>
+    <region name="Constant" parent="def:Constant"/>
+
+    <entity name="ident" value="[a-zA-Z_][a-zA-Z0-9_]*"/>
+    <entity name="digits" value="\d(?:_?\d)*"/>
+    <entity name="hexdigits" value="[\da-fA-F](?:_?[\da-fA-F])*"/>
+
+    <!-- String interpolation: $ident and ${expression} -->
+    <scheme name="StringInterpolation">
+      <block start="/(\$\{)/" end="/(\})/" scheme="Expression"
+             region="StringInterpolation"
+             region00="def:InsertionStart" region01="def:PairStart"
+             region10="def:InsertionEnd" region11="def:PairEnd"/>
+      <regexp match="/\$%ident;/" region="StringInterpolation"/>
+      <regexp match="/\$/" region="def:Error"/>
+    </scheme>
+
+    <!-- Escapes in non-raw strings. \$ must win over interpolation. -->
+    <scheme name="StringEscapes">
+      <regexp match="/\\[nrtbfv\\$'&#34;]/" region="StringEscape"/>
+      <regexp match="/\\x[\da-fA-F]{2}/" region="StringEscape"/>
+      <regexp match="/\\u[\da-fA-F]{4}/" region="StringEscape"/>
+      <regexp match="/\\u\{[\da-fA-F]{1,6}\}/" region="StringEscape"/>
+      <regexp match="/\\$/" region="StringEscape"/>
+      <regexp match="/\\./" region="def:Error"/>
+    </scheme>
+
+    <scheme name="StringContent">
+      <inherit scheme="StringEscapes"/>
+      <inherit scheme="StringInterpolation"/>
+    </scheme>
+
+    <scheme name="String">
+      <!-- Triple-quoted, then single-line. Raw forms first so r"..." is not an identifier + string. -->
+      <block start="/\b(r)(&#34;&#34;&#34;)/" end="/(&#34;&#34;&#34;)/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:Prefix" region02="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/\b(r)(''')/" end="/(''')/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:Prefix" region02="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/\b(r)(&#34;)/" end="/(&#34;)|$/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:Prefix"
+             region10="def:StringEdge"/>
+      <block start="/\b(r)(')/" end="/(')|$/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:Prefix"
+             region10="def:StringEdge"/>
+
+      <block start="/(?{def:StringEdge}&#34;&#34;&#34;)/" end="/(?{def:StringEdge}&#34;&#34;&#34;)/"
+             scheme="StringContent" region="String" inner-region="yes"
+             region00="def:PairStart" region10="def:PairEnd"/>
+      <block start="/(?{def:StringEdge}''')/" end="/(?{def:StringEdge}''')/"
+             scheme="StringContent" region="String" inner-region="yes"
+             region00="def:PairStart" region10="def:PairEnd"/>
+      <block start="/(?{def:StringEdge}&#34;)/" end="/(?{def:StringEdge}&#34;)|$/"
+             scheme="StringContent" region="String" inner-region="yes"/>
+      <block start="/(?{def:StringEdge}')/" end="/(?{def:StringEdge}')|$/"
+             scheme="StringContent" region="String" inner-region="yes"/>
+    </scheme>
+
+    <scheme name="Comments">
+      <regexp match="/\/\*\*\//" region="Comment"/>
+      <block start="/\/\/\//" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
+      <block start="/\/\*\*/" end="/\*\//" scheme="def:cNestedComment-internal" region="def:CommentDoc"
+             region00="def:PairStart" region10="def:PairEnd"/>
+      <inherit scheme="def:cNestedComment"/>
+    </scheme>
+
+    <scheme name="Attributes">
+      <regexp match="/@%ident;/" region="Attribute"/>
+    </scheme>
+
+    <scheme name="Numbers">
+      <regexp match="/\b%digits;\.%digits;([eE][+-]?%digits;)?/" region="def:NumberFloat"/>
+      <regexp match="/\b%digits;[eE][+-]?%digits;/" region="def:NumberFloat"/>
+      <regexp match="/\b0[xX]%hexdigits;/" region="def:NumberHex"/>
+      <regexp match="/\b%digits;/" region="def:NumberDec"/>
+    </scheme>
+
+    <scheme name="Expression">
+      <block start="/(\()/" end="/(\))/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+      <block start="/(\{)/" end="/(\})/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+
+      <inherit scheme="def:unixCommentDirective"/>
+      <inherit scheme="Comments"/>
+      <inherit scheme="Attributes"/>
+      <inherit scheme="String"/>
+      <inherit scheme="Numbers"/>
+
+      <!-- Unmatched brackets left after pair blocks -->
+      <keywords region="def:Error">
+        <symb name="("/>
+        <symb name=")"/>
+        <symb name="["/>
+        <symb name="]"/>
+        <symb name="{"/>
+        <symb name="}"/>
+        <symb name="*/"/>
+      </keywords>
+
+      <regexp match="/\b(extension)\s+(type)\b/" region1="Keyword" region2="Keyword" region="def:Outlined"/>
+      <regexp match="/\b(part)\s+(of)\b/" region1="Keyword" region2="Keyword"/>
+      <regexp match="/\b(class|mixin|enum|extension|typedef)\b/" region1="Keyword" region="def:Outlined"/>
+      <regexp match="/#[a-zA-Z_][\w$]*/" region="Constant"/>
+
+      <!-- Reserved words -->
+      <keywords region="Keyword">
+        <word name="assert"/>
+        <word name="break"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="class"/>
+        <word name="const"/>
+        <word name="continue"/>
+        <word name="default"/>
+        <word name="do"/>
+        <word name="else"/>
+        <word name="enum"/>
+        <word name="extends"/>
+        <word name="false"/>
+        <word name="final"/>
+        <word name="finally"/>
+        <word name="for"/>
+        <word name="if"/>
+        <word name="in"/>
+        <word name="is"/>
+        <word name="new"/>
+        <word name="null"/>
+        <word name="rethrow"/>
+        <word name="return"/>
+        <word name="super"/>
+        <word name="switch"/>
+        <word name="this"/>
+        <word name="throw"/>
+        <word name="true"/>
+        <word name="try"/>
+        <word name="var"/>
+        <word name="void"/>
+        <word name="while"/>
+        <word name="with"/>
+      </keywords>
+
+      <!-- Built-in identifiers and class modifiers -->
+      <keywords region="KeywordModifier">
+        <word name="abstract"/>
+        <word name="as"/>
+        <word name="base"/>
+        <word name="covariant"/>
+        <word name="deferred"/>
+        <word name="dynamic"/>
+        <word name="export"/>
+        <word name="extension"/>
+        <word name="external"/>
+        <word name="factory"/>
+        <word name="Function"/>
+        <word name="get"/>
+        <word name="hide"/>
+        <word name="implements"/>
+        <word name="import"/>
+        <word name="interface"/>
+        <word name="late"/>
+        <word name="library"/>
+        <word name="mixin"/>
+        <word name="operator"/>
+        <word name="part"/>
+        <word name="required"/>
+        <word name="sealed"/>
+        <word name="set"/>
+        <word name="show"/>
+        <word name="static"/>
+        <word name="typedef"/>
+      </keywords>
+
+      <!-- Contextual keywords -->
+      <keywords region="Keyword">
+        <word name="async"/>
+        <word name="await"/>
+        <word name="on"/>
+        <word name="sync"/>
+        <word name="when"/>
+        <word name="yield"/>
+      </keywords>
+
+      <!-- dart:core / dart:async types -->
+      <keywords region="KeywordType">
+        <word name="ArgumentError"/>
+        <word name="BigInt"/>
+        <word name="bool"/>
+        <word name="Comparable"/>
+        <word name="DateTime"/>
+        <word name="double"/>
+        <word name="Duration"/>
+        <word name="Enum"/>
+        <word name="Error"/>
+        <word name="Exception"/>
+        <word name="FormatException"/>
+        <word name="Future"/>
+        <word name="FutureOr"/>
+        <word name="int"/>
+        <word name="Iterable"/>
+        <word name="Iterator"/>
+        <word name="List"/>
+        <word name="Map"/>
+        <word name="Match"/>
+        <word name="Never"/>
+        <word name="Null"/>
+        <word name="num"/>
+        <word name="Object"/>
+        <word name="Pattern"/>
+        <word name="RangeError"/>
+        <word name="Record"/>
+        <word name="RegExp"/>
+        <word name="Runes"/>
+        <word name="Set"/>
+        <word name="StateError"/>
+        <word name="Stream"/>
+        <word name="String"/>
+        <word name="Symbol"/>
+        <word name="Type"/>
+        <word name="TypeError"/>
+        <word name="Uri"/>
+      </keywords>
+
+      <keywords region="Symbol">
+        <symb name="...?"/>
+        <symb name="..."/>
+        <symb name="?.."/>
+        <symb name="??="/>
+        <symb name="??"/>
+        <symb name="?."/>
+        <symb name="?["/>
+        <symb name=">>>="/>
+        <symb name=">>>"/>
+        <symb name="&lt;&lt;="/>
+        <symb name="&gt;&gt;="/>
+        <symb name="&lt;&lt;"/>
+        <symb name="&gt;&gt;"/>
+        <symb name="~/="/>
+        <symb name="~/"/>
+        <symb name="=&gt;"/>
+        <symb name="=="/>
+        <symb name="!="/>
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name="+="/>
+        <symb name="-="/>
+        <symb name="*="/>
+        <symb name="/="/>
+        <symb name="%="/>
+        <symb name="&amp;="/>
+        <symb name="|="/>
+        <symb name="^="/>
+        <symb name="&amp;&amp;"/>
+        <symb name="||"/>
+        <symb name="++"/>
+        <symb name="--"/>
+        <symb name=".."/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="="/>
+        <symb name="&amp;"/>
+        <symb name="|"/>
+        <symb name="^"/>
+        <symb name="~"/>
+        <symb name="!"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="?"/>
+        <symb name=":"/>
+        <symb name=";"/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name="@"/>
+        <symb name="#"/>
+        <symb name="$"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="dart">
+      <inherit scheme="Expression"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

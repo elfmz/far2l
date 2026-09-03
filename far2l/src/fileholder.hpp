@@ -57,3 +57,18 @@ public:
 	virtual ~TempFileUploadHolder();
 	void CheckForChanges();
 };
+
+class PluginTempFileHolder : public TempFileUploadHolder
+{
+	FARString _plug_dir;
+	HANDLE hPlugin;
+
+	virtual bool UploadTempFile();
+	void CheckPanelUpdate(class Panel *panel);
+
+public:
+	int PutCode = -1;
+
+	PluginTempFileHolder(const FARString &temp_file_name, HANDLE hPlugin_);
+	virtual ~PluginTempFileHolder();
+};

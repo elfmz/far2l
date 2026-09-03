@@ -225,7 +225,7 @@ public:
 	int UseFarCommand(HANDLE hPlugin, int CommandType);
 	void ReloadLanguage();
 	void DiscardCache();
-	int ProcessCommandLine(const wchar_t *Command, Panel *Target = nullptr);
+	int ProcessCommandLine(const wchar_t *Command, Panel *Target = nullptr, bool AllowPathPrefix = false);
 
 	bool SetHotKeyDialog(const wchar_t *DlgPluginTitle, const std::string &SettingName);
 	std::string GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind);
@@ -287,3 +287,5 @@ public:
 };
 
 const char *PluginsIni();
+
+void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel = false);

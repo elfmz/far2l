@@ -90,9 +90,9 @@ const std::string &GetMyHome()
 base settings/caches path from env with following order of precedence:
 	if $FARSETTINGS is set to full path:
 		return $FARSETTINGS/<usual_name>
-	elsif $<xdg_env> is set and $FARSETTINGS is set:
+	elsif $<xdg_env> is valid and $FARSETTINGS is set:
 		return $<xdg_env>/custom/$FARSETTINGS
-	elsif $<xdg_env> is set:
+	elsif $<xdg_env> is valid:
 		return $<xdg_env>
 	elsif $FARSETTINGS is set:
 		return $HOME/<usual_name>/custom/$FARSETTINGS
@@ -132,14 +132,23 @@ public:
 			_base_path+= _usual_name;
 
 		} else {
+			_base_path.clear();
 			const char *xdg_val = getenv(_xdg_env);
 			if (xdg_val && *xdg_val == GOOD_SLASH) {
 				_base_path = xdg_val;
-
-			} else {
-				if (UNLIKELY(xdg_val)) {
-					fprintf(stderr, "ProfileDir: %s ignored cuz its not a full path: '%s'\n", _xdg_env, xdg_val);
+				struct stat st{};
+				if (stat(_base_path.c_str(), &st) == 0) {
+					auto euid = geteuid();
+					if (st.st_uid != euid) {
+						fprintf(stderr, "ProfileDir: %s ignored cuz uid %ld != %ld at: '%s'\n",
+							_xdg_env, (unsigned long)st.st_uid, (unsigned long)euid, _base_path.c_str());
+					}
 				}
+			} else if (UNLIKELY(xdg_val)) {
+				fprintf(stderr, "ProfileDir: %s ignored cuz its not a full path: '%s'\n", _xdg_env, xdg_val);
+			}
+
+			if (_base_path.empty()) {
 				_base_path = GetMyHome();
 				_base_path+= GOOD_SLASH;
 				_base_path+= _usual_name;

@@ -1019,6 +1019,11 @@ enum FarHelpFlags
 	FHELP_USECONTENTS = 0x40000000,
 };
 
+enum FarSynchroFlags
+{
+	FCTL_SYNCHRO_IDLE = 0x00000001,
+};
+
 typedef BOOL (WINAPI *FARAPISHOWHELP)(
 	const wchar_t *ModuleName,
 	const wchar_t *Topic,
@@ -1467,12 +1472,17 @@ enum VIEWER_CONTROL_COMMANDS
 	VCTL_SETPOSITION,
 	VCTL_SELECT,
 	VCTL_SETMODE,
+	VCTL_GETSTRING,
+	VCTL_ADDCOLOR,
+	VCTL_ADDTRUECOLOR,
+	VCTL_GETCONTEXT,
 };
 
 enum VIEWER_OPTIONS
 {
 	VOPT_SAVEFILEPOSITION=1,
 	VOPT_AUTODETECTCODEPAGE=2,
+	VOPT_QUICKVIEW=4,
 };
 
 enum VIEWER_SETMODE_TYPES
@@ -1503,6 +1513,34 @@ struct ViewerSelect
 {
 	int64_t BlockStartPos;
 	int     BlockLen;
+};
+
+struct ViewerGetString
+{
+	size_t StringNumber;
+	const wchar_t *StringText;
+	size_t StringLength;
+	DWORD Flags;
+};
+
+enum VIEWER_GETSTRING_FLAGS
+{
+	VGS_WRAPS_TO_NEXT=1,
+	VGS_CONTEXT_RETAINED=2,
+};
+
+struct ViewerColor
+{
+	size_t StringNumber;
+	size_t StartPos;
+	size_t EndPos;
+	uint64_t Color;
+};
+
+struct ViewerTrueColor
+{
+	struct ViewerColor Base;
+	struct FarTrueColorForeAndBack TrueColor;
 };
 
 enum VIEWER_SETPOS_FLAGS
@@ -1554,6 +1592,7 @@ enum VIEWER_EVENTS
 {
 	VE_READ       =0,
 	VE_CLOSE      =1,
+	VE_REDRAW     =2,
 
 	VE_GOTFOCUS   =6,
 	VE_KILLFOCUS  =7,
@@ -1732,6 +1771,7 @@ enum EDITOR_OPTIONS
 	EOPT_BOM               = 0x00000200,
 	EOPT_SHOWNUMBERS       = 0x00000400,
 	EOPT_SHOWGUTTER        = 0x00000800,
+	EOPT_MEMOEDIT          = 0x00001000,
 };
 
 
@@ -2428,6 +2468,7 @@ struct OpenPluginInfo
 	const struct KeyBarTitles *KeyBar;
 	const wchar_t           *ShortcutData;
 	const wchar_t           *CurURL;
+	const wchar_t           *CurPath;
 	long                  Reserved;
 };
 

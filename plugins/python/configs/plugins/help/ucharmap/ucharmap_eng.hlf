@@ -1,0 +1,15 @@
+﻿.Language=English,English (English)
+.PluginContents=ucharmap
+
+@Contents
+$ #charmap
+Plugin shows character set (utf8).
+
+Supported keys:
+  Arrow keys - change cursor position
+  PgUp/PgDn - change cursor position by the size of the page
+  Enter - copy a character to the clipboard
+
+Mouse click - move to the selected position
+
+Goto - change cursor position - enter a decimal or hexadecimal number (0x prefix) or a character.

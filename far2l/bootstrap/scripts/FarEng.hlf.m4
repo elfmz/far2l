@@ -40,6 +40,7 @@ $^#File and archive manager#
    ~History~@History@
    ~Find folder~@FindFolder@
    ~Compare folders~@CompFolders@
+   ~Compare files~@FileDiff@
    ~User menu~@UserMenu@
    ~Location menu~@DriveDlg@
 
@@ -217,6 +218,7 @@ and in #terminal settings# option #OSC 52 must be allowed#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
 
 
+@??SupportedTerminals
  #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
     - Internal terminal in #FAR2L-GUI# (Linux/BSD, macOS),
 see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
@@ -246,6 +248,8 @@ for clipboard need turn on OSC 52)
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
   Original PuTTY does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
+    - #Putty-Zeroes-Mod# (Windows ssh-client): ~https://github.com/Zeroes1/Putty-Zeroes-Mod~@https://github.com/Zeroes1/Putty-Zeroes-Mod@
+(_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
     - #putty4far2l# (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
     - cyd01's #KiTTY# (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
@@ -256,6 +260,7 @@ for clipboard need turn on OSC 52)
 but vanilla PuTTY can not transfer clipboard.
 
 
+@??ConfigDirs
  #Location of FAR2L settings and history#
     - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l/#
     - command line switch #-u# (or #$FARSETTINGS# ~environment variable~@FAREnv@) allows to specify arbitrary settings location:
@@ -756,13 +761,13 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
-    Note: Print manager for Linux is unavailable. Instead, Editor has embedded 
+    Note: Print manager for Linux is unavailable. Instead, Editor has embedded
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 
     GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
     and printy itself; termibnal version expects the #lp# command works and your CUPS is
-    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    configured correctly. MacOS version uses native capabilities based upon WebKit
     printing automation.
 
   Create ~file links~@HardSymLink@                                           #Alt-F6#
@@ -1477,9 +1482,18 @@ $ #Menus: commands menu#
                         See ~Compare folders~@CompFolders@ for the
                         detailed description.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
    #Edit user menu#       Allows to edit main or local ~user menu~@UserMenu@.
-                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
-                        and #F4# to edit menu records.
+                        You may press #Ins# or #Ctrl+N# to insert,
+                        #Del# to delete and #F4# to edit menu records.
 
    #Edit associations#    Displays the list of ~file associations~@FileAssoc@.
                         You may press #Ins# to insert, #Del# to delete
@@ -1671,7 +1685,7 @@ TTY|X uses X11 to access clipboard):
         - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
         - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
         - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
-    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted@.
+    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted??SupportedTerminals@.
 
 @ConfirmDlg
 $ #Confirmations#
@@ -2915,6 +2929,42 @@ display the current time in HH:MM format before the current path
 current ~PUSHD~@OSCommands@ directory stack depth, one character per each
 saved path.
 
+@FileDiff
+$ #Compare files#
+    FileDiff compares the files selected on the active and passive file
+panels. The active panel's file is shown on the left and the passive panel's
+file on the right. Changed lines and changed parts within a line are
+highlighted. The center gutter contains merge actions for each change block.
+Arrows copy lines to the other pane; crosses delete one-sided extra lines.
+
+    Both panes are editable. Word wrap, line numbers, syntax highlighting,
+search, clipboard commands, and the usual editor undo/redo keys are available.
+
+    #F1#                 Show this help
+    #F2#                 Save the active file
+    #F5#                 Merge the current change block
+    #Tab, Shift-Tab#     Move focus between the left pane, gutter, and right pane
+    #Left, Right#        Select merge direction while the gutter has focus
+    #Enter#              Apply the selected merge while the gutter has focus
+    #Ctrl-Up#            Go to the previous change block
+    #Ctrl-Down#          Go to the next change block
+    #F7#                 Search in the active pane
+    #Shift-F7#           Continue the search
+    #Ctrl-Z#             Undo in the active pane
+    #Ctrl-Shift-Z#       Redo in the active pane
+    #F11#                Open the editor plugins menu
+    #Esc, F10#           Close FileDiff
+
+    When a text pane has focus, #F5# copies its current change block to the
+other file. When the gutter has focus, use #Left# or #Right# to choose the
+action and #Enter# or #F5# to apply it. Clicking an arrow copies the block;
+clicking a cross deletes the extra lines on that side. Each merge is recorded
+as one undo operation in the target pane.
+
+    Modified files are marked with #*#. Closing FileDiff asks whether changed
+files should be saved. If a file's encoding was detected heuristically,
+FileDiff asks for confirmation before the first save.
+
 @Viewer
 $ #Viewer: control keys#
    Viewer commands
@@ -3212,13 +3262,13 @@ keypad inserts the character that has the specified code (0-65535).
     4. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
-    5. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    5. Print manager for Linux is unavailable. Instead, Editor has embedded
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 
     GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
     and printy itself; termibnal version expects the #lp# command works and your CUPS is
-    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    configured correctly. MacOS version uses native capabilities based upon WebKit
     printing automation.
 
 @EditorSearch
@@ -3237,6 +3287,11 @@ $ #Editor: search/replace#
     The following option is available in search dialog only:
 
       #Select found#        - ^<wrap>found text is selected
+
+    The search dialog also has the #All# button: it searches the whole file at once
+and shows the list of all found occurrences with their line and column numbers.
+Pressing #Enter# in that list moves the cursor to the selected occurrence, #Esc#
+leaves the current position unchanged.
 
 
 @FileOpenCreate
@@ -5068,11 +5123,15 @@ $ #Macros: List of variables#
 
 <!Macro:Vars!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroConstList
 $ #Macros: List of constants#
     Below is a list of constants that can be used in macros.
 
 <!Macro:Consts!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroCommonList
 $ #Macros: Common#
@@ -5080,6 +5139,8 @@ $ #Macros: Common#
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroQViewList
 $ #Macros: Quick view panel#
@@ -5089,6 +5150,8 @@ $ #Macros: Quick view panel#
 <!Macro:Common!>
 <!Macro:Qview!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroMainMenuList
 $ #Macros: Main menu#
     Below are the macro key combinations active for the main menu.
@@ -5096,6 +5159,8 @@ $ #Macros: Main menu#
 
 <!Macro:Common!>
 <!Macro:MainMenu!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroTreeList
 $ #Macros: Tree panel#
@@ -5105,6 +5170,8 @@ $ #Macros: Tree panel#
 <!Macro:Common!>
 <!Macro:Tree!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroDialogList
 $ #Macros: Dialogs#
     Below are the macro key combinations active in dialogs.
@@ -5112,6 +5179,8 @@ $ #Macros: Dialogs#
 
 <!Macro:Common!>
 <!Macro:Dialog!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroInfoList
 $ #Macros: Info panel#
@@ -5121,6 +5190,8 @@ $ #Macros: Info panel#
 <!Macro:Common!>
 <!Macro:Info!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroDisksList
 $ #Macros: Location menu#
     Below are the macro key combinations active for the location menu.
@@ -5128,6 +5199,8 @@ $ #Macros: Location menu#
 
 <!Macro:Common!>
 <!Macro:Disks!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroUserMenuList
 $ #Macros: User menu#
@@ -5137,6 +5210,8 @@ $ #Macros: User menu#
 <!Macro:Common!>
 <!Macro:UserMenu!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroShellList
 $ #Macros: Panels#
     Below are the macro key combinations active for the file panels.
@@ -5144,6 +5219,8 @@ $ #Macros: Panels#
 
 <!Macro:Common!>
 <!Macro:Shell!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroSearchList
 $ #Macros: Fast find in panels#
@@ -5153,6 +5230,8 @@ $ #Macros: Fast find in panels#
 <!Macro:Common!>
 <!Macro:Search!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroFindFolderList
 $ #Macros: Find folder#
     Below are the macro key combinations active for the find folder dialog.
@@ -5161,6 +5240,8 @@ $ #Macros: Find folder#
 <!Macro:Common!>
 <!Macro:FindFolder!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroEditList
 $ #Macros: Editor#
     Macro-commands available in the editor are listed below. Descriptions are read from the config file.
@@ -5168,12 +5249,16 @@ $ #Macros: Editor#
 <!Macro:Common!>
 <!Macro:Editor!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroViewerList
 $ #Macros: Viewer#
     Macro commands available in the viewer are listed below. The description for each is read from the config file.
 
 <!Macro:Common!>
 <!Macro:Viewer!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @KeyMacroMenuList
 $ #Macros: Other menus#
@@ -5183,6 +5268,8 @@ $ #Macros: Other menus#
 <!Macro:Common!>
 <!Macro:Menu!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroHelpList
 $ #Macros: Help file#
     Below are the macro key combinations active for the help file.
@@ -5191,6 +5278,8 @@ $ #Macros: Help file#
 <!Macro:Common!>
 <!Macro:Help!>
 
+    See also ~"The list of installed macros"~@KeyMacroList@
+
 @KeyMacroOtherList
 $ #Macros: Other areas#
     Below are the macro key combinations active in other areas: screen text copying, vertical menus.
@@ -5198,6 +5287,8 @@ $ #Macros: Other areas#
 
 <!Macro:Common!>
 <!Macro:Other!>
+
+    See also ~"The list of installed macros"~@KeyMacroList@
 
 @Index
 $ #Index help file#
@@ -5209,7 +5300,7 @@ $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
   Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
-  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch);
   - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 

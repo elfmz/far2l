@@ -30,4 +30,4 @@ void VTShell_Enum(VTInfos &vts);
 VTState VTShell_LookupState(HANDLE hConsole);
 int VTShell_Switch(size_t index);
 
-const char *GetSystemShell();
+std::string VTShell_GetSystemShell();

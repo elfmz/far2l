@@ -172,11 +172,17 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 
 #endif
 #if defined(__APPLE__)
-	pid_t pids[40960];
-	int count = proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
+	auto bytes_count = proc_listpids(PROC_ALL_PIDS, 0, nullptr, 0);
+	if (bytes_count <= 0)
+		return;
 
-	for (int i = 0; i < count; i++) {
-		pid_t pid = pids[i];
+	std::vector<pid_t> pids(128 + bytes_count / sizeof(pid_t));
+	bytes_count = proc_listpids(PROC_ALL_PIDS, 0, pids.data(), pids.size() * sizeof(pid_t));
+	if (bytes_count <= 0)
+		return;
+
+	pids.resize(bytes_count / sizeof(pid_t));
+	for (const auto &pid : pids) {
 		if (pid <= 0) continue;
 
 		// ---- Get basic BSD info (name, etc.) ----

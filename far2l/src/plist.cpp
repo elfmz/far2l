@@ -85,6 +85,8 @@ struct FarPidInfo
 
 static const wchar_t CPU_LOAD_PLACEHOLDER[] = L"  ??.?%";
 
+#define AUTOREFRESH_MSEC 1000
+
 static void enumerateProcesses(std::vector<FarPidInfo>& v) 
 {
 	v.clear();
@@ -286,8 +288,14 @@ void ShowProcessList()
 	ProcList.Show();
 	ProcList.SetRegularIdle(true);
 	int sort_key = 'P';
-	auto last_refresh = 0;
-	bool refresh = true, autorefresh = true;
+	clock_t last_refresh = 0, schedule_refresh = 0;
+	bool autorefresh = true;
+	enum
+	{
+		AT_CHOSEN,
+		AT_TOP,
+		AT_BOTTOM,
+	} keep{AT_TOP};
 
 	struct TimeAndId
 	{
@@ -300,7 +308,7 @@ void ShowProcessList()
 	FARString str_usage;
 	for (unsigned int loop_id = 1; !ProcList.Done(); ++loop_id) {
 		const auto now = GetProcessUptimeMSec();
-		if (refresh || (autorefresh && (now - last_refresh) >= 1000)) {
+		if (last_refresh == 0 || (schedule_refresh && (now >= schedule_refresh || now < last_refresh))) {
 			int selected_pos = ProcList.GetSelectPos();
 			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : getpid();
 			ProcList.Hide();
@@ -369,13 +377,17 @@ void ShowProcessList()
 				MenuItemEx item;
 				item.strName = vj.text;
 				item.AccelKey = 0;
-				if (vj.pid == selected_pid) {
+				if (vj.pid == selected_pid && keep == AT_CHOSEN) {
 					item.Flags = LIF_SELECTED;
 					selected_pos = -1;
 				}
 				ProcList.AddItem(&item);
 			}
-			if (selected_pos != -1) {
+			if (keep == AT_TOP) {
+				ProcList.SetSelectPos(selected_pos, 0);
+			} else if (keep == AT_BOTTOM) {
+				ProcList.SetSelectPos(selected_pos, ProcList.GetItemCount() - 1);
+			} else if (selected_pos != -1) {
 				selected_pos = std::min(selected_pos, ProcList.GetItemCount() - 1);
 				if (selected_pos >= 0) {
 					ProcList.SetSelectPos(selected_pos, -1);
@@ -384,7 +396,9 @@ void ShowProcessList()
 
 			ProcList.Show();
 			last_refresh = GetProcessUptimeMSec();
-			refresh = false;
+			if (autorefresh) {
+				schedule_refresh = last_refresh + AUTOREFRESH_MSEC;
+			}
 		}
 		FarKey key = ProcList.ReadInput();
 		switch (key) {
@@ -396,16 +410,16 @@ void ShowProcessList()
 		case 'p': case 'P':
 		case 'm': case 'M':
 			sort_key = key;
-			refresh = true;
+			schedule_refresh = GetProcessUptimeMSec();
 			break;
 		case KEY_CTRLR:
 			autorefresh = !autorefresh;
-			refresh = autorefresh;
+			schedule_refresh = autorefresh ? GetProcessUptimeMSec() : 0;
 			break;
 		case KEY_NUMDEL:
 		case KEY_DEL:
 			if (!kill(v[ProcList.GetSelectPos()].pid, SIGTERM)) {
-				for (int i = 0; i < 300; ++i, usleep(10000)) { // wait up to  seconds for process exit
+				for (int i = 0; i < 100; ++i, usleep(10000)) { // wait up to second for process exit
 					if (kill(v[ProcList.GetSelectPos()].pid, 0) != 0) {
 						ProcList.DeleteItem(ProcList.GetSelectPos());
 						break;
@@ -419,9 +433,22 @@ void ShowProcessList()
 				ProcList.DeleteItem(ProcList.GetSelectPos()); // it had no chance to survive
 			}
 			break;
-		default:
+		case KEY_HOME:
+			keep = AT_TOP;
 			ProcList.ProcessInput();
 			break;
+		case KEY_END:
+			keep = AT_BOTTOM;
+			ProcList.ProcessInput();
+			break;
+		case KEY_NONE: case KEY_IDLE:
+			break;
+		default:
+			keep = AT_CHOSEN;
+			if (schedule_refresh) { // postpone autorefresh while user typing something
+				schedule_refresh = GetProcessUptimeMSec() + AUTOREFRESH_MSEC;
+			}
+			ProcList.ProcessInput();
 		}
 	}
 }

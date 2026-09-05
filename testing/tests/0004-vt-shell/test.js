@@ -25,7 +25,7 @@ for (testrun = 1; testrun <= 2; testrun++) {
 		ExpectString("VT Shell smoke Repro3171test")
 	}
 	ExpectString("~~~~~~~~~~~~~~~~~~~")
-	ExpectString("1Help", 0, -1, 0, 1)
+	ExpectString("1 Help", 0, -1, 0, 1)
 	TypeEscape()
 
 	ExpectString("↑", -1, -2, 1, 1) // wait when command line input edit will be activated again
@@ -39,7 +39,7 @@ for (testrun = 1; testrun <= 2; testrun++) {
 
 	TypeText("ping localhost")
 	TypeEnter()
-	ExpectNoString("1Help", 0, -1, 0, 1)
+	ExpectNoString("1 Help", 0, -1, 0, 1)
 	ExpectString("localhost", 0, -2, 0, 0) // expecting ping output filling screen from bottom
 	ToggleLCtrl(true)
 	ToggleLAlt(true)

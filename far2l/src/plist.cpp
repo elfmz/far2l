@@ -139,17 +139,17 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		parts.clear();
 		StrExplode(parts, proc_stat, " ");
 
-		unsigned long utime  = parts.size() > 14 ? DecToULong(parts[14].c_str(), parts[14].size()) : 0;
-		unsigned long stime  = parts.size() > 15 ? DecToULong(parts[15].c_str(), parts[15].size()) : 0;
-		unsigned long rss_kb = parts.size() > 24 ? DecToULong(parts[24].c_str(), parts[24].size()) * page_kb : 0;
+		unsigned long utime  = parts.size() > 13 ? DecToULong(parts[13].c_str(), parts[13].size()) : 0;
+		unsigned long stime  = parts.size() > 14 ? DecToULong(parts[14].c_str(), parts[14].size()) : 0;
+		unsigned long rss_kb = parts.size() > 23 ? DecToULong(parts[23].c_str(), parts[23].size()) * page_kb : 0;
 
 		auto pid = atoi(entry->d_name);
 
-		printf("PID: %d\n", pid);
+/*		printf("PID: %d\n", pid);
 		printf("Cmd: %s", proc_cmdline.c_str());
 		printf("CPU ticks: %ld (user) + %ld (system)\n", utime, stime);
-		printf("RSS: %ld KB\n", rss_kb);
-		printf("----\n");
+		printf("RSS: %ld KB (%s)\n", rss_kb, parts[24].c_str());
+		printf("----\n");*/
 
 		unsigned long total_time = utime + stime;
 		const char* cpuLoad = "?";
@@ -264,18 +264,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 
 void ShowProcessList()
 {
-	std::vector<FarPidInfo> v;
-	enumerateProcesses(v);
-
-	int GroupsLen = (int)v.size();
-	if (GroupsLen < 1) return; // nothing to display
-
-	MenuDataEx Groups[GroupsLen];
-	for (int j = 0; j < GroupsLen; ++j) {
-		Groups[j] = { v[j].text.c_str(), 0, 0 };
-	}
-
-	VMenu ProcList(Msg::ProcessListTitle, Groups, GroupsLen, ScrY - 4);
+	MenuDataEx dummy; // will refresh immediately
+	VMenu ProcList(Msg::ProcessListTitle, &dummy, 1, ScrY - 4);
 
 	ProcList.SetPosition(-1, -1, 0, 0);
 	ProcList.SetFlags(VMENU_WRAPMODE | VMENU_NOTCHANGE);
@@ -283,19 +273,17 @@ void ShowProcessList()
 	ProcList.ClearDone();
 
 	ProcList.Show();
+	ProcList.SetRegularIdle(true);
+	int sort_key = 'i';
+	auto last_refresh = 0;
+	bool refresh = true;
+
+	std::vector<FarPidInfo> v;
 
 	while (!ProcList.Done()) {
-		FarKey key = ProcList.ReadInput();
-
-		switch (key) {
-		case KEY_F1:
-			Help::Present(L"TaskList");
-			break;
-		case 't': case 'T': /* sort by name */
-		case 'i': case 'I': /* sort by pid */
-		case 'p': case 'P': /* sort by cpu */
-		case 'm': case 'M': /* sort by RSS */
-		case KEY_CTRLR:	
+		if (refresh || (GetProcessUptimeMSec() - last_refresh) >= 1000) {
+			int selected_pos = ProcList.GetSelectPos();
+			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : -1;
 			ProcList.Hide();
 			ProcList.DeleteItems();
 
@@ -303,44 +291,67 @@ void ShowProcessList()
 
 			enumerateProcesses(v);
 
-			if (key == 't' || key == 'T')
+			if (sort_key == 't' || sort_key == 'T')
 				std::sort(v.begin(), v.end(),
-					[key](const FarPidInfo& a, const FarPidInfo& b) {
-						return key == 'T' ? b.name < a.name : a.name < b.name;
+					[sort_key](const FarPidInfo& a, const FarPidInfo& b) {
+						return sort_key == 'T' ? b.name < a.name : a.name < b.name;
 					});
-			else if (key == 'i' || key == 'I')
+			else if (sort_key == 'i' || sort_key == 'I')
 				std::sort(v.begin(), v.end(),
-					[key](const FarPidInfo& a, const FarPidInfo& b) {
-						return key == 'i' ? a.pid < b.pid : b.pid < a.pid;
+					[sort_key](const FarPidInfo& a, const FarPidInfo& b) {
+						return sort_key == 'i' ? a.pid < b.pid : b.pid < a.pid;
 					});
-			else if (key == 'p' || key == 'P')
+			else if (sort_key == 'p' || sort_key == 'P')
 				std::sort(v.begin(), v.end(),
-					[key](const FarPidInfo& a, const FarPidInfo& b) {
-						return key == 'P' ? b.cpu_ticks < a.cpu_ticks : a.cpu_ticks < b.cpu_ticks;
+					[sort_key](const FarPidInfo& a, const FarPidInfo& b) {
+						return sort_key == 'P' ? b.cpu_ticks < a.cpu_ticks : a.cpu_ticks < b.cpu_ticks;
 					});
-			else if (key == 'm' || key == 'M')
+			else if (sort_key == 'm' || sort_key == 'M')
 				std::sort(v.begin(), v.end(),
-					[key](const FarPidInfo& a, const FarPidInfo& b) {
-						return key == 'M' ? b.rss < a.rss : a.rss < b.rss;
+					[sort_key](const FarPidInfo& a, const FarPidInfo& b) {
+						return sort_key == 'M' ? b.rss < a.rss : a.rss < b.rss;
 					});
 
-			GroupsLen = (int)v.size();
-			for (int j = 0; j < GroupsLen; ++j) {
+			for (const auto &vj : v) {
 				MenuItemEx item;
-				item.Clear();
-				item.strName = v[j].text.c_str();
+				item.strName = vj.text.c_str();
 				item.AccelKey = 0;
-				item.Flags = 0;
-
+				if (vj.pid == selected_pid) {
+					item.Flags = LIF_SELECTED;
+					selected_pos = -1;
+				}
 				ProcList.AddItem(&item);
+			}
+			if (selected_pos != -1) {
+				selected_pos = std::min(selected_pos, ProcList.GetItemCount() - 1);
+				if (selected_pos >= 0) {
+					ProcList.SetSelectPos(selected_pos, -1);
+				}
 			}
 
 			ProcList.Show();
+			last_refresh = GetProcessUptimeMSec();
+			refresh = false;
+		}
+		FarKey key = ProcList.ReadInput();
+		switch (key) {
+		case KEY_F1:
+			Help::Present(L"TaskList");
+			break;
+		case 't': case 'T':
+		case 'i': case 'I':
+		case 'p': case 'P':
+		case 'm': case 'M':
+			sort_key = key;
+			refresh = true;
+			break;
+		case KEY_CTRLR:
+			refresh = true;
 			break;
 		case KEY_NUMDEL:
 		case KEY_DEL:
 			if (!kill(v[ProcList.GetSelectPos()].pid, SIGTERM)) {
-				for (int i = 0; i < 300; ++i, usleep(10000)) { // wait up to 3 seconds for process exit
+				for (int i = 0; i < 300; ++i, usleep(10000)) { // wait up to  seconds for process exit
 					if (kill(v[ProcList.GetSelectPos()].pid, 0) != 0) {
 						ProcList.DeleteItem(ProcList.GetSelectPos());
 						break;

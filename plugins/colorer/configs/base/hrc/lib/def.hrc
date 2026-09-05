@@ -8,7 +8,11 @@
   <type name="def">
     <annotation><documentation>
       Shared macro-schemes, Common Region definitions,
-    </documentation></annotation>
+    </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
 
     <region name="default" description="Transparent region"/>
     <region name="Text" description="Background text"/>
@@ -127,8 +131,7 @@
 
     <scheme name="FloatNumber">
       <regexp match="/\B \. \d+ ([eE][\-+]?\d+)? ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
-      <regexp match="/\b \d+\.\d* ([eE][\-+]?\d+)? ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
-      <regexp match="/\b \d+ ([eE][\-+]?\d+) ([lLfF]?)\b/x" region0="NumberFloat" region2="NumberSuffix"/>
+      <regexp match="/\b \d+ (?: \.\d* ([eE][\-+]?\d+)? | [eE][\-+]?\d+ ) (?{NumberSuffix}[lLfF]?) \b/x" region0="NumberFloat"/>
     </scheme>
 
     <scheme name="DecNumber">

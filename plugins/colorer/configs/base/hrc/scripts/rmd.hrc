@@ -5,11 +5,10 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
-  <type name="go-sum">
+  <type name="rmd">
     <annotation>
       <documentation>
-        Go checksum file syntax (go.sum)
-        https://go.dev/ref/mod#go-sum-files
+        R Markdown and Quarto: YAML front matter, fenced R/Python chunks, Markdown body.
       </documentation>
       <contributors><![CDATA[
         Aleksey Dobrunov <ctapmex@ctapmex.com>
@@ -17,30 +16,24 @@
     </annotation>
 
     <import type="def"/>
+    <import type="markdown"/>
+    <import type="yaml"/>
+    <import type="r"/>
+    <import type="python"/>
 
-    <region name="ModulePath" parent="def:String"/>
-    <region name="Version" parent="def:Number"/>
-    <region name="HashType" parent="def:Keyword"/>
-    <region name="Hash" parent="def:CommentContent"/>
-    <region name="Symbol" parent="def:Symbol"/>
-    <region name="Error" parent="def:Error"/>
-
-    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
-    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
-    <entity name="hash" value="[A-Za-z0-9+/=]+"/>
-
-    <scheme name="go-sum">
-      <!-- module version/go.mod h1:hash (more specific first) -->
-      <regexp match="/(%modulePath;)\s+(%version;)(\/go\.mod)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="Symbol" region4="HashType" region5="Hash"/>
-      <!-- module version h1:hash -->
-      <regexp match="/(%modulePath;)\s+(%version;)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="HashType" region4="Hash"/>
-
-      <!-- any unexpected content is an error -->
-      <regexp match="/\S/" region="Error" priority="low"/>
+    <scheme name="rmd">
+      <block start="/^(---)\s*$/" end="/^(---)\s*$/"
+             scheme="yaml:YamlBody"
+             region00="yaml:DocumentStart" region10="yaml:DocumentEnd"
+             region01="def:PairStart" region11="def:PairEnd"/>
+      <block start="/^(```+)\s*[\{]?\s*r\b.*$/" end="/^```+\s*$/"
+             scheme="r:r" content-priority="low"
+             region00="markdown:FenceMark" region10="markdown:FenceMark"/>
+      <block start="/^(```+)\s*[\{]?\s*python\b.*$/" end="/^```+\s*$/"
+             scheme="python:python" content-priority="low"
+             region00="markdown:FenceMark" region10="markdown:FenceMark"/>
+      <inherit scheme="markdown:markdown"/>
     </scheme>
-
   </type>
 </hrc>
 <!--

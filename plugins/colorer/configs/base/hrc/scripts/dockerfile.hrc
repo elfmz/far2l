@@ -26,13 +26,13 @@
             2. Highlight sources and destinations differently for ADD/COPY
             3. Recognize and hightlight image name for "COPY --from=..."
             4. Recognize and validate parameters for instructions (FROM/RUN/ADD etc.)
-            5. Recognize and highlight parser directives (https://docs.docker.com/reference/dockerfile/#parser-directives)
 
         Home: https://github.com/chpock/ck.colorer-schemes
         Send requests there for bug fixes and features.
     </documentation>
     <contributors><![CDATA[
         Konstantin Kushnir <chpock@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
     ]]></contributors>
 
     <appinfo>
@@ -40,6 +40,9 @@
             <location link="scripts/dockerfile.hrc"/>
             <filename>/^[Dd]ockerfile\..+$/</filename>
             <filename>/^[Dd]ockerfile$/</filename>
+            <filename>/^[Cc]ontainerfile\..+$/</filename>
+            <filename>/^[Cc]ontainerfile$/</filename>
+            <filename>/\.dockerfile$/i</filename>
             <firstline>/^\s*FROM\b/</firstline>
         </prototype>
     </appinfo>
@@ -57,6 +60,8 @@
 <region name="ImageTag" parent="def:Identifier"/>
 <region name="ImageDigest" parent="def:Directive"/>
 <region name="ImageLabel" parent="def:Label"/>
+
+<region name="ParserDirective" parent="def:Directive"/>
 
 <region name="Instruction" parent="def:Keyword"/>
 <region name="InstructionOnBuild" parent="def:StructKeyword"/>
@@ -90,6 +95,8 @@
     <!-- For backward compatibility, leading whitespace before comments (#) and
     instructions (such as RUN) are ignored, but discouraged -->
     <regexp match="/\s+/"/>
+    <!-- parser directives (# syntax=, # escape=, …) before comments -->
+    <regexp match="/#\s*(syntax|escape|check|request)\s*=.*$/" region="ParserDirective"/>
     <!-- comments -->
     <block start="/#/" end="/$/" region="Comment" scheme="def:Comment"/>
     <!-- instruction: FROM -->

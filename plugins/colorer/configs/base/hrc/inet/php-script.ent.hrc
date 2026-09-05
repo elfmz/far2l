@@ -307,6 +307,11 @@
     />
     
     
+    <!-- PHP 8 attributes: must precede '#' line comments -->
+    <block start="/(#)(\[)/" end="/(\])/" scheme="Script"
+        region01="SymbolStrong" region02="Symbol"
+        region10="Symbol" region11="PairEnd"/>
+
     <!-- Linear Comments-->
     <block start="/\/\/|\#/" end="/$/" scheme="Comment" region="Comment" priority="low"/>
     <block start="/(\/\*)\*?=/" end="/(\*\/)/" scheme="DocBlock"
@@ -349,7 +354,7 @@
     <!-- speedup for big spaced files -->
     <regexp match="/^\s+\M\s/"/>
     <!-- outlines -->
-    <regexp match="/\M (^|\s)(class|interface) \s+ (?{ClassOutline}[\w_]+ [\w_:\$]*? )/ix"/>
+    <regexp match="/\M (^|\s)(class|interface|enum) \s+ (?{ClassOutline}[\w_]+ [\w_:\$]*? )/ix"/>
     <regexp match="/\M (^|\s)(function) [\s&amp;]+ (?{FunctionOutline}[\:\w_*&amp;~]+)/ix"/>    
     
     <regexp match="/((\())\s*(integer|int|boolean|bool|float|double|string|array|object|resource)\s*((\)))/"
@@ -372,6 +377,7 @@
     
     <keywords region="Symbol" ignorecase="yes">
         <symb name=";" region="SymbolStrong"/>
+        <symb name="=&gt;"/>
         <symb name="="/><symb name="+"/>
         <symb name="-"/><symb name="/"/><symb name="*"/>
         <symb name="&amp;"/><symb name="|"/><symb name="^"/>
@@ -399,6 +405,14 @@
     <keywords region="KeywordStrong" ignorecase="yes">
         <word name="case-folded"/>
         <word name="case-folding"/>
+    </keywords>
+
+    <keywords region="php.keyword" ignorecase="yes">
+        <word name="match"/>
+        <word name="enum"/>
+        <word name="readonly"/>
+        <word name="fn"/>
+        <word name="never"/>
     </keywords>
         
     <inherit scheme="base-keywords"/>      

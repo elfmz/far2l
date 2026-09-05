@@ -9,7 +9,7 @@
 
 		<annotation>
 			<documentation>
-				Cascading Style Sheets, Level 1 and 2, with media queries
+				Cascading Style Sheets with media queries, nesting, and modern at-rules
 			</documentation>
 			<contributors><![CDATA[
 				darkman <darkman@magnet.ru>
@@ -853,12 +853,15 @@
 		    </keywords>
 			<keywords region="PropertyFunc" ignorecase="yes" worddiv='%worddiv-class;'>
 				<word name="attr"/>
+				<word name="color-mix"/>
 				<word name="color-stop"/>
 				<word name="cubic-bezier"/>
 				<word name="from"/>
 				<word name="hsl"/>
 				<word name="hsla"/>
 				<word name="linear-gradient"/>
+				<word name="oklab"/>
+				<word name="oklch"/>
 				<word name="radial-gradient"/>
 				<word name="rect"/>
 				<word name="repeating-linear-gradient"/>
@@ -1214,15 +1217,18 @@
 		<scheme name="RuleContent">
 			<inherit scheme="Comment"/>
 			<inherit scheme="NestedMediaDirective"/>
-			<!-- property value after colon -->
-			<block start="/\M([\w\d\-]+)?\s*(:)/" end="/\M[\;\}\x22\x27]/"
+			<inherit scheme="NestedScopeDirective"/>
+			<regexp match="/&amp;/" region="def:Keyword"/>
+			<!-- property value after colon; name required so '&amp;:hover' and nested rules stay selectors -->
+			<block start="/\M([\w\d\-]+)\s*(:)/" end="/\M[\;\}\x22\x27]/"
 				scheme="PropertyWrapper" region02="Symbol"
 			/>
-    
+
 			<!-- EE: add ";" -->
 			<keywords region="def:SymbolStrong">
 				<symb name=";"/>
 			</keywords>
+			<inherit scheme="RulesList"/>
 		</scheme>
     
 		<scheme name="QuotRuleContent">
@@ -1281,6 +1287,9 @@
 				<word name="left"/>
 				<word name="link"/>
 				<word name="not"/>
+				<word name="has"/>
+				<word name="is"/>
+				<word name="where"/>
 				<word name="nth-child"/>
 				<word name="nth-last-child"/>
 				<word name="nth-last-of-type"/>
@@ -1475,23 +1484,86 @@
 		</scheme>
 
 		<scheme name="MediaDirective">
-			<regexp match="/\M\@media\b\s*(?{MediaOutline}.*)/ix"/>
-			<block start="/(\@)(media)\s*\M.*/i" end="/(\})?#1/"
+			<regexp match="/\M\@(media|container)\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(media|container)\s*\M.*/i" end="/(\})?#1/"
 				region01="SymbolStrong" region02="Directive"
 				scheme="MediaQuery"
 			/>
 		</scheme>
 
 		<scheme name="NestedMediaDirective">
-			<regexp match="/\M\@media\b\s*(?{MediaOutline}.*)/ix"/>
-			<block start="/(\@)(media)\s*\M.*/i" end="/(\})?#1/"
+			<regexp match="/\M\@(media|container)\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(media|container)\s*\M.*/i" end="/(\})?#1/"
 				region01="SymbolStrong" region02="Directive"
 				scheme="NestedMediaQuery"
 			/>
 		</scheme>
 
+		<scheme name="ScopeQuery">
+			<keywords region="MediaOperator" ignorecase="yes">
+				<word name="to"/>
+			</keywords>
+			<block start="/(\()/" end="/(\))/"
+				region00="PairStart" region01="Symbol"
+				region10="PairEnd" region11="Symbol"
+				scheme="RulesList"
+			/>
+			<block start="/(\{)/" end="/(\})/"
+				region00="PairStart" region01="SymbolStrong"
+				region10="PairEnd" region11="SymbolStrong"
+				scheme="RulesList"
+			/>
+		</scheme>
+
+		<scheme name="NestedScopeQuery">
+			<keywords region="MediaOperator" ignorecase="yes">
+				<word name="to"/>
+			</keywords>
+			<block start="/(\()/" end="/(\))/"
+				region00="PairStart" region01="Symbol"
+				region10="PairEnd" region11="Symbol"
+				scheme="RulesList"
+			/>
+			<block start="/(\{)/" end="/(\})/"
+				region00="PairStart" region01="SymbolStrong"
+				region10="PairEnd" region11="SymbolStrong"
+				scheme="RuleContent"
+			/>
+		</scheme>
+
+		<scheme name="ScopeDirective">
+			<regexp match="/\M\@scope\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(scope)\s*\M.*/i" end="/(\})?#1/"
+				region01="SymbolStrong" region02="Directive"
+				scheme="ScopeQuery"
+			/>
+		</scheme>
+
+		<scheme name="NestedScopeDirective">
+			<regexp match="/\M\@scope\b\s*(?{MediaOutline}.*)/ix"/>
+			<block start="/(\@)(scope)\s*\M.*/i" end="/(\})?#1/"
+				region01="SymbolStrong" region02="Directive"
+				scheme="NestedScopeQuery"
+			/>
+		</scheme>
+
+		<scheme name="LayerDirective">
+			<regexp match="/\M\@layer\b\s*(?{DirectiveOutline}.*)/ix"/>
+			<block start="/(\@)(layer)\b([\w\s,\-]*)(\{)/i" end="/(\})/"
+				region01="SymbolStrong" region02="Directive" region03="MediaType"
+				region04="SymbolStrong" region10="SymbolStrong" region11="PairEnd"
+				scheme="RulesList"
+			/>
+			<block start="/(\@)(layer)\b/i" end="/(;)/"
+				region01="SymbolStrong" region02="Directive" region10="SymbolStrong"
+				scheme="MediaQueryList"
+			/>
+		</scheme>
+
 		<scheme name="RuleDirective">
 			<inherit scheme="MediaDirective"/>
+			<inherit scheme="ScopeDirective"/>
+			<inherit scheme="LayerDirective"/>
 			<regexp match="/\M\@(\w+)/" region1="DirectiveOutline"/>
 			<block start="/(?{SymbolStrong}\@)(?{Directive}font-face)\s+
 				(?{PairStart}(?{SymbolStrong}\{))/ixs"
@@ -1521,11 +1593,12 @@
 			<inherit scheme="TagNames"/>
 			<!-- !!EE: symbols in tags -->
 			<regexp match="/((?{Symbol}[\#\.\*])|\w)+/" region="TagName"/>
+			<regexp match="/&amp;/" region="def:Keyword"/>
     
 			<regexp match="/(:)(lang)((\())(\w+)((\)))/"
 				region1="SymbolStrong" region2="PseudoClass" region3="SymbolStrong" region4="PairStart" region5="PropertyValue" region6="SymbolStrong" region7="PairEnd"
 			/>
-			<block start="/(:)(not)((\())/" end="/(\))/"
+			<block start="/(:)(not|has|is|where)((\())/" end="/(\))/"
 				scheme="RulesList" region01="SymbolStrong" region02="PseudoClass" region03="PairStart" region04="SymbolStrong"
 				region10="SymbolStrong" region11="PairEnd"
 			/>
@@ -1621,6 +1694,8 @@
 				scheme="Animation"
 			/>
 			<inherit scheme="MediaDirective"/>
+			<inherit scheme="ScopeDirective"/>
+			<inherit scheme="LayerDirective"/>
 			<block start="/(\@)(import|charset|namespace(\s*[\w]+)?)/i" end="/(\;)/" scheme="Property"
 				region01="SymbolStrong" region02="Directive" region03="NameSpacePrefix" region11="SymbolStrong"
 			/>

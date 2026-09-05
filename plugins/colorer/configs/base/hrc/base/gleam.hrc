@@ -5,11 +5,11 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
-  <type name="go-sum">
+  <type name="gleam">
     <annotation>
       <documentation>
-        Go checksum file syntax (go.sum)
-        https://go.dev/ref/mod#go-sum-files
+        Gleam language.
+        https://gleam.run/book/tour/
       </documentation>
       <contributors><![CDATA[
         Aleksey Dobrunov <ctapmex@ctapmex.com>
@@ -18,29 +18,52 @@
 
     <import type="def"/>
 
-    <region name="ModulePath" parent="def:String"/>
-    <region name="Version" parent="def:Number"/>
-    <region name="HashType" parent="def:Keyword"/>
-    <region name="Hash" parent="def:CommentContent"/>
-    <region name="Symbol" parent="def:Symbol"/>
-    <region name="Error" parent="def:Error"/>
+    <region name="Type" parent="def:TypeKeyword"/>
 
-    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
-    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
-    <entity name="hash" value="[A-Za-z0-9+/=]+"/>
-
-    <scheme name="go-sum">
-      <!-- module version/go.mod h1:hash (more specific first) -->
-      <regexp match="/(%modulePath;)\s+(%version;)(\/go\.mod)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="Symbol" region4="HashType" region5="Hash"/>
-      <!-- module version h1:hash -->
-      <regexp match="/(%modulePath;)\s+(%version;)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="HashType" region4="Hash"/>
-
-      <!-- any unexpected content is an error -->
-      <regexp match="/\S/" region="Error" priority="low"/>
+    <scheme name="gleam">
+      <block start="/\/\/\//" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <regexp match="/\b[A-Z]\w*\b/" region="Type"/>
+      <keywords region="def:Keyword">
+        <word name="as"/>
+        <word name="assert"/>
+        <word name="case"/>
+        <word name="const"/>
+        <word name="echo"/>
+        <word name="fn"/>
+        <word name="if"/>
+        <word name="import"/>
+        <word name="let"/>
+        <word name="opaque"/>
+        <word name="panic"/>
+        <word name="pub"/>
+        <word name="todo"/>
+        <word name="type"/>
+        <word name="use"/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="gleam"/>
+      </inherit>
+      <keywords region="def:Symbol">
+        <symb name="-&gt;"/>
+        <symb name="|&gt;"/>
+        <symb name="&lt;&gt;"/>
+        <symb name="&lt;-"/>
+        <symb name="=="/>
+        <symb name="!="/>
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name="."/>
+        <symb name="/"/>
+        <symb name=","/>
+        <symb name=":"/>
+        <symb name="="/>
+        <symb name="_"/>
+      </keywords>
     </scheme>
-
   </type>
 </hrc>
 <!--

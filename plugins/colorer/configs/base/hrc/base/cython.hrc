@@ -5,11 +5,11 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
-  <type name="go-sum">
+  <type name="cython">
     <annotation>
       <documentation>
-        Go checksum file syntax (go.sum)
-        https://go.dev/ref/mod#go-sum-files
+        Cython (.pyx, .pxd, .pxi) on top of Python.
+        https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html
       </documentation>
       <contributors><![CDATA[
         Aleksey Dobrunov <ctapmex@ctapmex.com>
@@ -17,30 +17,56 @@
     </annotation>
 
     <import type="def"/>
+    <import type="python"/>
 
-    <region name="ModulePath" parent="def:String"/>
-    <region name="Version" parent="def:Number"/>
-    <region name="HashType" parent="def:Keyword"/>
-    <region name="Hash" parent="def:CommentContent"/>
-    <region name="Symbol" parent="def:Symbol"/>
-    <region name="Error" parent="def:Error"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="TypeKeyword" parent="def:TypeKeyword"/>
 
-    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
-    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
-    <entity name="hash" value="[A-Za-z0-9+/=]+"/>
-
-    <scheme name="go-sum">
-      <!-- module version/go.mod h1:hash (more specific first) -->
-      <regexp match="/(%modulePath;)\s+(%version;)(\/go\.mod)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="Symbol" region4="HashType" region5="Hash"/>
-      <!-- module version h1:hash -->
-      <regexp match="/(%modulePath;)\s+(%version;)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="HashType" region4="Hash"/>
-
-      <!-- any unexpected content is an error -->
-      <regexp match="/\S/" region="Error" priority="low"/>
+    <scheme name="cython">
+      <keywords region="Keyword">
+        <word name="cdef"/>
+        <word name="cpdef"/>
+        <word name="ctypedef"/>
+        <word name="cimport"/>
+        <word name="include"/>
+        <word name="nogil"/>
+        <word name="gil"/>
+        <word name="fused"/>
+        <word name="cppclass"/>
+        <word name="namespace"/>
+        <word name="extern"/>
+        <word name="public"/>
+        <word name="readonly"/>
+        <word name="inline"/>
+        <word name="api"/>
+        <word name="packed"/>
+        <word name="by"/>
+        <word name="noexcept"/>
+        <word name="DEF"/>
+        <word name="IF"/>
+        <word name="ELIF"/>
+        <word name="ELSE"/>
+      </keywords>
+      <keywords region="TypeKeyword">
+        <word name="bint"/>
+        <word name="void"/>
+        <word name="char"/>
+        <word name="int"/>
+        <word name="float"/>
+        <word name="double"/>
+        <word name="unsigned"/>
+        <word name="signed"/>
+        <word name="short"/>
+        <word name="long"/>
+        <word name="size_t"/>
+        <word name="Py_ssize_t"/>
+        <word name="NULL"/>
+        <word name="nullptr"/>
+      </keywords>
+      <inherit scheme="python:python">
+        <virtual scheme="python:python" subst-scheme="cython"/>
+      </inherit>
     </scheme>
-
   </type>
 </hrc>
 <!--

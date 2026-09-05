@@ -29,6 +29,8 @@
      - updated functions according to OpenGL 1.5, GLU 1.3, GLX 1.4
     Ivan Shatsky <ivan.shatsky@gmail.com>
      - add C++11 string literals
+    Aleksey Dobrunov <ctapmex@ctapmex.com>
+     - speed up FuncOutline regexp
   ]]></contributors>
   </annotation>
 
@@ -336,10 +338,10 @@
    </annotation>
 
    <regexp><![CDATA[
-     /^ \M \s* (\w[\w_*&~]+ \s [\s\w_*&~\"]*?)?
-     (?{FuncOutline} [\:\w_&~<>]+? )
+     /^ \M \s* (\w[\w_*&~]+ \s+ (?{}[\w_*&~\"]+\s+)* [*&~]* )?
+     (?{FuncOutline} [\:\w_&~<>]+ )
      (\sfor)?~4 (\sif)?~3 (\swhile)?~6 (\sswitch)?~7
-     \s* \( [^;]* ($|\{)/x
+     \s* \( [^;\{]* (\{|$)/x
    ]]></regexp>
    
   <regexp><![CDATA[

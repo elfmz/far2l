@@ -32,6 +32,11 @@ With help of:
     Roman Kuzmin
 -->
    <type name="sql">
+      <annotation>
+        <contributors><![CDATA[
+          Aleksey Dobrunov <ctapmex@ctapmex.com>
+        ]]></contributors>
+      </annotation>
 
       <import type="def"/>
 
@@ -958,6 +963,15 @@ With help of:
          <block start="/\/\//" end="/$/" scheme="Comment" region="sqlComment"/>
          <block start="/\/\*/" end="/\*\//" scheme="Comment" region="sqlComment" region00="PairStart" region10="PairEnd"/>
          <block start="/\{/" end="/\}/" scheme="Comment" region="sqlComment" region00="PairStart" region10="PairEnd"/>
+<!-- PostgreSQL COPY FROM stdin dumps: rows until a line with only \. -->
+         <block start="/\bFROM\s+stdin\b[^;]*;/i" end="/^\\\./"
+                scheme="def:empty" region="sqlString"
+                region00="PairStart" region10="PairEnd"/>
+<!-- PostgreSQL dollar-quoted strings -->
+         <block start="/(?{start}\$\$)/" end="/(?{end}\$\$)/"
+                scheme="def:empty" region="sqlString"/>
+         <block start="/(?{start}\$(?{DollarTag}[A-Za-z_][\w]*)\$)/" end="/(?{end}\$\y{DollarTag}\$)/"
+                scheme="def:empty" region="sqlString"/>
 <!-- strings -->
          <regexp match="/(&#34;(\\.|[^\\&#34;])*?&#34;)/" region="sqlQuotedIdentifier"/>
          <block start="/'/" end="/'/" scheme="stringApost" region="sqlString"/>
@@ -993,6 +1007,7 @@ With help of:
       </scheme>
 
       <scheme name="sql-content">
+         <regexp match="/\$\d+/" region="Var"/>
 <!-- Numbers -->
          <inherit scheme="CHexNumber"/>
          <inherit scheme="FloatNumber"/>

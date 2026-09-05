@@ -8,11 +8,12 @@
 
     <type name="yaml">
         <annotation>
-            <contributors>
+            <contributors><![CDATA[
                 Eugene Myronchuk
-            </contributors>
+                Aleksey Dobrunov <ctapmex@ctapmex.com>
+            ]]></contributors>
             <appinfo>
-                <prototype name="yaml" group="rare" description="YAML">
+                <prototype name="yaml" group="scripts" description="YAML">
                     <location link="rare/yaml.hrc"/>
                     <filename weight="10">/\.(yml)$/</filename>
                 </prototype>
@@ -48,6 +49,7 @@
 		</scheme>
 		<scheme name="Strings">
 		    <inherit scheme="Escapes"/>
+			<inherit scheme="GitHubExpr"/>
 			<regexp match="/(%byte;)(?{def:Symbol}\.)(%byte;)(?{def:Symbol}\.)(%byte;)(?{def:Symbol}\.)(%byte;)((?{def:SymbolStrong}:)(%word;))?/" region="IP" />
 			<regexp match="/%[\w\._]+%/" region="def:Constant" />
 			<inherit scheme="Date" />
@@ -61,6 +63,7 @@
         </scheme>
 
         <scheme name="Keys">
+			<regexp match="/(([&quot;&apos;])[^&quot;&apos;\n]*\2)\s*\M:(\s|$)?=/" region1="KeyName" />
 			<regexp match="/([\w\.\:\-]+)\M:(\s|$)?=/" region1="KeyName" />
         </scheme>
 
@@ -100,12 +103,22 @@
         	</keywords>
         </scheme>
         
+        <scheme name="GitHubExpr">
+        	<block start="/(\$)(\{\{)/" end="/(\}\})/"
+        		scheme="def:empty"
+        		region="def:Var"
+        		region01="def:SymbolStrong" region02="def:SymbolStrong"
+        		region11="def:SymbolStrong"
+        	/>
+        </scheme>
+
         <scheme name="YamlBody">
         	<inherit scheme="Comments"/>
 			<inherit scheme="Tags" />
 			<inherit scheme="def:Time" />
         	<inherit scheme="Keys"/>
         	<inherit scheme="Scalars"/>
+        	<inherit scheme="GitHubExpr"/>
         	<regexp match="/[&amp;*]\w+/" region="def:Var" />
         	<regexp match="/[|?&gt;!%&amp;`@]($|\s)?=/" region="def:Symbol" />
         	<inherit scheme="Brackets"/>

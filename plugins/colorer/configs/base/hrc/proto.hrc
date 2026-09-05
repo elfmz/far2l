@@ -38,7 +38,7 @@
     </prototype>
     <prototype name="cpp" group="main" description="C++">
         <location link="base/cpp.hrc" />
-        <filename>/\.(cpp|cxx|cc|hpp|h|icpp)$/i</filename>
+        <filename>/\.(cpp|cxx|cc|hpp|h|icpp|hh|hxx|ipp|tpp|inl|ixx|cppm|ccm|cxxm)$/i</filename>
         <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
         <firstline>/\#include/</firstline>
         <firstline>/\#define|\#if/</firstline>
@@ -190,13 +190,25 @@
     </prototype>
     <prototype name="python" group="main" description="Python">
         <location link="base/python.hrc" />
-        <filename>/\.(py|pyw|pys)$/i</filename>
+        <filename>/\.(py|pyw|pys|pyi)$/i</filename>
         <firstline weight='2'>/^\#!\S*.+python/</firstline>
         <firstline>/^("""|import)/</firstline>
+    </prototype>
+    <prototype name="cython" group="main" description="Cython">
+        <location link="base/cython.hrc" />
+        <filename>/\.(pyx|pxd|pxi)$/i</filename>
+    </prototype>
+    <prototype name="julia" group="main" description="Julia">
+        <location link="base/julia.hrc" />
+        <filename>/\.jl$/i</filename>
     </prototype>
     <prototype name="lua" group="main" description="Lua">
         <location link="base/lua.hrc" />
         <filename>/\.(w?lua)$/i</filename>
+    </prototype>
+    <prototype name="luau" group="main" description="Luau">
+        <location link="base/luau.hrc" />
+        <filename>/\.luau$/i</filename>
     </prototype>
     <prototype name="moonscript" group="main" description="MoonScript">
         <location link="base/moonscript.hrc" />
@@ -208,6 +220,14 @@
         <filename>/Rakefile$/i</filename>
         <firstline weight='4'>/-\*- ruby -\*-/i</firstline>
         <firstline>/bin\/ruby/i</firstline>
+    </prototype>
+    <prototype name="elixir" group="main" description="Elixir">
+        <location link="base/elixir.hrc" />
+        <filename>/\.exs?$/i</filename>
+    </prototype>
+    <prototype name="gleam" group="main" description="Gleam">
+        <location link="base/gleam.hrc" />
+        <filename>/\.gleam$/i</filename>
     </prototype>
     <prototype name="nix" group="main" description="Nix">
         <location link="base/nix.hrc" />
@@ -247,7 +267,7 @@
     </prototype>
     <prototype name="kotlin" group="main" description="Kotlin">
         <location link="base/kotlin.hrc" />
-        <filename>/\.kt$/i</filename>
+        <filename>/\.(kt|kts)$/i</filename>
     </prototype>
     <prototype name="groovy" group="main" description="Groovy">
         <location link="base/groovy.hrc" />
@@ -277,6 +297,18 @@
     <prototype name="rust" group="main" description="Rust">
         <location link="base/rust.hrc" />
         <filename>/\.rs$/i</filename>
+    </prototype>
+    <prototype name="zig" group="main" description="Zig">
+        <location link="base/zig.hrc" />
+        <filename>/\.zig$/i</filename>
+    </prototype>
+    <prototype name="gdscript" group="main" description="GDScript">
+        <location link="base/gdscript.hrc" />
+        <filename>/\.gd$/i</filename>
+    </prototype>
+    <prototype name="solidity" group="main" description="Solidity">
+        <location link="base/solidity.hrc" />
+        <filename>/\.sol$/i</filename>
     </prototype>
     <prototype name="swift" group="main" description="Swift">
         <location link="base/swift.hrc" />
@@ -321,6 +353,10 @@
     <prototype name="sass" group="inet" description="SASS">
         <location link="inet/sass.hrc" />
         <filename>/\.sass$/i</filename>
+    </prototype>
+    <prototype name="scss" group="inet" description="SCSS">
+        <location link="inet/scss.hrc" />
+        <filename>/\.scss$/i</filename>
     </prototype>
     <prototype name="less" group="inet" description="Less css">
         <location link="inet/less.hrc" />
@@ -374,6 +410,11 @@
             <param name="docblock" value="true" description="DocBlock highlightning" />
             &php-proto-gen;
         </parameters>
+    </prototype>
+    <prototype name="blade" group="inet" description="Laravel Blade">
+        <location link="inet/blade.hrc" />
+        <!-- php filename .php is weight 2; 3 wins for *.blade.php -->
+        <filename weight="3">/\.blade\.php$/i</filename>
     </prototype>
 
     <prototype name="xhtml-trans" group="inet" description="xhtml transitional" targetNamespace="http://www.w3.org/1999/xhtml">
@@ -433,7 +474,32 @@
     </prototype>
     <prototype name="jScript" group="inet" description="JavaScript">
         <location link="inet/jscript.hrc" />
-        <filename>/\.(cjs|mjs|js|mocha|ts|mts|cts)$/i</filename>
+        <filename>/\.(cjs|mjs|js|mocha)$/i</filename>
+    </prototype>
+    <prototype name="typescript" group="inet" description="TypeScript">
+        <location link="inet/typescript.hrc" />
+        <filename>/\.(ts|mts|cts)$/i</filename>
+    </prototype>
+    <prototype name="jsx" group="inet" description="JSX / TSX">
+        <location link="inet/jsx.hrc" />
+        <filename>/\.(jsx|tsx)$/i</filename>
+    </prototype>
+    <prototype name="vue" group="inet" description="Vue SFC">
+        <location link="inet/vue.hrc" />
+        <filename>/\.vue$/i</filename>
+    </prototype>
+    <prototype name="svelte" group="inet" description="Svelte">
+        <location link="inet/svelte.hrc" />
+        <filename>/\.svelte$/i</filename>
+    </prototype>
+    <prototype name="astro" group="inet" description="Astro">
+        <location link="inet/astro.hrc" />
+        <!-- diff firstline for patch headers is weight 2; 3 wins regardless of proto order -->
+        <filename weight="3">/\.astro$/i</filename>
+    </prototype>
+    <prototype name="razor" group="inet" description="Razor / Blazor">
+        <location link="inet/razor.hrc" />
+        <filename>/\.(razor|cshtml)$/i</filename>
     </prototype>
     <prototype name="actionscript" group="inet" description="ActionScript">
         <location link="inet/actionscript.hrc" />
@@ -470,7 +536,7 @@
     </prototype>
     <prototype name="graphql" group="inet" description="GraphQL">
         <location link="inet/graphql.hrc" />
-        <filename>/\.(graphql|gql)$/i</filename>
+        <filename>/\.(graphql|gql|graphqls)$/i</filename>
     </prototype>
 
 
@@ -479,6 +545,7 @@
         <location link="xml/xml.hrc" />
         <filename>/\.(xml|\w*proj|gi2|gpr|ui|xaml)$/i</filename>
         <filename>/\.(wxs|fb2)$/i</filename>
+        <filename>/\.slnx$/i</filename>
         <firstline>/^&lt;\?xml | &lt;\!DOCTYPE | xmlns /x</firstline>
         <firstline>/^\s*&lt;\w+&gt;\s*/</firstline> <!-- (\s+\w+\s*=\*([&quot;&apos;]).+?\2)*\s* -->
         <parameters>
@@ -626,9 +693,15 @@
             <param name="backslash_escapes" value="true" description="Treat \' in character literals as an escaped '" />
         </parameters>
     </prototype>
+    <prototype name="prisma" group="database" description="Prisma schema">
+        <location link="db/prisma.hrc" />
+        <filename>/\.prisma$/i</filename>
+    </prototype>
     <prototype name="mysql" group="database" description="MySQL">
         <location link="db/mysql.hrc" />
-        <filename>/\.sql$/i</filename>
+        <filename>/\.mysql$/i</filename>
+        <firstline weight="3">/-- MySQL dump/i</firstline>
+        <firstline weight="3">/-- MariaDB dump/i</firstline>
     </prototype>
 
     <!--  scripts  -->
@@ -670,9 +743,18 @@
         <filename>/\.(ctl|tpl|ini|cfg|inf|srg|conf|types|tab|dof|dsk|lng|editorconfig)$/i</filename>
         <firstline>/^[;\[\#]/</firstline>
     </prototype>
-    <prototype name="gitignore" group="scripts" description="Git ignore">
+    <prototype name="gitignore" group="scripts" description="Ignore list">
         <location link="scripts/gitignore.hrc" />
-        <filename>/^\.gitignore$/i</filename>
+        <filename>/^\.(git|docker|prettier|eslint|npm)ignore$/i</filename>
+        <filename>/^\.gitignore_global$/i</filename>
+    </prototype>
+    <prototype name="gitattributes" group="scripts" description="Git attributes">
+        <location link="scripts/gitattributes.hrc" />
+        <filename>/^\.gitattributes$/i</filename>
+    </prototype>
+    <prototype name="dotenv" group="scripts" description="dotenv">
+        <location link="scripts/dotenv.hrc" />
+        <filename>/\.env(\.[^/]+)?$/i</filename>
     </prototype>
     <prototype name="awk" group="scripts" description="AWK">
         <location link="scripts/awk.hrc" />
@@ -687,9 +769,26 @@
         <location link="scripts/r.hrc" />
         <filename>/\.(R|Rhistory|Rprofile)$/i</filename>
     </prototype>
+    <prototype name="rproj" group="scripts" description="RStudio project">
+        <location link="scripts/rproj.hrc" />
+        <!-- xml binds /\w*proj$/ (csproj, vbproj, …); weight 3 beats that default 2 -->
+        <filename weight="3">/\.(rproj)$/i</filename>
+    </prototype>
+    <prototype name="rmd" group="scripts" description="R Markdown / Quarto">
+        <location link="scripts/rmd.hrc" />
+        <filename>/\.(Rmd|qmd)$/i</filename>
+    </prototype>
     <prototype name="markdown" group="scripts" description="markdown">
         <location link="misc/markdown.hrc" />
         <filename>/\.(text|md|markdown)$/i</filename>
+    </prototype>
+    <prototype name="typst" group="scripts" description="Typst">
+        <location link="misc/typst.hrc" />
+        <filename>/\.typ$/i</filename>
+    </prototype>
+    <prototype name="mdx" group="scripts" description="MDX">
+        <location link="inet/mdx.hrc" />
+        <filename>/\.mdx$/i</filename>
     </prototype>
     &scripts-colorer-protos;
     &scripts-far-protos;
@@ -711,6 +810,12 @@
         <filename>/(\.cmake)$/i</filename>
         <filename weight="3">/(^CMakeLists\.txt)$/i</filename>
         <firstline weight="2">/^cmake_minimum_required/xi</firstline>
+    </prototype>
+    <prototype name="meson" group="scripts" description="Meson">
+        <location link="scripts/meson.hrc" />
+        <filename>/^meson\.build$/i</filename>
+        <filename>/^meson\.options$/i</filename>
+        <filename>/^meson_options\.txt$/i</filename>
     </prototype>
     <prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
         <location link="scripts/solution.hrc" />
@@ -794,6 +899,7 @@
         <location link="scripts/hcl/terraform.hrc"/>
         <filename>/\.tf$/i</filename>
         <filename>/\.tfvars$/i</filename>
+        <filename>/\.tofu$/i</filename>
     </prototype>
 
     <prototype name="delphiform" group="scripts" description="Delphi form">
@@ -854,6 +960,9 @@
         <location link="scripts/dockerfile.hrc"/>
         <filename>/^[Dd]ockerfile\..+$/</filename>
         <filename>/^[Dd]ockerfile$/</filename>
+        <filename>/^[Cc]ontainerfile\..+$/</filename>
+        <filename>/^[Cc]ontainerfile$/</filename>
+        <filename>/\.dockerfile$/i</filename>
         <firstline>/^\s*FROM\b/</firstline>
     </prototype>
 
@@ -1075,13 +1184,33 @@
         <location link="rare/llvm.hrc" />
         <filename weight='3'>/\.ll$/i</filename>
     </prototype>
-    <prototype name="json" group="rare" description="JSON">
-        <location link="rare/json.hrc" />
-        <filename weight='3'>/\.json$/i</filename>
+    <prototype name="protobuf" group="rare" description="Protocol Buffers">
+        <location link="rare/protobuf.hrc" />
+        <filename>/\.proto$/i</filename>
     </prototype>
-    <prototype name="yaml" group="rare" description="YAML">
+    <prototype name="csv" group="rare" description="CSV / TSV">
+        <location link="rare/csv.hrc" />
+        <filename>/\.(csv|tsv)$/i</filename>
+    </prototype>
+    <prototype name="json" group="scripts" description="JSON">
+        <location link="rare/json.hrc" />
+        <filename weight='3'>/\.jsonc?$/i</filename>
+        <filename>/^jsconfig\.json$/i</filename>
+        <filename>/^tsconfig(\.[^/]+)?\.json$/i</filename>
+    </prototype>
+    <prototype name="ipynb" group="scripts" description="Jupyter Notebook">
+        <location link="rare/ipynb.hrc" />
+        <filename>/\.ipynb$/i</filename>
+    </prototype>
+    <prototype name="yaml" group="scripts" description="YAML">
         <location link="rare/yaml.hrc" />
         <filename weight="10">/\.ya?ml$/</filename>
+    </prototype>
+    <prototype name="toml" group="scripts" description="TOML">
+        <location link="rare/toml.hrc" />
+        <filename>/\.toml$/i</filename>
+        <filename>/^Pipfile$/i</filename>
+        <filename>/^(Cargo|poetry|uv)\.lock$/i</filename>
     </prototype>
 
     <!--  other types  -->

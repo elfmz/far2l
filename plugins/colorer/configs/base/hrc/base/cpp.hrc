@@ -19,6 +19,8 @@
      - add temlpates
      - add STL keywords
      - change regions routing
+    Aleksey Dobrunov <ctapmex@ctapmex.com>
+     - speed up FuncOutline regexp
  ]]></contributors>
  </annotation>
 
@@ -510,15 +512,16 @@
 
   <regexp><![CDATA[
     /^ \M \s* (typedef)?! (return)?!
-    (\w[\w_*&<>~,:]+ \s [\s\w_*&<>~\",:]*?)?
+    (\w[\w_*&<>~,:]+ \s+ (?{}[\w_*&<>~\":]+\s+)* )?
 
     (?{c:FuncOutline}
-     ([\w_][\w_<*&,\s:>]*?\:\:)? ([\:\w_&*~<>]+?|operator..?)
+     ([\w_<*&,>\s]+::\s*)*
+     ([\:\w_&*~<>]+|operator..?)
     )
 
     (\sfor)?~4 (\sif)?~3 (\swhile)?~6 (\sswitch)?~7 (\scatch)?~6
     (printf)?~6 (constexpr)?~9 (\s<<)?~3
-    \s* \( [^;]* ($|\{)/x  
+    \s* \( [^;\{]* (\{|$)/x
   ]]></regexp>
 <!--
    Ф'ция(...) дальше ": ..."      или не';,<'    или скобки переносятся

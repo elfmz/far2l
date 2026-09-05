@@ -10,7 +10,10 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 
 markdown.hrc by Roman Kuzmin (nightroman), 2026-01-30
 
-* Use markdown2 for extensions.
+* Fenced code (``` / ~~~) with a common language tag is highlighted
+  (python, javascript, typescript, jsx, json, yaml, html, xml, css, sql,
+  bash/sh, java, csharp, c, c++, go, rust, php, ruby, kotlin, lua,
+  toml, diff). Use markdown2 for other languages.
 * Opened spans are always colored.
 * Blockquotes are partially parsed.
 * List levels 4: only items are parsed.
@@ -34,6 +37,30 @@ Contributors:
 ]]></contributors>
 </annotation>
 
+<import type="c"/>
+<import type="cpp"/>
+<import type="csharp"/>
+<import type="css"/>
+<import type="diff"/>
+<import type="go"/>
+<import type="html"/>
+<import type="java"/>
+<import type="jScript"/>
+<import type="json"/>
+<import type="jsx"/>
+<import type="kotlin"/>
+<import type="lua"/>
+<import type="php"/>
+<import type="python"/>
+<import type="ruby"/>
+<import type="rust"/>
+<import type="shell"/>
+<import type="sql"/>
+<import type="toml"/>
+<import type="typescript"/>
+<import type="xml"/>
+<import type="yaml"/>
+
 <region name="Anchor"        parent="def:LabelStrong"    description="{#Anchor}"/>
 <region name="Code"          parent="def:TypeKeyword"    description="`Code` spans, indented and fenced blocks."/>
 <region name="EmText"        parent="def:Label"          description="Emphasized text (*Text*, _Text_)."/>
@@ -53,6 +80,7 @@ Contributors:
 <region name="BlindMark"     parent="def:Tag"            description="Markup and information not visible in HTML."/>
 <region name="Abbreviation"  parent="BlindMark"          description="*[Abbreviation]: Text"/>
 <region name="FenceMark"     parent="BlindMark"          description="~~~"/>
+<region name="FenceLang"     parent="BlindMark"          description="Language tag after a fence"/>
 <region name="HeadMark"      parent="BlindMark"          description="#, ##, ..., ######"/>
 <region name="LinkMark"      parent="BlindMark"          description="[]() or [][] or []"/>
 <region name="LinkDest"      parent="def:URI"            description="Link destination in [Ref]: Address"/>
@@ -80,8 +108,10 @@ Contributors:
 
 <entity name="Abbr" value=" {,3}\*\[[^\]]+\]:"/>
 <entity name="Email" value="[^@&gt;]+@[^.&gt;]+\.[^&gt;]+"/>
-<entity name="Fence" value="\~{3,}\s*$"/>
+<entity name="Fence" value="(?:`{3,}|\~{3,})"/>
 <entity name="FenceMark" value="(?{FenceMark}(?:`{3,}|\~{3,}))"/>
+<entity name="FenceOpen" value="(?{start}^[ \t]*%FenceMark;)\s*[\{]?\s*"/>
+<entity name="FenceClose" value="(?{end}^[ \t]*(?{FenceMark}\y{FenceMark}))\s*$"/>
 <entity name="Head" value="#{1,6}"/>
 <entity name="ID" value="[a-zA-Z][a-zA-Z0-9_\-:.]*"/>
 <entity name="List1" value="(?:[*+\-]|\d+\.)\s+\S"/>
@@ -96,20 +126,20 @@ Contributors:
 
 <entity name="Top" value="^(?:\s*$|%Rule;|%Head;|%Ref;|%Abbr;)"/>
 <entity name="Blank" value="^\s*$"/>
-<entity name="LEnd" value="^(?:%Top;|\s*%List2;|%Fence;|%i3;%Quote;)?="/>
-<entity name="PEnd" value="^(?:%Top;| {,3}:\s+\S|%Fence;|%i3;%Quote;)?="/>
+<entity name="LEnd" value="^(?:%Top;|\s*%List2;|{,3}%Fence;|%i3;%Quote;)?="/>
+<entity name="PEnd" value="^(?:%Top;| {,3}:\s+\S|{,3}%Fence;|%i3;%Quote;)?="/>
 
 <scheme name="Escape">
   <regexp match="/(?{Escape}\\([\!\&quot;\#\$\%\&amp;\'\(\)\*\+\,\-\.\/\:\;\&lt;\=\&gt;\?\@\[\\\]\^\_\`\{\|\}\~]|$))/"/>
 </scheme>
 <scheme name="CodeSpan">
   <block scheme="Template" region="Code"
-  start="/(?{start}`+)/" end="/(?{end}\y{start})|%LEnd;/"/>
+  start="/(^[ \t]*`{3,})?!(?{start}`+)/" end="/(?{end}\y{start})|%LEnd;/"/>
 </scheme>
 
 <scheme name="PCodeSpan">
   <block scheme="Template" region="Code"
-  start="/(?{start}`+)/" end="/(?{end}\y{start})|%PEnd;/"/>
+  start="/(^[ \t]*`{3,})?!(?{start}`+)/" end="/(?{end}\y{start})|%PEnd;/"/>
 </scheme>
 
 <scheme name="Link">
@@ -204,14 +234,72 @@ Contributors:
   />
 </scheme>
 
+<scheme name="fencedLang">
+  <!-- more specific tags before shorter aliases (c++ before c, csharp before c, tsx before ts) -->
+  <block start="/%FenceOpen;(?{FenceLang}(?:javascript|js|node|mjs|cjs))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="jScript:jScript" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:typescript|mts|cts|ts))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="typescript:typescript" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:tsx|jsx))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="jsx:jsx" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:python|py))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="python:python" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:jsonc|json))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="json:json" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:yaml|yml))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="yaml:yaml" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:html|htm))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="html:html" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}xml)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="xml:xml" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}css)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="css:css" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}sql)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="sql:sql" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:bash|shell|zsh|ksh|console|sh))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="shell:shell" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}java)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="java:java" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:csharp|c\#|cs))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="csharp:csharp" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:c\+\+|cpp|cxx))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="cpp:cpp" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}c)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="c:c" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:golang|go))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="go:go" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:rust|rs))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="rust:rust" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}php)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="php:phpScript" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:ruby|rb))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="ruby:ruby" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:kotlin|kts|kt))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="kotlin:kotlin" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}lua)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="lua:lua" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}toml)(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="toml:toml" content-priority="low"/>
+  <block start="/%FenceOpen;(?{FenceLang}(?:diff|patch))(\w)?!.*$/i" end="/%FenceClose;/"
+         scheme="diff:diff" content-priority="low"/>
+</scheme>
+
+<scheme name="fenced">
+  <inherit scheme="fencedLang"/>
+  <block scheme="Template" region="Code"
+  start="/(?{start}^[ \t]*%FenceMark;).*$/" end="/(?{end}^[ \t]*(?{FenceMark}\y{FenceMark}))\s*$/"/>
+</scheme>
+
 <scheme name="Base">
   <inherit scheme="Wrap"/>
   <inherit scheme="Escape"/>
   <inherit scheme="CodeSpan"/>
+  <regexp match="/\[([ xX])\]/" region="ListMark"/>
   <inherit scheme="LinkSpan"/>
   <inherit scheme="Template"/>
   <inherit scheme="HtmlBlock"/>
   <inherit scheme="Html"/>
+  <regexp match="/\|/" region="ShownMark"/>
 </scheme>
 
 <scheme name="EmSpan">
@@ -306,6 +394,8 @@ Contributors:
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s12;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,3}%Fence;|%i11;%Quote;)/"/>
 
+  <inherit scheme="fenced"/>
+
   <block scheme="Template" region="Code"
   start="/(?{start}%x12;%FenceMark;)/" end="/(?{end}%x12;(?{FenceMark}\y{FenceMark})\s*$)/"/>
 
@@ -332,6 +422,8 @@ Contributors:
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s8;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,2}%Fence;|%i7;%Quote;)/"/>
 
+  <inherit scheme="fenced"/>
+
   <block scheme="Template" region="Code"
   start="/(?{start}%x8;%FenceMark;)/" end="/(?{end}%x8;(?{FenceMark}\y{FenceMark})\s*$)/"/>
 
@@ -357,6 +449,8 @@ Contributors:
   <inherit scheme="HtmlBlock"/>
   <block scheme="Template" region="QuoteText"
   start="/(?{start}%s4;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;%Fence;|%i3;%Quote;)/"/>
+
+  <inherit scheme="fenced"/>
 
   <block scheme="Template" region="Code"
   start="/(?{start}%x4;%FenceMark;)/" end="/(?{end}%x4;(?{FenceMark}\y{FenceMark})\s*$)/"/>
@@ -396,8 +490,10 @@ Contributors:
   <block scheme="Template" region="Code"
   start="/(?{start}^ {4,}|\t+)\S.*/" end="/(?{end})\M%i3;\S/"/>
 
+  <inherit scheme="fenced"/>
+
   <block scheme="Template" region="Code"
-  start="/(?{start}^%FenceMark;).*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark}))\s*$/"/>
+  start="/(?{start}^[ \t]*%FenceMark;).*$/" end="/(?{end}^[ \t]*(?{FenceMark}\y{FenceMark}))\s*$/"/>
 
   <block scheme="ReferenceDef" region="def:Outlined"
   start="/^(?{def:Outlined}(?{Reference}%Ref;))/" end="/$/"/>
@@ -409,6 +505,11 @@ Contributors:
 
   <block scheme="List"
   start="/(?{start}%i3;%ListMark;)/" end="/(?{end})/"/>
+
+  <regexp match="/^ {,3}(?:\|?\s*:?-+:?\s*){2,}\|?\s*$/" region="Rule"/>
+
+  <block scheme="Text"
+  start="/^ {,3}\|?=/" end="/$/"/>
 
   <block scheme="Para"
   start="/\M(?{start}%i3;)\S/" end="/(?{end})%PEnd;/"/>

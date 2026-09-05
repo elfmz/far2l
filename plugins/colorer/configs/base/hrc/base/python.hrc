@@ -14,6 +14,7 @@
   <contributors><![CDATA[
     anatoly techtonik <techtonik@php.net>
     Nikita Kniazev <kniazev.nikita@gmail.com>
+    Aleksey Dobrunov <ctapmex@ctapmex.com>
   ]]></contributors>
  </annotation>
 
@@ -132,6 +133,12 @@
     <block start="/((?:fr|rf)(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
        scheme="RawFStringContent" region="pyString" inner-region="yes"
        region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(t(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="FStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/((?:tr|rt)(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="RawFStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
     <!-- Same as above but for singlequotes -->
     <block start="/(u?(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
        scheme="StringContent" region="pyString" inner-region="yes"
@@ -149,6 +156,12 @@
        scheme="FStringContent" region="pyString" inner-region="yes"
        region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
     <block start="/((?:fr|rf)(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="RawFStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(t(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="FStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/((?:tr|rt)(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
        scheme="RawFStringContent" region="pyString" inner-region="yes"
        region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
   </scheme>
@@ -170,7 +183,6 @@
     <word name="elif"/>
     <word name="else"/>
     <word name="except"/>
-    <word name="exec"/>
     <word name="finally"/>
     <word name="for"/>
     <word name="from"/>
@@ -180,14 +192,16 @@
     <word name="in"/>
     <word name="is"/>
     <word name="lambda"/>
+    <word name="match"/>
+    <word name="case"/>
     <word name="nonlocal"/>
     <word name="not"/>
     <word name="or"/>
     <word name="pass"/>
-    <word name="print"/>
     <word name="raise"/>
     <word name="return"/>
     <word name="try"/>
+    <word name="type"/>
     <word name="while"/>
     <word name="with"/>
     <word name="yield"/>
@@ -225,6 +239,7 @@
       <word name="divmod"/>
       <word name="enumerate"/>
       <word name="eval"/>
+      <word name="exec"/>
       <word name="execfile"/>
       <word name="file"/>
       <word name="filter"/>
@@ -257,6 +272,7 @@
       <word name="open"/>
       <word name="ord"/>
       <word name="pow"/>
+      <word name="print"/>
       <word name="property"/>
       <word name="range"/>
       <word name="raw_input"/>
@@ -274,7 +290,6 @@
       <word name="sum"/>
       <word name="super"/>
       <word name="tuple"/>
-      <word name="type"/>
       <word name="unichr"/>
       <word name="unicode"/>
       <word name="vars"/>

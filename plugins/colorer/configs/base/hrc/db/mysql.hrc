@@ -9,15 +9,18 @@
 <type name="mysql">
 
  <annotation><documentation>
-  Support SQL languare for MySQL version 3.23.53.
+  Support SQL language for MySQL version 3.23.53.
  </documentation><contributors><![CDATA[
-  Eugene Efremov <4mirror@mail.ru>:
+  Eugene Efremov <4mirror@mail.ru>
+  Aleksey Dobrunov <ctapmex@ctapmex.com>
  ]]></contributors>
   <appinfo>
 
    <prototype name="mysql" group="database" description="MySQL">
     <location link="db/mysql.hrc"/>
-    <filename>/\.sql$/i</filename>
+    <filename>/\.mysql$/i</filename>
+    <firstline weight="3">/-- MySQL dump/i</firstline>
+    <firstline weight="3">/-- MariaDB dump/i</firstline>
    </prototype>
    <require>
     <package name="regexp"/>

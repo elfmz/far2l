@@ -8,7 +8,8 @@
   <type name="gitignore">
     <annotation>
       <documentation>
-        Git ignore file syntax (.gitignore)
+        Ignore-list syntax (.gitignore, .dockerignore, .prettierignore,
+        .eslintignore, .npmignore, .gitignore_global)
         https://git-scm.com/docs/gitignore
       </documentation>
       <contributors><![CDATA[
@@ -26,17 +27,23 @@
     <region name="Error" parent="def:Error"/>
 
     <scheme name="gitignore">
-      <!-- comments -->
-      <regexp match="/^\s*#.*$/" region="Comment"/>
+      <!-- comments: first char '#'. Pattern below also allows '#' so foo#bar
+           stays one token; a hash after whitespace is treated as a comment. -->
+      <regexp match="/#.*$/" region="Comment"/>
 
-      <!-- blank lines -->
-      <regexp match="/^\s*$/"/>
-
-      <!-- negation marker -->
-      <regexp match="/^\s*(!)/" region1="Negation"/>
+      <!-- negation: first char '!'. Mid-line '!' is eaten by Pattern. -->
+      <regexp match="/!/" region="Negation"/>
 
       <!-- escaped special characters: \# \! \* \? \[ \] \/ -->
-      <regexp match="/(\\#|\\!|\\\*|\\\?|\\\[|\\\]|\\\/)/" region1="Escape"/>
+      <keywords region="Escape">
+        <symb name="\#"/>
+        <symb name="\!"/>
+        <symb name="\*"/>
+        <symb name="\?"/>
+        <symb name="\["/>
+        <symb name="\]"/>
+        <symb name="\/"/>
+      </keywords>
 
       <!-- character class [abc] -->
       <regexp match="/(\[)([^\]]+)(\])/"
@@ -50,8 +57,8 @@
         <symb name="/"/>
       </keywords>
 
-      <!-- plain pattern text -->
-      <regexp match="/[^\s#*?\/\[\]\\]+/" region="Pattern"/>
+      <!-- plain pattern text (includes '#' and '!' so they are not re-scanned) -->
+      <regexp match="/[^\s*?\/\[\]\\]+/" region="Pattern"/>
 
       <!-- any unexpected non-whitespace -->
       <regexp match="/\S/" region="Error" priority="low"/>

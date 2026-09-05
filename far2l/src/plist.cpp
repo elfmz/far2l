@@ -338,9 +338,21 @@ void ShowProcessList()
 			ProcList.Show();
 			break;
 		case KEY_NUMDEL:
-		case KEY_DEL: 
-			if(!kill(v[ProcList.GetSelectPos()].pid, SIGTERM))
-				ProcList.DeleteItem(ProcList.GetSelectPos());
+		case KEY_DEL:
+			if (!kill(v[ProcList.GetSelectPos()].pid, SIGTERM)) {
+				for (int i = 0; i < 300; ++i, usleep(10000)) { // wait up to 3 seconds for process exit
+					if (kill(v[ProcList.GetSelectPos()].pid, 0) != 0) {
+						ProcList.DeleteItem(ProcList.GetSelectPos());
+						break;
+					}
+				}
+			}
+			break;
+		case KEY_SHIFTNUMDEL:
+		case KEY_SHIFTDEL:
+			if(!kill(v[ProcList.GetSelectPos()].pid, SIGKILL)) {
+				ProcList.DeleteItem(ProcList.GetSelectPos()); // it had no chance to survive
+			}
 			break;
 		default:
 			ProcList.ProcessInput();

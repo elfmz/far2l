@@ -689,7 +689,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	virtual void OnMouseExpectation(MouseMode mex, bool enable)
 	{
-		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
+		fprintf(stderr, "VT::OnMouseExpectation: %c%u\n", enable ? '+' : '-', mex);
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
 		const auto prev_mouse_mode = _mouse_mode;

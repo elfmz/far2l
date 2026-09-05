@@ -11,7 +11,7 @@ class VTMouse
 
 	IVTShell *_vtshell;
 	uint32_t _mode;
-	unsigned int _sgr_prev_ibut{0};
+	int _sgr_prev_ibut{-1};
 
 
 public:

@@ -64,7 +64,7 @@ std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, 
     return nullptr;
   }
 
-  auto cc = std::make_unique<icu::UnicodeSet>();
+  auto cc = std::make_unique<CharacterClass>();
   icu::UnicodeSet cc_temp;
   bool inverse = false;
   UChar prev_char = BAD_WCHAR;
@@ -84,6 +84,7 @@ std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, 
       if (inverse) {
         cc->complement();
       }
+      cc->freeze();
       return cc;
     }
     if (ccs[pos] == '{') {

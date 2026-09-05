@@ -3,25 +3,15 @@
 #include "colorer/Exception.h"
 #include "colorer/io/InputSource.h"
 
-TextLinesStore::~TextLinesStore()
-{
-  freeFile();
-}
-
 void TextLinesStore::freeFile()
 {
   fileName.reset();
-  for (auto it : lines) {
-    delete it;
-  }
   lines.clear();
 }
 
 void TextLinesStore::loadFile(const UnicodeString* inFileName, bool tab2spaces)
 {
-  if (this->fileName) {
-    freeFile();
-  }
+  freeFile();
 
   uUnicodeString file;
 
@@ -59,7 +49,7 @@ void TextLinesStore::loadFile(const UnicodeString* inFileName, bool tab2spaces)
 
   while (filepos < length + 1) {
     if (filepos == length || (*file)[filepos] == '\r' || (*file)[filepos] == '\n') {
-      lines.push_back(new UnicodeString(*file, prevpos, filepos - prevpos));
+      lines.emplace_back(*file, prevpos, filepos - prevpos);
       if (tab2spaces) {
         replaceTabs(lines.size() - 1);
       }
@@ -82,7 +72,7 @@ UnicodeString* TextLinesStore::getLine(size_t lno)
   if (lines.size() <= lno) {
     return nullptr;
   }
-  return lines[lno];
+  return &lines[lno];
 }
 
 size_t TextLinesStore::getLineCount() const
@@ -92,5 +82,5 @@ size_t TextLinesStore::getLineCount() const
 
 void TextLinesStore::replaceTabs(size_t lno)
 {
-  lines.at(lno)->findAndReplace("\t", "    ");
+  lines.at(lno).findAndReplace("\t", "    ");
 }

@@ -3,7 +3,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include <list>
+#include <unordered_map>
 #include "colorer/xml/XMLNode.h"
 #include "colorer/xml/XmlInputSource.h"
 
@@ -14,28 +14,24 @@ class LibXmlReader
 
   ~LibXmlReader();
 
-  void parse(std::list<XMLNode>& nodes);
+  void parse(XMLNodeList& nodes);
 
   [[nodiscard]]
   bool isParsed() const
   {
-    return xmldoc != nullptr;
+    return parsed;
   }
 
  private:
-
-  xmlDocPtr xmldoc {nullptr};
+  bool parsed {false};
+  XMLNodeList nodes;
 
   explicit LibXmlReader(const UnicodeString& source_file);
   static void getAttributes(const xmlNode* node, std::unordered_map<UnicodeString, UnicodeString>& data);
-  void getChildren(xmlNode* node, XMLNode& result);
-  bool populateNode(xmlNode* node, XMLNode& result);
+  static void getChildren(xmlNode* node, XMLNode& result);
+  static bool populateNode(xmlNode* node, XMLNode& result);
   static uUnicodeString getElementText(const xmlNode* node);
 
-  /* the name of the file that is being processed */
-  static uUnicodeString current_file;
-  /* is this the first xmlMyExternalEntityLoader call for current file*/
-  static bool is_first_call;
   static xmlParserInputPtr xmlMyExternalEntityLoader(const char* URL, const char* ID, xmlParserCtxtPtr ctxt);
   static void xml_error_func(void* ctx, const char* msg, ...);
 

@@ -16,7 +16,7 @@ bool XmlReader::parse()
   return xml_reader->isParsed();
 }
 
-void XmlReader::getNodes(std::list<XMLNode>& nodes) const
+void XmlReader::getNodes(XMLNodeList& nodes) const
 {
   xml_reader->parse(nodes);
 }

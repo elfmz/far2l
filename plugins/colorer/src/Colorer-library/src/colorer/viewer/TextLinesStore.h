@@ -17,7 +17,7 @@ public:
   /** Empty constructor. Does nothing.
   */
   TextLinesStore()=default;
-  ~TextLinesStore() override;
+  ~TextLinesStore() override = default;
 
   /** Loads specified file into vector of strings.
       @param inFileName File to load.
@@ -36,7 +36,7 @@ protected:
   */
   void freeFile();
 private:
-  std::vector<UnicodeString *> lines;
+  std::vector<UnicodeString> lines;
   uUnicodeString fileName;
   void replaceTabs(size_t lno);
 

@@ -17,6 +17,12 @@ class HrcLibraryException : public Exception
 
 /** HrcLibrary class.
     Defines basic operations of loading and accessing HRC information.
+
+    Loading (#loadSource, #loadProtoTypes, #loadFileType, #loadHrcSettings) is exclusive
+    for one library. After a type is loaded, TextParser::parse may run concurrently
+    as a shared read. Do not destroy the library while parse is running.
+    #getRegion(const UnicodeString*) may load a type and is exclusive with parse.
+    RegionHandler callbacks must not call HrcLibrary.
 */
 class HrcLibrary
 {

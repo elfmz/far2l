@@ -17,6 +17,19 @@
  * state, outline structure creation, pair constructions search.
  * This class has event-oriented structure. Each editor event
  * is passed into this object and gets internal processing.
+ *
+ * invalidLine is the first stale line. getLineRegions() calls
+ * validate(lno, true), which colors a cover of 2*wSize lines around
+ * the visible window into a LineRegion ring of 3*wSize (the ring
+ * never shrinks). idleJob() calls validate(..., false) to warm
+ * TextParser's ParseCache without moving that ring.
+ * modifyLineEvent() uses TextParser::tryParseLine: if the scheme
+ * stack past the edited line is unchanged, invalidLine is left as-is.
+ *
+ * idleJob / breakParse may run from a background thread; do not parse
+ * the same BaseEditor concurrently. TextParser takes a shared lock on
+ * HrcLibrary for the duration of parse / tryParseLine.
+ *
  * @ingroup colorer_editor
  */
 class BaseEditor : public RegionHandler

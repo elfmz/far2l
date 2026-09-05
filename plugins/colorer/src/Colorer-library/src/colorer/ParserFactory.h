@@ -16,6 +16,10 @@
  * and creates HrcLibrary, StyledHRDMapper, TextHRDMapper and TextParser instances
  * with information, loaded from specified sources.
  *
+ * Several instances may exist in one process. Each owns an HrcLibrary.
+ * loadCatalog / loadHrcPath / loadHrcSettings / loadFileType are exclusive
+ * per library. After a type is loaded, createTextParser() instances may parse
+ * that library concurrently. Destroy the factory only after those parsers stop.
  */
 class ParserFactory
 {

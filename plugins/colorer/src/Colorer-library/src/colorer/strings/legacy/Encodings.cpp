@@ -96,32 +96,30 @@ int Encodings::toBytes(int encoding, wchar wc, byte* dest)
     return 1;
   }
   if (encoding == ENC_UTF8) {
-    int dpos = 0;
     if (wc <= 0x7F) {
-      dest[dpos] = wc & 0x7F;
+      dest[0] = static_cast<byte>(wc);
+      return 1;
     }
-    if (wc > 0x7F && wc <= 0x7FF) {
-      dest[dpos] =(byte)(0xC0 + (wc >> 6));
-      dpos++;
-      dest[dpos] = 0x80 + (wc & 0x3F);
+    if (wc <= 0x7FF) {
+      dest[0] = static_cast<byte>(0xC0 | (wc >> 6));
+      dest[1] = static_cast<byte>(0x80 | (wc & 0x3F));
+      return 2;
     }
-    if (wc > 0x7FF && wc <= 0xFFFF) {
-      dest[dpos] = 0xE0 + (wc >> 12);
-      dpos++;
-      dest[dpos] = 0x80 + ((wc >> 6) & 0x3F);
-      dpos++;
-      dest[dpos] = 0x80 + (wc & 0x3F);
+#if (__WCHAR_MAX__ > 0xffff)
+    if (wc <= 0xFFFF) {
+#endif
+      dest[0] = static_cast<byte>(0xE0 | (wc >> 12));
+      dest[1] = static_cast<byte>(0x80 | ((wc >> 6) & 0x3F));
+      dest[2] = static_cast<byte>(0x80 | (wc & 0x3F));
+      return 3;
+#if (__WCHAR_MAX__ > 0xffff) // 4-byte UTF-8 is impossible for 16-bit wchar
     }
-    if (wc > 0xFFFF) {
-      dest[dpos] = 0xF0 + (wc >> 14);
-      dpos++;
-      dest[dpos] = 0x80 + ((wc >> 12) & 0x3F);
-      dpos++;
-      dest[dpos] = 0x80 + ((wc >> 6) & 0x3F);
-      dpos++;
-      dest[dpos] = 0x80 + (wc & 0x3F);
-    }
-    return dpos + 1;
+    dest[0] = static_cast<byte>(0xF0 | (wc >> 18));
+    dest[1] = static_cast<byte>(0x80 | ((wc >> 12) & 0x3F));
+    dest[2] = static_cast<byte>(0x80 | ((wc >> 6) & 0x3F));
+    dest[3] = static_cast<byte>(0x80 | (wc & 0x3F));
+    return 4;
+#endif
   }
   if (encoding == ENC_UTF16) {
     dest[0] = wc & 0xFF;
@@ -138,7 +136,7 @@ int Encodings::toBytes(int encoding, wchar wc, byte* dest)
     dest[0] = wc & 0xFF;
     dest[1] = (wc >> 8) & 0xFF;
     dest[2] = (wc >> 16) & 0xFF;
-    dest[3] = (wc >> 14) & 0xFF;
+    dest[3] = (wc >> 24) & 0xFF;
     return 4;
   }
 
@@ -146,7 +144,7 @@ int Encodings::toBytes(int encoding, wchar wc, byte* dest)
     dest[3] = wc & 0xFF;
     dest[2] = (wc >> 8) & 0xFF;
     dest[1] = (wc >> 16) & 0xFF;
-    dest[0] = (wc >> 14) & 0xFF;
+    dest[0] = (wc >> 24) & 0xFF;
     return 4;
   }
 #endif

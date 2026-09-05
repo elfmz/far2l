@@ -99,6 +99,12 @@ class UnicodeString
     return wstr[i];
   }
 
+  /** Internal character buffer. May be null when length() is 0. */
+  inline const wchar* getBuffer() const
+  {
+    return wstr.get();
+  }
+
   /** String length in unicode characters */
   inline int32_t length() const
   {

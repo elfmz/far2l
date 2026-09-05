@@ -110,6 +110,9 @@ struct SMatches
   int cnMatch;
 };
 
+/// Bit per ASCII code point (0..127). Used for the first-char and required-char prefilters.
+using AsciiCharMask = std::array<uint64_t, 2>;
+
 /** Regular expressions internal tree node.
     @ingroup cregexp
 */
@@ -140,6 +143,10 @@ class SRegInfo
   int e = 0;
 
   EOps op = EOps::ReEmpty;
+  // First ASCII characters of the left ReOr branch. Used to skip that branch
+  // when the subject cannot start it; unused unless branchFirstUseful.
+  AsciiCharMask branchFirst = {};
+  bool branchFirstUseful = false;
 };
 
 enum ReAction {
@@ -168,6 +175,7 @@ struct StackElem
 
 #define INIT_MEM_SIZE 512
 #define MEM_INC 128
+
 /** Regular Expression compiler and matcher.
     Colorer regular expressions library cregexp.
 
@@ -221,7 +229,37 @@ struct StackElem
    - No string length changes on case mappings (only 1 <-> 1 mappings),
 \par 2.2. Algorithmic problems:
    - Explicit parse stack (grows as needed and is reused by all CRegExp
-     instances; matching is single-threaded).
+     instances on the same thread).
+
+\par 3. Matching pipeline (hot path).
+
+   setRE compiles an SRegInfo tree; optimize() then fills skip facts used
+   by parseRE / mayMatch before the NFA (lowParse) runs:
+
+   - firstCharMask / firstNode — first consuming ASCII set and first
+     literal/class/word (quickCheck). Unused if the prefix is nullable.
+   - startAnchor — pattern begins with ^ (not /m) or ~; only pos==0 or
+     pos==schemeStart can match, even with positionMoves.
+   - endAnchor + maxLen — pattern ends with $ (not /m, no top-level |).
+     A match cannot start more than maxLen characters before eol.
+     maxLen==-1 if * / + / \\N / \\y make length unbounded.
+     $ means toParse==eol (the parse() bound, not str->length()).
+   - requiredChars — up to 4 ASCII sets that must appear somewhere in
+     the subject (TextParser passes a per-line mask). /i letters omitted.
+   - ReOr.branchFirst — skip a | branch in lowParse when the current
+     ASCII char cannot start it. Left unused if the branch is nullable
+     or starts with a zero-width op (\\m \\M \\b lookaround ^ $): those
+     still have side effects (\\M bounds group 0 for a later alternative).
+
+   parse() pins parseBuf to UnicodeString::getBuffer() so the NFA does
+   not index the string per step. Each offset resets \\m/\\M and captures.
+   The backtracking stack is thread_local and shared by every CRegExp on
+   that thread; count_elem is reset per parseRE. Do not clear it from
+   ParserFactory teardown. parseStepLimit (default 1e6) counts NFA steps
+   in one parse(); exceeding it fails the match.
+
+   TextParser calls mayMatch() with the same pos/eol/schemeStart/line
+   mask before parse() to avoid entering the NFA.
 
     @ingroup cregexp
 */
@@ -288,11 +326,45 @@ class CRegExp
   /** Runs RE parser against input string @c str
    */
   bool parse(const UnicodeString* str, SMatches* mtch);
-  /** Runs RE parser against input string @c str
+  /** Runs RE parser against input string @c str.
+   *  @param subjectChars optional mask of ASCII characters present anywhere in @c str
+   *         (not only in [pos, eol)). Lets the matcher reject patterns whose
+   *         mandatory literals are absent from the line without running the NFA.
    */
   bool parse(const UnicodeString* str, int pos, int eol, SMatches* mtch, int soscheme = 0,
-             int moves = -1);
+             int moves = -1, const AsciiCharMask* subjectChars = nullptr);
   bool canStartWith(wchar ch) const;
+  /**
+   * Fills @c mask with every ASCII character of @c str; use as @c subjectChars in parse().
+   */
+  static void collectAsciiChars(const UnicodeString& str, AsciiCharMask& mask);
+  /**
+   * Cheap pre-check of what parse() would reject before running the matcher:
+   * a start anchor (^ or ~) at another position, an end-anchored pattern whose
+   * bounded length cannot reach @c eol, or a mandatory literal missing from
+   * @c subjectChars. False means parse() cannot succeed there.
+   * @c eol is the same bound parse() would receive ($ is toParse == eol).
+   */
+  bool mayMatch(int pos, int eol, int soscheme, const AsciiCharMask& subjectChars) const
+  {
+    if (startAnchor == StartAnchor::LineStart && pos != 0)
+      return false;
+#ifdef COLORERMODE
+    if (startAnchor == StartAnchor::SchemeStart && pos != soscheme)
+      return false;
+#else
+    (void) soscheme;
+#endif
+    // Moving searches skip forward to eol - maxLen in parseRE; only a
+    // fixed-position attempt is impossible when too much text remains.
+    if (endAnchor && maxLen >= 0 && !positionMoves && eol - pos > maxLen)
+      return false;
+    for (int i = 0; i < requiredCharsCount; i++) {
+      if (((requiredChars[i][0] & subjectChars[0]) | (requiredChars[i][1] & subjectChars[1])) == 0)
+        return false;
+    }
+    return true;
+  }
   /**
    * Caps backtracking steps in one parse() call. When exceeded, the match
    * fails (it is not a wall-clock quantum). Default 1 000 000.
@@ -310,8 +382,20 @@ class CRegExp
   SRegInfo* tree_root = nullptr;
   EError error = EError::EOK;
   SRegInfo* firstNode = nullptr;
-  std::array<uint64_t, 2> firstCharMask = {};
+  AsciiCharMask firstCharMask = {};
   bool firstCharMaskUseful = false;
+  // Pattern begins with ^ (single-line) or ~: only one start position can match.
+  enum class StartAnchor : uint8_t { None, LineStart, SchemeStart };
+  StartAnchor startAnchor = StartAnchor::None;
+  // Pattern ends with $ (single-line, no top-level alternation): match can
+  // only finish at eol, so it cannot start more than maxLen before eol.
+  bool endAnchor = false;
+  // Maximum characters the tree can consume; -1 = unbounded (* / + / \N / \y).
+  int maxLen = -1;
+  // Every match must contain at least one character from each of these sets.
+  static constexpr int MAX_REQUIRED_SETS = 4;
+  std::array<AsciiCharMask, MAX_REQUIRED_SETS> requiredChars = {};
+  int requiredCharsCount = 0;
 #ifdef COLORERMODE
   CRegExp* backRE = nullptr;
   const UnicodeString* backStr = nullptr;
@@ -322,6 +406,7 @@ class CRegExp
   bool startChange = false;
   bool endChange = false;
   const UnicodeString* global_pattern = nullptr;
+  const wchar* parseBuf = nullptr;
   int end = 0;
 
   SMatches* matches = nullptr;
@@ -337,33 +422,184 @@ class CRegExp
   bool matchChars(wchar one, wchar another) const;
   struct FirstChars
   {
-    std::array<uint64_t, 2> mask = {};
+    AsciiCharMask mask = {};
     bool nullable = false;
   };
   FirstChars analyzeFirstChars(const SRegInfo* re) const;
   FirstChars firstCharsForNode(const SRegInfo* re) const;
   void addFirstChar(FirstChars& result, wchar ch) const;
+  std::vector<AsciiCharMask> requiredCharsForChain(const SRegInfo* re) const;
+  std::vector<AsciiCharMask> requiredCharsForNode(const SRegInfo* re) const;
+  void addRequiredChar(std::vector<AsciiCharMask>& out, wchar ch) const;
+  void analyzeStartAnchor();
+  void analyzeEndAnchor();
+  int maxLenOfNode(const SRegInfo* re) const;
+  int maxLenOfChain(const SRegInfo* re) const;
+  void analyzeMaxLen();
+  void analyzeRequiredChars();
+  void analyzeBranchFirstChars(SRegInfo* re);
   void optimize();
   bool quickCheck(int toParse);
   bool isWordBoundary(int toParse);
   bool checkMetaSymbol(EMetaSymbols metaSymbol, int& toParse);
   bool matchCopiedRange(const UnicodeString& src, int from, int to, int& toParse, bool icase) const;
   bool lowParse(SRegInfo* re, SRegInfo* prev, int toParse);
-  bool parseRE(int toParse);
+  bool parseRE(int toParse, const AsciiCharMask* subjectChars);
+  void bindSubject(const UnicodeString* str);
 
   int count_elem;
   int parseSteps = 0;
   int parseStepLimit = 1000000;
   bool stepBudgetExceeded = false;
-  void check_stack(bool res, SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter,
-                   ReAction* action);
-  void insert_stack(SRegInfo** re, SRegInfo** prev, int* toParse, bool* leftenter, ReAction ifTrueReturn,
-                    ReAction ifFalseReturn, SRegInfo** re2, SRegInfo** prev2, int toParse2);
+  void growRegExpStack();
+  void check_stack(bool res, SRegInfo*& re, SRegInfo*& prev, int& toParse, bool& leftenter, ReAction& action);
+  void insert_stack(SRegInfo*& re, SRegInfo*& prev, int& toParse, bool& leftenter, ReAction ifTrueReturn,
+                    ReAction ifFalseReturn, SRegInfo* re2, SRegInfo* prev2, int toParse2);
 
-  static std::vector<StackElem> RegExpStack;
+  static thread_local std::vector<StackElem> RegExpStack;
+
+  static bool isLineBreak(wchar c)
+  {
+    return c == 0x0A || c == 0x0B || c == 0x0C || c == 0x0D || c == 0x85 || c == 0x2028 || c == 0x2029;
+  }
 
  public:
   static void clearRegExpStack();
 };
+
+inline bool CRegExp::isWordBoundary(int toParse)
+{
+  const bool after = (toParse < end && Character::isLetterOrDigitOrUnderscore(parseBuf[toParse]));
+  const bool before = (toParse > 0 && Character::isLetterOrDigitOrUnderscore(parseBuf[toParse - 1]));
+  return before != after;
+}
+
+inline bool CRegExp::checkMetaSymbol(EMetaSymbols symb, int& toParse)
+{
+  switch (symb) {
+    case EMetaSymbols::ReAnyChr:
+      if (toParse >= end || (!singleLine && isLineBreak(parseBuf[toParse])))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReSoL:
+      return toParse == 0 || (multiLine && isLineBreak(parseBuf[toParse - 1]));
+
+    case EMetaSymbols::ReEoL:
+      return toParse == end || (multiLine && toParse && toParse < end && isLineBreak(parseBuf[toParse - 1]));
+
+    case EMetaSymbols::ReDigit:
+      if (toParse >= end || !Character::isDigit(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReNDigit:
+      if (toParse >= end || Character::isDigit(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReWordSymb:
+      if (toParse >= end || !Character::isLetterOrDigitOrUnderscore(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReNWordSymb:
+      if (toParse >= end || Character::isLetterOrDigitOrUnderscore(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReWSpace:
+      if (toParse >= end || !Character::isWhitespace(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReNWSpace:
+      if (toParse >= end || Character::isWhitespace(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReUCase:
+      if (toParse >= end || !Character::isUpperCase(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReNUCase:
+      if (toParse >= end || !Character::isLowerCase(parseBuf[toParse]))
+        return false;
+      toParse++;
+      return true;
+
+    case EMetaSymbols::ReWBound:
+      return isWordBoundary(toParse);
+
+    case EMetaSymbols::ReNWBound:
+      return !isWordBoundary(toParse);
+
+    case EMetaSymbols::RePreNW:
+      return toParse == 0 || toParse >= end || !Character::isLetter(parseBuf[toParse - 1]);
+
+#ifdef COLORERMODE
+    case EMetaSymbols::ReSoScheme:
+      return (schemeStart == toParse);
+
+    case EMetaSymbols::ReStart:
+      matches->s[0] = toParse;
+      startChange = true;
+      return true;
+
+    case EMetaSymbols::ReEnd:
+      matches->e[0] = toParse;
+      endChange = true;
+      return true;
+#endif
+
+    default:
+      return false;
+  }
+}
+
+inline void CRegExp::check_stack(bool res, SRegInfo*& re, SRegInfo*& prev, int& toParse, bool& leftenter,
+                                 ReAction& action)
+{
+  if (count_elem == 0) {
+    action = res ? rea_True : rea_False;
+    return;
+  }
+
+  const StackElem& ne = RegExpStack[--count_elem];
+  action = res ? ne.ifTrueReturn : ne.ifFalseReturn;
+  re = ne.re;
+  prev = ne.prev;
+  toParse = ne.toParse;
+  leftenter = ne.leftenter;
+}
+
+inline void CRegExp::insert_stack(SRegInfo*& re, SRegInfo*& prev, int& toParse, bool& leftenter,
+                                  ReAction ifTrueReturn, ReAction ifFalseReturn, SRegInfo* re2, SRegInfo* prev2,
+                                  int toParse2)
+{
+  if (RegExpStack.size() == static_cast<size_t>(count_elem)) {
+    growRegExpStack();
+  }
+  RegExpStack[static_cast<size_t>(count_elem++)] =
+      StackElem{re, prev, toParse, leftenter, ifTrueReturn, ifFalseReturn};
+
+  prev = prev2;
+  re = re2;
+  toParse = toParse2;
+  leftenter = true;
+  if (!re && prev != nullptr) {
+    re = prev->parent;
+    leftenter = false;
+  }
+}
 
 #endif  // COLORER_CREGEXP_H

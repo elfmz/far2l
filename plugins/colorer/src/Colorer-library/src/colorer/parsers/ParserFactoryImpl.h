@@ -7,6 +7,9 @@
 #include "colorer/handlers/StyledHRDMapper.h"
 #include "colorer/handlers/TextHRDMapper.h"
 #include "colorer/parsers/HrdNode.h"
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+#include "colorer/xml/libxml2/SharedXmlInputSource.h"
+#endif
 
 class ParserFactory::Impl
 {
@@ -57,6 +60,9 @@ class ParserFactory::Impl
   std::vector<UnicodeString> hrc_locations;
   std::unordered_map<UnicodeString, std::unique_ptr<std::vector<std::unique_ptr<HrdNode>>>> hrd_nodes;
 
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+  mutable XmlJarCache jar_cache;
+#endif
   HrcLibrary* hrc_library;
 };
 

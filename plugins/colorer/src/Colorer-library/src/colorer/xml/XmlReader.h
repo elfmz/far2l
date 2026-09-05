@@ -11,7 +11,7 @@ class XmlReader
   explicit XmlReader(const XmlInputSource& xml_input_source);
   ~XmlReader();
   bool parse();
-  void getNodes(std::list<XMLNode>& nodes) const;
+  void getNodes(XMLNodeList& nodes) const;
 
  private:
   const XmlInputSource* input_source;

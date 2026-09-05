@@ -1,8 +1,8 @@
 #ifndef COLORER_XMLNODE_H
 #define COLORER_XMLNODE_H
 
-#include <list>
 #include <unordered_map>
+#include <vector>
 #include "colorer/Common.h"
 
 class XMLNode
@@ -16,7 +16,9 @@ class XMLNode
   UnicodeString name;  // tag name
   UnicodeString text;  // tag value ( if is a text tag )
   std::unordered_map<UnicodeString, UnicodeString> attributes;
-  std::list<XMLNode> children;
+  std::vector<XMLNode> children;
 };
+
+using XMLNodeList = std::vector<XMLNode>;
 
 #endif  // COLORER_XMLNODE_H

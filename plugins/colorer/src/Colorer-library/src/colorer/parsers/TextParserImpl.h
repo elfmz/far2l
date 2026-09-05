@@ -11,6 +11,20 @@
  * This is the base Colorer syntax parser, which
  * works with parsed internal HRC structure and colorisez
  * text in a target editor system.
+ *
+ * Hot path: parse() walks ParseCache to the scheme covering `from`,
+ * then colorize() on each line. One scheme is active; gx is the column.
+ * Per line the ASCII occupancy mask (str_chars) is computed once and
+ * passed into every CRegExp::mayMatch/parse. searchMatch() uses the
+ * scheme's searchDispatch (first-character candidate list) then tries
+ * keywords / regexp / block / inherit in HRC order. A block start-RE
+ * recurses into colorize(end-RE). Multi-line blocks become ParseCache
+ * nodes; single-line matches do not.
+ *
+ * tryParseLine() reparses one line under TPM_CACHE_READ and keeps the
+ * rest of the file valid if the open-block stack (scheme, start-RE
+ * captures) still matches what the cache predicted for the next line.
+ *
  * @ingroup colorer_parsers
  */
 class TextParser::Impl
@@ -24,6 +38,7 @@ class TextParser::Impl
   void setRegionHandler(RegionHandler* rh);
   int parse(int from, int num, TextParseMode mode);
   bool tryParseLine(int line);
+  FileType* currentFileType() const;
   void breakParse();
   void initCache();
   void setMaxBlockSize(int max_block_size);
@@ -41,6 +56,8 @@ class TextParser::Impl
   UnicodeString* str = nullptr;
   UnicodeString str_lowercase;
   bool str_lowercase_ready = false;
+  // ASCII characters present in str; lets CRegExp skip patterns that cannot match the line.
+  AsciiCharMask str_chars = {};
   int stackLevel = 0;
   int current_parse_line = 0;
   int gx = 0;

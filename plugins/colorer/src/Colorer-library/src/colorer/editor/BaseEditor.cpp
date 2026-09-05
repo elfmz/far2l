@@ -1,6 +1,13 @@
 #include "colorer/editor/BaseEditor.h"
 #include "colorer/parsers/TextParserImpl.h"
 
+// Editor facade over TextParser. invalidLine is the first stale line.
+// Visible window wSize; colored cover is 2*wSize; LineRegion ring is
+// 3*wSize and never shrinks. validate(lno, true) paints the cover;
+// validate(..., false) only warms ParseCache (idleJob).
+// modifyLineEvent tries a single-line reparse before invalidating.
+// See .agents/skills/colorer-hrc/core-parse.md.
+
 #define IDLE_PARSE(time) (100 + (time) * 4)
 
 const int CHOOSE_STR = 4;
@@ -132,6 +139,9 @@ void BaseEditor::remapLRS(bool recreate)
 
 void BaseEditor::setFileType(FileType* ftype)
 {
+  if (ftype == nullptr) {
+    throw FileTypeException("FileType is null");
+  }
   COLORER_LOG_DEBUG("[BaseEditor] setFileType: %", ftype->getName());
   currentFileType = ftype;
   parserFactory->getHrcLibrary().loadFileType(ftype);
@@ -360,6 +370,8 @@ void BaseEditor::modifyEvent(int topLine)
   }
 }
 
+// Single-line edit. tryParseLine keeps the rest of the file valid when
+// the scheme stack past `line` is unchanged; otherwise same as modifyEvent.
 void BaseEditor::modifyLineEvent(int line)
 {
   if (invalidLine > line) {
@@ -390,6 +402,8 @@ inline int BaseEditor::getLastVisibleLine() const
   return ((r1 > r2) ? r2 : r1) - 1;
 }
 
+// rebuildRegions: color into the LineRegion ring for the visible cover.
+// !rebuildRegions: TPM_CACHE_UPDATE from invalidLine without moving the ring.
 void BaseEditor::validate(int lno, bool rebuildRegions)
 {
   int parseFrom;

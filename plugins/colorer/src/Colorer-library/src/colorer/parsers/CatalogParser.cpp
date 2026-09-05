@@ -14,7 +14,7 @@ void CatalogParser::parse(const UnicodeString* path)
   if (!xml.parse()) {
     throw CatalogParserException(*path + UnicodeString(" parse error"));
   }
-  std::list<XMLNode> nodes;
+  XMLNodeList nodes;
   xml.getNodes(nodes);
 
   if (nodes.begin()->name != catTagCatalog) {

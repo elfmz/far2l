@@ -2,6 +2,7 @@
 #define COLORER_STRINGS_H
 
 #include "colorer/strings/icu/common_icu.h"
+#include "colorer/strings/icu/CharacterClass.h"
 #include "colorer/strings/icu/Character.h"
 #include "colorer/strings/icu/Encodings.h"
 #include "colorer/strings/icu/UStr.h"

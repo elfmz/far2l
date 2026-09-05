@@ -5,18 +5,17 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 <type name="r">
-<annotation><documentation><![CDATA[
+<annotation>
+<documentation><![CDATA[
 
 r.hrc by Roman Kuzmin, aka NightRoman, 2012-04-01
 
-Add to proto.hrc:
-
-<prototype name="r" group="scripts" description="R">
-<filename>/\.(R|Rhistory|Rprofile)$/i</filename>
-<location link="..."/>
-</prototype>
-
-]]></documentation></annotation>
+]]></documentation>
+<contributors><![CDATA[
+Roman Kuzmin
+Aleksey Dobrunov <ctapmex@ctapmex.com>
+]]></contributors>
+</annotation>
 
 <region name="Comment"       parent="def:Comment"       description="R comments."/>
 <region name="Constant"      parent="def:Constant"      description="R constants."/>
@@ -86,6 +85,7 @@ Add to proto.hrc:
 		<symb name="&amp;"/>
 
 		<symb name="||"/>
+		<symb name="|&gt;"/>
 		<symb name="|"/>
 
 		<symb name="&lt;&lt;-"/>
@@ -163,6 +163,9 @@ Add to proto.hrc:
 	start="/(?{start}(?{StringEdge}`))/" end="/(?{end}(?{StringEdge}`))/"/>
 
 	<inherit scheme="Operator"/>
+
+	<!-- \(x) lambda (R 4.1+); \M leaves '(' for PairedBrackets -->
+	<regexp match="/\\\M\(/" region="Keyword"/>
 
 	<!--Function-->
 	<regexp match="/\b(function)\b/i" region1="def:FunctionKeyword" region="def:Outlined"/>

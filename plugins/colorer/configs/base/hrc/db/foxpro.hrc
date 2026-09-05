@@ -13,6 +13,7 @@
           build with 'FoxPro Syntax' by
           Cyrill Panov/Кирилл Панов Cyrill.Panov@usu.ru
           Vadim Zaharenko (Vadim.Zaharenko@GMail.com)
+          Aleksey Dobrunov ctapmex@ctapmex.com
         </contributors>
        </documentation>
       </annotation>
@@ -32,9 +33,9 @@
          <regexp match="/\/\/.*$/" region0="foxComment"/>
          <regexp match="/^\s*\*.*$/" region0="foxComment"/>
 <!-- Strings -->
-         <regexp match="/\&#34;.*?\&#34;/" region0="foxString"/>
-         <regexp match="/\'.*?\'/" region0="foxString"/>
-         <block start="/(\{)(\|.*?\|)?/" end="/(\})/" scheme="foxpro" region="Insertion" region00="foxSymb" region02="foxString" region10="foxSymb" region01="PairStart" region11="PairEnd"/>
+         <regexp match="/&#34;(?:[^&#34;]|&#34;&#34;)*&#34;/" region0="foxString"/>
+         <regexp match="/'(?:[^']|'')*'/" region0="foxString"/>
+         <block start="/(\{)(\|[^|]*\|)?/" end="/(\})/" scheme="foxpro" region="Insertion" region00="foxSymb" region02="foxString" region10="foxSymb" region01="PairStart" region11="PairEnd"/>
          <inherit scheme="PairedBrackets">
             <virtual scheme="PairedBrackets" subst-scheme="foxpro"/>
          </inherit>

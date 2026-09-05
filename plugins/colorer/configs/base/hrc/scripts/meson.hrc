@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="meson">
+    <annotation>
+      <documentation>
+        Meson build definitions (meson.build, meson.options).
+        https://mesonbuild.com/Syntax.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+    <import type="python"/>
+
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="Function" parent="def:FunctionKeyword"/>
+
+    <scheme name="meson">
+      <keywords region="Keyword">
+        <word name="and"/>
+        <word name="or"/>
+        <word name="not"/>
+        <word name="in"/>
+        <word name="if"/>
+        <word name="elif"/>
+        <word name="else"/>
+        <word name="endif"/>
+        <word name="foreach"/>
+        <word name="endforeach"/>
+        <word name="break"/>
+        <word name="continue"/>
+        <word name="true"/>
+        <word name="false"/>
+      </keywords>
+      <keywords region="Function">
+        <word name="project"/>
+        <word name="meson"/>
+        <word name="get_option"/>
+        <word name="dependency"/>
+        <word name="executable"/>
+        <word name="library"/>
+        <word name="shared_library"/>
+        <word name="static_library"/>
+        <word name="both_libraries"/>
+        <word name="shared_module"/>
+        <word name="files"/>
+        <word name="include_directories"/>
+        <word name="subdir"/>
+        <word name="subdir_done"/>
+        <word name="import"/>
+        <word name="find_program"/>
+        <word name="run_command"/>
+        <word name="configure_file"/>
+        <word name="custom_target"/>
+        <word name="declare_dependency"/>
+        <word name="install_data"/>
+        <word name="install_headers"/>
+        <word name="install_man"/>
+        <word name="test"/>
+        <word name="benchmark"/>
+        <word name="error"/>
+        <word name="warning"/>
+        <word name="message"/>
+        <word name="join_paths"/>
+        <word name="environment"/>
+        <word name="add_project_arguments"/>
+        <word name="add_global_arguments"/>
+        <word name="add_languages"/>
+        <word name="generator"/>
+        <word name="vcs_tag"/>
+        <word name="summary"/>
+        <word name="assert"/>
+        <word name="disabler"/>
+      </keywords>
+      <inherit scheme="python:python">
+        <virtual scheme="python:python" subst-scheme="meson"/>
+      </inherit>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

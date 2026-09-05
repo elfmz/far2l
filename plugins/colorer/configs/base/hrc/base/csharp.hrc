@@ -11,6 +11,12 @@
     Roman Kuzmin aka NightRoman
   -->
   <type name="csharp">
+    <annotation>
+      <documentation>C# syntax description</documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
     <region name="Comment" parent="def:Comment"/>
     <region name="Directive" parent="def:Directive"/>
     <region name="Error" parent="def:Error"/>
@@ -150,6 +156,7 @@
         <symb name="/"/>
         <symb name="%"/>
         <symb name="="/>
+        <symb name=".."/>
         <symb name="."/>
         <symb name=","/>
         <symb name="&lt;"/>
@@ -188,11 +195,13 @@
         <word name="float"/>
         <word name="for"/>
         <word name="foreach"/>
+        <word name="file"/>
         <word name="get"/>
         <word name="goto"/>
         <word name="if"/>
         <word name="implicit"/>
         <word name="in"/>
+        <word name="init"/>
         <word name="int"/>
         <word name="interface"/>
         <word name="internal"/>
@@ -201,6 +210,8 @@
         <word name="long"/>
         <word name="namespace"/>
         <word name="new"/>
+        <word name="nint"/>
+        <word name="nuint"/>
         <word name="null"/>
         <word name="object"/>
         <word name="operator"/>
@@ -213,7 +224,9 @@
         <word name="readonly"/>
         <word name="ref"/>
         <word name="return"/>
+        <word name="required"/>
         <word name="sbyte"/>
+        <word name="scoped"/>
         <word name="sealed"/>
         <word name="set"/>
         <word name="short"/>

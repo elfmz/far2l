@@ -12,8 +12,16 @@ With help of:
     Alexander Polosow/Александр Полозов 2:5025/54.32 aka 38.89
 -->
    <type name="config">
+      <annotation>
+        <contributors><![CDATA[
+          Aleksey Dobrunov <ctapmex@ctapmex.com>
+        ]]></contributors>
+      </annotation>
 
       <import type="def"/>
+
+      <region name="start" parent="def:PairStart"/>
+      <region name="end" parent="def:PairEnd"/>
 
 
 
@@ -21,7 +29,6 @@ With help of:
          <inherit scheme="NetAddresses"/>
 <!-- Path -->
          <inherit scheme="Path"/>
-         <regexp match="/^\s* \M \[ (.*?) \]/x" region1="Function"/>
          <regexp match="/\%[\w\.]+\%/" region0="Var"/>
          <regexp match="/\{[\da-fA-F]{8}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{4}\-[\da-fA-F]{12}\}/" region0="Number"/>
          <regexp match="/\-[\w\s]{4,}?\-/" region0="String"/>
@@ -268,8 +275,11 @@ With help of:
       </scheme>
 
       <scheme name="config">
+         <block start="/^\s*(\[)/" end="/(\])/"
+                scheme="def:empty" region="Function"
+                region00="SymbolStrong" region10="SymbolStrong"
+                region01="start" region11="end"/>
          <inherit scheme="ConfCommon"/>
-         <regexp match="/^\s*\[.*?\]/" region0="CommentContent"/>
 <!-- Apache conf stuff -->
          <regexp match="/^\s*(&lt;.*?\&gt;)\s*$/" region0="CommentContent"/>
          <block start="/(=)/" end="/(^ | [^\\]?#1) $/x" scheme="ConfRight" region00="Symbol"/>

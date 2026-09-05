@@ -5,11 +5,11 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
-  <type name="go-sum">
+  <type name="prisma">
     <annotation>
       <documentation>
-        Go checksum file syntax (go.sum)
-        https://go.dev/ref/mod#go-sum-files
+        Prisma schema language.
+        https://www.prisma.io/docs/orm/prisma-schema
       </documentation>
       <contributors><![CDATA[
         Aleksey Dobrunov <ctapmex@ctapmex.com>
@@ -18,29 +18,47 @@
 
     <import type="def"/>
 
-    <region name="ModulePath" parent="def:String"/>
-    <region name="Version" parent="def:Number"/>
-    <region name="HashType" parent="def:Keyword"/>
-    <region name="Hash" parent="def:CommentContent"/>
-    <region name="Symbol" parent="def:Symbol"/>
-    <region name="Error" parent="def:Error"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="Type" parent="def:TypeKeyword"/>
+    <region name="Attribute" parent="def:Directive"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="String" parent="def:String"/>
 
-    <entity name="modulePath" value="[a-zA-Z][a-zA-Z0-9_.\-]*(?:\/[a-zA-Z0-9_.\-]+)*"/>
-    <entity name="version" value="v\d+(?:\.\d+){0,2}(?:-[A-Za-z0-9_.\-]+)?"/>
-    <entity name="hash" value="[A-Za-z0-9+/=]+"/>
-
-    <scheme name="go-sum">
-      <!-- module version/go.mod h1:hash (more specific first) -->
-      <regexp match="/(%modulePath;)\s+(%version;)(\/go\.mod)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="Symbol" region4="HashType" region5="Hash"/>
-      <!-- module version h1:hash -->
-      <regexp match="/(%modulePath;)\s+(%version;)\s+(h1:)\s*(%hash;)/"
-              region1="ModulePath" region2="Version" region3="HashType" region4="Hash"/>
-
-      <!-- any unexpected content is an error -->
-      <regexp match="/\S/" region="Error" priority="low"/>
+    <scheme name="prisma">
+      <block start="/\/\/\//" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="def:empty" region="String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <keywords region="Keyword">
+        <word name="generator"/>
+        <word name="datasource"/>
+        <word name="model"/>
+        <word name="enum"/>
+        <word name="type"/>
+        <word name="view"/>
+      </keywords>
+      <keywords region="Type">
+        <word name="String"/>
+        <word name="Int"/>
+        <word name="BigInt"/>
+        <word name="Float"/>
+        <word name="Decimal"/>
+        <word name="Boolean"/>
+        <word name="DateTime"/>
+        <word name="Json"/>
+        <word name="Bytes"/>
+        <word name="Unsupported"/>
+      </keywords>
+      <regexp match="/\@\@?[A-Za-z]\w*/" region="Attribute"/>
+      <keywords region="def:BooleanConstant">
+        <word name="true"/>
+        <word name="false"/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="prisma"/>
+      </inherit>
     </scheme>
-
   </type>
 </hrc>
 <!--

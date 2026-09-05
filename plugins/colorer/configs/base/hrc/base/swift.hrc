@@ -13,6 +13,7 @@
       </documentation>
       <contributors><![CDATA[
         Maxim Chernobayev
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
       ]]></contributors>
     </annotation>
 
@@ -42,8 +43,7 @@
 
     <!-- String escapes -->
     <scheme name="StringEscapes">
-      <regexp match="/\\[0\\tnr\x22\x27]/" region="StringEscape"/>
-      <regexp match="/\\u\{[\da-fA-F]{1,8}\}/" region="StringEscape"/>
+      <regexp match="/\\(?:[0\\tnr\x22\x27]|u\{[\da-fA-F]{1,8}\})/" region="StringEscape"/>
       <inherit scheme="StringInterpolation"/>
     </scheme>
 
@@ -95,11 +95,9 @@
       <regexp match="/@\w+/" region="Attribute"/>
     </scheme>
 
-    <!-- Compiler directives #if, #available, etc -->
+    <!-- Compiler directives #if, #available, etc. Longer names first so #else does not eat #elseif. -->
     <scheme name="Directives">
-      <regexp match="/#(if|else|elseif|endif|available|unavailable|sourceLocation|warning|error)\b/" region="Directive"/>
-      <regexp match="/#(file|fileID|filePath|line|column|function|dsohandle)\b/" region="Directive"/>
-      <regexp match="/#(selector|keyPath|colorLiteral|fileLiteral|imageLiteral)\b/" region="Directive"/>
+      <regexp match="/#(elseif|endif|available|unavailable|sourceLocation|warning|error|if|else|filePath|fileID|file|line|column|function|dsohandle|selector|keyPath|colorLiteral|fileLiteral|imageLiteral)\b/" region="Directive"/>
     </scheme>
 
     <!-- Main expression scheme -->
@@ -119,15 +117,16 @@
       <inherit scheme="String"/>
       <inherit scheme="Character"/>
 
-      <!-- Numbers -->
-      <inherit scheme="def:Number"/>
-      <regexp match="/0b[01_]+/" region="def:Number"/>
-      <regexp match="/0o[0-7_]+/" region="def:Number"/>
-      <regexp match="/0x[\da-fA-F_]+(\.[\da-fA-F_]+)?([pP][\+\-]?[\d_]+)?/" region="def:Number"/>
-      <regexp match="/[\d_]+(\.[\d_]+)?([eE][\+\-]?[\d_]+)?/" region="def:Number"/>
+      <!-- Swift numbers (underscores, 0o, hex-float). Not def:Number: it has no
+           underscores/octal and would steal 0x before the hex-float regexp. -->
+      <regexp match="/(?:(?{def:NumberBin}0[bB][01_]+)|(?{def:NumberOct}0[oO][0-7_]+)|(?{def:NumberHex}0[xX][\da-fA-F_]+(?:\.[\da-fA-F_]+)?(?:[pP][\-+]?[\d_]+)?))/" />
+      <regexp match="/\d[\d_]*(?:\.[\d_]+(?:[eE][\-+]?[\d_]+)?|[eE][\-+]?[\d_]+)/" region="def:NumberFloat"/>
+      <regexp match="/\d[\d_]*/" region="def:NumberDec"/>
 
       <!-- func/init/deinit for outlining -->
-      <regexp match="/\b(func|init|deinit)\b/" region="FunctionKeyword" region0="def:Outlined"/>
+      <regexp match="/func\b/" region="FunctionKeyword" region0="def:Outlined"/>
+      <regexp match="/init\b/" region="FunctionKeyword" region0="def:Outlined"/>
+      <regexp match="/deinit\b/" region="FunctionKeyword" region0="def:Outlined"/>
 
       <!-- Declaration keywords -->
       <keywords region="Keyword">

@@ -14,6 +14,7 @@
  </documentation><contributors><![CDATA[
     Mikhail Kupchik <Mikhail.Kupchik@gmail.com>
     anatoly techtonik <techtonik@gmail.com>
+    Aleksey Dobrunov <ctapmex@ctapmex.com>
  ]]></contributors>
  </annotation>
 
@@ -95,6 +96,9 @@
    <block start="/\/\*\*/" end="/\*\//" scheme="doxygen:doxygen" region="def:CommentDoc"
           region00="def:PairStart" region10="def:PairEnd"/>
 
+   <!-- Compiler directives: must precede '//' comments -->
+   <regexp match="/\/\/go:\w+.*$/" region="def:Directive"/>
+
    <!-- Comments -->
    <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
    <block scheme="def:Comment" region="Comment">
@@ -155,6 +159,7 @@
       <symb name="%" />
       <symb name="." />
       <symb name=":" />
+      <symb name="~" />
    </keywords>
 
   </scheme>

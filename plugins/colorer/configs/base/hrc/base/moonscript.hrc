@@ -38,10 +38,7 @@
     </scheme>
 
     <scheme name="stringContent">
-      <regexp match="/\\[abfnrtv\\&#34;']/" region="SymbolStrong"/>
-      <regexp match="/\\\d{1,3}/" region="SymbolStrong"/>
-      <regexp match="/\\x[\da-fA-F]{2}/" region="SymbolStrong"/>
-      <regexp match="/\\u[\da-fA-F]{4}/" region="SymbolStrong"/>
+      <regexp match="/\\(?:[abfnrtv\\&#34;']|\d{1,3}|x[\da-fA-F]{2}|u[\da-fA-F]{4})/" region="SymbolStrong"/>
     </scheme>
 
     <scheme name="string">
@@ -57,9 +54,8 @@
     </scheme>
 
     <scheme name="number">
-      <regexp match="/\b0x[\da-fA-F]+\b/" region="Number"/>
-      <regexp match="/\b\d+\.\d+([eE][+-]?\d+)?\b/" region="Number"/>
-      <regexp match="/\b\d+\b/" region="Number"/>
+      <regexp match="/0x[\da-fA-F]+/" region="Number"/>
+      <regexp match="/\d+(?:\.\d+(?:[eE][+-]?\d+)?)?/" region="Number"/>
     </scheme>
 
     <scheme name="moonscript">
@@ -139,14 +135,17 @@
         <symb name=","/>
         <symb name=";"/>
         <symb name=":"/>
+        <symb name="@"/>
       </keywords>
 
-      <!-- self reference @ and method call \name -->
-      <regexp match="/@/" region="Symbol"/>
+      <!-- method call \name -->
       <regexp match="/(\\)([a-zA-Z_][\w!?]*)/" region1="Symbol" region2="Function"/>
 
       <!-- arrows -->
-      <regexp match="/(->|=>)/" region="SymbolStrong"/>
+      <keywords region="SymbolStrong">
+        <symb name="->"/>
+        <symb name="=>"/>
+      </keywords>
 
       <!-- identifiers (low priority so keywords/operators win) -->
       <regexp match="/[a-zA-Z_][\w!?]*/" region="def:Text" priority="low"/>

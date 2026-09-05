@@ -10,6 +10,12 @@ With help of:
     Alexey Drugobitskiy <msfun@rambler.ru>
 -->
    <type name="vbnet">
+      <annotation>
+         <documentation>Visual Basic.NET syntax</documentation>
+         <contributors><![CDATA[
+           Aleksey Dobrunov <ctapmex@ctapmex.com>
+         ]]></contributors>
+      </annotation>
 
       <import type="def"/>
       <import type="vbasic"/>
@@ -27,7 +33,9 @@ With help of:
             <word name="and"/>
             <word name="ansi"/>
             <word name="assembly"/>
+            <word name="async"/>
             <word name="auto"/>
+            <word name="await"/>
             <word name="binary"/>
             <word name="bitand"/>
             <word name="bitor"/>
@@ -57,6 +65,7 @@ With help of:
             <word name="inherits"/>
             <word name="interface"/>
             <word name="is"/>
+            <word name="iterator"/>
             <word name="lib"/>
             <word name="like"/>
             <word name="mod"/>
@@ -64,10 +73,12 @@ With help of:
             <word name="mustoverride"/>
             <word name="mybase"/>
             <word name="myclass"/>
+            <word name="nameof"/>
             <word name="namespace"/>
             <word name="notinheritable"/>
             <word name="notoverridable"/>
             <word name="off"/>
+            <word name="of"/>
             <word name="optional"/>
             <word name="or"/>
             <word name="overloads"/>
@@ -96,6 +107,7 @@ With help of:
             <word name="withevents"/>
             <word name="writeonly"/>
             <word name="xor"/>
+            <word name="yield"/>
          </keywords>
       </scheme>
 

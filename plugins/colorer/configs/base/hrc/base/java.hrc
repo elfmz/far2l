@@ -10,6 +10,7 @@
     JULY <lubimovi@usa.net>
     Eugene Efremov <4mirror@mail.ru>
     xarx <xarx@zoznam.sk>
+    Aleksey Dobrunov <ctapmex@ctapmex.com>
   ]]></contributors>
   </annotation>
 
@@ -81,6 +82,13 @@
        <regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="StringEscape"/>
        <regexp match="/\\[0-7]{1,12}/" region0="StringEscape"/>
        <regexp match="/[^\&#34;]$/" region0="Error"/>
+    </scheme>
+
+    <scheme name="TextBlockContent">
+       <regexp match="/\\[^uU0-7]/" region0="StringEscape"/>
+       <regexp match="/\\$/" region0="StringEscape"/>
+       <regexp match="/\\[uU][\da-fA-F]{1,8}/" region0="StringEscape"/>
+       <regexp match="/\\[0-7]{1,12}/" region0="StringEscape"/>
     </scheme>
 
     <scheme name="DocumentationComment">
@@ -166,7 +174,9 @@
 
        <regexp match="/ \b (?{Keyword}interface) \s+ (?{InterfaceOutline}\w+[\w\$]*?) /x"/>
        <regexp match="/ \b (?{Keyword}class) \s+ (?{ClassOutline}\w+[\w\$]*?) /x"/>
-       <regexp match="/ \b (?{Keyword}class|interface) \s+ (?{Error}\@\w+[\w\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}record) \s+ (?{ClassOutline}\w+[\w\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}class|interface|record) \s+ (?{Error}\@\w+[\w\$]*?) /x"/>
+       <regexp match="/\bnon-sealed\b/" region="KeywordModifier"/>
 
        <regexp match="/ \M (\@interface) \s+ (?{AnnotationOutline}\w+ [\w\$]*?) /x"/>
 
@@ -177,9 +187,13 @@
           <word name="extends"/>
           <word name='final'/>
           <word name="implements"/>
+          <word name='module'/>
+          <word name='open'/>
+          <word name='permits'/>
           <word name='private'/>
           <word name='protected'/>
           <word name='public'/>
+          <word name='sealed'/>
           <word name='static'/>
           <word name='strictfp'/>
           <word name="throws"/>
@@ -204,7 +218,9 @@
 
        <regexp match="/ \b (?{Keyword}interface) \s+ (?{InterfaceOutline}\w+[\w\$]*?) /x"/>
        <regexp match="/ \b (?{Keyword}class) \s+ (?{ClassOutline}\w+[\w\$]*?) /x"/>
-       <regexp match="/ \b (?{Keyword}class|interface) \s+ (?{Error} \@ \w+[\w\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}record) \s+ (?{ClassOutline}\w+[\w\$]*?) /x"/>
+       <regexp match="/ \b (?{Keyword}class|interface|record) \s+ (?{Error} \@ \w+[\w\$]*?) /x"/>
+       <regexp match="/\bnon-sealed\b/" region="KeywordModifier"/>
 
        <inherit scheme="NewInstanceOutlined"/>
        <!--
@@ -225,6 +241,7 @@
        <inherit scheme="JavaNumber"/>
 
        <!-- strings -->
+       <block start="/&#34;&#34;&#34;/" end="/&#34;&#34;&#34;/" scheme="TextBlockContent" region="String"/>
        <block start="/&#34;/" end="/&#34;|$/" scheme="StringContent" region="String"/>
        <regexp match="/' \\u[\da-fA-F]{1,4} '/ix" region="Character"/>
        <inherit scheme="c:Character"/>
@@ -279,19 +296,34 @@
           <word name="throw"/>
           <word name="true"/>
           <word name="try"/>
+          <word name="when"/>
           <word name="while"/>
+          <word name="yield"/>
+          <word name="_"/>
        </keywords>
        <keywords region="KeywordModifier">
           <word name='abstract'/>
           <word name="extends"/>
           <word name='final'/>
           <word name="implements"/>
+          <word name='permits'/>
           <word name='private'/>
           <word name='protected'/>
           <word name='public'/>
+          <word name='sealed'/>
           <word name='static'/>
           <word name='strictfp'/>
           <word name="throws"/>
+          <word name="module"/>
+          <word name="open"/>
+          <word name="requires"/>
+          <word name="exports"/>
+          <word name="opens"/>
+          <word name="provides"/>
+          <word name="transitive"/>
+          <word name="uses"/>
+          <word name="to"/>
+          <word name="with"/>
        </keywords>
        <keywords region="KeywordModifier">
           <word name='native'/>
@@ -309,6 +341,7 @@
           <word name='int'/>
           <word name='long'/>
           <word name='short'/>
+          <word name='var'/>
           <word name='void'/>
        </keywords>
        <keywords region="def:Error">

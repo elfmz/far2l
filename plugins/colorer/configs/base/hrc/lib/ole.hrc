@@ -5,6 +5,11 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
    <type name="ole">
+     <annotation>
+       <contributors><![CDATA[
+         Aleksey Dobrunov <ctapmex@ctapmex.com>
+       ]]></contributors>
+     </annotation>
 
      <import type='def'/>
 
@@ -19,9 +24,9 @@
        <regexp match="/(&amp;&amp;.*$)/" region0="oleComment"/>
        <regexp match="/^(\s*\*.*$)/" region0="oleComment"/>
 <!-- Strings -->
-       <regexp match="/(\&#34;.*?\&#34;)/" region0="oleString"/>
-       <regexp match="/(\'.*?\')/" region0="oleString"/>
-       <block start="/\{(\|.*?\|)?/" end="/\}/" scheme="ole" region="Insertion" region01="StringContent"/>
+       <regexp match="/(&#34;(?:[^&#34;]|&#34;&#34;)*&#34;)/" region0="oleString"/>
+       <regexp match="/('(?:[^']|'')*')/" region0="oleString"/>
+       <block start="/\{(\|[^|]*\|)?/" end="/\}/" scheme="ole" region="Insertion" region01="StringContent"/>
 <!-- Numbers -->
        <regexp match="/\b(0[xX][\da-fA-F]+)\b/" region0="oleNumb"/>
        <regexp match="/\b([0-9]+)\b/" region0="oleNumb"/>

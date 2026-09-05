@@ -18,10 +18,15 @@
       </contributors>
     </annotation>
 
-    <!-- 
-    This file is based on the language grammar described here:
-            http://doc.rust-lang.org/1.0.0-beta.2/grammar.html 
+    <!--
+    Keywords: https://doc.rust-lang.org/reference/keywords.html
     -->
+
+    <scheme name="StringEscapes">
+      <regexp match="/\\[nrt0'\\&quot;\\]/" region="def:SymbolStrong"/>
+      <regexp match="/\\x[\da-fA-F]{2}/" region="def:SymbolStrong"/>
+      <regexp match="/\\u\{[\da-fA-F]+\}/" region="def:SymbolStrong"/>
+    </scheme>
 
     <scheme name="rust">
       <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
@@ -35,9 +40,31 @@
         <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
       </block>
 
+      <!-- raw strings: fixed one or two hashes, not an arbitrary run -->
+      <block start="/(br##&quot;)/" end="/(&quot;##)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r##&quot;)/" end="/(&quot;##)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(br#&quot;)/" end="/(&quot;#)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r#&quot;)/" end="/(&quot;#)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(br&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(b&quot;)/" end="/(&quot;)/" scheme="StringEscapes" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="StringEscapes" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+
+      <!-- char literals before lifetimes so 'x' is not 'x -->
+      <regexp match="/b?'(\\.|.)'/" region="def:Character"/>
+      <regexp match="/'[A-Za-z_][\w]*/" region="def:Var"/>
+
       <inherit scheme="def:Number"/>
 
-      <block start="/^\s*(#)(\[)/" end="/(\])/" scheme="rust" region="def:Directive"
+      <block start="/(#\!?)(\[)/" end="/(\])/" scheme="rust" region="def:Directive"
              region00="def:DirectiveEdge" region01="def:DirectiveEdge" region02="def:PairStart"
              region10="def:DirectiveEdge" region11="def:PairEnd"/>
 
@@ -49,21 +76,18 @@
              region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
 
       <keywords region="def:Keyword">
-        <word name='abstract'/>
-        <word name='alignof'/>
         <word name='as'/>
-        <word name='become'/>
-        <word name='box'/>
+        <word name='async'/>
+        <word name='await'/>
         <word name='break'/>
         <word name='const'/>
         <word name='continue'/>
         <word name='crate'/>
-        <word name='do'/>
+        <word name='dyn'/>
         <word name='else'/>
         <word name='enum'/>
         <word name='extern'/>
         <word name='false'/>
-        <word name='final'/>
         <word name='fn'/>
         <word name='for'/>
         <word name='if'/>
@@ -75,30 +99,35 @@
         <word name='mod'/>
         <word name='move'/>
         <word name='mut'/>
-        <word name='offsetof'/>
-        <word name='once'/>
-        <word name='override'/>
-        <word name='priv'/>
-        <word name='proc'/>
         <word name='pub'/>
-        <word name='pure'/>
         <word name='ref'/>
         <word name='return'/>
-        <word name='sizeof'/>
-        <word name='static'/>
         <word name='self'/>
+        <word name='Self'/>
+        <word name='static'/>
         <word name='struct'/>
         <word name='super'/>
-        <word name='true'/>
         <word name='trait'/>
+        <word name='true'/>
         <word name='type'/>
-        <word name='typeof'/>
         <word name='unsafe'/>
-        <word name='unsized'/>
         <word name='use'/>
-        <word name='virtual'/>
         <word name='where'/>
         <word name='while'/>
+        <!-- reserved for future use -->
+        <word name='abstract'/>
+        <word name='become'/>
+        <word name='box'/>
+        <word name='do'/>
+        <word name='final'/>
+        <word name='gen'/>
+        <word name='macro'/>
+        <word name='override'/>
+        <word name='priv'/>
+        <word name='try'/>
+        <word name='typeof'/>
+        <word name='unsized'/>
+        <word name='virtual'/>
         <word name='yield'/>
       </keywords>
 

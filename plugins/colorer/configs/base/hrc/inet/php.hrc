@@ -24,6 +24,7 @@
          - any keywords/regions changed and other fixs...
         Alexey Kupershtokh <wicked@ngs.ru>:
          - add very many keywords
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
     ]]></contributors> 
     </annotation>
 
@@ -88,6 +89,9 @@
     </scheme>
 
     <scheme name="phpScript">
+      <block start="/(#)(\[)/" end="/(\])/" scheme="phpScript"
+        region01="SymbolStrong" region02="Symbol"
+        region10="Symbol" region11="PairEnd"/>
       <block start="/(\/\/|\#)/" end="/\M (\?&gt;|$)/ix" scheme="Comment" region="Comment"/>
       <inherit scheme="InverseInsertion"/>
       <inherit scheme="Script">

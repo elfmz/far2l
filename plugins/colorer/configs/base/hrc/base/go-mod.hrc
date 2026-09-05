@@ -50,7 +50,7 @@
 
     <scheme name="requireItem">
       <inherit scheme="common"/>
-      <regexp match="/^\s*(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
+      <regexp match="/(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
       <regexp match="/\S/" region="Error" priority="low"/>
     </scheme>
 
@@ -60,13 +60,13 @@
 
     <scheme name="replaceItem">
       <inherit scheme="common"/>
-      <regexp match="/^\s*(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
+      <regexp match="/(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
               region1="ModulePath" region2="Version" region3="Symbol" region4="ModulePath" region5="Version"/>
-      <regexp match="/^\s*(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
+      <regexp match="/(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
               region1="ModulePath" region2="Version" region3="Symbol" region4="ModulePath"/>
-      <regexp match="/^\s*(%modulePath;)\s*(=>)\s*(%modulePath;)/"
+      <regexp match="/(%modulePath;)\s*(=>)\s*(%modulePath;)/"
               region1="ModulePath" region2="Symbol" region3="ModulePath"/>
-      <regexp match="/^\s*(%modulePath;)\s*(=>)\s*(%localPath;)/"
+      <regexp match="/(%modulePath;)\s*(=>)\s*(%localPath;)/"
               region1="ModulePath" region2="Symbol" region3="ModulePath"/>
       <regexp match="/\S/" region="Error" priority="low"/>
     </scheme>
@@ -77,7 +77,7 @@
 
     <scheme name="excludeItem">
       <inherit scheme="common"/>
-      <regexp match="/^\s*(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
+      <regexp match="/(%modulePath;)\s+(%version;)/" region1="ModulePath" region2="Version"/>
       <regexp match="/\S/" region="Error" priority="low"/>
     </scheme>
 
@@ -87,9 +87,9 @@
 
     <scheme name="retractItem">
       <inherit scheme="common"/>
-      <regexp match="/^\s*\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
+      <regexp match="/\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
               region1="Version" region2="Version"/>
-      <regexp match="/^\s*(%version;)/" region1="Version"/>
+      <regexp match="/(%version;)/" region1="Version"/>
       <regexp match="/\S/" region="Error" priority="low"/>
     </scheme>
 
@@ -101,61 +101,61 @@
       <inherit scheme="common"/>
 
       <!-- module directive -->
-      <regexp match="/^\s*(module)\s+(%modulePath;)/"
+      <regexp match="/(module)\s+(%modulePath;)/"
               region1="Keyword" region2="ModulePath"/>
 
       <!-- go directive -->
-      <regexp match="/^\s*(go)\s+(\d+(?:\.\d+){1,2})/"
+      <regexp match="/(go)\s+(\d+(?:\.\d+){1,2})/"
               region1="Keyword" region2="Version"/>
 
       <!-- toolchain directive -->
-      <regexp match="/^\s*(toolchain)\s+(go\d+(?:\.\d+){1,2})/"
+      <regexp match="/(toolchain)\s+(go\d+(?:\.\d+){1,2})/"
               region1="Keyword" region2="Version"/>
 
       <!-- single-line require -->
-      <regexp match="/^\s*(require)\s+(%modulePath;)\s+(%version;)/"
+      <regexp match="/(require)\s+(%modulePath;)\s+(%version;)/"
               region1="Keyword" region2="ModulePath" region3="Version"/>
 
       <!-- require block -->
-      <block start="/^\s*(require)\s*\(\s*$/"
+      <block start="/(require)\s*\(\s*$/"
              end="/^\s*\)\s*$/"
              scheme="requireBlock"
              region00="Symbol" region01="Keyword" region10="Symbol"/>
 
       <!-- single-line replace -->
-      <regexp match="/^\s*(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
+      <regexp match="/(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%modulePath;)\s+(%version;)/"
               region1="Keyword" region2="ModulePath" region3="Version" region4="Symbol" region5="ModulePath" region6="Version"/>
-      <regexp match="/^\s*(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
+      <regexp match="/(replace)\s+(%modulePath;)\s+(%version;)\s*(=>)\s*(%localPath;)/"
               region1="Keyword" region2="ModulePath" region3="Version" region4="Symbol" region5="ModulePath"/>
-      <regexp match="/^\s*(replace)\s+(%modulePath;)\s*(=>)\s*(%modulePath;)/"
+      <regexp match="/(replace)\s+(%modulePath;)\s*(=>)\s*(%modulePath;)/"
               region1="Keyword" region2="ModulePath" region3="Symbol" region4="ModulePath"/>
-      <regexp match="/^\s*(replace)\s+(%modulePath;)\s*(=>)\s*(%localPath;)/"
+      <regexp match="/(replace)\s+(%modulePath;)\s*(=>)\s*(%localPath;)/"
               region1="Keyword" region2="ModulePath" region3="Symbol" region4="ModulePath"/>
 
       <!-- replace block -->
-      <block start="/^\s*(replace)\s*\(\s*$/"
+      <block start="/(replace)\s*\(\s*$/"
              end="/^\s*\)\s*$/"
              scheme="replaceBlock"
              region00="Symbol" region01="Keyword" region10="Symbol"/>
 
       <!-- single-line exclude -->
-      <regexp match="/^\s*(exclude)\s+(%modulePath;)\s+(%version;)/"
+      <regexp match="/(exclude)\s+(%modulePath;)\s+(%version;)/"
               region1="Keyword" region2="ModulePath" region3="Version"/>
 
       <!-- exclude block -->
-      <block start="/^\s*(exclude)\s*\(\s*$/"
+      <block start="/(exclude)\s*\(\s*$/"
              end="/^\s*\)\s*$/"
              scheme="excludeBlock"
              region00="Symbol" region01="Keyword" region10="Symbol"/>
 
       <!-- single-line retract -->
-      <regexp match="/^\s*(retract)\s+\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
+      <regexp match="/(retract)\s+\[\s*(%version;)\s*,\s*(%version;)\s*\]/"
               region1="Keyword" region2="Version" region3="Version"/>
-      <regexp match="/^\s*(retract)\s+(%version;)/"
+      <regexp match="/(retract)\s+(%version;)/"
               region1="Keyword" region2="Version"/>
 
       <!-- retract block -->
-      <block start="/^\s*(retract)\s*\(\s*$/"
+      <block start="/(retract)\s*\(\s*$/"
              end="/^\s*\)\s*$/"
              scheme="retractBlock"
              region00="Symbol" region01="Keyword" region10="Symbol"/>

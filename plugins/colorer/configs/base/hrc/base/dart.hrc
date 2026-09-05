@@ -46,11 +46,7 @@
 
     <!-- Escapes in non-raw strings. \$ must win over interpolation. -->
     <scheme name="StringEscapes">
-      <regexp match="/\\[nrtbfv\\$'&#34;]/" region="StringEscape"/>
-      <regexp match="/\\x[\da-fA-F]{2}/" region="StringEscape"/>
-      <regexp match="/\\u[\da-fA-F]{4}/" region="StringEscape"/>
-      <regexp match="/\\u\{[\da-fA-F]{1,6}\}/" region="StringEscape"/>
-      <regexp match="/\\$/" region="StringEscape"/>
+      <regexp match="/\\(?:[nrtbfv\\$'&#34;]|x[\da-fA-F]{2}|u[\da-fA-F]{4}|u\{[\da-fA-F]{1,6}\}|$)/" region="StringEscape"/>
       <regexp match="/\\./" region="def:Error"/>
     </scheme>
 
@@ -104,8 +100,7 @@
     </scheme>
 
     <scheme name="Numbers">
-      <regexp match="/\b%digits;\.%digits;([eE][+-]?%digits;)?/" region="def:NumberFloat"/>
-      <regexp match="/\b%digits;[eE][+-]?%digits;/" region="def:NumberFloat"/>
+      <regexp match="/\b%digits;(?:\.%digits;([eE][+-]?%digits;)?|[eE][+-]?%digits;)/" region="def:NumberFloat"/>
       <regexp match="/\b0[xX]%hexdigits;/" region="def:NumberHex"/>
       <regexp match="/\b%digits;/" region="def:NumberDec"/>
     </scheme>

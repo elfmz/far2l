@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="vue">
+    <annotation>
+      <documentation>
+        Vue single-file component: template, script, and style blocks.
+        https://vuejs.org/api/sfc-spec.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+    <import type="html"/>
+    <import type="jScript"/>
+    <import type="typescript"/>
+    <import type="css"/>
+
+    <region name="SfcTag" parent="html:htmlOpenTag"/>
+    <region name="Directive" parent="def:Keyword"/>
+
+    <scheme name="vueTags">
+      <keywords ignorecase="yes" region="SfcTag" worddiv="[^\w-]">
+        <word name="template"/>
+        <word name="script"/>
+        <word name="style"/>
+        <word name="slot"/>
+        <word name="component"/>
+        <word name="transition"/>
+        <word name="teleport"/>
+        <word name="suspense"/>
+        <word name="keep-alive"/>
+      </keywords>
+      <inherit scheme="html:htmlCoreTags"/>
+    </scheme>
+
+    <scheme name="vueParams">
+      <regexp match="/(@|:|#|v-)[\w.:-]*/" region="Directive"/>
+      <inherit scheme="html:htmlCoreParams"/>
+    </scheme>
+
+    <scheme name="vue">
+      <block start="/(&lt;script\b[^&gt;]*\blang\s*=\s*[&quot;']ts[&quot;'][^&gt;]*&gt;)/i"
+             end="/(&lt;\/script\s*&gt;)/i"
+             scheme="typescript:typescript" content-priority="low"
+             region00="html:htmlTagBr" region10="html:htmlTagBr"/>
+      <block start="/(&lt;script\b[^&gt;]*&gt;)/i" end="/(&lt;\/script\s*&gt;)/i"
+             scheme="jScript:jScript" content-priority="low"
+             region00="html:htmlTagBr" region10="html:htmlTagBr"/>
+      <block start="/(&lt;style\b[^&gt;]*&gt;)/i" end="/(&lt;\/style\s*&gt;)/i"
+             scheme="css:css" content-priority="low"
+             region00="html:htmlTagBr" region10="html:htmlTagBr"/>
+      <regexp match="/\{\{.*?\}\}/" region="def:Insertion"/>
+      <inherit scheme="html:html">
+        <virtual scheme="html:html" subst-scheme="vue"/>
+        <virtual scheme="html:htmlCoreTags" subst-scheme="vueTags"/>
+        <virtual scheme="html:htmlCoreParams" subst-scheme="vueParams"/>
+      </inherit>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

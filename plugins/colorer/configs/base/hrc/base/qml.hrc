@@ -14,6 +14,7 @@
         </documentation>
         <contributors><![CDATA[
             Kate Tempergate <kate@tempergate.co.uk>
+            Aleksey Dobrunov <ctapmex@ctapmex.com>
         ]]></contributors>
     </annotation>
 
@@ -35,12 +36,14 @@
             <inherit scheme="def:Comment"/>
         </scheme>
         <scheme name="QmlImportLine">
-            <regexp match="/\bQtQuick\b/" region="qmlType"/>
-            <regexp match="/\bControls\b/" region="qmlType"/>
-            <regexp match="/\b\d+(\.\d+)?\b/" region="qmlNumber"/>
+            <keywords region="qmlType">
+                <word name="QtQuick"/>
+                <word name="Controls"/>
+            </keywords>
+            <regexp match="/\d+(?:\.\d+)?/" region="qmlNumber"/>
         </scheme>
         <scheme name="QmlImport">
-            <block start="/^\s*import\b/" end="/$/"
+            <block start="/import\b/" end="/$/"
                    scheme="QmlImportLine"
                    region="qmlImport"/>
         </scheme>
@@ -161,7 +164,7 @@
             <regexp match="/\b\d+(\.\d+)?\b/" region="qmlNumber"/>
 
             <!-- PROPERTY -->
-            <regexp match="/\b\w+\s*:/" region="qmlProperty"/>
+            <regexp match="/\w+\s*:/" region="qmlProperty"/>
 
             <!-- SIGNAL HANDLER -->
             <regexp match="/\bon[A-Z]\w*/" region="qmlSignal"/>

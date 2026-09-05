@@ -12,6 +12,11 @@ With help of:
     Alexey Yatsenko <Alexey.Yatsenko@p52.f9.n5060.z2.fidonet.org>
 -->
    <type name="vbasic">
+      <annotation>
+        <contributors><![CDATA[
+          Aleksey Dobrunov <ctapmex@ctapmex.com>
+        ]]></contributors>
+      </annotation>
 
       <import type="def"/>
 
@@ -92,7 +97,7 @@ With help of:
          <regexp match="/'.*$/" region0="vbComment"/>
          <regexp match="/\brem\b.*$/ix" region0="vbComment"/>
 <!-- Strings -->
-         <regexp match="/&#34;.*?&#34;/" region0="vbString"/>
+         <regexp match="/&#34;(?:[^&#34;]|&#34;&#34;)*&#34;/" region0="vbString"/>
 <!-- Numbers  -->
          <regexp match="/\B\$[\da-fA-F]+\b/" region0="vbNumb"/>
          <regexp match="/\B&amp;H[\da-fA-F]+\b/" region0="vbNumb"/>

@@ -9,7 +9,7 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
   if (!xml.parse()) {
     throw Exception("Error loading HRD file '" + is.getPath() + "'");
   }
-  std::list<XMLNode> nodes;
+  XMLNodeList nodes;
   xml.getNodes(nodes);
 
   if (nodes.begin()->name != hrdTagHrd) {

@@ -1,5 +1,12 @@
 #include "colorer/parsers/TextParserImpl.h"
 
+// Coloring loop: parse() → colorize() → searchMatch() per column gx.
+// One scheme is active. Parent end-RE (root_end_re) bounds the window;
+// content is keywords / regexp / block / inherit from searchNodes
+// (ASCII first-char slice in searchDispatch when present).
+// str_chars is the line's ASCII occupancy; CRegExp::mayMatch uses it
+// to reject patterns before the NFA. See .agents/skills/colorer-hrc/core-parse.md.
+
 TextParser::Impl::Impl()
 {
   COLORER_LOG_DEEPTRACE("[TextParserImpl] constructor");
@@ -20,6 +27,11 @@ void TextParser::Impl::setFileType(FileType* type)
   initCache();
 }
 
+FileType* TextParser::Impl::currentFileType() const
+{
+  return baseScheme != nullptr ? baseScheme->fileType : nullptr;
+}
+
 void TextParser::Impl::setLineSource(LineSource* lh)
 {
   lineSource = lh;
@@ -30,6 +42,9 @@ void TextParser::Impl::setRegionHandler(RegionHandler* rh)
   regionHandler = rh;
 }
 
+// Locate the ParseCache node covering `from`, then colorize from there
+// toward the root. CACHE_UPDATE drops children from `from` and rebuilds
+// them; CACHE_READ only colors. Returns the last colored line.
 int TextParser::Impl::parse(int from, int num, TextParseMode mode)
 {
   gx = 0;
@@ -205,6 +220,8 @@ void TextParser::Impl::ensureLineLowercase()
   str_lowercase_ready = true;
 }
 
+// Binary search in the keyword table for this gx. ASCII first-char bitset
+// plus asciiBegin/End slice; lowercase line built only for ignore-case lists.
 int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int lowlen,
                                int /*hilen*/)
 {
@@ -231,12 +248,23 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
     }
   }
 
-  if (gx < lowlen && !node->kwList->firstChar->contains((*use_str)[gx])) {
-    return MATCH_NOTHING;
-  }
-
   int left = 0;
   int right = node->kwList->count;
+  if (gx < lowlen) {
+    const auto ch = static_cast<uint32_t>((*use_str)[gx]);
+    if (ch < 128) {
+      if ((node->kwList->firstCharAscii[ch >> 6] & (uint64_t(1) << (ch & 63))) == 0) {
+        return MATCH_NOTHING;
+      }
+      left = node->kwList->asciiBegin[ch];
+      right = node->kwList->asciiEnd[ch];
+    } else if (!node->kwList->firstChar->contains(static_cast<wchar>(ch))) {
+      return MATCH_NOTHING;
+    }
+  }
+  if (left >= right) {
+    return MATCH_NOTHING;
+  }
   while (true) {
     int pos = left + (right - left) / 2;
     int kwlen = node->kwList->kwList[pos].keyword->length();
@@ -318,7 +346,10 @@ int TextParser::Impl::searchIN(SchemeNodeInherit* node, int no, int lowLen, int 
 int TextParser::Impl::searchRE(SchemeNodeRegexp* node, int /*no*/, int lowLen, int hiLen)
 {
   SMatches match;
-  if (!node->start->parse(str, gx, node->lowPriority ? lowLen : hiLen, &match, schemeStart)) {
+  const int eol = node->lowPriority ? lowLen : hiLen;
+  if (!node->start->mayMatch(gx, eol, schemeStart, str_chars) ||
+      !node->start->parse(str, gx, eol, &match, schemeStart, -1, &str_chars))
+  {
     return MATCH_NOTHING;
   }
   COLORER_LOG_DEEPTRACE("[TextParserImpl] RE matched. gx=%", gx);
@@ -349,7 +380,10 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
 
   // проверяем совпадение по регулярному выражению start
   SMatches match;
-  if (!node->start->parse(str, gx, node->lowPriority ? lowLen : hiLen, &match, schemeStart)) {
+  const int eol = node->lowPriority ? lowLen : hiLen;
+  if (!node->start->mayMatch(gx, eol, schemeStart, str_chars) ||
+      !node->start->parse(str, gx, eol, &match, schemeStart, -1, &str_chars))
+  {
     return MATCH_NOTHING;
   }
 
@@ -452,7 +486,7 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
       forward = ResF;
       parent = ResP;
     }
-    else {
+    else if (OldCacheF != nullptr) {
       OldCacheF->eline = current_parse_line;
       OldCacheF->vcache = vtlist.store();
       forward = OldCacheF;
@@ -474,6 +508,8 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
   return MATCH_SCHEME;
 }
 
+// First matching node at gx wins. ASCII characters use searchDispatch
+// (nodes that canStartWith(ch)); otherwise the full searchNodes list.
 int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen, int hiLen)
 {
   COLORER_LOG_DEEPTRACE("[TextParserImpl] searchMatch: entered scheme \"%\"", *cscheme->getName());
@@ -486,18 +522,20 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
 #endif
   size_t searchBegin = 0;
   size_t searchEnd = cscheme->searchNodes.size();
-  bool useDispatch = false;
-  if (cscheme->searchDispatch && gx < str->length()) {
+  const auto* dispatch = cscheme->searchDispatch.get();
+  if (dispatch != nullptr && gx < str->length()) {
     const auto ch = static_cast<uint32_t>((*str)[gx]);
     if (ch < 128) {
-      searchBegin = cscheme->searchDispatch->offsets[ch];
-      searchEnd = cscheme->searchDispatch->offsets[ch + 1];
-      useDispatch = true;
+      searchBegin = dispatch->offsets[ch];
+      searchEnd = dispatch->offsets[ch + 1];
+    } else {
+      dispatch = nullptr;
     }
+  } else {
+    dispatch = nullptr;
   }
   for (size_t i = searchBegin; i < searchEnd; i++) {
-    auto* schemeNode = cscheme->searchNodes[
-      useDispatch ? cscheme->searchDispatch->nodeIndexes[i] : i];
+    auto* schemeNode = cscheme->searchNodes[dispatch ? dispatch->nodeIndexes[i] : i];
     COLORER_LOG_DEEPTRACE("[TextParserImpl] searchMatch: processing node:%/%, type:%", idx + 1,
                          searchEnd - searchBegin,
                          SchemeNode::schemeNodeTypeNames[static_cast<int>(schemeNode->type)]);
@@ -539,6 +577,10 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
   return MATCH_NOTHING;
 }
 
+// One scheme, successive lines. Each line: fetch once, fill str_chars,
+// try parent end-RE, then searchMatch until gx reaches that bound.
+// End-RE hit → leave the block. Else next line, or the next maxBlockSize
+// window on this line when chunkLongLines is set.
 bool TextParser::Impl::colorize(CRegExp* root_end_re, bool lowContentPriority, bool tryPopOnEnd)
 {
   len = -1;
@@ -559,13 +601,13 @@ bool TextParser::Impl::colorize(CRegExp* root_end_re, bool lowContentPriority, b
       if (str == nullptr) {
         // LineSource can return null if the line is not available (e.g. editor shutdown).
         // Stop parsing gracefully instead of throwing across threads.
-        str = nullptr;
         clearLine = -1;
         endLine = current_parse_line;
         stackLevel--;
         return true;
       }
       str_lowercase_ready = false;
+      CRegExp::collectAsciiChars(*str, str_chars);
       regionHandler->clearLine(current_parse_line, str);
     }
     // hack to include invisible regions in start of block
@@ -582,8 +624,8 @@ bool TextParser::Impl::colorize(CRegExp* root_end_re, bool lowContentPriority, b
 
     // searches for the end of parent block
     int res = 0;
-    if (root_end_re) {
-      res = root_end_re->parse(str, gx, len, &matchend, schemeStart);
+    if (root_end_re && root_end_re->mayMatch(gx, len, schemeStart, str_chars)) {
+      res = root_end_re->parse(str, gx, len, &matchend, schemeStart, -1, &str_chars);
     }
     if (!res) {
       matchend.s[0] = matchend.e[0] = gx + maxBlockSize > len ? len : gx + maxBlockSize;
@@ -712,6 +754,9 @@ bool TextParser::Impl::sameTryLevel(const TryLevel& a, const TryLevel& b)
   return true;
 }
 
+// Reparse `line` without dropping the cache tree. True iff the open-block
+// stack continuing past this line still matches what the cache predicted
+// for line+1 (same schemes, start-RE captures, backtrace start text).
 bool TextParser::Impl::tryParseLine(int line)
 {
   if (!regionHandler || !lineSource || !baseScheme || line < 0) {

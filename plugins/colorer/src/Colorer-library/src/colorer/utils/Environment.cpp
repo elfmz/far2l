@@ -7,6 +7,22 @@
 
 namespace colorer {
 
+namespace {
+
+const std::regex& envVarBraceRegex()
+{
+  static const std::regex re(R"--(\$\{([[:alpha:]]\w*)\})--");
+  return re;
+}
+
+const std::regex& envVarDollarRegex()
+{
+  static const std::regex re(R"--(\$([[:alpha:]]\w*)\b)--");
+  return re;
+}
+
+}  // namespace
+
 fs::path Environment::to_filepath(const UnicodeString* str)
 {
 #ifdef _WINDOWS
@@ -155,8 +171,13 @@ UnicodeString Environment::expandSpecialEnvironment(const UnicodeString& path)
 {
   COLORER_LOG_DEBUG("expand system environment for '%'", path);
 
+  if (path.indexOf('$') == -1) {
+    COLORER_LOG_DEBUG("result of expand '%'", path);
+    return path;
+  }
+
   const auto text = UStr::to_stdstr(&path);
-  auto result = expandEnvByRegexp(text, std::regex(R"--(\$([[:alpha:]]\w*)\b)--"));
+  auto result = expandEnvByRegexp(text, envVarDollarRegex());
 
   COLORER_LOG_DEBUG("result of expand '%'", result);
   return UStr::to_unistr(result);
@@ -179,9 +200,14 @@ UnicodeString Environment::expandEnvironment(const UnicodeString& path)
   COLORER_LOG_DEBUG("result of expand '%'", result);
   return result;
 #else
+  if (path.indexOf('$') == -1) {
+    COLORER_LOG_DEBUG("result of expand '%'", path);
+    return path;
+  }
+
   const auto text = UStr::to_stdstr(&path);
-  auto res = expandEnvByRegexp(text, std::regex(R"--(\$\{([[:alpha:]]\w*)\})--"));
-  res = expandEnvByRegexp(res, std::regex(R"--(\$([[:alpha:]]\w*)\b)--"));
+  auto res = expandEnvByRegexp(text, envVarBraceRegex());
+  res = expandEnvByRegexp(res, envVarDollarRegex());
   COLORER_LOG_DEBUG("result of expand '%'", res);
   return UStr::to_unistr(res);
 #endif
@@ -200,6 +226,10 @@ UnicodeString Environment::getCurrentDir()
 
 std::string Environment::expandEnvByRegexp(const std::string& path, const std::regex& regex)
 {
+  if (path.find('$') == std::string::npos) {
+    return path;
+  }
+
   std::smatch matcher;
   std::string result;
   auto text = path;

@@ -1,7 +1,9 @@
 #ifndef COLORER_KEYWORDLIST_H
 #define COLORER_KEYWORDLIST_H
 
+#include <array>
 #include <climits>
+#include <cstdint>
 #include "colorer/Common.h"
 #include "colorer/Region.h"
 
@@ -31,6 +33,9 @@ class KeywordList
   int count = 0;
   int minKeywordLength = INT_MAX;
   std::unique_ptr<CharacterClass> firstChar;
+  std::array<uint64_t, 2> firstCharAscii = {};
+  std::array<int, 128> asciiBegin = {};
+  std::array<int, 128> asciiEnd = {};
   KeywordInfo* kwList = nullptr;
   explicit KeywordList(size_t list_size);
   ~KeywordList();

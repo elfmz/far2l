@@ -1,6 +1,7 @@
 #ifndef COLORER_FILETYPEIMPL_H
 #define COLORER_FILETYPEIMPL_H
 
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 #include "colorer/FileType.h"
@@ -106,6 +107,7 @@ class FileType::Impl
   std::unordered_map<UnicodeString, TypeParameter> paramsHash;
   std::vector<UnicodeString> importVector;
   uXmlInputSource inputSource;
+  std::shared_mutex* library_access {nullptr};
 };
 
 #endif  // COLORER_FILETYPEIMPL_H

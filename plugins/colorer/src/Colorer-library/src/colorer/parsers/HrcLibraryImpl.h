@@ -1,12 +1,18 @@
 #ifndef COLORER_HRCLIBRARYIMPL_H
 #define COLORER_HRCLIBRARYIMPL_H
 
+#include <shared_mutex>
+#include <cstdint>
 #include <unordered_map>
 #include "colorer/HrcLibrary.h"
 #include "colorer/cregexp/cregexp.h"
 #include "colorer/parsers/SchemeImpl.h"
 #include "colorer/xml/XMLNode.h"
 #include "colorer/xml/XmlInputSource.h"
+
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+#include "colorer/xml/libxml2/SharedXmlInputSource.h"
+#endif
 
 class FileType;
 
@@ -34,6 +40,8 @@ class HrcLibrary::Impl
   size_t getRegionCount() const;
   const Region* getRegion(unsigned int id) const;
   const Region* getRegion(const UnicodeString* name);
+
+  mutable std::shared_mutex access;
 
  protected:
   enum class QualifyNameType { QNT_DEFINE, QNT_SCHEME, QNT_ENTITY };
@@ -89,6 +97,8 @@ class HrcLibrary::Impl
   uUnicodeString qualifyForeignName(const UnicodeString* name, QualifyNameType qntype, bool logErrors);
 
   void updateLinks();
+  void buildSearchNodes(SchemeImpl* scheme, std::unordered_map<const SchemeImpl*, uint8_t>& state);
+  void mergeSearchKeywords(SchemeImpl* scheme);
   void updateSchemeLink(uUnicodeString& scheme_name, SchemeImpl** scheme_impl, byte scheme_type,
                         const SchemeImpl* current_scheme);
   uUnicodeString useEntities(const UnicodeString* name);
@@ -99,6 +109,11 @@ class HrcLibrary::Impl
 
   void updatePrototype(const XMLNode& elem);
   void updatePrototypeParams(const XMLNode& node, FileType* current_parse_prototype);
+
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+  XmlJarCache zip_cache;
+  XmlJarCache* zip_cache_ptr {nullptr};
+#endif
 };
 
 #endif  // COLORER_HRCLIBRARYIMPL_H

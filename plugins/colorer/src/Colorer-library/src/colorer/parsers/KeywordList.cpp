@@ -46,6 +46,9 @@ void KeywordList::substrIndex()
       hasNonSymbols = true;
     }
   }
+  firstCharAscii = {};
+  asciiBegin = {};
+  asciiEnd = {};
   for (int i = count - 1; i > 0; i--) {
     for (int ii = i - 1; ii >= 0; ii--) {
       if ((*kwList[ii].keyword)[0] != (*kwList[i].keyword)[0]) {
@@ -58,5 +61,18 @@ void KeywordList::substrIndex()
         break;
       }
     }
+  }
+  for (int i = 0; i < count; ) {
+    const auto ch = static_cast<uint32_t>((*kwList[i].keyword)[0]);
+    int j = i + 1;
+    while (j < count && static_cast<uint32_t>((*kwList[j].keyword)[0]) == ch) {
+      j++;
+    }
+    if (ch < 128) {
+      firstCharAscii[ch >> 6] |= uint64_t(1) << (ch & 63);
+      asciiBegin[ch] = i;
+      asciiEnd[ch] = j;
+    }
+    i = j;
   }
 }

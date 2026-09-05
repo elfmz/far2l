@@ -1,5 +1,7 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -14,6 +16,9 @@ HrcLibrary::Impl::Impl()
   regionNamesHash.reserve(1000);
   regionNamesVector.reserve(1000);
   schemeHash.reserve(4000);
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+  zip_cache_ptr = XmlJarCache::bound() != nullptr ? XmlJarCache::bound() : &zip_cache;
+#endif
 }
 
 HrcLibrary::Impl::~Impl()
@@ -40,6 +45,10 @@ void HrcLibrary::Impl::loadSource(XmlInputSource* input_source, const LoadType l
   if (!input_source) {
     throw HrcLibraryException("Can't open stream - 'null' is bad stream.");
   }
+
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+  XmlJarCache::Current jar_scope(*zip_cache_ptr);
+#endif
 
   // Сохраняем текущий контекст парсинга файла, т.к. у нас рекурсивное использование
   XmlInputSource* temp_is = current_input_source;
@@ -121,11 +130,14 @@ void HrcLibrary::Impl::loadFileType(FileType* filetype)
 
 void HrcLibrary::Impl::loadHrcSettings(const XmlInputSource& is)
 {
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+  XmlJarCache::Current jar_scope(*zip_cache_ptr);
+#endif
   XmlReader xml_parser(is);
   if (!xml_parser.parse()) {
     throw HrcLibraryException("Error reading " + is.getPath());
   }
-  std::list<XMLNode> nodes;
+  XMLNodeList nodes;
   xml_parser.getNodes(nodes);
 
   if (nodes.begin()->name != u"hrc-settings") {
@@ -217,7 +229,7 @@ void HrcLibrary::Impl::parseHRC(const XmlInputSource& is)
   if (!xml.parse()) {
     throw HrcLibraryException("Error reading hrc file '" + is.getPath() + "'");
   }
-  std::list<XMLNode> nodes;
+  XMLNodeList nodes;
   xml.getNodes(nodes);
 
   if (nodes.begin()->name != hrcTagHrc) {
@@ -307,6 +319,7 @@ void HrcLibrary::Impl::addPrototype(const XMLNode& elem)
 
   parsePrototypeBlock(elem, type);
 
+  ptype->library_access = &access;
   fileTypeHash.try_emplace(typeName, type);
   if (!ptype->isPackage) {
     fileTypeVector.push_back(type);
@@ -603,7 +616,10 @@ void HrcLibrary::Impl::addSchemeInherit(SchemeImpl* scheme, const XMLNode& elem)
   scheme_node->schemeName = std::make_unique<UnicodeString>(nqSchemeName);
   auto schemeName = qualifyForeignName(scheme_node->schemeName.get(), QualifyNameType::QNT_SCHEME, false);
   if (schemeName != nullptr) {
-    scheme_node->scheme = schemeHash.find(*schemeName)->second;
+    const auto scheme_it = schemeHash.find(*schemeName);
+    if (scheme_it != schemeHash.end()) {
+      scheme_node->scheme = scheme_it->second;
+    }
     scheme_node->schemeName = std::move(schemeName);
   }
 
@@ -981,14 +997,146 @@ void HrcLibrary::Impl::updateSchemeLink(uUnicodeString& scheme_name, SchemeImpl*
   if (scheme_name != nullptr && *scheme_impl == nullptr) {
     const auto schemeName = qualifyForeignName(scheme_name.get(), QualifyNameType::QNT_SCHEME, true);
     if (schemeName != nullptr) {
-      *scheme_impl = schemeHash.find(*schemeName)->second;
+      const auto scheme_it = schemeHash.find(*schemeName);
+      if (scheme_it != schemeHash.end()) {
+        *scheme_impl = scheme_it->second;
+      }
     }
-    else {
+    if (*scheme_impl == nullptr) {
       COLORER_LOG_ERROR(message[scheme_type], *scheme_name, *current_scheme->schemeName);
     }
 
     scheme_name.reset();
   }
+}
+
+namespace {
+
+bool keywordsMergeable(const SchemeNodeKeywords* a, const SchemeNodeKeywords* b)
+{
+  return a->kwList->matchCase == b->kwList->matchCase && a->worddiv == nullptr &&
+         b->worddiv == nullptr;
+}
+
+std::unique_ptr<SchemeNodeKeywords> mergeKeywordNodes(const std::vector<const SchemeNodeKeywords*>& src)
+{
+  size_t total = 0;
+  for (const auto* node : src) {
+    total += static_cast<size_t>(node->kwList->count);
+  }
+  auto merged = std::make_unique<SchemeNodeKeywords>();
+  merged->kwList = std::make_unique<KeywordList>(total);
+  auto* kw = merged->kwList.get();
+  kw->matchCase = src.front()->kwList->matchCase;
+  for (const auto* node : src) {
+    const auto* list = node->kwList.get();
+    for (int i = 0; i < list->count; i++) {
+      auto& dst = kw->kwList[kw->count];
+      dst.keyword = std::make_unique<UnicodeString>(*list->kwList[i].keyword);
+      dst.region = list->kwList[i].region;
+      dst.isSymbol = list->kwList[i].isSymbol;
+      kw->firstChar->add((*dst.keyword)[0]);
+      kw->minKeywordLength = std::min(kw->minKeywordLength, dst.keyword->length());
+      kw->count++;
+    }
+  }
+  std::stable_sort(kw->kwList, kw->kwList + kw->count, [](const KeywordInfo& a, const KeywordInfo& b) {
+    const int cmp = a.keyword->compare(*b.keyword);
+    if (cmp != 0) {
+      return cmp < 0;
+    }
+    return a.isSymbol < b.isSymbol;
+  });
+  const KeywordInfo* const new_end =
+      std::unique(kw->kwList, kw->kwList + kw->count, [](const KeywordInfo& a, const KeywordInfo& b) {
+        return a.isSymbol == b.isSymbol && a.keyword->compare(*b.keyword) == 0;
+      });
+  kw->count = static_cast<int>(new_end - kw->kwList);
+  kw->firstChar->freeze();
+  kw->substrIndex();
+  return merged;
+}
+
+constexpr uint8_t kSearchUnbuilt = 0;
+constexpr uint8_t kSearchBuilding = 1;
+constexpr uint8_t kSearchDone = 2;
+
+}  // namespace
+
+void HrcLibrary::Impl::mergeSearchKeywords(SchemeImpl* scheme)
+{
+  std::vector<SchemeNode*> merged;
+  merged.reserve(scheme->searchNodes.size());
+  for (size_t i = 0; i < scheme->searchNodes.size();) {
+    auto* node = scheme->searchNodes[i];
+    if (node->type != SchemeNode::SchemeNodeType::SNT_KEYWORDS) {
+      merged.push_back(node);
+      i++;
+      continue;
+    }
+    auto* first = static_cast<SchemeNodeKeywords*>(node);
+    if (first->kwList->count == 0) {
+      i++;
+      continue;
+    }
+    std::vector<const SchemeNodeKeywords*> run {first};
+    size_t j = i + 1;
+    for (; j < scheme->searchNodes.size(); j++) {
+      auto* next = scheme->searchNodes[j];
+      if (next->type != SchemeNode::SchemeNodeType::SNT_KEYWORDS) {
+        break;
+      }
+      auto* kw = static_cast<SchemeNodeKeywords*>(next);
+      if (kw->kwList->count == 0) {
+        continue;
+      }
+      if (!keywordsMergeable(first, kw)) {
+        break;
+      }
+      run.push_back(kw);
+    }
+    if (run.size() == 1) {
+      merged.push_back(node);
+    } else {
+      auto owned = mergeKeywordNodes(run);
+      merged.push_back(owned.get());
+      scheme->searchOwnedNodes.emplace_back(std::move(owned));
+    }
+    i = j;
+  }
+  scheme->searchNodes = std::move(merged);
+}
+
+void HrcLibrary::Impl::buildSearchNodes(SchemeImpl* scheme,
+                                        std::unordered_map<const SchemeImpl*, uint8_t>& state)
+{
+  auto& st = state[scheme];
+  if (st != kSearchUnbuilt) {
+    return;
+  }
+  st = kSearchBuilding;
+  scheme->searchNodes.clear();
+  scheme->searchOwnedNodes.clear();
+  for (const auto& node : scheme->nodes) {
+    if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
+      auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
+      if (inherit->scheme != nullptr && inherit->virtualEntryVector.empty() &&
+          !inherit->scheme->virtualTarget)
+      {
+        if (state[inherit->scheme] == kSearchBuilding) {
+          scheme->searchNodes.push_back(node.get());
+          continue;
+        }
+        buildSearchNodes(inherit->scheme, state);
+        scheme->searchNodes.insert(scheme->searchNodes.end(), inherit->scheme->searchNodes.begin(),
+                                   inherit->scheme->searchNodes.end());
+        continue;
+      }
+    }
+    scheme->searchNodes.push_back(node.get());
+  }
+  mergeSearchKeywords(scheme);
+  st = kSearchDone;
 }
 
 void HrcLibrary::Impl::updateLinks()
@@ -1043,20 +1191,12 @@ void HrcLibrary::Impl::updateLinks()
     }
   }
 
+  // Flatten static inherit into searchNodes, merge keyword lists, then
+  // build per-ASCII candidate slices (searchDispatch). Virtual inherit
+  // stays as SNT_INHERIT and is resolved at parse time via VTList.
+  std::unordered_map<const SchemeImpl*, uint8_t> searchState;
   for (const auto& [key, scheme] : schemeHash) {
-    scheme->searchNodes.clear();
-    for (const auto& node : scheme->nodes) {
-      if (node->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
-        auto* inherit = static_cast<SchemeNodeInherit*>(node.get());
-        if (inherit->scheme && inherit->virtualEntryVector.empty() && !inherit->scheme->virtualTarget) {
-          for (const auto& inheritedNode : inherit->scheme->nodes) {
-            scheme->searchNodes.push_back(inheritedNode.get());
-          }
-          continue;
-        }
-      }
-      scheme->searchNodes.push_back(node.get());
-    }
+    buildSearchNodes(scheme, searchState);
   }
 
   std::unordered_map<const SchemeImpl*, std::array<uint8_t, 128>> startCache;
@@ -1206,7 +1346,11 @@ uUnicodeString HrcLibrary::Impl::qualifyForeignName(const UnicodeString* name, c
       if (idx > -1) {
         tname = current_parse_type->pimpl->importVector.at(idx);
       }
-      FileType* importer = fileTypeHash.find(tname)->second;
+      const auto importer_it = fileTypeHash.find(tname);
+      if (importer_it == fileTypeHash.end()) {
+        continue;
+      }
+      FileType* importer = importer_it->second;
       if (!importer->pimpl->type_loading) {
         loadFileType(importer);
       }
@@ -1255,7 +1399,10 @@ uUnicodeString HrcLibrary::Impl::useEntities(const UnicodeString* name)
     auto qEnName = qualifyForeignName(&enname, QualifyNameType::QNT_ENTITY, true);
     const UnicodeString* enval = nullptr;
     if (qEnName != nullptr) {
-      enval = schemeEntitiesHash.find(*qEnName)->second;
+      const auto entity_it = schemeEntitiesHash.find(*qEnName);
+      if (entity_it != schemeEntitiesHash.end()) {
+        enval = entity_it->second;
+      }
     }
     if (enval == nullptr) {
       epos++;

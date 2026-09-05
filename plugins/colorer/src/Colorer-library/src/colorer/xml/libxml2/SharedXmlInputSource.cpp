@@ -3,7 +3,51 @@
 #include "colorer/Exception.h"
 #include "colorer/utils/Environment.h"
 
-std::unordered_map<UnicodeString, SharedXmlInputSource*>* SharedXmlInputSource::isHash = nullptr;
+thread_local XmlJarCache* XmlJarCache::current_ = nullptr;
+
+XmlJarCache::Current::Current(XmlJarCache& cache) : previous(current_)
+{
+  current_ = &cache;
+}
+
+XmlJarCache::Current::~Current()
+{
+  current_ = previous;
+}
+
+XmlJarCache& XmlJarCache::fallback()
+{
+  static thread_local XmlJarCache tls_fallback;
+  return tls_fallback;
+}
+
+XmlJarCache& XmlJarCache::active()
+{
+  return current_ != nullptr ? *current_ : fallback();
+}
+
+XmlJarCache* XmlJarCache::bound()
+{
+  return current_;
+}
+
+SharedXmlInputSource* XmlJarCache::get(const UnicodeString& path)
+{
+  const auto existing = entries.find(path);
+  if (existing != entries.end()) {
+    existing->second->addref();
+    return existing->second.get();
+  }
+
+  auto sis = std::unique_ptr<SharedXmlInputSource>(new SharedXmlInputSource(path));
+  auto* const raw = sis.get();
+  const auto [it, inserted] = entries.try_emplace(path, std::move(sis));
+  if (!inserted) {
+    it->second->addref();
+    return it->second.get();
+  }
+  return raw;
+}
 
 int SharedXmlInputSource::addref()
 {
@@ -14,7 +58,6 @@ int SharedXmlInputSource::delref()
 {
   ref_count--;
   if (ref_count <= 0) {
-    delete this;
     return -1;
   }
   return ref_count;
@@ -22,36 +65,12 @@ int SharedXmlInputSource::delref()
 
 SharedXmlInputSource* SharedXmlInputSource::getSharedInputSource(const UnicodeString& path)
 {
-  if (isHash == nullptr) {
-    isHash = new std::unordered_map<UnicodeString, SharedXmlInputSource*>();
-  }
-
-  const auto s = isHash->find(path);
-  if (s != isHash->end()) {
-    SharedXmlInputSource* sis = s->second;
-    sis->addref();
-    return sis;
-  }
-
-  auto* sis = new SharedXmlInputSource(path);
-  isHash->try_emplace(path, sis);
-  return sis;
+  return XmlJarCache::active().get(path);
 }
 
-SharedXmlInputSource::SharedXmlInputSource(const UnicodeString& path): source_path(path)
+SharedXmlInputSource::SharedXmlInputSource(const UnicodeString& path) : source_path(path)
 {
-
   is_open = false;
-}
-
-SharedXmlInputSource::~SharedXmlInputSource()
-{
-  // You don't need to delete an object that has been deleted from the array. We are already in the destructor.
-  isHash->erase(source_path);
-  if (isHash->empty()) {
-    delete isHash;
-    isHash = nullptr;
-  }
 }
 
 int SharedXmlInputSource::getSize() const

@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <cerrno>
 #include <cstring>
 
 #if defined WIN32
@@ -12,8 +13,40 @@
 #ifndef O_BINARY
 #define O_BINARY 0x0
 #endif
+#ifndef O_RDONLY
+#define O_RDONLY 0
+#endif
 
 #include "colorer/io/FileInputSource.h"
+
+namespace {
+
+struct FileDescriptor {
+  int fd = -1;
+
+  FileDescriptor() = default;
+  ~FileDescriptor()
+  {
+    close();
+  }
+  FileDescriptor(const FileDescriptor&) = delete;
+  FileDescriptor& operator=(const FileDescriptor&) = delete;
+
+  void close()
+  {
+    if (fd == -1) {
+      return;
+    }
+#ifdef _MSC_VER
+    _close(fd);
+#else
+    ::close(fd);
+#endif
+    fd = -1;
+  }
+};
+
+}  // namespace
 
 FileInputSource::FileInputSource(const UnicodeString* basePath, FileInputSource* base)
 {
@@ -67,32 +100,60 @@ const byte* FileInputSource::openStream()
 {
   if (stream != nullptr)
     throw InputSourceException("openStream(): source stream already opened: '" + *baseLocation + "'");
-#ifdef _MSC_VER
-  int source;
-  _sopen_s(&source, UStr::to_stdstr(baseLocation).c_str(), _O_BINARY | O_RDONLY, _SH_DENYNO, _S_IREAD | _S_IWRITE);
-#else
-  int source = open(UStr::to_stdstr(baseLocation).c_str(), O_BINARY);
-#endif
-  if (source == -1)
-    throw InputSourceException("Can't open file '" + *baseLocation + "'");
-  struct stat st
-  {};
-  fstat(source, &st);
-  len = st.st_size;
 
-  stream = new byte[len];
-  memset(stream, 0, sizeof(byte) * len);
+  FileDescriptor source;
 #ifdef _MSC_VER
-  if (_read(source, stream, len) != len) {
-    throw InputSourceException("Error on read file" + *baseLocation);
-  }
-  _close(source);
+  if (_sopen_s(&source.fd, UStr::to_stdstr(baseLocation).c_str(), _O_BINARY | O_RDONLY, _SH_DENYNO,
+               _S_IREAD | _S_IWRITE) != 0 ||
+      source.fd == -1)
 #else
-  if (read(source, stream, len) != len) {
-    throw InputSourceException("Error on read file" + *baseLocation);
-  }
-  close(source);
+  source.fd = open(UStr::to_stdstr(baseLocation).c_str(), O_RDONLY | O_BINARY);
+  if (source.fd == -1)
 #endif
+  {
+    throw InputSourceException("Can't open file '" + *baseLocation + "'");
+  }
+
+  struct stat st {};
+  if (fstat(source.fd, &st) != 0) {
+    throw InputSourceException("Can't stat file '" + *baseLocation + "'");
+  }
+  len = static_cast<int>(st.st_size);
+  if (len < 0) {
+    throw InputSourceException("File is too large '" + *baseLocation + "'");
+  }
+
+  stream = new byte[len == 0 ? 1 : len];
+  if (len == 0) {
+    stream[0] = 0;
+    return stream;
+  }
+  memset(stream, 0, sizeof(byte) * static_cast<size_t>(len));
+
+  int got = 0;
+  while (got < len) {
+#ifdef _MSC_VER
+    const int n = _read(source.fd, stream + got, static_cast<unsigned>(len - got));
+#else
+    const int n = static_cast<int>(read(source.fd, stream + got, static_cast<size_t>(len - got)));
+#endif
+    if (n < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      delete[] stream;
+      stream = nullptr;
+      len = 0;
+      throw InputSourceException("Error on read file '" + *baseLocation + "'");
+    }
+    if (n == 0) {
+      delete[] stream;
+      stream = nullptr;
+      len = 0;
+      throw InputSourceException("Error on read file '" + *baseLocation + "'");
+    }
+    got += n;
+  }
   return stream;
 }
 

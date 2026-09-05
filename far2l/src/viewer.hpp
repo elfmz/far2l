@@ -83,6 +83,14 @@ enum SHOW_MODES
 	SHOW_DOWN
 };
 
+struct ViewerBookmark {
+	DWORD64 FilePos;
+	DWORD64 LeftPos;
+	int index;
+
+	wchar_t preview[128];
+};
+
 class Viewer : public ScreenObject
 {
 	friend class FileViewer;
@@ -298,4 +306,6 @@ public:
 	int ProcessHexMode(int newMode, bool isRedraw = TRUE);
 	int ProcessWrapMode(int newMode, bool isRedraw = TRUE);
 	int ProcessTypeWrapMode(int newMode, bool isRedraw = TRUE);
+
+	std::vector<ViewerBookmark> GetActiveBookmarks();
 };

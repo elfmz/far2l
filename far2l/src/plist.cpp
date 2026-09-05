@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 #if defined(__APPLE__)
 #include <libproc.h>
@@ -74,17 +75,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct FarPidInfo
 {
-	std::wstring text;
+	FARString text;
 	std::string name;
 	int pid;
 	unsigned long rss;
-	unsigned long cpu_ticks;
+	unsigned long long cpu_time; // in milliseconds!
+	double cpu_usage; // initially set to -1, its calculated out of enumerateProcesses!
 };
+
+static const wchar_t CPU_LOAD_PLACEHOLDER[] = L"  ??.?%";
 
 static void enumerateProcesses(std::vector<FarPidInfo>& v) 
 {
 	v.clear();
 
+	FARString text;
 #ifdef __linux__
 	struct dirent *entry;
 
@@ -92,7 +97,7 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 	if (!d) return;
 
 	const unsigned long page_kb = sysconf(_SC_PAGESIZE) / 1024;
-	FARString text;
+	const unsigned long clock_tick = sysconf(_SC_CLK_TCK);
 	std::string path, proc_comm, proc_cmdline, proc_stat, proc_status, uid_name;
 	std::vector<std::string> parts;
 	while ((entry = readdir(d)) != NULL) {
@@ -151,19 +156,17 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		printf("RSS: %ld KB (%s)\n", rss_kb, parts[24].c_str());
 		printf("----\n");*/
 
-		unsigned long total_time = utime + stime;
-		const char* cpuLoad = "?";
+		unsigned long long cpu_time = utime + stime;
+		if (clock_tick) {
+			cpu_time*= 1000;
+			cpu_time/= clock_tick;
+		}
 
-		if (total_time < 100)		cpuLoad = "idle";
-		else if (total_time < 1000)  cpuLoad = "low";
-		else if (total_time < 10000) cpuLoad = "medium";
-		else						 cpuLoad = "high";
-
-		text.Format(L"%8d %lc %-12.12s %lc %-16.16s %lc %-40.40s %lc %6s %lc %'8ld Mb", 
+		text.Format(L"%8d %lc %-12.12s %lc %-16.16s %lc %-40.40s %lc %ls %lc %'8ld Mb", 
 			pid, BoxSymbols[BS_V1], uid_name.c_str(), BoxSymbols[BS_V1], 
 			proc_comm.c_str(), BoxSymbols[BS_V1], proc_cmdline.c_str(), BoxSymbols[BS_V1], 
-			cpuLoad, BoxSymbols[BS_V1], rss_kb / 1024);
-		v.push_back({ text.GetWide(), proc_cmdline, pid, rss_kb, total_time });
+			CPU_LOAD_PLACEHOLDER, BoxSymbols[BS_V1], rss_kb / 1024);
+		v.push_back({ text, proc_cmdline, pid, rss_kb, cpu_time, -1 });
 	}
 	closedir(d);
 
@@ -181,13 +184,14 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		int ret = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &bsd, sizeof(bsd));
 		if (ret <= 0) continue;
 
-		struct proc_taskinfo task;
+		struct proc_taskinfo task{};
 		ret = proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &task, sizeof(task));
 		if (ret <= 0) continue;
 
 		// CPU time (user + system) in nanoseconds + RSS
-		unsigned long total_time = task.pti_total_user + task.pti_total_system;
-		double cpu_seconds = (task.pti_total_user + task.pti_total_system) / 1e9;
+		unsigned long long cpu_time = task.pti_total_user + task.pti_total_system;
+		cpu_time/= 1000000; // downconvert to wanted milliseconds
+//		double cpu_seconds = (task.pti_total_user + task.pti_total_system) / 1e9;
 		unsigned long rss_kb = task.pti_resident_size / 1024;
 
 		/*
@@ -198,9 +202,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		printf("----\n");
 		*/
 
-		FARString strStr;
-		strStr.Format(L"%8d %lc %-40.40s %lc %6.4lf %lc %8ld Mb", pid, BoxSymbols[BS_V1], bsd.pbi_name, BoxSymbols[BS_V1], cpu_seconds, BoxSymbols[BS_V1], rss_kb / 1024);
-		v.push_back({ strStr.GetWide(), bsd.pbi_name, pid, rss_kb, total_time });
+		text.Format(L"%8d %lc %-40.40s %lc %ls %lc %8ld Mb", pid, BoxSymbols[BS_V1], bsd.pbi_name, BoxSymbols[BS_V1], CPU_LOAD_PLACEHOLDER, BoxSymbols[BS_V1], rss_kb / 1024);
+		v.push_back({ text, bsd.pbi_name, pid, rss_kb, cpu_time, -1 });
 	}
 
 #endif
@@ -227,20 +230,23 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 
 	int count = len / sizeof(struct kinfo_proc);
 
+	FARString strStr;
 	for (int i = 0; i < count; i++) {
 		struct kinfo_proc *p = &procs[i];
 
 		pid_t pid = p->ki_pid;
 		const char *name = p->ki_comm;
 
-		// CPU time (user + system) in microseconds
-		unsigned long total_time = p->ki_rusage.ru_utime.tv_sec +
-			 p->ki_rusage.ru_stime.tv_sec;
-		double cpu_seconds =
+		// CPU time (user + system) - convert to milliseconds
+		unsigned long long cpu_time = p->ki_rusage.ru_utime.tv_sec + p->ki_rusage.ru_stime.tv_sec;
+		cpu_time*= 1000;
+		cpu_time+= (p->ki_rusage.ru_utime.tv_usec + p->ki_rusage.ru_stime.tv_usec) / 1000;
+
+/*		double cpu_seconds =
 			(p->ki_rusage.ru_utime.tv_sec +
 			 p->ki_rusage.ru_stime.tv_sec) +
 			(p->ki_rusage.ru_utime.tv_usec +
-			 p->ki_rusage.ru_stime.tv_usec) / 1e6;
+			 p->ki_rusage.ru_stime.tv_usec) / 1e6;*/
 
 		// Resident memory size (RSS)
 		unsigned long rss_kb = p->ki_rssize * getpagesize() / 1024;
@@ -253,9 +259,8 @@ static void enumerateProcesses(std::vector<FarPidInfo>& v)
 		printf("----\n");
 		*/
 
-		FARString strStr;
-		strStr.Format(L"%8d %lc %-40.40s %lc %6.4lf %lc %6ld Mb", pid, BoxSymbols[BS_V1], name, BoxSymbols[BS_V1], cpu_seconds, BoxSymbols[BS_V1], rss_kb / 1024);
-		v.push_back({ strStr.GetWide(), name, pid, rss_kb, total_time });
+		text.Format(L"%8d %lc %-40.40s %lc %ls %lc %6ld Mb", pid, BoxSymbols[BS_V1], name, BoxSymbols[BS_V1], CPU_LOAD_PLACEHOLDER, BoxSymbols[BS_V1], rss_kb / 1024);
+		v.push_back({ text, name, pid, rss_kb, cpu_time, -1 });
 	}
 
 	free(procs);
@@ -274,22 +279,64 @@ void ShowProcessList()
 
 	ProcList.Show();
 	ProcList.SetRegularIdle(true);
-	int sort_key = 'i';
+	int sort_key = 'P';
 	auto last_refresh = 0;
 	bool refresh = true;
 
+	struct TimeAndId
+	{
+		unsigned long long cpu_time{};
+		unsigned int id{};
+	};
+	std::unordered_map<int, TimeAndId> pid2ti;
 	std::vector<FarPidInfo> v;
 
-	while (!ProcList.Done()) {
-		if (refresh || (GetProcessUptimeMSec() - last_refresh) >= 1000) {
+	FARString str_usage;
+	for (unsigned int loop_id = 1; !ProcList.Done(); ++loop_id) {
+		const auto now = GetProcessUptimeMSec();
+		if (refresh || (now - last_refresh) >= 1000) {
 			int selected_pos = ProcList.GetSelectPos();
-			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : -1;
+			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : getpid();
 			ProcList.Hide();
 			ProcList.DeleteItems();
 
 			ProcList.SetPosition(-1,-1,0,0);
 
 			enumerateProcesses(v);
+
+			// estimate cpu usage
+			for (auto &vj : v) {
+				auto &pt = pid2ti[vj.pid];
+				if (pt.id != 0 && vj.cpu_time >= pt.cpu_time) {
+					unsigned long long cpu_time_delta = vj.cpu_time - pt.cpu_time;
+					unsigned long long real_time_delta = (now > last_refresh) ? now - last_refresh : 1;
+					vj.cpu_usage = double(cpu_time_delta * 100) / real_time_delta;
+					if (vj.cpu_usage <= 1) {
+						str_usage.Format(L"%.2f%%", vj.cpu_usage);
+					} else if (vj.cpu_usage <= 99) {
+						str_usage.Format(L"%.1f%%", vj.cpu_usage);
+					} else {
+						str_usage.Format(L"%d%%", int(vj.cpu_usage));
+					}
+					if (str_usage.GetLength() < ARRAYSIZE(CPU_LOAD_PLACEHOLDER) - 1) {
+						str_usage.Insert(0, L' ', ARRAYSIZE(CPU_LOAD_PLACEHOLDER) - 1 - str_usage.GetLength());
+					} else {
+						str_usage.Truncate(ARRAYSIZE(CPU_LOAD_PLACEHOLDER) - 1);
+					}
+					ReplaceStrings(vj.text, CPU_LOAD_PLACEHOLDER, str_usage);
+				}
+				pt.id = loop_id;
+				pt.cpu_time = vj.cpu_time;
+			}
+			// remove from pid2ti those entries that were not updated, meaning they terminated
+			for (auto it = pid2ti.begin(); it != pid2ti.end(); ) {
+				if (it->second.id != loop_id) {
+					fprintf(stderr, "%s: pid %d terminated\n", __FUNCTION__, it->first);
+					it = pid2ti.erase(it);
+				} else {
+					++it;
+				}
+			}
 
 			if (sort_key == 't' || sort_key == 'T')
 				std::sort(v.begin(), v.end(),
@@ -304,7 +351,7 @@ void ShowProcessList()
 			else if (sort_key == 'p' || sort_key == 'P')
 				std::sort(v.begin(), v.end(),
 					[sort_key](const FarPidInfo& a, const FarPidInfo& b) {
-						return sort_key == 'P' ? b.cpu_ticks < a.cpu_ticks : a.cpu_ticks < b.cpu_ticks;
+						return sort_key == 'P' ? b.cpu_usage < a.cpu_usage : a.cpu_usage < b.cpu_usage;
 					});
 			else if (sort_key == 'm' || sort_key == 'M')
 				std::sort(v.begin(), v.end(),
@@ -314,7 +361,7 @@ void ShowProcessList()
 
 			for (const auto &vj : v) {
 				MenuItemEx item;
-				item.strName = vj.text.c_str();
+				item.strName = vj.text;
 				item.AccelKey = 0;
 				if (vj.pid == selected_pid) {
 					item.Flags = LIF_SELECTED;

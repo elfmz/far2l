@@ -311,7 +311,7 @@ void ShowProcessList()
 					unsigned long long cpu_time_delta = vj.cpu_time - pt.cpu_time;
 					unsigned long long real_time_delta = (now > last_refresh) ? now - last_refresh : 1;
 					vj.cpu_usage = double(cpu_time_delta * 100) / real_time_delta;
-					if (vj.cpu_usage <= 1) {
+					if (vj.cpu_usage <= 9) {
 						str_usage.Format(L"%.2f%%", vj.cpu_usage);
 					} else if (vj.cpu_usage <= 99) {
 						str_usage.Format(L"%.1f%%", vj.cpu_usage);

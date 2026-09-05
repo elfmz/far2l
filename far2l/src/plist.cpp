@@ -281,7 +281,7 @@ void ShowProcessList()
 	ProcList.SetRegularIdle(true);
 	int sort_key = 'P';
 	auto last_refresh = 0;
-	bool refresh = true;
+	bool refresh = true, autorefresh = true;
 
 	struct TimeAndId
 	{
@@ -294,7 +294,7 @@ void ShowProcessList()
 	FARString str_usage;
 	for (unsigned int loop_id = 1; !ProcList.Done(); ++loop_id) {
 		const auto now = GetProcessUptimeMSec();
-		if (refresh || (now - last_refresh) >= 1000) {
+		if (refresh || (autorefresh && (now - last_refresh) >= 1000)) {
 			int selected_pos = ProcList.GetSelectPos();
 			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : getpid();
 			ProcList.Hide();
@@ -393,7 +393,8 @@ void ShowProcessList()
 			refresh = true;
 			break;
 		case KEY_CTRLR:
-			refresh = true;
+			autorefresh = !autorefresh;
+			refresh = autorefresh;
 			break;
 		case KEY_NUMDEL:
 		case KEY_DEL:

@@ -526,7 +526,23 @@ void KeyBar::SetDisableMask(int Mask)
 void KeyBar::ResizeConsole() {}
 
 static const wchar_t* GetDescriptionFromLabelIf(const wchar_t* label) {
-    return label;
+	static wchar_t buf[256];
+
+	// first 8 characters are short names; the rest is normnal text
+	*buf = 0;
+	wchar_t* t = buf;
+	const wchar_t* q = label;
+
+	for(int i = 0; i < 8 && *q; ++i) *t++ = *q++;
+	for(; *q && isspace(*q); ++q);
+    *t++ = L' ';
+    *t++ = L' ';
+    *t++ = L' ';
+    *t++ = L' ';
+	while(*q) *t++ = *q++;
+	*t = 0;
+	fprintf(stderr, "%-25.25ls -> %ls\n", label, buf);
+    return (const wchar_t*)buf;
 }
 
 void KeyBar::ShowContextMenu() 

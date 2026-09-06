@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="toml">
+    <annotation>
+      <documentation>
+        TOML (Tom's Obvious, Minimal Language) syntax
+        https://toml.io/en/v1.0.0
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Key" parent="def:Keyword" description="Bare or quoted key"/>
+    <region name="TableName" parent="def:KeywordStrong" description="Table header name"/>
+    <region name="String" parent="def:String"/>
+    <region name="Escape" parent="def:StringContent"/>
+    <region name="Comment" parent="def:LineComment"/>
+    <region name="DateTime" parent="def:Date"/>
+    <region name="Boolean" parent="def:BooleanConstant"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="Error" parent="def:Error"/>
+
+    <entity name="bareKey" value="[A-Za-z0-9_-]+"/>
+    <entity name="dec" value="[0-9](?:_?[0-9])*"/>
+    <entity name="hex" value="[0-9A-Fa-f](?:_?[0-9A-Fa-f])*"/>
+    <entity name="oct" value="[0-7](?:_?[0-7])*"/>
+    <entity name="bin" value="[01](?:_?[01])*"/>
+    <entity name="fullDate" value="\d{4}-\d{2}-\d{2}"/>
+    <entity name="partialTime" value="\d{2}:\d{2}:\d{2}(?:\.\d+)?"/>
+    <entity name="timeOffset" value="(?:[Zz]|[+-]\d{2}(?::\d{2})?)"/>
+
+    <scheme name="comment">
+      <block start="/#/" end="/$/" scheme="def:Comment" region="Comment"/>
+    </scheme>
+
+    <scheme name="escapes">
+      <regexp match="/\\(?:[btnfre\\&quot;]|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|x[0-9A-Fa-f]{2})/" region="Escape"/>
+      <regexp match="/\\./" region="Error"/>
+      <regexp match="/\\/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="multilineEscapes">
+      <block start="/\\$/" end="/^/" scheme="def:empty" region="Escape"/>
+      <inherit scheme="escapes"/>
+    </scheme>
+
+    <scheme name="strings">
+      <block start="/(&quot;&quot;&quot;)/" end="/(&quot;{3,5})/"
+             scheme="multilineEscapes" region="String"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(''')/" end="/('{3,5})/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(&quot;)/" end="/(&quot;|$)/"
+             scheme="escapes" region="String"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(')/" end="/('|$)/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="quotedKeys">
+      <block start="/(&quot;)\M(?:[^\\&quot;]|\\.)*&quot;\s*[.=]/"
+             end="/(&quot;)/"
+             scheme="escapes" region="Key"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(')\M[^']*'\s*[.=]/"
+             end="/(')/"
+             scheme="def:empty" region="Key"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="numbers">
+      <regexp match="/(?:(?{def:NumberHex}0x%hex;)|(?{def:NumberOct}0o%oct;)|(?{def:NumberBin}0b%bin;))\b/"/>
+      <regexp match="/[+-](?:%dec;\.%dec;(?:[eE][+-]?%dec;)?|%dec;[eE][+-]?%dec;)/" region="def:NumberFloat"/>
+      <regexp match="/%dec;(?:\.%dec;(?:[eE][+-]?%dec;)?|[eE][+-]?%dec;)/" region="def:NumberFloat"/>
+      <regexp match="/[+-](inf|nan)\b/" region="def:NumberFloat"/>
+      <keywords region="def:NumberFloat">
+        <word name="inf"/>
+        <word name="nan"/>
+      </keywords>
+      <regexp match="/[+-](?:0|[1-9](?:_?[0-9])*)\b/" region="def:NumberDec"/>
+      <regexp match="/(?:0|[1-9](?:_?[0-9])*)\b/" region="def:NumberDec"/>
+    </scheme>
+
+    <scheme name="datetimes">
+      <regexp match="/%fullDate;(?:[Tt ]%partialTime;(?:%timeOffset;)?)?/" region="DateTime"/>
+      <regexp match="/%partialTime;/" region="DateTime"/>
+    </scheme>
+
+    <scheme name="booleans">
+      <keywords region="Boolean" ignorecase="no">
+        <word name="true"/>
+        <word name="false"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="tableName">
+      <block start="/(&quot;)/" end="/(&quot;)/"
+             scheme="escapes" region="TableName"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <block start="/(')/" end="/(')/"
+             scheme="def:empty" region="TableName"
+             region00="def:StringEdge" region01="def:PairStart"
+             region10="def:StringEdge" region11="def:PairEnd"/>
+      <regexp match="/%bareKey;/" region="TableName"/>
+      <keywords region="Symbol">
+        <symb name="."/>
+      </keywords>
+      <regexp match="/[^\s\]]/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="values">
+      <inherit scheme="comment"/>
+      <inherit scheme="strings"/>
+      <inherit scheme="datetimes"/>
+      <inherit scheme="numbers"/>
+      <inherit scheme="booleans"/>
+      <block start="/(\[)/" end="/(\])/"
+             scheme="values"
+             region00="Symbol" region10="Symbol"
+             region01="def:PairStart" region11="def:PairEnd"/>
+      <block start="/(\{)/" end="/(\})/"
+             scheme="inlineTable"
+             region00="Symbol" region10="Symbol"
+             region01="def:PairStart" region11="def:PairEnd"/>
+      <keywords region="Symbol">
+        <symb name=","/>
+      </keywords>
+      <keywords region="Error">
+        <symb name="]"/>
+        <symb name="}"/>
+      </keywords>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <!-- '=' introduces a value. Nested arrays/tables/multiline strings
+         get their own spanning blocks so a same-line scalar end ('$')
+         cannot close them early. -->
+    <scheme name="assign">
+      <block start="/(?{def:SymbolStrong}=)\s*(?{def:PairStart}(?{def:StringEdge}&quot;&quot;&quot;))/"
+             end="/(?{def:PairEnd}(?{def:StringEdge}&quot;{3,5}))/"
+             scheme="multilineEscapes" region="String" inner-region="yes"/>
+      <block start="/(?{def:SymbolStrong}=)\s*(?{def:PairStart}(?{def:StringEdge}'''))/"
+             end="/(?{def:PairEnd}(?{def:StringEdge}'{3,5}))/"
+             scheme="def:empty" region="String" inner-region="yes"/>
+      <block start="/(?{def:SymbolStrong}=)\s*(?{def:PairStart}(?{Symbol}\[))/"
+             end="/(?{def:PairEnd}(?{Symbol}\]))/"
+             scheme="values"/>
+      <block start="/(?{def:SymbolStrong}=)\s*(?{def:PairStart}(?{Symbol}\{))/"
+             end="/(?{def:PairEnd}(?{Symbol}\}))/"
+             scheme="inlineTable"/>
+      <block start="/(?{def:SymbolStrong}=)/"
+             end="/\M[,}\]#]|$/"
+             scheme="values"/>
+    </scheme>
+
+    <scheme name="body">
+      <inherit scheme="comment"/>
+      <inherit scheme="quotedKeys"/>
+      <regexp match="/(%bareKey;)\M\s*[.=]/" region="Key"/>
+      <inherit scheme="assign"/>
+      <keywords region="Symbol">
+        <symb name="."/>
+        <symb name=","/>
+      </keywords>
+      <regexp match="/\S/" region="Error" priority="low"/>
+    </scheme>
+
+    <scheme name="inlineTable">
+      <inherit scheme="body"/>
+    </scheme>
+
+    <scheme name="toml">
+      <inherit scheme="comment"/>
+      <block start="/(\[\[)/" end="/(\]\])/"
+             scheme="tableName"
+             region00="def:PairStart" region10="def:PairEnd"
+             region01="def:SymbolStrong" region11="def:SymbolStrong"/>
+      <block start="/(\[)/" end="/(\])/"
+             scheme="tableName"
+             region00="def:PairStart" region10="def:PairEnd"
+             region01="def:SymbolStrong" region11="def:SymbolStrong"/>
+      <inherit scheme="body"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

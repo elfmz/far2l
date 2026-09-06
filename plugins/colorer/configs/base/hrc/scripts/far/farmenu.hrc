@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="farmenu">
+
+ <annotation><documentation>
+   FarMenu.Ini (F2 in Far manager)
+ </documentation><contributors><![CDATA[
+   Eugene Efremov <4mirror@mail.ru>
+   Aleksey Dobrunov <ctapmex@ctapmex.com>
+ ]]></contributors></annotation>
+
+<region name="symb" parent="def:Symbol"/>
+<region name="symb.struct" parent="def:SymbolStrong"/>
+<region name="input" parent="def:String"/>
+<region name="input.label" parent="def:KeywordStrong"/>
+<region name="input.name" parent="def:Var"/>
+<region name="label" parent="def:Label"/>
+
+<scheme name="str">
+ <inherit scheme="farsymb"/>
+</scheme>
+
+<scheme name="farmenu">
+ <block start="/^(\-\:)/" end="/^(\-\:)/" scheme="menu"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+
+ <inherit scheme="menu"/>
+</scheme>
+
+<scheme name="menu">
+
+ <block start="/(\{)/" end="/(\})/" scheme="menu"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+
+ <regexp match="/^(\S*\:)\s+(.*)$/" region="def:String"
+  region1="label" region2="def:Outlined"
+ />
+
+ <inherit scheme="farsymb"/>
+
+ <block start="/^\s+(?{def:KeywordStrong}@?luas?:)/" end="/$/" scheme="lua:lua"/>
+ <block start="/^\s+(?{def:KeywordStrong}@?v?ps:)/" end="/$/" scheme="powershell:powershell"/>
+
+ <block start="/&quot;/" end="/&quot;/" scheme="str" region="def:String"/>
+
+ <inherit scheme="def:Path"/>
+ <regexp match="/\w+\:/" region="def:KeywordStrong"/>
+
+ <block start="/(\()\M\!/" end="/(\))/" scheme="menu"
+  region00="def:PairStart" region10="def:PairEnd"
+  region01="symb.struct" region11="symb.struct"
+ />
+
+ <inherit scheme="Batch:Batch"/>
+</scheme>
+
+
+<!--
+ -
+ - Metasumbols
+ -
+ - -->
+
+
+<scheme name="farsymb.input">
+ <block start="/~(\?)/" end="/(\?)/"
+  region="input.label" scheme="farsymb.input.label"
+  region00="symb" region10="symb"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+ <inherit scheme="farsymb.input.content"/>
+</scheme>
+
+<scheme name="farsymb.input.label">
+ <regexp match="/~(\$)\w+(\$)/" region="input.name"
+  region1="def:PairStart" region2="def:PairEnd"
+ />
+ <inherit scheme="farsymb.input.content"/>
+</scheme>
+
+<scheme name="farsymb.input.content">
+ <block start="/(\()/" end="/(\))/" scheme="farsymb.input.paren"
+  region00="symb.struct" region10="symb.struct"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+</scheme>
+
+<scheme name="farsymb.input.paren">
+ <inherit scheme="farsymb.input.content"/>
+ <inherit scheme="farsymb.content"/>
+</scheme>
+
+
+<scheme name="farsymb">
+ <block start="/(\!)\M\?/" end="/(\!)/"
+  region="input" scheme="farsymb.input"
+  region00="symb.struct" region10="symb.struct"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+ <!--regexp match="/(\!\?).*?(\?).*?(\!)/" region="def:String"
+  region1="symb" region2="symb" region3="symb"
+ /-->
+ <inherit scheme="farsymb.content"/>
+</scheme>
+
+<scheme name="farsymb.content">
+ <regexp match="/\![@$][QSFA]\!/" region="symb"/>
+<keywords region="symb">
+  <symb name="!"/>
+  <symb name="!~"/>
+  <symb name="!`"/>
+  <symb name="!`~"/>
+  <symb name="!.!"/>
+  <symb name="!-!"/>
+  <symb name="!+!"/>
+  <symb name="!@!"/>
+  <symb name="!$!"/>
+  <symb name="!&amp;~"/>
+  <symb name="!&amp;"/>
+  <symb name="!^"/>
+  <symb name="!#"/>
+  <symb name="!:"/>
+  <symb name="!\"/>
+  <symb name="!/"/>
+  <symb name="!!"/>
+ </keywords>
+</scheme>
+
+</type>
+</hrc>
+<!--
+Copyright (C) 2003-2005 Eugene Efremov <4mirror@mail.ru>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

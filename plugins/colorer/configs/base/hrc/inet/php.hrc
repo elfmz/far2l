@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+	<!ENTITY php-script SYSTEM "php-script.ent.hrc">
+	<!ENTITY php-gen SYSTEM "gen/php-gen.ent.hrc">
+]>
+<hrc version="take5" 
+	xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+ >
+
+  <type name="php">
+
+    <annotation><documentation>
+       PHP scheme
+    </documentation><contributors><![CDATA[
+        Zini nAlexei <zn@zn.mldnet.com>
+        Kirill Hryapin <kx@mail.ru>
+        Ondrej Brablc <colorer@brablc.com>
+        Eugene Efremov <4mirror@mail.ru>:
+         - correct strings and heredoc, new schemes for strings
+         - add regexp support (PCRE and ROSIX)
+         - any keywords/regions changed and other fixs...
+        Alexey Kupershtokh <wicked@ngs.ru>:
+         - add very many keywords
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+    ]]></contributors> 
+    </annotation>
+
+    <import type="def"/>
+    <!--import type="asp"/-->
+
+    <region name="Insertion" parent="asp:Insertion"/>
+    <region name="OpenTag"   parent="asp:OpenTag"/>
+    <region name="CloseTag"  parent="asp:CloseTag"/>
+
+    &php-script;
+    &php-gen;
+     
+    <scheme name="Insertion">
+      <block start="/(&lt;\?(php\b)?)/" end="/(\?&gt;)/" 
+      	priority="low" content-priority="low"
+      	scheme="phpScript" region="Insertion" 
+      	region00="OpenTag" region10="OpenTag" 
+      	region01="def:PairStrongStart" region11="def:PairStrongEnd"
+      />
+      <block start="/(&lt;script\s+language\s*=\s*(php|'php'|&quot;php&quot;)\s*&gt;)/" 
+      	end="/(&lt;/script\s*&gt;)/" scheme="phpScript"
+      	priority="low" content-priority="low"
+      	region="Insertion" region00="OpenTag" region10="OpenTag" 
+      	region01="def:PairStrongStart" region11="def:PairStrongEnd"
+      />
+    </scheme>
+
+      
+    <scheme name="InverseInsertion">
+       <block start="/((\?&gt;))/" end="/((&lt;\?(php\b)?))/" scheme="html"
+        priority="low" region="Text" inner-region="yes"
+        region00="Insertion" region10="Insertion" 
+        region01="def:PairStrongStart" region11="def:PairStrongEnd"      
+        region02="OpenTag"   region12="OpenTag" 
+       />
+    </scheme>
+
+    
+    
+    <scheme name="htmlScripts">
+      <block start="/ (&lt;(script [^&gt;]+ (phpscript[\d\.]*) [^&gt;]*) &gt;) /ix" end="/(&lt;\/(script)&gt;)/i" scheme="phpScript-client"
+               region00="def:PairStrongStart" region10="def:PairStrongEnd"
+               region01="html:htmlTagBr" region02="OpenTag" region03="html:htmlString"
+               region11="html:htmlTagBr" region12="CloseTag"/>
+      <inherit scheme="asp:htmlScripts">
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="StringContent">
+      <inherit scheme="Insertion"/>
+      <inherit scheme="c:StringContent"/>
+    </scheme>
+
+    <scheme name="phpScript-client">
+      <inherit scheme="Insertion"/>
+      <inherit scheme="Script">
+        <virtual scheme="c:StringContent" subst-scheme="StringContent"/>
+        <virtual scheme="Script" subst-scheme="phpScript-client"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="phpScript">
+      <block start="/(#)(\[)/" end="/(\])/" scheme="phpScript"
+        region01="SymbolStrong" region02="Symbol"
+        region10="Symbol" region11="PairEnd"/>
+      <block start="/(\/\/|\#)/" end="/\M (\?&gt;|$)/ix" scheme="Comment" region="Comment"/>
+      <inherit scheme="InverseInsertion"/>
+      <inherit scheme="Script">
+        <virtual scheme="Script" subst-scheme="phpScript"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="html">
+      <inherit scheme="asp:html">
+        <virtual scheme="asp:htmlScripts" subst-scheme="htmlScripts"/>
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="php.lang">
+      <inherit scheme="asp:html">
+        <virtual scheme="asp:InverseInsertion" subst-scheme="InverseInsertion"/>
+        <virtual scheme="asp:Insertion" subst-scheme="Insertion"/>
+        <virtual scheme="asp:targetLanguage" subst-scheme="phpScript"/>
+        <virtual scheme="asp:html" subst-scheme="html"/>
+      </inherit>
+    </scheme>
+
+    <scheme name='php'>
+    	<inherit scheme='def:unixCommentFirstline'>
+    		<virtual scheme="def:def" subst-scheme="php.lang"/>
+    	</inherit>
+    </scheme>
+
+    
+</type>
+</hrc>
+<!--
+Copyright (C) 1999-2003 Cail Lomecb <irusskih@gmail.com>
+Copyright (C) Alexey Kupershtokh <wicked@ngs.ru>
+Copyright (C) Eugene Efremov <4mirror@mail.ru>
+Copyright (C) Kirill Hryapin <kx@mail.ru>
+Copyright (C) Ondrej Brablc <colorer@brablc.com>
+Copyright (C) Zini nAlexei <zn@zn.mldnet.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

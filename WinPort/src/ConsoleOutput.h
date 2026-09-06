@@ -68,6 +68,8 @@ class ConsoleOutput : public IConsoleOutput
 
 public:
 	ConsoleOutput();
+	virtual ~ConsoleOutput();
+
 	virtual void SetBackend(IConsoleOutputBackend *listener);
 
 	virtual void SetAttributes(DWORD64 attributes);

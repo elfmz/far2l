@@ -46,13 +46,15 @@ private:
 
 private:
 	std::recursive_mutex RecursiveMutex;
-	DList<SynchroData> Data;
+	DList<SynchroData> Data, DataIdle;
+
+	bool ProcessInner(bool Idle);
 
 public:
 	PluginSynchro();
 	~PluginSynchro();
-	void Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param);
-	bool Process(void);
+	void Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param, LONG_PTR Flags);
+	bool Process(bool idle);
 };
 
 extern PluginSynchro PluginSynchroManager;

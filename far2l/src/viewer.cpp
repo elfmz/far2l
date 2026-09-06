@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "WideMB.h"
 #include "UtfConvert.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 #include "LinkHighlighter.hpp"
 #include <algorithm>
 #include <cwctype>
@@ -81,6 +82,21 @@ static void ViewerSearchMsg(const wchar_t *Name, int Percent);
 static int InitHex = FALSE, SearchHex = FALSE;
 
 static int NextViewerID = 0;
+
+static bool EncodeTextForHex(FARString &hex, UINT codePage, const wchar_t *text)
+{
+	hex.Clear();
+	if (const auto length = StrLength(text); length > 0) {
+		WideCharToMultiByteBuffer bytes(codePage, text, length);
+		if (bytes.empty())
+			return false;
+
+		for (const auto &byte : bytes) {
+			hex.AppendFormat(L"%02X", static_cast<unsigned char>(byte));
+		}
+	}
+	return true;
+}
 
 static int CalcByteDistance(UINT CodePage, const wchar_t *begin, const wchar_t *end)
 {
@@ -440,6 +456,10 @@ int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 	// }
 	ChangeViewKeyBar();
 	AdjustWidth();
+	ViewerContext.clear();
+	ViewerContextReady = false;
+	ViewerContextRetained = false;
+	ViewerContextPos = -1;
 	CtrlObject->Plugins.CurViewer = this;	// HostFileViewer;
 	/*
 		$ 15.09.2001 tran
@@ -524,6 +544,7 @@ void Viewer::ShowPage(int nMode)
 		SelectPos = FilePos;
 
 	if (nMode == SHOW_HEX) {
+		ViewerColors.clear();
 		LineLinks.clear();
 		PageLinks.clear();
 		VisibleTopPos = -1;
@@ -591,6 +612,21 @@ void Viewer::ShowPage(int nMode)
 		if (ViOpt.ClickableURLs)
 			CollectVisibleLinks();
 
+		if (!VM.Hex && !VM.Processed) {
+			ViewerColors.assign(static_cast<size_t>(lineCount), {});
+			if (ViewerContextCodePage != VM.CodePage) {
+				ViewerContext.clear();
+				ViewerContextRetained = false;
+				ViewerContextPos = -1;
+			}
+			if (ViewerContextPos != Strings[0].nFilePos) {
+				ViewerContextReady = false;
+			}
+			CtrlObject->Plugins.CurViewer = this;
+			CtrlObject->Plugins.ProcessViewerEvent(VE_REDRAW, &ViewerID);
+		} else
+			ViewerColors.clear();
+
 		std::unique_ptr<ViewerPrinter> printer;
 		if (VM.Processed)
 			printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
@@ -604,6 +640,7 @@ void Viewer::ShowPage(int nMode)
 			GotoXY(X1, Y);
 
 			printer->Print(LeftPos, Width, Strings[I].Chars());
+			ApplyColorRanges(I, Y, *printer);
 
 			auto &StringI = Strings[I];
 			if (SelectSize && StringI.bSelection) {
@@ -661,6 +698,131 @@ void Viewer::ShowPage(int nMode)
 
 	DrawScrollbar();
 	ShowStatus();
+}
+
+void Viewer::PrepareViewerContext()
+{
+	const int64_t previousContextPos = ViewerContextPos;
+	const UINT previousContextCodePage = ViewerContextCodePage;
+	auto previousContext = std::move(ViewerContext);
+	ViewerContextReady = true;
+	ViewerContextRetained = false;
+	ViewerContext.clear();
+	ViewerContextPos = Strings[0].nFilePos;
+	ViewerContextCodePage = VM.CodePage;
+	if (!ViewFile.Opened() || ViewerColors.empty() || Strings[0].nFilePos <= 0)
+		return;
+
+	constexpr size_t MaxContextLines = 200;
+	const int64_t savedFilePos = FilePos;
+	const int64_t savedViewPos = vtell();
+	const int64_t savedLastPage = LastPage;
+	const int savedWrap = VM.Wrap;
+	const int64_t visiblePos = Strings[0].nFilePos;
+	std::vector<int64_t> positions;
+
+	FilePos = visiblePos;
+	VM.Wrap = FALSE;
+	while (positions.size() < MaxContextLines && FilePos > 0) {
+		const int64_t previous = FilePos;
+		Up();
+		if (FilePos == previous)
+			break;
+		positions.emplace_back(FilePos);
+	}
+	std::reverse(positions.begin(), positions.end());
+
+	for (const int64_t position : positions) {
+		vseek(position, SEEK_SET);
+		ViewerString line;
+		line.nFilePos = position;
+		ReadString(line, -1, MAX_VIEWLINE);
+		if (vtell() > visiblePos) {
+			const int64_t distance = visiblePos - position;
+			size_t length = 0;
+			int64_t consumed = 0;
+			while (line.Chars(length)[0]) {
+				const int width = CalcCodeUnitsDistance(VM.CodePage,
+					line.Chars(length), line.Chars(length + 1));
+				if (consumed + width > distance)
+					break;
+				consumed+= width;
+				++length;
+			}
+			line.SetChar(length, 0);
+			line.WrapsToNext = true;
+		}
+		ViewerContext.emplace_back(std::move(line));
+	}
+
+	// Keep parser line numbers stable while scrolling, but bound retained context.
+	constexpr size_t MaxRetainedContextLines = MaxContextLines * 2;
+	if (previousContextCodePage == VM.CodePage && previousContextPos >= 0 &&
+		visiblePos > previousContextPos && !previousContext.empty() && !ViewerContext.empty()) {
+		auto overlap = std::find_if(previousContext.begin(), previousContext.end(),
+			[&](const ViewerString &line) { return line.nFilePos == ViewerContext.front().nFilePos; });
+		if (overlap != previousContext.end()) {
+			const size_t prefix = static_cast<size_t>(overlap - previousContext.begin());
+			if (prefix + ViewerContext.size() <= MaxRetainedContextLines) {
+				ViewerContext.insert(ViewerContext.begin(), previousContext.begin(), overlap);
+				ViewerContextRetained = true;
+			}
+		}
+	}
+
+	VM.Wrap = savedWrap;
+	FilePos = savedFilePos;
+	LastPage = savedLastPage;
+	vseek(savedViewPos, SEEK_SET);
+}
+
+void Viewer::ApplyColorRanges(int line, int screenY, ViewerPrinter &printer)
+{
+	if (line < 0 || static_cast<size_t>(line) >= ViewerColors.size())
+		return;
+
+	const wchar_t *text = Strings[line].Chars();
+	const size_t length = wcslen(text);
+	const bool singleCell = std::all_of(text, text + length,
+		[](wchar_t ch) { return static_cast<uint32_t>(ch) <= 0x7f; });
+	size_t previousPosition = 0;
+	size_t previousVisualPosition = 0;
+	const auto visualPosition = [&](size_t position) {
+		if (singleCell)
+			return position;
+		const size_t target = std::min(position, length);
+		if (target < previousPosition ||
+			(previousPosition && (text[previousPosition - 1] == CharClasses::ZERO_WIDTH_JOINER ||
+				CharClasses::IsXxxfix(text[previousPosition - 1])))) {
+			previousPosition = 0;
+			previousVisualPosition = 0;
+		}
+		previousVisualPosition+= static_cast<size_t>(printer.Length(text + previousPosition,
+			static_cast<int>(target - previousPosition)));
+		previousPosition = target;
+		return previousVisualPosition + position - target;
+	};
+
+	for (const auto &range : ViewerColors[line]) {
+		const size_t visualStart = visualPosition(range.StartPos);
+		const size_t visualEnd = visualPosition(range.EndPos + 1);
+		const int64_t visibleStart = std::max<int64_t>(static_cast<int64_t>(visualStart), LeftPos);
+		const int64_t visibleEnd = std::min<int64_t>(static_cast<int64_t>(visualEnd), LeftPos + Width);
+
+		if (visibleStart >= visibleEnd)
+			continue;
+
+		const int startX = X1 + static_cast<int>(visibleStart - LeftPos);
+		const int endX = X1 + static_cast<int>(visibleEnd - LeftPos) - 1;
+		std::vector<CHAR_INFO> buffer(static_cast<size_t>(endX - startX + 1));
+		GetText(startX, screenY, endX, screenY, buffer.data(),
+			static_cast<int>(buffer.size() * sizeof(CHAR_INFO)));
+
+		for (auto &cell : buffer)
+			cell.Attributes = range.Color;
+
+		PutText(startX, screenY, endX, screenY, buffer.data());
+	}
 }
 
 void Viewer::DisplayObject()
@@ -1178,8 +1340,16 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		}
 
 		for (;;) {
-			if (OutPtr >= StrSize - 16)
+			if (OutPtr >= StrSize - 16) {
+				const int64_t position = vtell();
+				if (vgetc(Ch)) {
+					rString.WrapsToNext = Ch != CRSym;
+					if (rString.WrapsToNext && CRSym == L'\n' && Ch == L'\r' && vgetc(Ch2))
+						rString.WrapsToNext = Ch2 != CRSym;
+				}
+				vseek(position, SEEK_SET);
 				break;
+			}
 
 			do { // attach zero-length sequences at the string ending (if any)
 				int64_t SavePosEsc = vtell();
@@ -2618,10 +2788,14 @@ LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 				bool Hex = (Param1 == SD_RADIO_HEX);
 				FARString strDataStr;
-				Transform(strDataStr,
-						(const wchar_t *)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR,
-								Hex ? SD_EDIT_TEXT : SD_EDIT_HEX, 0),
-						Hex ? L'X' : L'S');
+				const auto *source = (const wchar_t *)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR,
+						Hex ? SD_EDIT_TEXT : SD_EDIT_HEX, 0);
+				if (Hex) {
+					auto *viewer = reinterpret_cast<Viewer *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+					EncodeTextForHex(strDataStr, viewer ? viewer->GetCodePage() : CP_UTF8, source);
+				} else {
+					Transform(strDataStr, source, L'S');
+				}
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, Hex ? SD_EDIT_HEX : SD_EDIT_TEXT,
 						(LONG_PTR)strDataStr.CPtr());
 				SendDlgMessage(hDlg, DM_SDSETVISIBILITY, Hex, 0);
@@ -2771,6 +2945,7 @@ void Viewer::Search(int Next, int FirstChar)
 	if (!Next) {
 		SearchFlags.Flags = 0;
 		Dialog Dlg(SearchDlg, ARRAYSIZE(SearchDlg), ViewerSearchDlgProc);
+		Dlg.SetDialogData(reinterpret_cast<LONG_PTR>(this));
 		Dlg.SetPosition(-1, -1, 76, 13);
 		Dlg.SetHelp(L"ViewerSearch");
 
@@ -2834,8 +3009,8 @@ void Viewer::Search(int Next, int FirstChar)
 		if (!SearchWChars)
 			return;
 
-		SearchCodeUnits =
-				CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchWChars);
+		SearchCodeUnits = SearchHex ? SearchWChars
+				: CalcCodeUnitsDistance(VM.CodePage, strSearchStr.CPtr(), strSearchStr.CPtr() + SearchWChars);
 		FARString strSearchStrLowerCase;
 
 		if (!Case && !SearchHex) {
@@ -2979,7 +3154,8 @@ void Viewer::Search(int Next, int FirstChar)
 							Match = CheckBufMatchesCaseSensitive(SearchWChars, &Buf[I], strSearchStr.CPtr());
 						}
 						if (Match) {
-							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I);
+							MatchPos = CurPos + (SearchHex ? I
+									: CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I));
 							break;
 						}
 					}
@@ -3585,16 +3761,16 @@ void Viewer::SelectText(const int64_t &MatchPos, const int64_t &SearchLength, co
 	//	LastSelPos=SelectPos+((Flags&0x2) ? -1:1);
 	LastSelPos = SelectPos + SearchLength * ((Flags & 0x2) ? -1 : 1);
 	if (VM.Hex) {
-		size_t len = 8;
+		size_t len = 16;
 		switch (VM.CodePage) {
 			case CP_UTF32LE:
 			case CP_UTF32BE:
-				len*= 4;
+				len/= 4;
 				break;
 
 			case CP_UTF16LE:
 			case CP_UTF16BE:
-				len*= 2;
+				len/= 2;
 				break;
 		}
 		FilePos&= ~(len - 1);
@@ -3744,12 +3920,55 @@ int Viewer::ViewerControl(int Command, void *Param)
 				if (ViOpt.AutoDetectCodePage)
 					Info->Options|= VOPT_AUTODETECTCODEPAGE;
 
+				if (m_bQuickView)
+					Info->Options|= VOPT_QUICKVIEW;
+
 				Info->TabSize = ViOpt.TabSize;
 				Info->LeftPos = LeftPos;
 				return TRUE;
 			}
 
 			break;
+		}
+		case VCTL_GETSTRING:
+		case VCTL_GETCONTEXT: {
+			ViewerGetString *string = static_cast<ViewerGetString *>(Param);
+			if (!string)
+				break;
+
+			const bool context = Command == VCTL_GETCONTEXT;
+			if (context && !ViewerContextReady)
+				PrepareViewerContext();
+			const size_t count = context ? ViewerContext.size() : ViewerColors.size();
+			if (string->StringNumber >= count)
+				break;
+
+			const ViewerString &source = context
+				? ViewerContext[string->StringNumber]
+				: Strings[string->StringNumber];
+			string->StringText = source.Chars();
+			string->StringLength = wcslen(string->StringText);
+			string->Flags = (source.WrapsToNext ? VGS_WRAPS_TO_NEXT : 0) |
+				(context && ViewerContextRetained ? VGS_CONTEXT_RETAINED : 0);
+			return TRUE;
+		}
+		case VCTL_ADDCOLOR:
+		case VCTL_ADDTRUECOLOR: {
+			if (!Param)
+				break;
+			const ViewerColor *color = Command == VCTL_ADDCOLOR
+				? static_cast<const ViewerColor *>(Param)
+				: &static_cast<const ViewerTrueColor *>(Param)->Base;
+			if (!color || color->EndPos < color->StartPos ||
+				color->StringNumber >= ViewerColors.size())
+				break;
+
+			ViewerColorRange range {color->StartPos, color->EndPos, color->Color};
+			if (Command == VCTL_ADDTRUECOLOR)
+				FarTrueColorToAttributes(range.Color,
+					static_cast<const ViewerTrueColor *>(Param)->TrueColor);
+			ViewerColors[color->StringNumber].emplace_back(range);
+			return TRUE;
 		}
 		/*
 			Param = ViewerSetPosition

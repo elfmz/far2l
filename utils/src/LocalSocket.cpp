@@ -44,6 +44,14 @@ template <class IO_ERROR, class FN>
 	}
 }
 
+void LocalSocket::SetBufferSize(int size)
+{
+	if (setsockopt(_sock, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1
+		|| setsockopt(_sock, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1) {
+		throw LocalSocketSocketError();
+	}
+}
+
 size_t LocalSocket::Send(const void *data, size_t len)
 {
 	return len
@@ -245,4 +253,3 @@ void LocalSocketServer::WaitForClient(int fd_cancel, int tmout_msec)
 		}
 	}
 }
-

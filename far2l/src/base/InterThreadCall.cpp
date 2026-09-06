@@ -159,9 +159,9 @@ InterThreadLock::InterThreadLock()
 {
 }
 
-void InterThreadLock::WaitForWake()
+void InterThreadLock::WaitForWake(DWORD timeout_msec)
 {
-	s_inter_thread_call_synch.cond.wait_for(_locker, std::chrono::milliseconds(5000));
+	s_inter_thread_call_synch.cond.wait_for(_locker, std::chrono::milliseconds(timeout_msec));
 }
 
 InterThreadLockAndWake::~InterThreadLockAndWake()

@@ -11,12 +11,13 @@ bool POpen(std::string &result, const char *command)
 		return false;
 	}
 
-	char buf[0x400];
+	char buf[0x1000];
+	const size_t prev_result_len = result.size();
 	while (fgets(buf, sizeof(buf), f)) {
 		result+= buf;
 	}
-	pclose(f);
-	return true;
+	const int rc = pclose(f);
+	return rc == 0 || result.size() > prev_result_len;
 }
 
 bool POpen(std::vector<std::wstring> &result, const char *command)

@@ -180,6 +180,8 @@ const ConfigOpt g_cfg_opts[] {
 		L"CmdlineSettings", L"Display a text block with version, copyright and keyboard tips in build-in terminal at FAR2L starts" },
 	{OST_NONE,   NSecCmdline, "AskOnMultilinePaste", &Opt.CmdLine.AskOnMultilinePaste, 1,
 		L"CmdLineCmd", L"Asks for confirmation before pasting multi-line text into the command line" },
+	{OST_COMMON,   NSecCmdline, "CtrlEnterMultipleItems", &Opt.CmdLine.CtrlEnterMultipleItems, 1,
+		L"CmdLineCmd", L"Place selected files from panel to command lnue via ^Enter shortcuts family" },
 
 	{OST_COMMON, NSecInterface, "Mouse", &Opt.Mouse, 1,
 		L"InputSettings", L"Enables mouse support in the interface" },

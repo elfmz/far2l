@@ -255,6 +255,8 @@ static LONG_PTR WINAPI MacroEditDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					if (i < MEParam->Descriptions->size())
 						SendDlgMessage(hDlg, DM_SETTEXTPTR, ME_MEMOEDIT_MLIB_DESC,
 								reinterpret_cast<LONG_PTR>(MEParam->Descriptions->at(i).CPtr()));
+
+					SendDlgMessage(hDlg, DM_LISTSETMOUSEREACTION, ME_COMBO_MLIB, (LONG_PTR)LMRT_NEVER);
 				}
 				break;
 
@@ -666,7 +668,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_DOUBLEBOX].X2 = DLG_WIDTH - 4;
 		MacroEditDlgData[ME_COMBO_MLIB].X2 = DLG_WIDTH - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Y1 = 2;
-		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 4;
+		MacroEditDlgData[ME_COMBO_MLIB].Y2 = DLG_HEIGHT - 5 - 6;
 		MacroEditDlgData[ME_COMBO_MLIB].Type = DI_LISTBOX;
 		MacroEditDlgData[ME_COMBO_MLIB].Flags|= DIF_LISTNOCLOSE;
 		if (MacroEditDlgData[ME_COMBO_MLIB].X2 - MacroEditDlgData[ME_COMBO_MLIB].X1 > x_mlib) {
@@ -682,7 +684,7 @@ bool MacroBrowser::Edit(int imacro)
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X1 = MacroEditDlgData[ME_COMBO_MLIB].X1;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].X2 = MacroEditDlgData[ME_COMBO_MLIB].X2;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y1 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 1;
-		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 4;
+		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Y2 = MacroEditDlgData[ME_COMBO_MLIB].Y2 + 6;
 		MacroEditDlgData[ME_MEMOEDIT_MLIB_DESC].Flags = DIF_FOCUS | DIF_READONLY; // clear DIF_HIDDEN
 	}
 	MakeDialogItemsEx(MacroEditDlgData, MacroEditDlg);
@@ -843,7 +845,7 @@ void MacroBrowser::PrepareVMenu()
 		stat_macros_deleted = 0,
 		stat_glbConsts = 0, stat_glbVars = 0;
 
-	fs.Format(L"Total Macros in all areas: %d,  MacroFunctions: %zu",
+	fs.Format(L"Total macros across all areas: %d; macro functions: %zu",
 		Macro->MacroLIBCount, Macro->GetCountMacroFunction());
 	ListMacro.AddItem(fs);
 	fs2copy += fs;
@@ -869,6 +871,7 @@ void MacroBrowser::PrepareVMenu()
 
 		mi.strName.Format(L"%ls (%d macros)", macro_area, Macro->IndexMode[ia][1]);
 		mi.Flags = (b_hide_empty_areas && Macro->IndexMode[ia][1] <= 0) ? LIF_SEPARATOR | LIF_HIDDEN : LIF_SEPARATOR;
+		mi.strDescription.Clear();
 		ListMacro.AddItem(&mi);
 		fs2copy += "\n--- " + mi.strName + " ---";
 		v_menu_macroindex.emplace_back(-1, -1);
@@ -894,6 +897,16 @@ void MacroBrowser::PrepareVMenu()
 				BoxSymbols[BS_V1],
 				Macro->MacroLIB[imacro].Description ? Macro->MacroLIB[imacro].Description : L"");
 			mi.Flags = (!Macro->MacroLIB[imacro].BufferSize || !Macro->MacroLIB[imacro].Src) ? LIF_GRAYED : 0;
+
+			mi.strDescription.Format(L"Area: \"%ls\"  Key: %ls  (%ls  %ls%ls)\n   Sequence: %ls\nDescription: %ls",
+				macro_area,
+				strKeyName.CPtr(),
+				((Macro->MacroLIB[imacro].Flags & MFLAGS_DISABLEMACRO)  ? L"Disabled" : L"Enabled"),
+				((Macro->MacroLIB[imacro].Flags & MFLAGS_NEEDSAVEMACRO) ? L"Needs saving" : L"Saved"),
+				((!Macro->MacroLIB[imacro].BufferSize || !Macro->MacroLIB[imacro].Src) ? L"  Marked for deletion" : L""),
+				(Macro->MacroLIB[imacro].Src ? Macro->MacroLIB[imacro].Src : L"[empty]"),
+				(Macro->MacroLIB[imacro].Description ? Macro->MacroLIB[imacro].Description : L"[empty]"));
+
 			ListMacro.AddItem(&mi);
 			fs2copy += "\n" + mi.strName;
 			v_menu_macroindex.emplace_back(ia, imacro);
@@ -913,6 +926,7 @@ void MacroBrowser::PrepareVMenu()
 		mi.PrefixLen = 0;
 		mi.strName = (ia == MACRO_VARS) ? L"Global Variables" : L"Global Constants";
 		mi.Flags = LIF_SEPARATOR;
+		mi.strDescription.Clear();
 		ListMacro.AddItem(&mi);
 		fs2copy += "\n--- " + mi.strName + " ---";
 		v_menu_macroindex.emplace_back(-1, -1);
@@ -934,19 +948,24 @@ void MacroBrowser::PrepareVMenu()
 				mi.PrefixLen = mi.strName.GetLength()-1;
 				mi.strName.AppendFormat(L"%-25ls%lc ", var->str, BoxSymbols[BS_V1]);
 				mi.Flags = 0;
+				mi.strDescription.Format(L"%ls: \"%ls\" ", macro_area, var->str);
 				switch (var->value.type()) {
 					case vtInteger:
 						mi.strName.AppendFormat(L"Integer %lc %ls", BoxSymbols[BS_V1], var->value.s());
+						mi.strDescription.AppendFormat(L"\n Type: Integer\nValue: %ls", var->value.s());
 						break;
 					case vtDouble:
 						mi.strName.AppendFormat(L"Double  %lc %ls", BoxSymbols[BS_V1], var->value.s());
+						mi.strDescription.AppendFormat(L"\n Type: Double\nValue: %ls", var->value.s());
 						break;
 					case vtString:
 						mi.strName.AppendFormat(L"String  %lc \"%ls\"", BoxSymbols[BS_V1], var->value.s());
+						mi.strDescription.AppendFormat(L"\n Type: String\nValue: \"%ls\"", var->value.s());
 						break;
 					case vtUnknown:
 					default:
 						mi.strName.Append(L"Unknown");
+						mi.strDescription.Append(L"\n Type: Unknown");
 						break;
 				}
 				ListMacro.AddItem(&mi);
@@ -957,8 +976,9 @@ void MacroBrowser::PrepareVMenu()
 	}
 
 	mi.PrefixLen = 0;
-	mi.strName.Format(L"MacroFunctions (%zu items)", Macro->GetCountMacroFunction());
+	mi.strName.Format(L"Macro functions (%zu items)", Macro->GetCountMacroFunction());
 	mi.Flags = LIF_SEPARATOR;
+	mi.strDescription.Clear();
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n--- " + mi.strName + " ---";
 	v_menu_macroindex.emplace_back(-1, -1);
@@ -966,15 +986,20 @@ void MacroBrowser::PrepareVMenu()
 		const wchar_t *macro_area = Macro->GetSubKey(MACRO_FUNCS);
 
 		for (size_t imf = 0; imf < Macro->GetCountMacroFunction(); imf++) {
-				mi.strName.Format(L"%14ls#%3zu: ", macro_area, imf+1);
-				mi.PrefixLen = mi.strName.GetLength()-1;
 				const TMacroFunction *mf = Macro->GetMacroFunction(imf);
 				if (!mf || !mf->Name || !mf->Name[0])
 					continue;
+				mi.strName.Format(L"%14ls#%3zu: ", macro_area, imf+1);
+				mi.PrefixLen = mi.strName.GetLength()-1;
 				mi.strName.AppendFormat(L"%-25ls%lc %-12ls %lc ",
 					mf->Name, BoxSymbols[BS_V1], MacroLib_GetFunctionType(mf), BoxSymbols[BS_V1] );
-				if (mf->Syntax && mf->Syntax[0])
+				mi.strDescription.Format(L"%ls: %ls (%ls)", macro_area, mf->Name, MacroLib_GetFunctionType(mf));
+				mi.strDescription.AppendFormat(L"\nParameters: %d total, %d optional", mf->nParam, mf->oParam);
+				mi.strDescription.AppendFormat(L"   GUID: %ls", mf->fnGUID ? mf->fnGUID : L"");
+				if (mf->Syntax && mf->Syntax[0]) {
 					mi.strName+= mf->Syntax;
+					mi.strDescription.AppendFormat(L"\n    Syntax: %ls", mf->Syntax);
+				}
 				mi.Flags = 0;
 				ListMacro.AddItem(&mi);
 				fs2copy += "\n" + mi.strName;
@@ -985,6 +1010,7 @@ void MacroBrowser::PrepareVMenu()
 	mi.PrefixLen = 0;
 	mi.strName = L"Statistics";
 	mi.Flags = LIF_SEPARATOR;
+	mi.strDescription.Clear();
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n--- " + mi.strName + " ---";
 	v_menu_macroindex.emplace_back(-1, -1);
@@ -1003,15 +1029,15 @@ void MacroBrowser::PrepareVMenu()
 	fs2copy += "\n" + mi.strName;
 	v_menu_macroindex.emplace_back(-1, -1);
 
-	mi.strName.Format(L"                  (NS) need save=%d, (D) marked as deleted=%d",
+	mi.strName.Format(L"                  (NS) Needs saving=%d, (D) marked for deletion=%d",
 		stat_need_save, stat_macros_deleted);
 	mi.Flags = 0;
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n" + mi.strName;
 	v_menu_macroindex.emplace_back(-1, -1);
 
-	mi.strName.Format(L" Global: Constants=%d, Variables=%d, MacroFunctions=%zu",
-		stat_glbConsts, stat_glbVars, Macro->GetCountMacroFunction());
+	mi.strName.Format(L" Global: constants=%d, variables=%d, macro functions=%d",
+		stat_glbConsts, stat_glbVars, Macro->CMacroFunction);
 	mi.Flags = 0;
 	ListMacro.AddItem(&mi);
 	fs2copy += "\n" + mi.strName;
@@ -1032,6 +1058,7 @@ void MacroBrowser::Show(class KeyMacro *KMacro)
 		return;
 	}
 
+	ListMacro.SetBottomTextLines(3);
 	ListMacro.SetTitle(TitleStr(b_hide_empty_areas));
 	ListMacro.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListMacro.ClearFlags(VMENU_MOUSEREACTION);

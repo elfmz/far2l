@@ -16,13 +16,13 @@ in
       # Modified 7zip package with shared library support
       _7z-far = prev.stdenv.mkDerivation rec {
         pname = "_7z-far";
-        version = "26.00";
+        version = "26.01";
 
         src = fetchFromGitHub {
           owner = "ip7z";
           repo = "7zip";
-          rev = "839151eaaad24771892afaae6bac690e31e58384";
-          sha256 = "sha256-B+piugjEI7+8ILTuDitADY8XseltvV0lYIVecXGib7s=";
+          rev = "8c63d71ff886bda90c86db28466287f977374237";
+          sha256 = "sha256-GCVZA0M7WGDyndHbnko62nQcLnb1YQYERs7U8G+yn2M=";
         };
 
         nativeBuildInputs = [ prev.gcc ];
@@ -48,7 +48,7 @@ in
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.8.0-483dea0";
+        version = "2.9.0-59354e9";
 
         #separateDebugInfo = true;
 
@@ -56,9 +56,8 @@ in
           owner = "elfmz";
           repo = "far2l";
 
-          rev = "483dea0818c68a95c054f313e099f8b99b722a3d";
-          sha256 = "sha256-LP+agJrYxjH6vLAg6cJTU4/9jYGF9iaZzxA7hozDKNY=";
-
+          rev = "59354e96e366e0bf3a2fcd9d76c45cf5ec6d0c30";
+          sha256 = "sha256-9mSi3gqZ2jpgUawD3Jr2Pmn1shLpySuFCh4iOZe7CO8=";
         };
 
         postPatch = ''
@@ -75,40 +74,89 @@ in
         ];
 
         buildInputs = [
+          # we need it anyway
+          prev.bash
+          # SDL GUI (testing)
+          prev.SDL2
+          prev.harfbuzz
+          prev.fontconfig
+          prev.libxft
+          # WX GUI
           prev.libx11
           prev.wxwidgets_3_2
+          # Colorer and formattes
           prev.libuchardet
           prev.spdlog
           prev.libxml2
-          prev.libarchive
           prev.pcre
+          # Netrocks
           prev.openssl
           prev.libssh
           prev.libnfs
           prev.neon
-          prev.aws-sdk-cpp
+          prev.gnutls
+          prev.libtasn1
+          prev.p11-kit
+          # ImageViewer
           prev.imagemagick
           prev.ffmpeg
+          # ADB
+          prev.android-tools
+          # MTP
+          prev.libmtp
+          prev.libusb1
+          # GIT
+          prev.git
+          # archivers
+          prev.libarchive
           final._7z-far
         ]
         ++ lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba;
 
         cmakeFlags = [
-          "-DTTYX=ON"
-          "-DUSEWX=ON"
-          "-DUSEUCD=ON"
+          "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+          # Pluggins setup
+          "-DADB=ON"
+          "-DALIGN=ON"
+          "-DARCLITE=ON"
+          "-DAUTOWRAP=ON"
+          "-DCALC=ON"
           "-DCOLORER=ON"
+          "-DCOMPARE=ON"
+          "-DDRAWLINE=ON"
+          "-DEDITCASE=ON"
+          "-DEDITORCOMP=ON"
+          "-DEDSORT=ON"
+          "-DFARFTP=ON"
+          "-DFILECASE=ON"
+          "-DGITGUTTER=ON"
+          "-DHEXITOR=ON"
+          "-DIMAGEVIEWER=ON"
+          "-DINCSRCH=ON"
+          "-DINSIDE=ON"
+          "-DMEMO=ON"
+          "-DMTP=ON"
           "-DMULTIARC=ON"
           "-DNETROCKS=ON"
-          "-DAWS_S3=ON"
+          "-DOPENWITH=ON"
+          "-DSIMPLEINDENT=ON"
+          "-DTMPPANEL=ON"
+          "-DTRUNCATE=ON"
+          # Python pluggins support
           "-DPYTHON=OFF"
-          "-DARCLITE=ON"
-          #"-DFAR2L_GUI_BACKEND=SDL"
+          # Backend setup
+          "-DUSESDL=YES"
+          "-DUSEWX=YES"
+          "-DTTYX=YES"
+          # Libruaries setup
+          "-DMTP_SYSTEM_LIBUSB=ON"
+          "-DMTP_SYSTEM_LIBMTP=ON"
         ];
 
         postInstall =
           let
-            archiveTools = with prev; [
+            farTools = with prev; [
+              # archivers
               unrar
               unzip
               zip
@@ -117,12 +165,18 @@ in
               bzip2
               gnutar
               final._7z-far
+              # cli tools
+              git
+              android-tools
+              libmtp
+              libusb1
+              bash
             ];
           in
           ''
-            # Wrap archivers paths to program bin
+            # Wrap tools paths to program bin
             wrapProgram $out/bin/far2l \
-              --prefix PATH : ${lib.makeBinPath archiveTools}
+              --prefix PATH : ${lib.makeBinPath farTools}
 
             # Link p7z lib to far plugin arclite home
             echo "Linking 7zzz libraries..."

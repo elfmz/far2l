@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+   <type name="ole">
+     <annotation>
+       <contributors><![CDATA[
+         Aleksey Dobrunov <ctapmex@ctapmex.com>
+       ]]></contributors>
+     </annotation>
+
+     <import type='def'/>
+
+     <region name="oleString" parent="def:String"/>
+     <region name="oleComment" parent="def:CommentContent"/>
+     <region name="oleSymb" parent="def:Symbol"/>
+     <region name="oleWord" parent="def:Keyword"/>
+     <region name="oleNumb" parent="def:Number"/>
+
+     <scheme name="ole">
+<!-- Linear Comments -->
+       <regexp match="/(&amp;&amp;.*$)/" region0="oleComment"/>
+       <regexp match="/^(\s*\*.*$)/" region0="oleComment"/>
+<!-- Strings -->
+       <regexp match="/(&#34;(?:[^&#34;]|&#34;&#34;)*&#34;)/" region0="oleString"/>
+       <regexp match="/('(?:[^']|'')*')/" region0="oleString"/>
+       <block start="/\{(\|[^|]*\|)?/" end="/\}/" scheme="ole" region="Insertion" region01="StringContent"/>
+<!-- Numbers -->
+       <regexp match="/\b(0[xX][\da-fA-F]+)\b/" region0="oleNumb"/>
+       <regexp match="/\b([0-9]+)\b/" region0="oleNumb"/>
+       <keywords region="oleSymb">
+          <symb name=";"/>
+          <symb name="="/>
+          <symb name="+"/>
+          <symb name="-"/>
+          <symb name="/"/>
+          <symb name="*"/>
+          <symb name="&amp;"/>
+          <symb name="|"/>
+          <symb name="^"/>
+          <symb name="("/>
+          <symb name=")"/>
+          <symb name="["/>
+          <symb name="]"/>
+          <symb name=","/>
+          <symb name="."/>
+          <symb name=":"/>
+          <symb name="!"/>
+          <symb name="~"/>
+          <symb name="&lt;"/>
+          <symb name="&gt;"/>
+          <symb name="%"/>
+          <symb name="?"/>
+          <symb name="{"/>
+          <symb name="}"/>
+       </keywords>
+       <keywords ignorecase="yes" region="oleWord">
+          <word name="Activate"/>
+          <word name="ActiveDocument"/>
+          <word name="Add"/>
+          <word name="Application"/>
+          <word name="Cells"/>
+          <word name="CentimetersToPoints"/>
+          <word name="Close"/>
+          <word name="Documents"/>
+          <word name="End"/>
+          <word name="Excel"/>
+          <word name="Font"/>
+          <word name="InsertAfter"/>
+          <word name="InsertBefore"/>
+          <word name="Open"/>
+          <word name="PageSetup"/>
+          <word name="Paragraphs"/>
+          <word name="Range"/>
+          <word name="SetWidth"/>
+          <word name="Size"/>
+          <word name="TextColumns"/>
+          <word name="Value"/>
+          <word name="Word"/>
+          <word name="Add"/>
+          <word name="Cnt"/>
+          <word name="CreateObje"/>
+          <word name="CreateObject"/>
+          <word name="FirstLineIndent"/>
+          <word name="GetObje"/>
+          <word name="GetObject"/>
+          <word name="Visible"/>
+          <word name="WorkBooks"/>
+       </keywords>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 1999-2005 Cail Lomecb <irusskih@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

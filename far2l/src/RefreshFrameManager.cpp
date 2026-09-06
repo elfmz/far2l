@@ -50,16 +50,12 @@ UndoGlobalSaveScrPtr::~UndoGlobalSaveScrPtr()
 	GlobalSaveScrPtr = nullptr;
 }
 
-RefreshFrameManager::RefreshFrameManager(int OScrX, int OScrY, int MsgWaitTime, BOOL DontRedrawFrame)
-	:
-	OScrX(OScrX), OScrY(OScrY), MsgWaitTime(MsgWaitTime), DontRedrawFrame(DontRedrawFrame)
+RefreshFrameManager::RefreshFrameManager()
 {}
 
 RefreshFrameManager::~RefreshFrameManager()
 {
-	if (DontRedrawFrame || !FrameManager || !FrameManager->ManagerStarted())
-		return;
-	else if (OScrX != ScrX || OScrY != ScrY || MsgWaitTime != -1) {
+	if (FrameManager && FrameManager->ManagerStarted()) {
 		LockScreen LckScr;
 		FrameManager->ResizeAllFrame();
 		FrameManager->GetCurrentFrame()->Show();

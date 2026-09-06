@@ -51,8 +51,8 @@ enum
 	FSCROBJ_LOCKED              = 0x00000010,
 };
 
-# if defined(__LP64__) || defined(_LP64)
-#pragma pack(push,16)
+#if defined(__LP64__) || defined(_LP64)
+# pragma pack(push,16)
 #else
 # pragma pack(push,8)
 #endif

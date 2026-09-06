@@ -28,6 +28,32 @@ EcoString::~EcoString()
 	MakeEmpty();
 }
 
+EcoString &EcoString::operator =(const EcoString& src)
+{
+	if (this != &src) {
+		if (src._len < 0) {
+			MakeEmpty();
+			_len = src._len;
+			_data = src._data;
+			if (size_t(-_len) > sizeof(_data)) {
+				_data.pmb = (unsigned char *)malloc(-_len);
+				if (LIKELY(_data.pws)) {
+					memcpy(_data.pmb, src._data.pmb, -_len);
+					++s_stats.char_heap;
+				} else {
+					fprintf(stderr, "EcoString::operator= strdup failed len=%d\n", _len);
+					_len = 0;
+				}
+			} else {
+				++s_stats.char_local;
+			}
+		} else {
+			Assign(src.CPtr(), src.Size());
+		}
+	}
+	return *this;
+}
+
 void EcoString::Swap(EcoString &another)
 {
 	std::swap(_data, another._data);
@@ -112,9 +138,9 @@ bool EcoString::TryAssignCompact(const wchar_t *data, int len)
 	return true;
 }
 
-bool EcoString::Assign(const wchar_t *data, int len, bool compact)
+bool EcoString::Assign(const wchar_t *data, int len, bool try_compact)
 {
-	if (!compact || !TryAssignCompact(data, len)) {
+	if (!try_compact || !TryAssignCompact(data, len)) {
 		if (!MakeWideLength(len)) {
 			return false;
 		}
@@ -164,6 +190,35 @@ bool EcoString::EnsureWide() const
 	return true;
 }
 
+
+template <class CHAR_LEFT, class CHAR_RIGHT>
+	static bool TypeInvariantEqual(const CHAR_LEFT *left, const CHAR_RIGHT *right, int cnt)
+{
+	for (int i = 0; i < cnt; ++i) {
+		if ((unsigned int)left[i] != (unsigned int)right[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool EcoString::EqualTo(const wchar_t *data, int cnt) const
+{
+	if (cnt != Size())
+		return false;
+
+	if (_len < 0) {
+		if (size_t(cnt) > sizeof(_data)) {
+			return TypeInvariantEqual(_data.pmb, data, cnt);
+		}
+		return TypeInvariantEqual(_data.lmb, data, cnt);
+
+	} else if (((cnt + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		return TypeInvariantEqual(_data.pws, data, cnt);
+	}
+	return TypeInvariantEqual(_data.lws, data, cnt);
+}
+
 void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 {
 	if (_len < 0) {
@@ -185,9 +240,16 @@ void EcoString::CopyTo(wchar_t *dst, int ofs, int cnt) const
 
 void EcoString::CopyTo(std::wstring &dst) const
 {
-	dst.resize(Size());
-	if (!dst.empty()) {
-		CopyTo(dst.data(), 0, dst.size());
+	if (_len < 0) {
+		if (size_t(-_len) > sizeof(_data)) {
+			dst.assign(_data.pmb, _data.pmb + -_len);
+		} else {
+			dst.assign(&_data.lmb[0], &_data.lmb[0] + -_len);
+		}
+	} else if (((_len + 1) * sizeof(wchar_t) > sizeof(_data))) {
+		dst.assign(&_data.pws[0], _len);
+	} else {
+		dst.assign(&_data.lws[0], _len);
 	}
 }
 
@@ -229,17 +291,18 @@ bool EcoString::MakeWideLength(int len)
 
 bool EcoString::Replace(int pos, int rcnt, wchar_t ch, int cnt)
 {
-	if (pos + rcnt > _len) {
-		fprintf(stderr, "EcoString::InsertC: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
+	const int prev_len = Size();
+	if (pos + rcnt > prev_len) {
+		fprintf(stderr, "EcoString::ReplaceC: pos{%d} + rcnt{%d} > abs(_len{%d})\n", pos, rcnt, _len);
 		return false;
 	}
 	EcoString new_str;
-	if (!new_str.MakeWideLength(_len - rcnt + cnt)) {
+	if (!new_str.MakeWideLength(prev_len - rcnt + cnt)) {
 		return false;
 	}
 	CopyTo(new_str.Ptr(), 0, pos);
 	wmemset(new_str.Ptr() + pos, ch, cnt);
-	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, _len - pos - rcnt);
+	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, prev_len - pos - rcnt);
 	Swap(new_str);
 	return true;
 }
@@ -249,17 +312,18 @@ bool EcoString::Replace(int pos, int rcnt, const wchar_t *data, int cnt)
 	if (cnt < 0) {
 		cnt = wcslen(data);
 	}
-	if (pos + rcnt > _len) {
-		fprintf(stderr, "EcoString::Replace: pos{%u} + rcnt{%u} > _len{%u}\n", pos, rcnt, _len);
+	const int prev_len = Size();
+	if (pos + rcnt > prev_len) {
+		fprintf(stderr, "EcoString::Replace: pos{%d} + rcnt{%d} > abs(_len{%d})\n", pos, rcnt, _len);
 		return false;
 	}
 	EcoString new_str;
-	if (!new_str.MakeWideLength(_len - rcnt + cnt)) {
+	if (!new_str.MakeWideLength(prev_len - rcnt + cnt)) {
 		return false;
 	}
 	CopyTo(new_str.Ptr(), 0, pos);
 	wmemcpy(new_str.Ptr() + pos, data, cnt);
-	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, _len - pos - rcnt);
+	CopyTo(new_str.Ptr() + pos + cnt, pos + rcnt, prev_len - pos - rcnt);
 	Swap(new_str);
 	return true;
 }
@@ -389,13 +453,13 @@ const wchar_t *EcoString::CPtr() const
 	return ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) ? _data.pws : _data.lws;
 }
 
-const wchar_t EcoString::operator[](int i) const
+wchar_t EcoString::At(int i) const
 {
 	const size_t sz = Size();
 	if (size_t(i) == sz) {
 		return 0; // allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
 	}
-	ASSERT_MSG(i >= 0 && size_t(i) < sz,  "EcoString[]: bad %d while _len=%d\n", i, _len);
+	ASSERT_MSG(i >= 0 && size_t(i) < sz,  "EcoString::At: bad %d while _len=%d\n", i, _len);
 
 	if (_len < 0) {
 		return (wchar_t)(unsigned char)((sz > sizeof(_data)) ? _data.pmb[i] : _data.lmb[i]);
@@ -404,20 +468,23 @@ const wchar_t EcoString::operator[](int i) const
 	return ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) ? _data.pws[i] : _data.lws[i];
 }
 
-static wchar_t s_dummy;
-
-wchar_t &EcoString::operator[](int i)
+void EcoString::Set(int i, wchar_t wc) const
 {
-	if (!EnsureWide()) {
-		s_dummy = 0;
-		return s_dummy;
+	if (wc == 0 && i == Size()) {
+		return;
 	}
-	// allow access to ending NUL char as Edit.cpp doing this sometimes for historically legal reasons
-	ASSERT_MSG(i >= 0 && i <= Size(),  "EcoString[]: bad %d while _len=%d\n", i, _len);
-
-	if ((_len + 1) * sizeof(wchar_t) > sizeof(_data)) {
-		return _data.pws[i];
+	ASSERT_MSG(i >= 0 && i < Size(),  "EcoString::Set: bad %d while _len=%d; wc=0x%x\n", i, _len, (unsigned int)wc);
+	if (unsigned(wc) <= 0xff && _len < 0) {
+		if (size_t(-_len) > sizeof(_data)) {
+			_data.pmb[i] = unsigned(wc);
+		} else {
+			_data.lmb[i] = unsigned(wc);
+		}
+	} else if (EnsureWide()) {
+		if (((_len + 1) * sizeof(wchar_t) > sizeof(_data))) {
+			_data.pws[i] = wc;
+		} else {
+			_data.lws[i] = wc;
+		}
 	}
-
-	return _data.lws[i];
 }

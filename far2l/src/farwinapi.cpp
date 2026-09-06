@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <errno.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 #include <sys/mount.h>
 #elif !defined(__HAIKU__)
 #include <sys/statfs.h>
@@ -473,20 +473,21 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 
 BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolumeName,
 		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
-		FARString *pFileSystemName, FARString *pFileSystemMountPoint)
+		LPDWORD pClusterSize, FARString *pFileSystemName, FARString *pFileSystemMountPoint)
 {
 	struct statvfs svfs {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
 	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
 		return FALSE;
 	}
-
 	if (lpMaximumComponentLength)
 		*lpMaximumComponentLength = svfs.f_namemax;
 	if (lpVolumeSerialNumber)
 		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
 	if (lpFileSystemFlags)
 		*lpFileSystemFlags = (DWORD)svfs.f_flag;
+	if (pClusterSize)
+		*pClusterSize = svfs.f_bsize;
 
 	if (pVolumeName) {
 		pVolumeName->Clear();

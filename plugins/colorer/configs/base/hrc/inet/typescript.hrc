@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="typescript">
+    <annotation>
+      <documentation>
+        TypeScript on top of JavaScript.
+        https://www.typescriptlang.org/docs/handbook/2/everyday-types.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+    <import type="jScript"/>
+
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="TypeKeyword" parent="def:TypeKeyword"/>
+
+    <scheme name="tsKeywords">
+      <keywords region="Keyword">
+        <word name="abstract"/>
+        <word name="accessor"/>
+        <word name="as"/>
+        <word name="asserts"/>
+        <word name="declare"/>
+        <word name="infer"/>
+        <word name="is"/>
+        <word name="keyof"/>
+        <word name="namespace"/>
+        <word name="override"/>
+        <word name="readonly"/>
+        <word name="satisfies"/>
+        <word name="type"/>
+      </keywords>
+      <keywords region="TypeKeyword">
+        <word name="never"/>
+        <word name="unknown"/>
+      </keywords>
+    </scheme>
+
+    <scheme name="typescript">
+      <inherit scheme="tsKeywords"/>
+      <inherit scheme="jScript:jScript">
+        <virtual scheme="jScript:jScript" subst-scheme="typescript"/>
+      </inherit>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

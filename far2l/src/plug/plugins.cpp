@@ -1889,3 +1889,47 @@ std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
 	std::lock_guard<std::mutex> lock(BgTasks);
 	return BgTasks;
 }
+
+
+void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel)
+{
+	if (DirName && *DirName) {
+		FARString strName(DirName);
+		wchar_t *DirPtr = strName.GetBuffer();
+		wchar_t *NamePtr = (wchar_t *)PointToName(DirPtr);
+
+		if (NamePtr != DirPtr) {
+			*(NamePtr - 1) = 0;
+			// force plugin to update its file list (that can be empty at this time)
+			// if not done SetDirectory may fail
+			{
+				int FileCount = 0;
+				PluginPanelItem *PanelData = nullptr;
+
+				if (CtrlObject->Plugins.GetFindData(hPlugin, &PanelData, &FileCount, OPM_SILENT)) {
+					CtrlObject->Plugins.FreeFindData(hPlugin, PanelData, FileCount);
+				}
+			}
+
+			fprintf(stderr, "DirPtr=%ls\n", DirPtr);
+			if (*DirPtr) {
+				if (*DirPtr != GOOD_SLASH)	// fix #182
+					CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
+
+				CtrlObject->Plugins.SetDirectory(hPlugin, DirPtr, OPM_SILENT);
+			} else {
+				CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
+			}
+		}
+
+		// Отрисуем панель при необходимости.
+		if (UpdatePanel) {
+			CtrlObject->Cp()->ActivePanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->ActivePanel->GoToFile(NamePtr);
+			CtrlObject->Cp()->ActivePanel->Show();
+		}
+
+		// strName.ReleaseBuffer(); Не надо. Строка все равно удаляется, лишний вызов StrLength.
+	}
+}
+

@@ -148,6 +148,7 @@ public:
 
 	size_t CellsCount() const;
 	size_t TruncateByCells(size_t nCount);
+	void FitToCells(size_t nCount, wchar_t Ch = L' ');
 
 	inline wchar_t At(size_t nIndex) const { return m_pContent->GetData()[nIndex]; }
 

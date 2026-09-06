@@ -123,7 +123,7 @@ template <class FN>
 struct InterThreadLock
 {
 	InterThreadLock();
-	void WaitForWake();
+	void WaitForWake(DWORD timeout_msec = 5000);
 
 private:
 	std::unique_lock<std::mutex> _locker;

@@ -41,17 +41,26 @@ PluginSynchro::PluginSynchro() {}
 
 PluginSynchro::~PluginSynchro() {}
 
-void PluginSynchro::Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param)
+void PluginSynchro::Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param, LONG_PTR Flags)
 {
 	RecursiveMutex.lock();
-	SynchroData *item = Data.Push();
+	SynchroData *item = (Flags & FCTL_SYNCHRO_IDLE) ? DataIdle.Push() : Data.Push();
 	item->Plugin = Plugin;
 	item->ModuleNumber = ModuleNumber;
 	item->Param = Param;
 	RecursiveMutex.unlock();
 }
 
-bool PluginSynchro::Process(void)
+bool PluginSynchro::Process(bool idle)
+{
+	bool out = ProcessInner(false);
+	if (idle && ProcessInner(true)) {
+		out = true;
+	}
+	return out;
+}
+
+bool PluginSynchro::ProcessInner(bool Idle)
 {
 	bool res = false;
 
@@ -61,14 +70,17 @@ bool PluginSynchro::Process(void)
 	void *param = nullptr;
 
 	RecursiveMutex.lock();
-	SynchroData *item = Data.First();
+	SynchroData *item = Idle ? DataIdle.First() : Data.First();
 
 	if (item) {
 		process = true;
 		plugin = item->Plugin;
 		module = item->ModuleNumber;
 		param = item->Param;
-		Data.Delete(item);
+		if (Idle)
+			DataIdle.Delete(item);
+		else
+			Data.Delete(item);
 	}
 
 	RecursiveMutex.unlock();

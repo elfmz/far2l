@@ -40,9 +40,6 @@ class EcoString
 	// if _len >= 0 && _len * sizeof(wc) < sizeof(_data): using _data.lmb
 	mutable int _len = 0;
 
-	EcoString(const EcoString& src) = delete;
-	EcoString &operator =(const EcoString& src) = delete;
-
 	void MakeEmpty();
 	bool MakeWideLength(int len);
 
@@ -55,16 +52,41 @@ public:
 	EcoString() = default;
 	~EcoString();
 
+	EcoString(EcoString &&o) noexcept
+	{
+		Swap(o);
+	}
+
+	EcoString &operator=(EcoString &&o) noexcept
+	{
+		Swap(o);
+		return *this;
+	}
+
+
+	EcoString(const EcoString& src)
+	{
+		operator=(src);
+	}
+
+	EcoString &operator =(const EcoString& src);
+
 	inline int Size() const
 	{
 		return __builtin_abs(_len);// (_len < 0) ? -_len : _len;
 	}
 
-	bool Assign(const wchar_t *data, int len, bool compact = false);
+	bool Assign(const wchar_t *data, int len, bool try_compact = true);
 	void Compact(); // makes string compact if possible
+	bool IsCompact() const { return _len < 0; }
 	void CopyTo(wchar_t *dst, int ofs, int cnt) const;
 	void CopyTo(std::wstring &dst) const;
 	void CopyTo(FARString &dst) const;
+	void CopyTo(EcoString &dst) const { dst = *this; }
+
+	bool EqualTo(const wchar_t *data, int cnt) const;
+	bool EqualTo(const std::wstring &to) const { return EqualTo(to.c_str(), to.size()); }
+	bool EqualTo(const FARString &to) const { return EqualTo(to.CPtr(), to.GetLength()); }
 
 	void Swap(EcoString &another);
 
@@ -93,6 +115,33 @@ public:
 
 	wchar_t *Ptr();
 	const wchar_t *CPtr() const;
-	const wchar_t operator[](int i) const;
-	wchar_t &operator[](int i);
+
+	wchar_t At(int i) const;
+	void Set(int i, wchar_t wc) const;
+
+	bool IsXxxfix(int i) const
+	{
+		// ASCII chars cant be prefix/suffix, right?
+		return _len > 0 && CharClasses::IsXxxfix(At(i));
+	}
+
+	bool IsFullWidth(int i) const
+	{
+		// ASCII chars cant be fullwidth, right?
+		return _len > 0 && CharClasses::IsFullWidth(CPtr() + i);
+	}
+
+	class Access
+	{
+		EcoString &_es;
+		const int _i;
+	public:
+		Access(EcoString &es, int i) : _es(es), _i(i) {}
+		operator wchar_t() const { return _es.At(_i); }
+		Access &operator =(wchar_t c) { _es.Set(_i, c); return *this; }
+		Access &operator =(const Access &a) { _es.Set(_i, a); return *this; }
+	};
+
+	inline wchar_t operator[](int i) const { return At(i); }
+	inline Access operator[](int i) { return Access(*this, i); }
 };

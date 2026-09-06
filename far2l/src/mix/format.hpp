@@ -185,3 +185,17 @@ class FormatScreen : public BaseFormat
 {
 	void Commit(const FARString &Data);
 };
+
+template <class T>
+	class FormatToPrintText : public BaseFormat
+{
+	T *_t;
+
+public:
+	FormatToPrintText(T *t) : _t(t) {}
+
+	void Commit(const FARString &Data)
+	{
+		_t->PrintText(Data);
+	}
+};

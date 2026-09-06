@@ -194,7 +194,7 @@ extern "C"
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
 			fcntl(r, O_DIRECT, 1);
-#elif !defined(__CYGWIN__)
+#elif !defined(__CYGWIN__) && !defined(__OpenBSD__)
 			fcntl(r, F_NOCACHE, 1);
 #endif // __FreeBSD__
 		}
@@ -620,7 +620,7 @@ extern "C"
 			wfd->UnixGroup = s.st_gid;
 			wfd->UnixDevice = s.st_dev;
 			wfd->UnixNode = s.st_ino;
-			wfd->nPhysicalSize = ((DWORD64)_st_lnk.st_blocks) * 512;
+			wfd->nPhysicalSize = ((DWORD64)s.st_blocks) * 512; // _st_lnk
 			wfd->nFileSize = (DWORD64)s.st_size;
 			wfd->dwFileAttributes = _attr;
 			wfd->dwUnixMode = s.st_mode;

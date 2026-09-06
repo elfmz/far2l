@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // # include <sys/sysctl.h>
 #include <mach/mach_host.h>
 #include <mach/vm_statistics.h>
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
+#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 #include <sys/sysinfo.h>
 #endif
 #include <sys/statvfs.h>
@@ -223,8 +223,9 @@ void InfoList::DisplayObject()
 		ConvertNameToReal(strCurDir, strRealDir);
 
 		fprintf(stderr, "apiGetVolumeInformation: %ls\n", strRealDir.CPtr());
+		DWORD ClusterSize = 0;
 		bool b_info = apiGetVolumeInformation(strRealDir, &strVolumeName, &VolumeNumber, &MaxNameLength, &FileSystemFlags,
-					&strFileSystemName, &strFileSystemMountPoint);
+					&ClusterSize, &strFileSystemName, &strFileSystemMountPoint);
 		if (b_info) {
 			//		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 			strTitle = L"(" + strFileSystemName + L")";
@@ -248,6 +249,13 @@ void InfoList::DisplayObject()
 				GotoXY(X1 + 2, CurY++);
 				PrintText(Msg::InfoDiskFree);
 				InsertCommas(UserFree, strOutStr);
+				PrintInfo(strOutStr);
+			}
+
+			if (ClusterSize) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoClusterSize);
+				InsertCommas(ClusterSize, strOutStr);
 				PrintInfo(strOutStr);
 			}
 
@@ -444,7 +452,7 @@ void InfoList::DisplayObject()
 			PrintInfo(strOutStr);
 		}
 
-#elif !defined(__FreeBSD__)&& !defined(__NetBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
+#elif !defined(__FreeBSD__)&& !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 		struct sysinfo si = {};
 		if (sysinfo(&si) == 0) {
 			DWORD dwMemoryLoad = 100 - ToPercent64(si.freeram + si.freeswap, si.totalram + si.totalswap);

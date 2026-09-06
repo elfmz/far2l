@@ -38,6 +38,7 @@ $^#Програма управління файлами та архівами#
  ~Історія команд~@History@
  ~Пошук папки~@FindFolder@
  ~Порівняння папок~@CompFolders@
+ ~Порівняння файлів~@FileDiff@
  ~Меню користувача~@UserMenu@
  ~Меню переходу~@DriveDlg@
 
@@ -1335,6 +1336,15 @@ $ #Меню команд#
  Додаткова інформація про цю команду
 міститься в темі Порівняння папок @CompFolders@.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
  #Меню користувача# Дозволяє редагувати головне або місцеве
 ~меню користувача~@UserMenu@. Для вставки пункту
  використовується #Ins# чи #Ctrl+N#, для видалення - #Del#,
@@ -2117,8 +2127,20 @@ $ #Історія зміни папок#
 
 @TaskList
 $ #Список завдань#
-    Список завдань відображає активні завдання, використовуючи #htop# (якщо доступно)
-або #top# як резервний варіант.
+    Список завдань відображає активні завдання.
+
+    #Del#                Kill process: sends #SIGTERM# and checks if process really exited as result
+    #Shift-Del#          Kill process: sends #SIGKILL#
+    #Ctrl-R#             Autorefresh on/off (if on, autorefresh each 1 s)
+    #t#/#T#                Sort by time
+    #n#/#N#                Sort by name
+    #i#/#I#                Sort by PID
+    #c#/#C#                Sort by CPU
+    #m#/#M#                Sort by memory (Resident Set Size, RSS)
+    #Ctrl-Alt-F#         Filter list items
+    #Ctrl-F10#           Go to #/proc/PID# directory in active panel (only in Linux)
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CompFolders
 $ #Порівняння папок#
@@ -2790,6 +2812,43 @@ $ #Формат командного рядка#
 від поточної глибини стеку каталогів ~PUSHD~@OSCommands@, по одному знаку на
 кожен збережений шлях.
 
+@FileDiff
+$ #Порівняння файлів#
+ FileDiff порівнює файли, вибрані на активній і пасивній файлових панелях.
+Файл активної панелі показано ліворуч, файл пасивної панелі — праворуч.
+Змінені рядки та змінені фрагменти всередині рядків підсвічуються. На
+центральному роздільнику для кожного блоку змін показано дії об'єднання.
+Стрілки копіюють рядки до іншої панелі, хрестики видаляють зайві рядки.
+
+ Обидві панелі доступні для редагування. Підтримуються перенесення рядків,
+номери рядків, підсвічування синтаксису, пошук, робота з буфером обміну та
+звичайні команди редактора для скасування й повторення змін.
+
+ #F1# Показати цю довідку
+ #F2# Зберегти активний файл
+ #F5# Об'єднати поточний блок змін
+ #Tab, Shift-Tab# Переміщати фокус між лівою панеллю, роздільником і правою панеллю
+ #Left, Right# Вибрати напрямок об'єднання, коли активний роздільник
+ #Enter# Виконати вибране об'єднання, коли активний роздільник
+ #Ctrl-Up# Перейти до попереднього блоку змін
+ #Ctrl-Down# Перейти до наступного блоку змін
+ #F7# Шукати в активній панелі
+ #Shift-F7# Продовжити пошук
+ #Ctrl-Z# Скасувати зміну в активній панелі
+ #Ctrl-Shift-Z# Повторити зміну в активній панелі
+ #F11# Відкрити меню плагінів редактора
+ #Esc, F10# Закрити FileDiff
+
+ Якщо активна текстова панель, #F5# копіює поточний блок змін із неї до іншого
+ файлу. Якщо активний роздільник, клавішами #Left# і #Right# виберіть дію,
+потім натисніть #Enter# або #F5#. Клацання стрілки копіює блок, а клацання
+хрестика видаляє зайві рядки з цього боку. Кожне об'єднання записується як одна
+операція скасування в цільовій панелі.
+
+ Змінені файли позначаються символом #*#. Під час закриття FileDiff пропонує
+зберегти змінені файли. Якщо кодування файлу було визначено евристично, перед
+першим збереженням FileDiff запитує підтвердження.
+
 @Viewer
 $ #Програма перегляду: клавіші керування#
  Команди програми перегляду
@@ -3115,6 +3174,11 @@ $ #Редактор: пошук та заміна#
  У режимі пошуку також доступна опція:
 
  #Виділяти знайдене# - ^<wrap>знайдені послідовності будуть виділені.
+
+ У діалозі пошуку є також кнопка #Всі#: за нею виконується пошук одразу по всьому
+файлу, а всі знайдені входження показуються списком з номерами рядків та позицій.
+#Enter# у цьому списку переводить курсор до вибраного входження, #Esc# залишає
+поточну позицію без змін.
 
 
 @FileOpenCreate
@@ -5155,7 +5219,7 @@ $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
   Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
-  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch);
   - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 

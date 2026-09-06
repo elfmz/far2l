@@ -66,6 +66,7 @@ void ConsoleOutput::DeferredRepaints::Add(const SMALL_RECT *areas, size_t cnt)
 	}
 }
 
+static std::atomic<int> s_conout_cnt{0};
 
 ConsoleOutput::ConsoleOutput() :
 	_backend(NULL),
@@ -80,6 +81,19 @@ ConsoleOutput::ConsoleOutput() :
 	_scroll_region.top = 0;
 	_scroll_region.bottom = MAXSHORT;
 	SetSize(80, 25);
+	int cnt = ++s_conout_cnt;
+	if (cnt > 4) {
+		fprintf(stderr, "ConsoleOutput: instances count increased to %d %s\n",
+			cnt, (cnt > 100) ? "!!!" : ((cnt > 10) ? "!" : ""));
+	}
+}
+
+ConsoleOutput::~ConsoleOutput()
+{
+	int cnt = --s_conout_cnt;
+	if (cnt >= 4) {
+		fprintf(stderr, "ConsoleOutput: instances count decreased to %d\n", cnt);
+	}
 }
 
 

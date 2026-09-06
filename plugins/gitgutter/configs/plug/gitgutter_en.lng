@@ -1,0 +1,18 @@
+.Language=English,English
+
+"GitGutter"
+"GitGutter settings"
+"Enabled"
+"Baseline"
+"HEAD (last commit)"
+"Staged version (index)"
+"Saved file on disk"
+"Update interval (ms)"
+"Color added"
+"Color modified"
+"Color deleted"
+"OK"
+"Cancel"
+"Git not found."
+"File is not in a Git repository."
+"Git root"

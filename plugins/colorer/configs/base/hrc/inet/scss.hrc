@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="scss">
+    <annotation>
+      <documentation>
+        SCSS (Sassy CSS) — brace-based Sass. Indented .sass stays on the sass type.
+        https://sass-lang.com/documentation/syntax#scss
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+    <import type="css"/>
+    <import type="html-css"/>
+
+    <region name="Variable" parent="def:VarStrong"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="AtRule" parent="def:Keyword"/>
+
+    <scheme name="Comment">
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+      <inherit scheme="css:Comment"/>
+    </scheme>
+
+    <scheme name="Interpolation">
+      <block start="/#(\{)/" end="/(\})/"
+             scheme="scss"
+             region00="def:Symbol" region10="def:Symbol"
+             region01="def:PairStart" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="Property">
+      <regexp match="/\$[\w-]+/" region="Variable"/>
+      <inherit scheme="Interpolation"/>
+      <block start="/\M[\w\-]+(\s*\()?=/" end="/\M\(/" scheme="css:CssFunctions"/>
+      <block start="/(\()/" end="/(\))/"
+             scheme="Property"
+             region00="def:Symbol" region01="def:PairStart"
+             region10="def:Symbol" region11="def:PairEnd"/>
+      <inherit scheme="css:Property">
+        <virtual scheme="css:Property" subst-scheme="Property"/>
+        <virtual scheme="css:PropertyValue" subst-scheme="html-css:PropertyValue"/>
+        <virtual scheme="css:CustomColors" subst-scheme="html-css:CustomColors"/>
+      </inherit>
+      <regexp match="/\$[\w-]+/" region="Variable"/>
+    </scheme>
+
+    <scheme name="PropertyWrapper">
+      <inherit scheme="css:PropertyWrapper">
+        <virtual scheme="css:Property" subst-scheme="Property"/>
+        <virtual scheme="css:PropertyNames" subst-scheme="html-css:PropertyNames"/>
+        <virtual scheme="css:PropertyFunc" subst-scheme="html-css:PropertyFunc"/>
+        <virtual scheme="css:CustomColors" subst-scheme="html-css:CustomColors"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="RuleContent">
+      <inherit scheme="Comment"/>
+      <regexp match="/@(use|forward|mixin|include|extend|function|return|if|else|for|each|while|debug|warn|error|at-root|content|scope|import)\b/"
+              region="AtRule"/>
+      <regexp match="/\$[\w-]+/" region="Variable"/>
+      <regexp match="/&amp;/" region="def:Keyword"/>
+      <block start="/\M ([\w\d\-]+) \s* (:)(.*\{)?!/x" end="/(;|\})?=/"
+             scheme="PropertyWrapper" region02="def:Symbol"/>
+      <keywords region="def:SymbolStrong">
+        <symb name=";"/>
+      </keywords>
+      <inherit scheme="RulesList"/>
+    </scheme>
+
+    <scheme name="RulesList">
+      <inherit scheme="Comment"/>
+      <block start="/^\s*(\$[\w-]+)\s*(:)/" end="/;/"
+             scheme="Property"
+             region01="Variable" region02="def:Symbol"
+             region10="def:SymbolStrong"/>
+      <regexp match="/\$[\w-]+/" region="Variable"/>
+      <regexp match="/&amp;/" region="def:Keyword"/>
+      <regexp match="/@(use|forward|mixin|include|extend|function|return|if|else|for|each|while|debug|warn|error|at-root|content|scope|import)\b/"
+              region="AtRule"/>
+      <inherit scheme="Interpolation"/>
+      <inherit scheme="css:RulesList">
+        <virtual scheme="css:TagNames" subst-scheme="html-css:cssTag"/>
+        <virtual scheme="css:AttrNames" subst-scheme="html-css:cssAttr"/>
+        <virtual scheme="css:Comment" subst-scheme="Comment"/>
+        <virtual scheme="css:Property" subst-scheme="Property"/>
+        <virtual scheme="css:PropertyWrapper" subst-scheme="PropertyWrapper"/>
+        <virtual scheme="css:RuleContent" subst-scheme="RuleContent"/>
+        <virtual scheme="css:RulesList" subst-scheme="RulesList"/>
+      </inherit>
+    </scheme>
+
+    <scheme name="scss">
+      <inherit scheme="html-css:css">
+        <virtual scheme="html-css:css" subst-scheme="scss"/>
+        <virtual scheme="css:Comment" subst-scheme="Comment"/>
+        <virtual scheme="css:Property" subst-scheme="Property"/>
+        <virtual scheme="css:PropertyWrapper" subst-scheme="PropertyWrapper"/>
+        <virtual scheme="css:RuleContent" subst-scheme="RuleContent"/>
+        <virtual scheme="css:RulesList" subst-scheme="RulesList"/>
+      </inherit>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

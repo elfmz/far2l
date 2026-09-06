@@ -14,6 +14,7 @@
 #include "message.hpp"
 #include "panelmix.hpp"
 #include "pathmix.hpp"
+#include "plugins.hpp"
 
 static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 {
@@ -142,6 +143,12 @@ PluginTempFileHolder::PluginTempFileHolder(const FARString &temp_file_name, HAND
 	:
 	TempFileUploadHolder(temp_file_name), hPlugin(hPlugin_)
 {
+	OpenPluginInfo plugin_info{};
+	CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &plugin_info);
+	if (plugin_info.CurDir) {
+		_plug_dir = plugin_info.CurDir;
+		AddEndSlash(_plug_dir);
+	}
 	CtrlObject->Plugins.RetainPlugin(hPlugin);
 }
 
@@ -176,8 +183,22 @@ bool PluginTempFileHolder::UploadTempFile()
 
 	PluginPanelItem PanelItem;
 	if (FileList::FileNameToPluginItem(strPath, &PanelItem)) {
+		OpenPluginInfo plugin_info{};
+		FARString cur_dir;
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &plugin_info);
+		if (plugin_info.CurDir) {
+			cur_dir = plugin_info.CurDir;
+			AddEndSlash(cur_dir);
+		}
+		fprintf(stderr, "PluginTempFileHolder: upload into '%ls' while cur '%ls' file '%ls'\n",
+			_plug_dir.CPtr(), cur_dir.CPtr(), PanelItem.FindData.lpwszFileName);
+		if (cur_dir != _plug_dir) {
+			SetPluginDirectory(_plug_dir, hPlugin);
+		}
 		PutCode = CtrlObject->Plugins.PutFiles(hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
-
+		if (cur_dir != _plug_dir) {
+			SetPluginDirectory(cur_dir, hPlugin);
+		}
 		if (PutCode != 0)
 			out = true;
 

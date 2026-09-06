@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="cython">
+    <annotation>
+      <documentation>
+        Cython (.pyx, .pxd, .pxi) on top of Python.
+        https://cython.readthedocs.io/en/latest/src/userguide/language_basics.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+    <import type="python"/>
+
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="TypeKeyword" parent="def:TypeKeyword"/>
+
+    <scheme name="cython">
+      <keywords region="Keyword">
+        <word name="cdef"/>
+        <word name="cpdef"/>
+        <word name="ctypedef"/>
+        <word name="cimport"/>
+        <word name="include"/>
+        <word name="nogil"/>
+        <word name="gil"/>
+        <word name="fused"/>
+        <word name="cppclass"/>
+        <word name="namespace"/>
+        <word name="extern"/>
+        <word name="public"/>
+        <word name="readonly"/>
+        <word name="inline"/>
+        <word name="api"/>
+        <word name="packed"/>
+        <word name="by"/>
+        <word name="noexcept"/>
+        <word name="DEF"/>
+        <word name="IF"/>
+        <word name="ELIF"/>
+        <word name="ELSE"/>
+      </keywords>
+      <keywords region="TypeKeyword">
+        <word name="bint"/>
+        <word name="void"/>
+        <word name="char"/>
+        <word name="int"/>
+        <word name="float"/>
+        <word name="double"/>
+        <word name="unsigned"/>
+        <word name="signed"/>
+        <word name="short"/>
+        <word name="long"/>
+        <word name="size_t"/>
+        <word name="Py_ssize_t"/>
+        <word name="NULL"/>
+        <word name="nullptr"/>
+      </keywords>
+      <inherit scheme="python:python">
+        <virtual scheme="python:python" subst-scheme="cython"/>
+      </inherit>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

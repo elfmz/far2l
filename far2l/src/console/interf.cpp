@@ -561,7 +561,7 @@ void Text(const WCHAR *Str, size_t Length)
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
 		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses::IsFullWidth(&Str[i])) {
+		if (CharClasses::IsFullWidth(&Str[i], Length - i)) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else if (CharClasses::IsXxxfix(Str[i])) {
@@ -610,7 +610,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 		}
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses::IsFullWidth(&Str[i])) {
+		if (CharClasses::IsFullWidth(&Str[i], Length - i)) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else	if (CharClasses::IsXxxfix(Str[i])) {

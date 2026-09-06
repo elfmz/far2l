@@ -7,7 +7,7 @@ BETA VERSION.
 **Use at your own risk!**
 
 Plug-ins that are currently working:
-ADB <sub>(the external adb binary is required to work, see: [README](https://github.com/elfmz/far2l/blob/master/adb/README.md))</sub>,
+ADB <sub>(the external adb binary is required to work, see: [README](https://github.com/elfmz/far2l/blob/master/plugins/adb/README.md))</sub>,
 Advanced compare,
 align,
 arclite <sub>(now as experimental version which partially more effective than multiarc;
@@ -26,12 +26,13 @@ hexitor,
 ImageViewer,
 incsrch,
 inside,
-memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/memo/README.md))</sub>,
-MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/mtp/README.md))</sub>,
+jumpword <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/jumpword/README.md))</sub>,
+memo <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/memo/README.md))</sub>,
+MTP <sub>(see: [README](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md))</sub>,
 multiarc,
 NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3),
 OpenWith,
-Python <sub>(optional scripting support, see [readme](python/configs/plugins/read-en.txt) and [info](python/configs/plugins/readme-plugins.txt))</sub>,
+Python <sub>(optional scripting support, see [readme](plugins/python/configs/plugins/read-en.txt) and [info](plugins/python/configs/plugins/readme-plugins.txt))</sub>,
 SimpleIndent,
 tmppanel,
 Transformer <sub>(generic external-command text transformations for the editor and file panels)</sub>,
@@ -72,7 +73,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * See also (in external documents):
     * [Change log](changelog.md)
     * [Releases](https://github.com/elfmz/far2l/releases)
-    * [Python plugin readme](python/configs/plugins/read-en.txt) and [Short information about each Python plugins/files](python/configs/plugins/readme-plugins.txt)
+    * [Python plugin readme](plugins/python/configs/plugins/read-en.txt) and [Short information about each Python plugins/files](plugins/python/configs/plugins/readme-plugins.txt)
     * [Notes on porting and FAR Plugin API changes](HACKING.md)
     * [Coding style](CODESTYLE.md)
     * [Testing](testing/README.md)
@@ -382,14 +383,15 @@ There're also options to toggle other plugins build in same way:
 `-DGITGUTTER=no`,
 `-DHEXITOR=no`,
 `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`,
+`-DJUMPWORD=no`,
 `-DMEMO=no`,
-`-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/mtp/README.md)),
+`-DMTP=no` (see additional flags in [MTP README](https://github.com/elfmz/far2l/blob/master/plugins/mtp/README.md)),
 `-DMULTIARC=no`,
 `-DNETROCKS=no`,
 `-DOPENWITH=no`,
 `-DSIMPLEINDENT=no`,
 `-DTMPPANEL=no`, `-DTRANSFORMER=no`, `-DTRUNCATE=no`
-(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
+(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [plugins/NetRocks/CMakeLists.txt](plugins/NetRocks/CMakeLists.txt)).
 
 #### macOS build
 
@@ -525,7 +527,6 @@ but vanilla PuTTY can not transfer clipboard.
     * tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
 
  * External far2l plugins:
-    + **jumpword** (far2l editor plugin for quick searching the word under cursor): https://github.com/axxie/far2l-jumpword/
     + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
     + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
     + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes

@@ -60,6 +60,7 @@ public:
 
 class PluginTempFileHolder : public TempFileUploadHolder
 {
+	FARString _plug_dir;
 	HANDLE hPlugin;
 
 	virtual bool UploadTempFile();

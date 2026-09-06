@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "panelmix.hpp"
 #include "mix.hpp"
+#include "WideCharToMultiByteBuffer.hpp"
 
 struct TSubstData
 {
@@ -652,7 +653,7 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifiers)
 			FARString strFileName;
 			DWORD FileAttr;
 			GetSelNameCompat(nullptr, FileAttr);
-
+			WideCharToMultiByteBuffer Buffer;
 			while (GetSelNameCompat(&strFileName, FileAttr)) {
 				if (Modifiers && *Modifiers) {
 					if (wcschr(Modifiers, L'F') && PointToName(strFileName) == strFileName.CPtr())		// 'F' - использовать полный путь; //BUGBUG ?
@@ -668,44 +669,24 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifiers)
 						QuoteSpaceOnly(strFileName);
 				}
 
-				LPCVOID Ptr = nullptr;
-				LPSTR Buffer = nullptr;
-				DWORD NumberOfBytesToWrite = 0, NumberOfBytesWritten = 0;
-
+				DWORD NumberOfBytesWritten;
+				BOOL Written = TRUE;
 				if (CodePage == CP_WIDE_LE) {
-					Ptr = strFileName.CPtr();
-					NumberOfBytesToWrite = static_cast<DWORD>(strFileName.GetLength() * sizeof(WCHAR));
-				} else {
-					int Size = WINPORT(WideCharToMultiByte)(CodePage, 0, strFileName,
-							static_cast<int>(strFileName.GetLength()), nullptr, 0, nullptr, nullptr);
-
-					if (Size) {
-						Buffer = static_cast<LPSTR>(malloc(Size));
-
-						if (Buffer) {
-							NumberOfBytesToWrite = WINPORT(WideCharToMultiByte)(CodePage, 0, strFileName,
-									static_cast<int>(strFileName.GetLength()), Buffer, Size, nullptr,
-									nullptr);
-							Ptr = Buffer;
-						}
-					}
+					Written = ListFile.Write(strFileName.CPtr(), strFileName.GetLength() * sizeof(WCHAR), &NumberOfBytesWritten);
+				} else if (!strFileName.IsEmpty()) {
+					Buffer.assign(CodePage, strFileName, strFileName.GetLength());
+					Written = !Buffer.empty() && ListFile.Write(Buffer.data(), Buffer.size(), &NumberOfBytesWritten);
 				}
 
-				BOOL Written = ListFile.Write(Ptr, NumberOfBytesToWrite, &NumberOfBytesWritten);
-
-				if (Buffer)
-					free(Buffer);
-
-				if (Written && NumberOfBytesWritten == NumberOfBytesToWrite) {
-					if (ListFile.Write(Eol, EolSize, &NumberOfBytesWritten)
-							&& NumberOfBytesWritten == EolSize) {
-						Ret = true;
-					}
-				} else {
+				if (!Written) {
 					Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateListFile,
 							Msg::CannotCreateListWrite, Msg::Ok);
 					apiDeleteFile(strListFileName);
 					break;
+				}
+				if (ListFile.Write(Eol, EolSize, &NumberOfBytesWritten)
+						&& NumberOfBytesWritten == EolSize) {
+					Ret = true;
 				}
 			}
 

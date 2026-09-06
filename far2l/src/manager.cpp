@@ -885,7 +885,7 @@ int Manager::ProcessKey(DWORD Key)
 		{
 			switch (Key) {
 				case KEY_CTRLW:
-					ShowProcessList();
+					ShowProcessList(CtrlObject->Cp()->ActivePanel);
 					return TRUE;
 				case KEY_F11:
 					PluginsMenu();
@@ -1036,6 +1036,10 @@ int Manager::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 void Manager::PluginsMenu()
 {
 	_MANAGER(SysLog(1));
+	if (CurrentFrame->ProcessPluginMenu()) {
+		_MANAGER(SysLog(-1));
+		return;
+	}
 	int curType = CurrentFrame->GetType();
 
 	if (curType == MODALTYPE_PANELS || curType == MODALTYPE_EDITOR || curType == MODALTYPE_VIEWER

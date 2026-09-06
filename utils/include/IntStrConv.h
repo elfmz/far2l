@@ -16,11 +16,27 @@ wchar_t * _itow(int i, wchar_t *w, int radix);
 #ifdef __cplusplus
 }
 
+#include "CheckedCast.hpp"
+
 // if pos is not nullptr then value being parsed starting from *pos value
 // and upon completion *pos is set to the end of parsed substring
-unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos = nullptr);
-unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos = nullptr);
-long DecToLong(const char *str, size_t maxlen, size_t *pos = nullptr);
+unsigned long long HexToULongLong(const char *str, size_t maxlen, size_t *pos = nullptr);
+static inline unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos = nullptr)
+{
+	return CheckedCast<unsigned long>(HexToULongLong(str, maxlen, pos));
+}
+
+unsigned long long DecToULongLong(const char *str, size_t maxlen, size_t *pos = nullptr);
+static inline unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos = nullptr)
+{
+	return CheckedCast<unsigned long>(DecToULongLong(str, maxlen, pos));
+}
+
+long long DecToLongLong(const char *str, size_t maxlen, size_t *pos = nullptr);
+static inline long DecToLong(const char *str, size_t maxlen, size_t *pos = nullptr)
+{
+	return CheckedCast<long>(DecToLongLong(str, maxlen, pos));
+}
 
 enum NumberKind {
 	NK_NOT_NUMBER = 0,

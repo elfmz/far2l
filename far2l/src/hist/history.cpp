@@ -178,16 +178,25 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Extra, const 
 
 static void AppendWithLFSeparator(std::wstring &str, const FARString &ap, bool first)
 {
-	if (!first) {
+	if (!first)
 		str+= L'\n';
-	}
-	size_t p = str.size();
+	size_t pos = str.size();
 	str.append(ap.CPtr(), ap.GetLength());
-	for (; p < str.size(); ++p) {
-		if (str[p] == L'\n') {
-			str[p] = L'\r';
-		}
+	for (; pos < str.size(); ++pos) {
+		if (str[pos] == L'\n')
+			str[pos] = L'\r';
 	}
+}
+
+static void RestoreLFSeparator(FARString &str)
+{
+	ReplaceStrings(str, L"\r", L"\n", -1);
+}
+
+static void MakeHistoryDisplayText(FARString &str)
+{
+	ReplaceStrings(str, L"\r", L"\x240D", -1);
+	ReplaceStrings(str, L"\n", L"\x21B5", -1);
 }
 
 bool History::SaveHistory()
@@ -285,6 +294,7 @@ bool History::ReadLastItem(const char *RegKey, FARString &strStr)
 	if (strStr.Pos(p, L'\n'))
 		strStr.Remove(p, strStr.GetLength() - p);
 
+	RestoreLFSeparator(strStr);
 	return true;
 }
 
@@ -318,8 +328,10 @@ bool History::ReadHistory(bool bOnlyLines)
 
 		HistoryRecord *AddRecord = HistoryList.Unshift();
 		AddRecord->strName = strLines.SubStr(LinesPos, LineEnd - LinesPos);
+		RestoreLFSeparator(AddRecord->strName);
 		LinesPos = LineEnd + 1;
 		AddRecord->strExtra = strExtras.SubStr(ExtrasPos, ExtraEnd - ExtrasPos);
+		RestoreLFSeparator(AddRecord->strExtra);
 		ExtrasPos = ExtraEnd + 1;
 
 		if (TypesPos < strTypes.GetLength()) {
@@ -661,6 +673,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord) {
 						FARString strCmd = CurrentRecord->strName;
 						FARString strDir = CurrentRecord->strExtra;
+						MakeHistoryDisplayText(strCmd);
+						MakeHistoryDisplayText(strDir);
 						TruncStrFromCenter(strCmd, std::max(ScrX - 32, 32));
 						TruncStrFromCenter(strDir, std::max(ScrX - 32, 32));
 						strCmd.Insert(0, Msg::HistoryCommandLine);

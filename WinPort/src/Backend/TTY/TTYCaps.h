@@ -32,5 +32,5 @@ struct TTYCaps
 	bool wayland : 1;       // set by Setup()
 };
 
-unsigned int TTYKernelQueryControlKeys(int stdin);
+unsigned int TTYKernelQueryControlKeys(int fd);
 bool TTYWriteAndDrain(int fd, const std::string &str);

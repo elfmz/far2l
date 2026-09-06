@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+  <!--
+  C# syntax description
+  With help of:
+    Alexey Drugobitskiy <msfun@rambler.ru>
+    Roman Kuzmin aka NightRoman
+  -->
+  <type name="csharp">
+    <annotation>
+      <documentation>C# syntax description</documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="Directive" parent="def:Directive"/>
+    <region name="Error" parent="def:Error"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="String" parent="def:String"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="SymbolStrong" parent="def:SymbolStrong"/>
+
+    <region name="Name" parent="def:Identifier"/>
+    <region name="Class" parent="def:Identifier"/>
+    <region name="Function" parent="def:Identifier"/>
+    <region name="Delegate" parent="def:Identifier"/>
+
+    <region name="Apos" parent="def:StringEdge"/>
+    <region name="Quot" parent="def:StringEdge"/>
+    <region name="Escape" parent="def:StringContent"/>
+
+    <region name="start" parent="def:PairStart"/>
+    <region name="end" parent="def:PairEnd"/>
+
+    <entity name="hex" value="[0-9a-fA-F]"/>
+    <entity name="type_space" value="\w[\w\[\]\s.,&lt;&gt;*]*?\??\s+"/>
+    <entity name="string_escape" value="\\([&apos;&quot;\\0abfnrtv]|x%hex;{1,4}|u%hex;{4}|U00%hex;{6})"/>
+
+    <!--raw string-->
+    <scheme name="RawString">
+      <block scheme="def:empty" start="/(?{start}\$*(?{Quot}&quot;{3,}))/" end="/(?{end}(?{Quot}\y{Quot}))/" region="String"/>
+    </scheme>
+
+    <!--interpolated verbatim string-->
+    <scheme name="IVString">
+      <block scheme="IVStringContent" start="/(?{start}(?{Quot}\$@&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="IVStringContent">
+      <regexp match="/\{\{|\}\}|&quot;&quot;/" region="Escape"/>
+      <block scheme="csharp" start="/(?{start}(?{SymbolStrong}\{))/" end="/(?{end}(?{SymbolStrong}\}))/" region="Name"/>
+    </scheme>
+
+    <!--interpolated string-->
+    <scheme name="IString">
+      <block scheme="IStringContent" start="/(?{start}(?{Quot}\$&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="IStringContent">
+      <regexp match="/(?{Escape}(\{\{|\}\}|%string_escape;))/"/>
+      <block scheme="csharp" start="/(?{start}(?{SymbolStrong}\{))/" end="/(?{end}(?{SymbolStrong}\}))/" region="Name"/>
+    </scheme>
+
+    <!--verbatim string-->
+    <scheme name="VString">
+      <block scheme="VStringContent" start="/(?{start}(?{Quot}@&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="VStringContent">
+      <regexp match="/&quot;&quot;/" region="Escape"/>
+    </scheme>
+
+    <!--string-->
+    <scheme name="String">
+      <block scheme="StringContent" start="/(?{start}(?{Quot}&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="StringContent">
+      <regexp match="/(?{Escape}%string_escape;)/"/>
+    </scheme>
+
+    <scheme name="Char">
+      <regexp match="/(?{Apos}')((?{Escape}\\('|\\|&quot;|0|u%hex;{4}|x%hex;{1,4}))|(?{String}.))(?{Apos}')/"/>
+    </scheme>
+
+    <scheme name="Comment">
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment" region00="start" region10="end"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+    </scheme>
+
+    <scheme name="csharp">
+      <inherit scheme="RawString"/>
+      <inherit scheme="IVString"/>
+      <inherit scheme="IString"/>
+      <inherit scheme="VString"/>
+      <inherit scheme="String"/>
+      <inherit scheme="Char"/>
+
+      <inherit scheme="def:CHexNumber"/>
+      <inherit scheme="def:FloatNumber"/>
+      <inherit scheme="def:DecNumber"/>
+
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="csharp"/>
+      </inherit>
+
+      <inherit scheme="Comment"/>
+
+      <!--#region-->
+      <block scheme="csharp">
+        <start>/^\s*(?{start}(?{Directive}(?{def:Outlined}#region)))\b\s*(?{Comment}.*)/</start>
+        <end>/^\s*(?{end}(?{Directive}#endregion))\b\s*(?{Comment}.*)/</end>
+      </block>
+
+      <!--function-->
+      <regexp>
+        /^\s*\M
+          ((else|new|return|throw)\b)?!
+          %type_space;
+
+          (?{def:Outlined}(?{Function}[\w.]+))
+
+          (\s* &lt; \s* \w [\w,\s]*? &gt;)?
+
+          \s* \( (.* \( [^\(\)]* \))* ( [^\)]*?\) | [^\);]*? )
+          \s* ($|\{|\/)
+        /x
+      </regexp>
+
+      <!--class, struct, interface, enum, record-->
+      <regexp>
+        /
+          ((?{Keyword}partial)\s+)?
+          (?{Keyword}class|struct|interface|enum|record(?:\s+(?:struct|class))?)\s+
+          (?{def:Outlined}(?{Class}\w+))
+        /x
+      </regexp>
+
+      <!--delegate-->
+      <regexp>
+        /
+          (?{Keyword}delegate)\s+
+          \M
+          %type_space;
+          (?{def:Outlined}(?{Delegate}\w+))
+        /x
+      </regexp>
+
+      <keywords region="Symbol">
+        <symb name=";" region="SymbolStrong"/>
+        <symb name=":"/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="="/>
+        <symb name=".."/>
+        <symb name="."/>
+        <symb name=","/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="!"/>
+      </keywords>
+      <keywords region="Keyword">
+        <word name="abstract"/>
+        <word name="as"/>
+        <word name="async"/>
+        <word name="await"/>
+        <word name="base"/>
+        <word name="bool"/>
+        <word name="break"/>
+        <word name="byte"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="char"/>
+        <word name="checked"/>
+        <word name="class"/>
+        <word name="const"/>
+        <word name="continue"/>
+        <word name="decimal"/>
+        <word name="default"/>
+        <word name="delegate"/>
+        <word name="do"/>
+        <word name="double"/>
+        <word name="else"/>
+        <word name="enum"/>
+        <word name="event"/>
+        <word name="explicit"/>
+        <word name="extern"/>
+        <word name="false"/>
+        <word name="finally"/>
+        <word name="fixed"/>
+        <word name="float"/>
+        <word name="for"/>
+        <word name="foreach"/>
+        <word name="file"/>
+        <word name="get"/>
+        <word name="goto"/>
+        <word name="if"/>
+        <word name="implicit"/>
+        <word name="in"/>
+        <word name="init"/>
+        <word name="int"/>
+        <word name="interface"/>
+        <word name="internal"/>
+        <word name="is"/>
+        <word name="lock"/>
+        <word name="long"/>
+        <word name="namespace"/>
+        <word name="new"/>
+        <word name="nint"/>
+        <word name="nuint"/>
+        <word name="null"/>
+        <word name="object"/>
+        <word name="operator"/>
+        <word name="out"/>
+        <word name="override"/>
+        <word name="params"/>
+        <word name="private"/>
+        <word name="protected"/>
+        <word name="public"/>
+        <word name="readonly"/>
+        <word name="ref"/>
+        <word name="return"/>
+        <word name="required"/>
+        <word name="sbyte"/>
+        <word name="scoped"/>
+        <word name="sealed"/>
+        <word name="set"/>
+        <word name="short"/>
+        <word name="sizeof"/>
+        <word name="stackalloc"/>
+        <word name="static"/>
+        <word name="string"/>
+        <word name="struct"/>
+        <word name="switch"/>
+        <word name="this"/>
+        <word name="throw"/>
+        <word name="true"/>
+        <word name="try"/>
+        <word name="typeof"/>
+        <word name="uint"/>
+        <word name="ulong"/>
+        <word name="unchecked"/>
+        <word name="unsafe"/>
+        <word name="ushort"/>
+        <word name="using"/>
+        <word name="var"/>
+        <word name="virtual"/>
+        <word name="void"/>
+        <word name="while"/>
+      </keywords>
+
+      <regexp match="/(?{Keyword}yield)\s+(?{Keyword}break|return)\b/"/>
+
+      <keywords region="Error">
+        <symb name="}"/>
+        <symb name=")"/>
+        <symb name="]"/>
+      </keywords>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 1999-2005 Cail Lomecb <irusskih@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

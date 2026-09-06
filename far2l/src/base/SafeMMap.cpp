@@ -1,4 +1,4 @@
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 # define _XOPEN_SOURCE // macos wants it for ucontext
 #endif
 
@@ -19,7 +19,7 @@
 #include "../WinPort/sudo.h"
 #include <sys/mman.h>
 #include <sys/stat.h>
-#if !defined(__HAIKU__)
+#if !defined(__HAIKU__) && !defined(__OpenBSD__)
 #include <ucontext.h>
 #endif
 
@@ -103,8 +103,13 @@ static void FDWriteSignalInfo(int fd, int num, siginfo_t *info, void *ctx)
 	FDWriteStr(fd, errmsg);
 
 	const ucontext_t *uctx = (const ucontext_t *)ctx;
+#ifdef __OpenBSD__
+	const long *mctx = (const long *)uctx;
+	const size_t mctx_count = sizeof(*uctx) / sizeof(*mctx);
+#else
 	const long *mctx = (const long *)&uctx->uc_mcontext;
 	const size_t mctx_count = sizeof(uctx->uc_mcontext) / sizeof(*mctx);
+#endif
 
 	for (size_t i = 0; i < mctx_count; ++i) {
 		if (i == 0) {
@@ -234,11 +239,11 @@ static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct siga
 	}
 }
 
-static struct sigaction s_prev_sa_bus {}, s_prev_sa_segv {};
+static struct sigaction s_prev_sa_bus {}, s_prev_sa_segv {}, s_prev_sa_abrt {};
 
 void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 {
-	{
+	if (num != SIGABRT) {
 		SMM_Lock sl;
 		for (const auto &smm : s_safe_mmaps) {
 			if ((uintptr_t)info->si_addr >= (uintptr_t)smm->_view &&
@@ -255,9 +260,12 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 
 	if (num == SIGSEGV) {
 		InvokePrevSigaction(num, info, ctx, s_prev_sa_segv);
-
 	} else if (num == SIGBUS) {
 		InvokePrevSigaction(num, info, ctx, s_prev_sa_bus);
+	} else if (num == SIGABRT) {
+		//InvokePrevSigaction(num, info, ctx, s_prev_sa_abrt);
+		struct sigaction tmp{};
+		sigaction(SIGABRT, &s_prev_sa_abrt, &tmp);
 	}
 
 	WriteCrashSigLog(num, info, ctx);
@@ -276,6 +284,7 @@ void SafeMMap::sRegisterSignalHandler()
 
 	sigaction(SIGBUS, &sa, &s_prev_sa_bus);
 	sigaction(SIGSEGV, &sa, &s_prev_sa_segv);
+	sigaction(SIGABRT, &sa, &s_prev_sa_abrt);
 }
 
 void SafeMMap::sUnregisterSignalHandler()
@@ -283,6 +292,7 @@ void SafeMMap::sUnregisterSignalHandler()
 	struct sigaction tmp{};
 	sigaction(SIGBUS, &s_prev_sa_bus, &tmp);
 	sigaction(SIGSEGV, &s_prev_sa_segv, &tmp);
+	sigaction(SIGABRT, &s_prev_sa_abrt, &tmp);
 }
 
 

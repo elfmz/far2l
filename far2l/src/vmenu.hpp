@@ -100,6 +100,7 @@ struct MenuItemEx
 	DWORD Flags;	// Флаги пункта
 	DWORD AccelKey;
 	FARString strName;
+	FARString strDescription;
 
 	union							// Пользовательские данные:
 	{
@@ -110,6 +111,10 @@ struct MenuItemEx
 	int UserDataSize;				// Размер пользовательских данных
 	int PrefixLen;	// Length of 'grayed' unimportant prefix
 	int ShowPos;
+	// Подсвечиваемый фрагмент пункта (в символах strName), HiliteLength=0 - нет подсветки.
+	// В отличие от AmpPos работает и при VMENU_SHOWAMPERSAND и подсвечивает не один символ.
+	int HiliteStart;
+	int HiliteLength;
 	short AmpPos;	// Позиция автоназначенной подсветки
 	bool FilteredOut;
 
@@ -150,12 +155,15 @@ struct MenuItemEx
 		Flags = 0;
 		AccelKey = 0;
 		strName.Clear();
+		strDescription.Clear();
 		FilteredOut = false;
 		UserDataSize = 0;
 		UserData = nullptr;
 		AmpPos = 0;
 		PrefixLen = 0;
 		ShowPos = 0;
+		HiliteStart = 0;
+		HiliteLength = 0;
 	}
 
 	MenuItemEx() { Clear(); }
@@ -172,12 +180,15 @@ struct MenuItemEx
 		if (this != &srcMenu) {
 			Flags = srcMenu.Flags;
 			strName = srcMenu.strName;
+			strDescription = srcMenu.strDescription;
 			AccelKey = srcMenu.AccelKey;
 			UserDataSize = 0;
 			UserData = nullptr;
 			AmpPos = srcMenu.AmpPos;
 			PrefixLen = srcMenu.PrefixLen;
 			ShowPos = srcMenu.ShowPos;
+			HiliteStart = srcMenu.HiliteStart;
+			HiliteLength = srcMenu.HiliteLength;
 		}
 
 		return *this;
@@ -235,6 +246,8 @@ class VMenu : public Modal
 private:
 	FARString strTitle;
 	FARString strBottomTitle;
+	int BottomTextLines;
+	int BottomTextLinesMin;
 
 	int SelectPos;
 	int TopPos;
@@ -278,6 +291,14 @@ private:
 	void ShowMenu(bool IsParent, bool ForceFrameRedraw);
 	void DrawEdges();
 	void DrawTitles();
+	void DrawBottomText();
+	int GetListBottom() const;
+	int GetListHeight() const;
+	int GetBottomAreaHeight() const;
+	int GetMaxListHeight() const;
+	int GetBottomTextWidth() const;
+	int GetRequiredBottomTextLines() const;
+	int GetMaxBottomTextLines() const;
 	int GetItemPosition(int Position);
 	static int _SetUserData(MenuItemEx *PItem, const void *Data, int Size);
 	static void *_GetUserData(MenuItemEx *PItem, void *Data, int Size);
@@ -318,6 +339,7 @@ public:
 
 	void SetBottomTitle(const wchar_t *BottomTitle);
 	FARString &GetBottomTitle(FARString &strDest);
+	void SetBottomTextLines(int Lines);
 	void SetDialogStyle(int Style)
 	{
 		ChangeFlags(VMENU_WARNDIALOG, Style);

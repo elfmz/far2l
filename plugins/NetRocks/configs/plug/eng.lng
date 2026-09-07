@@ -313,6 +313,10 @@
 "&Way to access shell"
 "Shell access way settings"
 "FISH+ Protocol Options"
+"Helper &flavor"
+"Auto (probe POSIX first, PowerShell on failure)"
+"POSIX (helper.sh)"
+"PowerShell (helper.ps1)"
 
 "Proxy settings"
 "Not using proxifier"

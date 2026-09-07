@@ -7,6 +7,7 @@
 #include <fstream>
 #include <random>
 #include <RandomString.h>
+#include <base64.h>
 #include "FishPlusScript.h"
 #include "../../Erroring.h"
 
@@ -99,6 +100,64 @@ namespace FishPlus
 		out += HELPER_END_MARKER;
 		out += " ] && break; ";
 		out += "F4S=$F4S$F4L$F4NL; done; eval \"$F4S\"\n";
+		return out;
+	}
+
+	// The ready marker cannot appear as one contiguous run of bytes anywhere in
+	// the encoded blob: a terminal echoing this very command back would then
+	// look like the shell answering. base64 output cannot contain quotes on its
+	// own, so splitting the marker with a doubled PowerShell single-quote (which
+	// the PowerShell parser reads as one literal quote) both breaks the string
+	// and stays inside the '...' literal.
+	//
+	// The pattern is extraordinarily unlikely - the marker is nine ASCII
+	// characters and the base64 alphabet is A-Za-z0-9+/= - but the collision
+	// would be hard to reproduce and even harder to debug, so it is filtered
+	// out unconditionally, matching what f4's Go client does.
+	static std::string SplitReadyMarkerInB64(const std::string &s, const std::string &token)
+	{
+		const std::string marker = ReadyMarker(token);
+		const std::string replacement = "F''4RDY" + token;
+		std::string out;
+		out.reserve(s.size());
+		size_t pos = 0;
+		for (;;) {
+			const size_t p = s.find(marker, pos);
+			if (p == std::string::npos) {
+				out.append(s, pos, std::string::npos);
+				break;
+			}
+			out.append(s, pos, p - pos);
+			out.append(replacement);
+			pos = p + marker.size();
+		}
+		return out;
+	}
+
+	std::string BootstrapLinePwshB64(const std::string &token,
+		const std::string &compact_helper)
+	{
+		// The prefix is a PowerShell comment that decodes to nothing but lets
+		// a wire dump identify what the base64 payload is.
+		std::string payload = "# F4B64" + token + "\n" + compact_helper;
+
+		std::string encoded;
+		base64_encode(encoded, (const unsigned char *)payload.c_str(), payload.size());
+		encoded = SplitReadyMarkerInB64(encoded, token);
+
+		std::string out;
+		out.reserve(encoded.size() + 256);
+		out += "$F4B='";
+		out += encoded;
+		out += "'; Write-Output ('F4R'+'DY'+'";
+		out += token;
+		out += "'); try { $F4S=[System.Text.Encoding]::UTF8.GetString"
+		       "([System.Convert]::FromBase64String($F4B)); "
+		       "Remove-Variable F4B -Force -ErrorAction SilentlyContinue; "
+		       "Invoke-Expression $F4S } catch { Write-Output ('.' + '";
+		out += token;
+		out += "' + ' 0 err bootstrap ' + $_.Exception.Message"
+		       ".Replace([char]10,' ').Replace([char]13,' ')) }\n";
 		return out;
 	}
 }

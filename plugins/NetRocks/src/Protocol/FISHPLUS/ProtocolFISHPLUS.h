@@ -34,12 +34,23 @@ class ProtocolFISHPLUS : public IProtocol
 	std::string _username;
 	std::string _password;
 	std::string _way_name;
+	std::string _flavor;	// "auto" (default), "posix" or "pwsh"
 	std::string _home;		// absolute home dir, resolved once at connect
 
 	void SubstituteCreds(std::string &str);
 	void OpenWay();
 	void PerformLogin();
 	void Initialize();
+
+	// Runs the transport-open, login and handshake sequence once with the
+	// given helper flavor. Returns on success; throws on any failure. On
+	// throw _way and _sess are torn down so a retry can start fresh.
+	void AttemptFlavor(bool pwsh);
+
+	// True when a failed Handshake looks like a wrong-flavor probe rather
+	// than a real error - so the auto path can try the other bootstrap
+	// before giving up.
+	static bool LooksLikeWrongFlavor(const std::exception &e);
 
 	// Fills fi from an info/linfo answer about path.
 	void QueryInformation(FileInformation &file_info, const std::string &path, bool follow_symlink);

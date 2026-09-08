@@ -642,6 +642,8 @@ $ #Command line commands#
   Paste from clipboard                                     #Shift-Ins#
   Previous command                                            #Ctrl-E#
   Next command                                                #Ctrl-X#
+  Insert last argument of previous command                #Ctrl-Alt-.#
+  Cycle backwards through last-argument history          #Ctrl-Alt-,#
   Clear command line                                          #Ctrl-Y#
 
  #Insertion commands#

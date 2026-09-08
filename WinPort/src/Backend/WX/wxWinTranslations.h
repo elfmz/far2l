@@ -25,7 +25,10 @@ public:
 	void OnKeyDown(wxKeyEvent& event, DWORD ticks);
 	bool OnKeyUp(wxKeyEvent& event);
 
-	bool CheckForSuddenModifiersUp();
+	// Pass just-received event as confirmation: modifiers that it reports
+	// as pressed are not checked, since wxGetKeyState() may falsely report
+	// them as released (seen on wx 3.2.8/GTK with Ctrl+Alt+punctuation)
+	bool CheckForSuddenModifiersUp(const wxKeyEvent *confirmation = nullptr);
 	void ForceAllUp();
 
 	bool Alt() const;

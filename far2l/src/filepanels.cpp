@@ -706,6 +706,17 @@ int FilePanels::ProcessKey(FarKey Key)
 
 			break;
 		}
+		case KEY_CTRLALTDOT:
+		case KEY_CTRLALTCOMMA: {
+			// bash-like yank-last-arg on a dedicated key combination, so the
+			// historical panel fast-find behavior of Alt+. is not affected;
+			// Ctrl+Alt+comma cycles backwards (not Ctrl+Alt+Shift+. - on many
+			// X11 setups Ctrl+Alt acts as an AltGr trigger, and the subsequent
+			// Shift press is consumed as an ISO_Level3_Shift chooser instead
+			// of reaching the application)
+			CtrlObject->CmdLine->ProcessKey(Key);
+			return TRUE;
+		}
 		case KEY_CTRLSHIFTD: {
 			PresentFileDiff(true);
 			break;

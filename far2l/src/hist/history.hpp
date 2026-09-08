@@ -99,6 +99,7 @@ public:
 	void GetPrev(FARString &strStr);
 	void GetNext(FARString &strStr);
 	bool GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend = false);
+	bool GetRecentStr(size_t Index, FARString &strStr);
 	bool GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str);
 	bool DeleteMatching(FARString &strStr);
 	void SetAddMode(bool EnableAdd, HistoryRemoveDupsMode RemoveDups, bool KeepSelectedPos);

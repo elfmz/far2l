@@ -453,6 +453,8 @@ $ #A parancssor parancsai#
   Beillesztés a vágólapról                                 #Shift-Ins#
   Előző utasítás                                              #Ctrl-E#
   Következő utasítás                                          #Ctrl-X#
+  Insert last argument of previous command                #Ctrl-Alt-.#
+  Cycle backwards through last-argument history          #Ctrl-Alt-,#
   Parancssor törlése                                          #Ctrl-Y#
 
  #Beszúró parancsok#

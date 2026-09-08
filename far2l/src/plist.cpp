@@ -101,19 +101,19 @@ static std::string FormatWallTime(unsigned long wall_time)
 	} 
 
 	unsigned int days = hours / 24;
-	if (days > 99999) { // just in case...
-		return StrPrintf("d%07.1f", double(wall_time) / (24 * 3600));
+	if (days > 9999999) { // just in case...
+		return StrPrintf("d%07.0f", double(wall_time) / (24 * 3600));
 	}
 	if (days > 9999) { // also not bad
-		return StrPrintf("d%07.2f", double(wall_time) / (24 * 3600));
+		return StrPrintf("d%07.0f", double(wall_time) / (24 * 3600));
 	}
 	if (days > 999) {
-		return StrPrintf("d%07.3f", double(wall_time) / (24 * 3600));
+		return StrPrintf("d%07.2f", double(wall_time) / (24 * 3600));
 	}
 	if (days > 99) {
-		return StrPrintf("d%07.4f", double(wall_time) / (24 * 3600));
+		return StrPrintf("d%07.3f", double(wall_time) / (24 * 3600));
 	}
-	return StrPrintf("d%07.5f", double(wall_time) / (24 * 3600));
+	return StrPrintf("d%07.4f", double(wall_time) / (24 * 3600));
 }
 
 static void enumerateProcesses(std::vector<FarPidInfo>& v) 

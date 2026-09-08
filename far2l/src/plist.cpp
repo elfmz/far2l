@@ -362,7 +362,7 @@ void ShowProcessList(Panel *ActivePanel)
 	FARString str_usage;
 	for (unsigned int loop_id = 1; !ProcList.Done(); ++loop_id) {
 		const auto now = GetProcessUptimeMSec();
-		if (last_refresh == 0 || (schedule_refresh && (now >= schedule_refresh || now < last_refresh))) {
+		if (last_refresh == 0 || (schedule_refresh && !ProcList.IsFilterEnabled() && (now >= schedule_refresh || now < last_refresh))) {
 			int selected_pos = ProcList.GetSelectPos();
 			int selected_pid = selected_pos < (int)v.size() ? v[selected_pos].pid : getpid();
 			ProcList.Hide();

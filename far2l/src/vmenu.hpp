@@ -384,6 +384,8 @@ public:
 
 	void UpdateItemFlags(int Pos, DWORD NewFlags);
 
+	bool IsFilterEnabled() const { return bFilterEnabled; }
+
 	void *GetUserData(void *Data, int Size, int Position = -1);
 	int GetUserDataSize(int Position = -1);
 	int SetUserData(LPCVOID Data, int Size = 0, int Position = -1);

@@ -54,28 +54,63 @@ enum
 
 const int KEY_COUNT = 12;
 
-typedef wchar_t KeyBarTitle[16];
+typedef wchar_t KeyBarTitle[128]; // was 16
 typedef KeyBarTitle KeyBarTitleGroup[KEY_COUNT];
+
+struct KeyBarElement {
+	FarKey key;
+	std::wstring text;
+	std::wstring keyName;
+	bool hover {0}, pressed {0};
+	int group { KBL_MAIN };
+	int x1 {-1}, x2 {-1};
+	std::wstring prevText;
+};
+
+struct KeyBarPlane {
+	std::vector<KeyBarElement> keys;
+	std::wstring groupName;
+	int groupType;
+};
+
+struct KeyBarStackedPlane {
+	std::vector<KeyBarPlane> groups;
+};
 
 class KeyBar : public ScreenObject
 {
 private:
 	ScreenObject *Owner;
-	KeyBarTitleGroup KeyTitles[KBL_GROUP_COUNT];
-	int KeyCounts[KBL_GROUP_COUNT];
 
-	int AltState, CtrlState, ShiftState;
-	int DisableMask;
+	std::vector<KeyBarStackedPlane> stacked;
+	std::vector<KeyBarPlane> groups;
+
+	//KeyBarTitleGroup KeyTitles[KBL_GROUP_COUNT];
+	//int KeyCounts[KBL_GROUP_COUNT];
+
+	int GetGroup(int alt, int shift, int ctrl, int meta);
+	std::wstring GetKeyName(int idx, int group);
+
+	int AltState{0}, CtrlState{0}, ShiftState{0};
+	int DisableMask{0};
 
 	KeyBarTitleGroup RegKeyTitles[KBL_GROUP_COUNT];
-	bool RegReaded;
+	bool RegReaded {false};
 
 	FARString strLanguage;
 	FARString strRegGroupName;
+	FARString strExtra;
+
+	//int Hover[KEY_COUNT];
+	//int xPos[KEY_COUNT + 1];
+	int SandwichHover;
 
 private:
 	void RefreshObject(bool render);
 	virtual void DisplayObject();
+
+	void ShowContextMenu();
+	FarKey BuildShortcut(int group, int key);
 
 public:
 	KeyBar();
@@ -111,6 +146,13 @@ public:
 	void SetDisableMask(int Mask);
 	void Change(const wchar_t *NewStr, int Pos) { Change(KBL_MAIN, NewStr, Pos); }
 
+	void Extra(const wchar_t* text){ strExtra = text; Redraw(); }
+	void Extra(const FARString& text){ strExtra = text; Redraw(); }
+
+	void AddExtraKey(int group, FarKey key, const wchar_t* label, const wchar_t* keyName);
+	void PushKeyBarAndExposeEmptyNew();
+	void PopKeyBarBack();
+									 
 	// Изменение любого Label
 	void Change(int Group, const wchar_t *NewStr, int Pos);
 

@@ -800,6 +800,100 @@ void SetColor(uint64_t Color, bool ApplyToConsole)
 	}
 }
 
+#include "Colorspace.h"
+
+uint64_t GetLinkColor(uint64_t attributes) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(bg, fg); /* inverted for links */
+    return assembleColor(r.bg_hover, bg) | (attributes & 0x0000FFFF);
+}
+
+uint64_t SoftenColorToBlack(uint64_t attributes) {
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+
+	iRGB blacked = SoftenBlackish_LAB(fg);
+
+    RGB newFg;
+    fg = toRGB(blacked);
+    ComputeContrast(fg, bg, newFg);
+    fg = newFg;
+
+   	return assembleColor(fg, bg) | (attributes & 0x0000FFFF);
+}
+
+uint64_t SoftenColorToDisabled(uint64_t attributes) {
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+
+    //RGB newFg;
+    fg = SoftenToDisabledState_LAB(fg);
+
+	LAB bgl = RGBtoLAB(bg);
+    bgl.L = std::max(0.0, bgl.L - 3.0); // darken to 3%, nothing for black background
+	bg = LABtoRGB(bgl);
+
+   	return assembleColor(fg, bg) | (attributes & 0x0000FFFF);
+}
+
+uint64_t SoftenItemColor(uint64_t attributes, int Focus, int Hover, int Pressed, int Selected) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(bg, fg) /* inverted colors */;
+   	if (Pressed)
+   		bg = SoftenToPressedState_LAB(bg, r.bg_hover);
+   	
+   	if (Focus) {
+    	//if (!IsWxBackend()) {
+			LAB topLab = RGBtoLAB(bg);
+			if (IsNearBlack(bg))
+				topLab.L = std::min(topLab.L + 15.0, 100.0);
+			else
+				topLab.L = std::max(topLab.L - 10.0, 0.0);
+			bg = LABtoRGB(topLab);
+    	//}
+   		fg = SoftenToFocusedState_LAB(fg, r.fg_hover);
+
+        if (Hover) {
+			bg = SoftenToHoverState_LAB(bg, r.bg_hover);
+        }
+    }
+   	else if (Hover) {
+       	bg = SoftenToHoverState_LAB(bg, r.bg_hover);
+		fg = SoftenToHoverState_LAB(fg, r.fg_hover);
+    }
+
+    if (Selected) {
+		LAB topLab = RGBtoLAB(fg);
+		topLab.L = 100.0 - topLab.L;
+		fg = LABtoRGB(topLab);
+    }
+
+    RGB newFg = fg;
+    ComputeContrast(fg, bg, newFg);
+    fg = newFg;
+
+   	return assembleColor(fg, bg) | (attributes & 0x0000FFFF);
+}
+
+uint64_t GetAccentColors(uint64_t attributes) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(fg, bg); // ComputeControlAccent(bg, fg);
+   	return assembleColor(r.fg_hover, r.bg_hover) | (attributes & 0x0000FFFF);
+}
+
+void SetFarColor(uint16_t Color, bool Focus, bool Hover, bool Pressed, bool Selected) 
+{
+	CurColor = FarColorToReal(Color);
+	if (Focus || Hover || Pressed || Selected)
+		CurColor = SoftenItemColor(CurColor, Focus, Hover, Pressed, Selected);
+}
+
 void SetFarColor(uint16_t Color, bool ApplyToConsole)
 {
 	CurColor = FarColorToReal(Color);

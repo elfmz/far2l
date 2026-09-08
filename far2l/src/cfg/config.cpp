@@ -719,6 +719,7 @@ void InterfaceSettings()
 		}
 
 		Builder.AddCheckbox(Msg::EnforceColorCorrection, (BOOL *)&Opt.Dialogs.EnforceColorCorrection);
+    	Builder.AddCheckbox(Msg::UseModernLook, (BOOL *)&Opt.Dialogs.UseModernLook);
 
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);

@@ -101,10 +101,7 @@ static std::string FormatWallTime(unsigned long wall_time)
 	} 
 
 	unsigned int days = hours / 24;
-	if (days > 9999999) { // just in case...
-		return StrPrintf("d%07.0f", double(wall_time) / (24 * 3600));
-	}
-	if (days > 9999) { // also not bad
+	if (days > 9999) { // just in case...
 		return StrPrintf("d%07.0f", double(wall_time) / (24 * 3600));
 	}
 	if (days > 999) {

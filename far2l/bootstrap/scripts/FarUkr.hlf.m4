@@ -2135,8 +2135,8 @@ $ #Список завдань#
     #i#/#I#                Sort by PID
     #c#/#C#                Sort by CPU
     #m#/#M#                Sort by memory (Resident Set Size, RSS)
-    #Ctrl-Alt-F#         Filter list items
-    #Ctrl-F10#           Go to #/proc/PID# directory in active panel (only in Linux)
+    #Ctrl-Alt-F#         Filter list items (autorefresh paused during filtering)
+    #Enter#              Go to #/proc/PID# directory in active panel (only in Linux)
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 

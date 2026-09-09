@@ -5,11 +5,16 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* GUI|WX: Drag files out of far2l panels
 * Quick view panel: Directory summary information improvements; colorer on for file preview
 * Command line: AutoComplete more correct working inside plugin panels
 * Task list (**Ctrl+W** or **F9**->Commands->Task list): built-in realization instead of htop/top
 * _colorer plugin_: Now working in Viewer (by defauil off) and Quick View panel (by default on), configurable in FarColorer's settings in Viewer coloring combobox
 * _colorer plugin_: Update colorer schemes to v1.3.0 (see: [CHANGELOG.md](https://github.com/elfmz/far2l/blob/master/plugins/colorer/configs/base/CHANGELOG.md))
+* _colorer plugin_: Update colorer library to v1.6.0-05.09.2026
+* _colorer plugin_: New colorer styles for true color
+* Fix AltGr regression in GUI|WX
+* Fix regression with saving changes in `far:config`
 * Several bugfixes and improvements
 
 ## 2.9.0 beta (2026-08-27)

@@ -131,6 +131,8 @@ public:
 	int IsOptionActive(int hMenu, int vMenu);
 
 	bool SendToPrinter();
+
+	std::vector<ViewerBookmark> GetActiveBookmarks(){ return View.GetActiveBookmarks(); }
 };
 
 void ModalViewFile(const std::string &pathname);

@@ -8717,6 +8717,21 @@ void Editor::DrawScrollbar()
 	}
 }
 
+FARString Editor::GetLine(int row, int col, int maxlen)
+{
+	int Len2 = 0;
+	Edit *line = GetStringByNumber(row);
+	if (!line) return L"";
+
+	std::wstring s = line->GetString();
+	Len2 = s.length(); // line->GetStringLength();
+	if (col >= Len2) return L"";
+	if (col + maxlen > Len2) maxlen = Len2 - col;
+	FARString x(s.c_str() + col);
+	if ((int)x.GetLength() > maxlen) x.Truncate(maxlen);
+	return x;
+}
+
 void Editor::BeginBulkLoad()
 {
 	m_BulkLoadMode = true;

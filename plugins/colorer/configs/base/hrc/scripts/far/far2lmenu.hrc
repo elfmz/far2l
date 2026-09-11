@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="far2lmenu">
+
+ <annotation>
+  <documentation>
+   far2l user-menu / file-association command: bash/sh with far2l meta-symbols.
+   Dialog memo in far2l is named Far2lUserMenu.bash; unique suffix is .far2lmenu.
+  </documentation>
+  <contributors><![CDATA[
+   Aleksey Dobrunov <ctapmex@ctapmex.com>
+  ]]></contributors>
+ </annotation>
+
+<import type="def"/>
+<import type="shell-posix"/>
+<import type="shell-bash"/>
+
+<region name="symb" parent="def:Symbol"/>
+<region name="symb.struct" parent="def:SymbolStrong"/>
+<region name="input" parent="def:String"/>
+<region name="input.label" parent="def:KeywordStrong"/>
+<region name="input.name" parent="def:Var"/>
+
+<!--
+  Meta-symbols (FAR help #...# is markup, not part of the token):
+    !!     literal !
+    !      name without extension
+    !`     extension
+    !.!    name with extension
+    !@@! / !$!   list-file (modifiers Q,S,F,A,U,W)
+    !&     selected names
+    !/     current path
+    !=/    current path, resolve symlinks
+    !?t?i! user input (optional ?$hist$title?init!)
+    !#     toggle passive panel
+    !^     toggle active panel
+-->
+
+<scheme name="far2lsymb.input">
+ <block start="/~(\?)/" end="/(\?)/"
+  region="input.label" scheme="far2lsymb.input.label"
+  region00="symb" region10="symb"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+ <inherit scheme="far2lsymb.input.content"/>
+</scheme>
+
+<scheme name="far2lsymb.input.label">
+ <regexp match="/~(\$)\w+(\$)/" region="input.name"
+  region1="def:PairStart" region2="def:PairEnd"
+ />
+ <inherit scheme="far2lsymb.input.content"/>
+</scheme>
+
+<scheme name="far2lsymb.input.content">
+ <block start="/(\()/" end="/(\))/" scheme="far2lsymb.input.paren"
+  region00="symb.struct" region10="symb.struct"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+</scheme>
+
+<scheme name="far2lsymb.input.paren">
+ <inherit scheme="far2lsymb.input.content"/>
+ <inherit scheme="far2lsymb.content"/>
+</scheme>
+
+<scheme name="far2lsymb">
+ <block start="/(\!)\M\?/" end="/(\!)/"
+  region="input" scheme="far2lsymb.input"
+  region00="symb.struct" region10="symb.struct"
+  region01="def:PairStart" region11="def:PairEnd"
+ />
+ <inherit scheme="far2lsymb.content"/>
+</scheme>
+
+<scheme name="far2lsymb.content">
+ <regexp match="/\!@@[QSFAUW]*\!/" region="symb"/>
+ <regexp match="/\!\$[QSFAUW]*\!/" region="symb"/>
+ <keywords region="symb">
+  <symb name="!=/"/>
+  <symb name="!#"/>
+  <symb name="!.!"/>
+  <symb name="!!"/>
+  <symb name="!&#96;"/>
+  <symb name="!&amp;"/>
+  <symb name="!/"/>
+  <symb name="!=&#92;"/>
+  <symb name="!&#92;"/>
+  <symb name="!^"/>
+  <symb name="!"/>
+ </keywords>
+</scheme>
+
+<!-- quote bodies: FAR substitutes macros before the shell runs -->
+<scheme name="string-single">
+ <inherit scheme="far2lsymb"/>
+</scheme>
+
+<scheme name="double_quoted_string">
+ <inherit scheme="far2lsymb"/>
+ <inherit scheme="shell-bash:double_quoted_string">
+  <virtual scheme="shell-posix:variables" subst-scheme="shell-bash:variables"/>
+ </inherit>
+</scheme>
+
+<scheme name="strings">
+ <inherit scheme="shell-bash:strings-dollar"/>
+ <block start="/(&apos;)/" end="/(&apos;)/" region="shell-posix:String" scheme="string-single"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"
+  region00="shell-posix:StringEdge" region10="shell-posix:StringEdge"/>
+ <block start="/(&quot;)/" end="/(&quot;)/" region="shell-posix:String" scheme="double_quoted_string"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"
+  region00="shell-posix:StringEdge" region10="shell-posix:StringEdge"/>
+</scheme>
+
+<!--
+  Word-level bash + macros. Do not inherit shell-bash:shell-bash: its command
+  blocks end at cmdbreak ([|#;)&amp;`]) so !# / !&amp; / !` would be split.
+-->
+<scheme name="script_words">
+ <inherit scheme="far2lsymb"/>
+ <block start="/([&lt;&gt;]\()/" end="/(\))/" scheme="far2lmenu"
+  region00="shell-posix:CommandReserved" region10="shell-posix:CommandReserved"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"/>
+ <inherit scheme="shell-posix:escapes"/>
+ <inherit scheme="strings"/>
+ <inherit scheme="shell-bash:variables"/>
+ <inherit scheme="shell-bash:evaluations">
+  <virtual scheme="shell-posix:script" subst-scheme="far2lmenu"/>
+  <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+ </inherit>
+ <regexp match="/\b(
+  %shell-posix:utility_no-param;|
+  %shell-posix:utility_one-param;|
+  %shell-posix:utility_one-param-number;|
+  %shell-posix:utility_common;|
+  %shell-bash:utility_one-param;|
+  %shell-bash:utility_one-param-number;|
+  %shell-bash:utility_common;
+ )\b/x" region="shell-posix:CommandBuiltin"/>
+ <inherit scheme="shell-posix:numbers"/>
+ <keywords region="shell-posix:Error">
+  <symb name="$"/>
+ </keywords>
+</scheme>
+
+<scheme name="script_words.maybe-variable">
+ <inherit scheme="far2lsymb"/>
+ <inherit scheme="shell-bash:script_words.maybe-variable">
+  <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+  <virtual scheme="shell-posix:variables" subst-scheme="shell-bash:variables"/>
+  <virtual scheme="shell-posix:evaluations" subst-scheme="shell-bash:evaluations"/>
+ </inherit>
+</scheme>
+
+<scheme name="test">
+ <inherit scheme="far2lsymb"/>
+ <inherit scheme="shell-bash:test-bash">
+  <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+  <virtual scheme="shell-posix:script_parameters" subst-scheme="script_words"/>
+  <virtual scheme="shell-bash:strings" subst-scheme="strings"/>
+ </inherit>
+</scheme>
+
+<!-- Bash control flow with far2l-aware command bodies. -->
+<scheme name="if">
+ <inherit scheme="shell-posix:if">
+  <virtual scheme="shell-posix:script" subst-scheme="far2lmenu"/>
+ </inherit>
+</scheme>
+
+<scheme name="while">
+ <inherit scheme="shell-posix:while">
+  <virtual scheme="shell-posix:script" subst-scheme="far2lmenu"/>
+ </inherit>
+</scheme>
+
+<scheme name="for">
+ <inherit scheme="shell-bash:for">
+  <virtual scheme="shell-posix:script" subst-scheme="far2lmenu"/>
+  <virtual scheme="shell-posix:script_words.maybe-variable" subst-scheme="script_words.maybe-variable"/>
+  <virtual scheme="shell-bash:script" subst-scheme="far2lmenu"/>
+  <virtual scheme="shell-bash:script_words" subst-scheme="script_words"/>
+  <virtual scheme="shell-bash:script_words.maybe-variable" subst-scheme="script_words.maybe-variable"/>
+ </inherit>
+</scheme>
+
+<scheme name="select">
+ <inherit scheme="shell-bash:select">
+  <virtual scheme="shell-bash:script" subst-scheme="far2lmenu"/>
+  <virtual scheme="shell-bash:script_words" subst-scheme="script_words"/>
+  <virtual scheme="shell-bash:script_words.maybe-variable" subst-scheme="script_words.maybe-variable"/>
+ </inherit>
+</scheme>
+
+<scheme name="case_pattern">
+ <inherit scheme="far2lsymb"/>
+ <inherit scheme="shell-posix:case_pattern"/>
+</scheme>
+
+<scheme name="case">
+ <inherit scheme="shell-posix:case">
+  <virtual scheme="shell-posix:script" subst-scheme="far2lmenu"/>
+  <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+  <virtual scheme="shell-posix:case_pattern" subst-scheme="case_pattern"/>
+ </inherit>
+</scheme>
+
+<scheme name="far2lmenu">
+ <regexp match="/^(@)/" region1="symb.struct"/>
+ <regexp match="/~(@)/" region1="symb.struct"/>
+ <inherit scheme="far2lsymb"/>
+ <inherit scheme="shell-posix:comments"/>
+ <inherit scheme="shell-posix:operators"/>
+ <block start="/(\(\()/" end="/(\)\))/" scheme="shell-bash:shell-arithmetic"
+  region00="shell-bash:Symbol" region10="shell-bash:Symbol"
+  region01="shell-bash:PairStart" region11="shell-bash:PairEnd"/>
+ <block start="/(\()/" end="/(\))/" scheme="far2lmenu"
+  region00="shell-posix:Symbol" region10="shell-posix:Symbol"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"/>
+ <block start="/(\{)/" end="/(\})/" scheme="far2lmenu"
+  region00="shell-posix:SymbolStrong" region10="shell-posix:SymbolStrong"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"/>
+ <block start="/\M\b(if)\b/" end="/\b(fi)\b/" scheme="if"
+  region01="shell-posix:PairStart" region10="shell-posix:PairEnd"
+  region00="shell-posix:CommandReserved" region11="shell-posix:CommandReserved"/>
+ <block start="/\M\b(for)\b/" end="/\b(done)\b/" scheme="for"
+  region01="shell-posix:PairStart" region10="shell-posix:PairEnd"
+  region00="shell-posix:CommandReserved" region11="shell-posix:CommandReserved"/>
+ <block start="/\M\b(select)\b/" end="/\b(done)\b/" scheme="select"
+  region01="shell-posix:PairStart" region10="shell-posix:PairEnd"
+  region00="shell-posix:CommandReserved" region11="shell-posix:CommandReserved"/>
+ <block start="/\M\b(while|until)\b/" end="/\b(done)\b/" scheme="while"
+  region01="shell-posix:PairStart" region10="shell-posix:PairEnd"
+  region00="shell-posix:CommandReserved" region11="shell-posix:CommandReserved"/>
+ <block start="/\M\b(case)\b/" end="/\b(esac)\b/" scheme="case"
+  region01="shell-posix:PairStart" region10="shell-posix:PairEnd"
+  region00="shell-posix:CommandReserved" region11="shell-posix:CommandReserved"/>
+ <regexp match="/\b(function)\s+(%shell-bash:funcname;)/"
+  region1="shell-bash:CommandReserved" region2="shell-bash:FunctionName"/>
+ <regexp match="/\b(coproc)\b/" region1="shell-bash:CommandReserved"/>
+ <regexp match="/\b(%shell-bash:funcname;)\s*(\(\s*\))/"
+  region1="shell-bash:FunctionName" region2="shell-bash:Symbol"/>
+ <block start="/(\[)(\s|$)?=/" end="/((\M(^|\s?#1|[^\\]?#1[;])(?{shell-posix:Symbol}\])))/"
+  scheme="test"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"
+  region00="shell-posix:Symbol" region10="shell-posix:Symbol"/>
+ <block start="/(\[\[)/" end="/(\]\])/" scheme="test"
+  region01="shell-posix:PairStart" region11="shell-posix:PairEnd"
+  region00="shell-posix:Symbol" region10="shell-posix:Symbol"/>
+ <inherit scheme="shell-posix:redirections_start">
+  <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+ </inherit>
+ <inherit scheme="script_words"/>
+</scheme>
+
+</type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

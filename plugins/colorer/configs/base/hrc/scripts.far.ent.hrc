@@ -15,6 +15,19 @@
         <filename weight="4">/FarMenu\.Ini$/i</filename>
     </prototype>
 
+    <prototype name="far2lmenu" group="scripts.far" description="far2l user menu command">
+        <location link="scripts/far/far2lmenu.hrc" />
+        <!-- far2l DI_MEMOEDIT UserData; weight beats shell-bash /\.bash$/i (5) -->
+        <filename weight="6">/^Far2lUserMenu\.bash$/i</filename>
+        <filename>/\.far2lmenu$/i</filename>
+    </prototype>
+
+    <prototype name="far2lusermenu" group="scripts.far" description="far2l user_menu.ini">
+        <location link="scripts/far/far2lusermenu.hrc" />
+        <!-- weight 4 beats ini filename(2)+firstline /^[;\[]/ (1) -->
+        <filename weight="4">/user_menu\.ini$/i</filename>
+    </prototype>
+
     <prototype name="farmailscript" group="scripts.far" description="FARMail Script">
         <location link="scripts/far/farmailscript.hrc" />
         <filename>/\.fms$/i</filename>

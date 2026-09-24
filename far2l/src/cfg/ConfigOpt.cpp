@@ -217,6 +217,11 @@ const ConfigOpt g_cfg_opts[] {
 	{OST_COMMON, NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0,
 		L"InputSettings", L"Captures the right Win or Super key exclusively when the backend supports it" },
 
+	{OST_COMMON,  NSecInterface, "CopyToPrimarySelection", &Opt.CopyToPrimarySelection, 1,
+		L"InterfaceSettings", L"Supports 2 clipboards for selection"},
+	{OST_COMMON,  NSecInterface, "PasteFromPrimarySelection", &Opt.PasteFromPrimarySelection, 1,
+		L"InterfaceSettings", L"Supports 2 clipboards for paste"},
+
 	{OST_COMMON, NSecInterface, "DateFormat", &Opt.DateFormat, GetDateFormatDefault(),
 		L"InterfSettings", L"Selects the date display format used by panels and dialogs: 0=MM-DD-YYYY, 1=DD-MM-YYYY, 2=YYYY-MM-DD" },
 	{OST_COMMON, NSecInterface, "DateSeparator", &Opt.strDateSeparator, GetDateSeparatorDefaultStr(),

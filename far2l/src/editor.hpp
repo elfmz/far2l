@@ -355,6 +355,7 @@ private:
 	void UnmarkMacroBlock();
 
 	void ProcessPasteEvent();
+	void ProcessPasteEventFromPrimary();
 
 	void AddUndoData(short Type, int StrNum, int StrPos, Edit *Line);
 	void AddUndoData(short Type, int StrNum = 0, int StrPos = 0, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int Length = -1);
@@ -539,6 +540,8 @@ public:
 	bool RenderVisualLine(int LineNumber, int VisualLine, int X1, int Y, int X2);
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
+
+	int AutoGrabToClipboard();
 
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 };

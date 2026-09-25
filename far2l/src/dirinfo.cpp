@@ -205,8 +205,12 @@ int DirInfo::FromFS(const wchar_t *DirName, DWORD Flags, FileFilter *Filter, Dir
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
-	SaveScreen SaveScr;
-	UndoGlobalSaveScrPtr UndSaveScr(&SaveScr);
+	std::unique_ptr<SaveScreen> saveScreen;
+	std::unique_ptr<UndoGlobalSaveScrPtr> undoSaveScreen;
+	if (!tracker || tracker->AllowDirInfoUserBreak()) {
+		saveScreen.reset(new SaveScreen());
+		undoSaveScreen.reset(new UndoGlobalSaveScrPtr(saveScreen.get()));
+	}
 	wakeful W;
 	ScanTree ScTree(FALSE, TRUE,
 			((Flags & GETDIRINFO_SCANSYMLINKDEF) ? -1 : ((Flags & GETDIRINFO_SCANSYMLINK) != 0)));
@@ -236,7 +240,8 @@ int DirInfo::FromFS(const wchar_t *DirName, DWORD Flags, FileFilter *Filter, Dir
 	ScannedINodes scanned_inodes;
 	const bool count_dir_size = !Opt.OnlyFilesSize;
 	const bool scan_symlinks = ScTree.IsSymlinksScanEnabled();
-	const bool can_break = !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
+	const bool can_break = (!tracker || tracker->AllowDirInfoUserBreak())
+			&& !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
 
 	if (count_dir_size) {	// include size of root dir's node
 		struct stat s{};
@@ -253,6 +258,9 @@ int DirInfo::FromFS(const wchar_t *DirName, DWORD Flags, FileFilter *Filter, Dir
 			INPUT_RECORD rec{};
 			if (tracker) {
 				tracker->OnDirInfoProgress(strShowDirName);
+				if (tracker->IsDirInfoCancelled())
+					return 0;
+				LastUpdateTime = CurTime;
 			}
 			if (can_break) switch (PeekInputRecord(&rec)) {
 				case 0:

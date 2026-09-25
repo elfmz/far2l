@@ -5953,6 +5953,50 @@ upd:"File operation complete"
 "Файлова операція виконана"
 "Файлавая дзея выканана"
 
+BackgroundFileOperationTitle
+"Фоновая файловая операция"
+"Background file operation"
+upd:"Background file operation"
+upd:"Background file operation"
+upd:"Background file operation"
+upd:"Background file operation"
+upd:"Background file operation"
+"Фонова файлова операція"
+"Фонавая файлавая аперацыя"
+
+BackgroundFileOperationStartFailed
+"Не удалось запустить фоновую файловую операцию."
+"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+"Не вдалося запустити фонову файлову операцію."
+"Не ўдалося запусціць фонавую файлавую аперацыю."
+
+BackgroundFileOperationFailed
+"Фоновая файловая операция завершилась с ошибкой."
+"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+"Фонова файлова операція завершилася з помилкою."
+"Фонавая файлавая аперацыя завяршылася з памылкай."
+
+BackgroundFileOperationExitWarning
+"Фоновые файловые операции всё ещё выполняются."
+"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+"Фонові файлові операції все ще виконуються."
+"Фонавыя файлавыя аперацыі ўсё яшчэ выконваюцца."
+
 SaveSetupTitle
 l:
 "Конфигурация"

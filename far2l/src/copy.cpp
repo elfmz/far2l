@@ -71,9 +71,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "DlgGuid.hpp"
 #include "console.hpp"
+#include "InterThreadCall.hpp"
 #include "wakeful.hpp"
 #include <unistd.h>
 #include <algorithm>
+#include <atomic>
+#include <map>
+#include <mutex>
+#include <thread>
 
 #if defined(__APPLE__)
 #include <AvailabilityMacros.h>
@@ -90,10 +95,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Общее время ожидания пользователя */
 extern long WaitUserTime;
-/* Для того, что бы время при ожидании пользователя тикало, а remaining/speed нет */
-static long OldCalcTime;
-
 #define PROGRESS_REFRESH_THRESHOLD 200		// msec
+
+static constexpr size_t CopyProgressContentWidth = 52;
 
 enum
 {
@@ -107,23 +111,7 @@ enum
 	COPY_RULE_FILES = 0x0002,
 };
 
-static int TotalFiles, TotalFilesToProcess;
-
-static clock_t CopyStartTime;
-
-static int OrigScrX, OrigScrY;
-
-static uint64_t TotalCopySize, TotalCopiedSize;		// Общий индикатор копирования
-static uint64_t CurCopiedSize;						// Текущий индикатор копирования
-static uint64_t TotalSkippedSize;					// Общий размер пропущенных файлов
-static size_t CountTarget;							// всего целей.
-static bool ShowTotalCopySize;
-static FARString strTotalCopySizeText;
-
-static FileFilter *Filter;
-static int UseFilter = FALSE;
-
-static clock_t ProgressUpdateTime;	// Last progress bar update time
+static int DefaultUseFilter = FALSE;
 
 ShellCopyFileExtendedAttributes::ShellCopyFileExtendedAttributes(File &f)
 {
@@ -145,6 +133,7 @@ struct CopyDlgParam
 	int SelCount;
 	bool FolderPresent;
 	bool FilesPresent;
+	bool AllowBackground;
 	FARString strPluginFormat;
 	bool AskRO;
 };
@@ -192,8 +181,28 @@ enum CopyMode
 
 // CopyProgress start
 // гнать это отсюда в отдельный файл после разбора кучи глобальных переменных вверху
-class CopyProgress
+struct CopyProgressSnapshot
 {
+	std::wstring source;
+	std::wstring destination;
+	uint64_t currentCompleted{0};
+	uint64_t currentTotal{0};
+	uint64_t overallCompleted{0};
+	uint64_t overallTotal{0};
+	uint64_t bytesPerSecond{0};
+	DWORD elapsedSeconds{0};
+	DWORD remainingSeconds{0};
+	int filesProcessed{0};
+	int filesTotal{0};
+	bool move{false};
+	bool showTotal{false};
+	bool showTime{false};
+	bool scanning{true};
+};
+
+class CopyProgress final : public DirInfoProgressTracker
+{
+	ShellCopyProgressState &State;
 	ConsoleTitle CopyTitle;
 	wakeful W;
 	SMALL_RECT Rect{};
@@ -201,7 +210,21 @@ class CopyProgress
 	size_t BarSize;
 	bool Move, Total, Time;
 	bool BgInit, ScanBgInit;
-	bool IsCancelled;
+	const bool Background;
+	std::atomic<bool> IsCancelled;
+	std::atomic<bool> IsFinished;
+	mutable std::mutex StateMutex;
+	std::wstring CurrentSource;
+	std::wstring CurrentDestination;
+	uint64_t CurrentCompleted{0};
+	uint64_t CurrentTotal{0};
+	uint64_t OverallCompleted{0};
+	uint64_t OverallTotal{0};
+	uint64_t OverallSkipped{0};
+	int FilesProcessed{0};
+	int FilesTotal{0};
+	bool Scanning{true};
+	const DWORD BackgroundStartTime;
 	uint64_t Color;
 	int Percents;
 	DWORD LastWriteTime;
@@ -213,10 +236,23 @@ class CopyProgress
 	void SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 TotalSize);
 
 public:
-	CopyProgress(bool Move, bool Total, bool Time);
+	CopyProgress(ShellCopyProgressState &State, bool Move, bool Total, bool Time, bool Background);
 	void CreateBackground();
-	bool Cancelled() { return IsCancelled; }
+	bool Cancelled() const { return IsCancelled.load(); }
+	bool Finished() const { return IsFinished.load(); }
+	bool IsBackground() const { return Background; }
+	bool IsMove() const { return Move; }
+	bool ShowsTotal() const { return Total; }
+	bool ShowsTime() const { return Time; }
+	void Cancel() { IsCancelled.store(true); }
+	void Finish() { IsFinished.store(true); }
+	void GetSnapshot(CopyProgressSnapshot &snapshot) const;
+	void SetFileCounts(int processed, int total);
+	void SetTotalInfo(uint64_t totalSize, int totalFiles);
 	void SetScanName(const wchar_t *Name);
+	void OnDirInfoProgress(const wchar_t *name) override { SetScanName(name); }
+	bool IsDirInfoCancelled() const override { return Cancelled(); }
+	bool AllowDirInfoUserBreak() const override { return !Background; }
 	void SetNames(const wchar_t *Src, const wchar_t *Dst);
 	void SetProgressValue(UINT64 CompletedSize, UINT64 TotalSize)
 	{
@@ -254,9 +290,9 @@ bool CopyProgress::Timer()
 void CopyProgress::Flush()
 {
 	if (Timer()) {
-		if (Total || (TotalFilesToProcess == 1)) {
+		if (Total || (State.TotalFilesToProcess == 1)) {
 			CopyTitle.Set(L"{%d%%} %ls",
-					Total ? ToPercent64(TotalCopiedSize >> 8, TotalCopySize >> 8) : Percents,
+					Total ? ToPercent64(State.TotalCopiedSize >> 8, State.TotalCopySize >> 8) : Percents,
 					(Move ? Msg::CopyMovingTitle : Msg::CopyCopyingTitle).CPtr());
 		}
 		if (!IsCancelled) {
@@ -268,15 +304,19 @@ void CopyProgress::Flush()
 	}
 }
 
-CopyProgress::CopyProgress(bool Move, bool Total, bool Time)
+CopyProgress::CopyProgress(ShellCopyProgressState &State, bool Move, bool Total, bool Time, bool Background)
 	:
-	BarSize(52),
+	State(State),
+	BarSize(CopyProgressContentWidth),
 	Move(Move),
 	Total(Total),
 	Time(Time),
 	BgInit(false),
 	ScanBgInit(false),
+	Background(Background),
 	IsCancelled(false),
+	IsFinished(false),
+	BackgroundStartTime(Background && Time ? GetProcessUptimeMSec() : 0),
 	Color(FarColorToReal(COL_DIALOGTEXT)),
 	Percents(0),
 	LastWriteTime(0)
@@ -284,6 +324,14 @@ CopyProgress::CopyProgress(bool Move, bool Total, bool Time)
 
 void CopyProgress::SetScanName(const wchar_t *Name)
 {
+	if (Background) {
+		std::lock_guard<std::mutex> lock(StateMutex);
+		CurrentSource = Name;
+		CurrentDestination = Msg::CopyScanning.CPtr();
+		Scanning = true;
+		return;
+	}
+
 	if (!ScanBgInit) {
 		CreateScanBackground();
 	}
@@ -295,6 +343,9 @@ void CopyProgress::SetScanName(const wchar_t *Name)
 
 void CopyProgress::CreateScanBackground()
 {
+	if (Background)
+		return;
+
 	for (size_t i = 0; i < BarSize; i++) {
 		Bar[i] = L' ';
 	}
@@ -312,6 +363,9 @@ void CopyProgress::CreateScanBackground()
 
 void CopyProgress::CreateBackground()
 {
+	if (Background)
+		return;
+
 	for (size_t i = 0; i < BarSize; i++) {
 		Bar[i] = L' ';
 	}
@@ -331,7 +385,7 @@ void CopyProgress::CreateBackground()
 		FARString strTotalSeparator(L"\x1 ");
 		strTotalSeparator+= Msg::CopyDlgTotal;
 		strTotalSeparator+= L": ";
-		strTotalSeparator+= strTotalCopySizeText;
+		strTotalSeparator+= State.strTotalCopySizeText;
 		strTotalSeparator+= L" ";
 
 		if (!Time) {
@@ -357,6 +411,9 @@ void CopyProgress::CreateBackground()
 
 void CopyProgress::DrawNames()
 {
+	if (Background)
+		return;
+
 	Text(Rect.Left + 5, Rect.Top + 3, Color, strSrc);
 	Text(Rect.Left + 5, Rect.Top + 5, Color, strDst);
 	Text(Rect.Left + 5, Rect.Top + (Total ? 10 : 8), Color, strFiles);
@@ -364,6 +421,16 @@ void CopyProgress::DrawNames()
 
 void CopyProgress::SetNames(const wchar_t *Src, const wchar_t *Dst)
 {
+	if (Background) {
+		std::lock_guard<std::mutex> lock(StateMutex);
+		CurrentSource = Src;
+		CurrentDestination = Dst;
+		FilesProcessed = State.TotalFiles;
+		FilesTotal = State.TotalFilesToProcess;
+		Scanning = false;
+		return;
+	}
+
 	if (!BgInit) {
 		CreateBackground();
 	}
@@ -376,9 +443,9 @@ void CopyProgress::SetNames(const wchar_t *Src, const wchar_t *Dst)
 	strDst = std::move(FString.strValue());
 
 	if (Total) {
-		strFiles.Format(Msg::CopyProcessedTotal, TotalFiles, TotalFilesToProcess);
+		strFiles.Format(Msg::CopyProcessedTotal, State.TotalFiles, State.TotalFilesToProcess);
 	} else {
-		strFiles.Format(Msg::CopyProcessed, TotalFiles);
+		strFiles.Format(Msg::CopyProcessed, State.TotalFiles);
 	}
 
 	DrawNames();
@@ -387,6 +454,19 @@ void CopyProgress::SetNames(const wchar_t *Src, const wchar_t *Dst)
 
 void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 TotalSize)
 {
+	if (Background) {
+		std::lock_guard<std::mutex> lock(StateMutex);
+		if (TotalProgress) {
+			OverallCompleted = CompletedSize;
+			OverallTotal = TotalSize;
+			OverallSkipped = State.TotalSkippedSize;
+		} else {
+			CurrentCompleted = CompletedSize;
+			CurrentTotal = TotalSize;
+		}
+		return;
+	}
+
 	if (!BgInit) {
 		CreateBackground();
 	}
@@ -424,13 +504,13 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 	Text(static_cast<int>(BarCoord.X + BarLength), BarCoord.Y, Color, strPercents);
 
 	if (Time && (!Total || TotalProgress)) {
-		DWORD WorkTime = GetProcessUptimeMSec() - CopyStartTime;
+		DWORD WorkTime = GetProcessUptimeMSec() - State.CopyStartTime;
 		UINT64 SizeLeft = (OldTotalSize > OldCompletedSize) ? (OldTotalSize - OldCompletedSize) : 0;
-		long CalcTime = OldCalcTime;
+		long CalcTime = State.OldCalcTime;
 
 		if (WaitUserTime != -1)		// -1 => находимся в процессе ожидания ответа юзера
 		{
-			OldCalcTime = CalcTime = WorkTime - WaitUserTime;
+			State.OldCalcTime = CalcTime = WorkTime - WaitUserTime;
 		}
 
 		WorkTime/= 1000;
@@ -440,7 +520,7 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 			strTime.Format(Msg::CopyTimeInfo, L" ", L" ", L" ");
 		} else {
 			if (TotalProgress) {
-				OldCompletedSize = OldCompletedSize - TotalSkippedSize;
+				OldCompletedSize = OldCompletedSize - State.TotalSkippedSize;
 			}
 
 			UINT64 CPS = CalcTime ? OldCompletedSize / CalcTime : 0;
@@ -463,9 +543,438 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 
 	Flush();
 }
+
+void CopyProgress::GetSnapshot(CopyProgressSnapshot &snapshot) const
+{
+	std::lock_guard<std::mutex> lock(StateMutex);
+	snapshot.source = CurrentSource;
+	snapshot.destination = CurrentDestination;
+	snapshot.currentCompleted = CurrentCompleted;
+	snapshot.currentTotal = CurrentTotal;
+	snapshot.overallCompleted = OverallCompleted;
+	snapshot.overallTotal = OverallTotal;
+	snapshot.filesProcessed = FilesProcessed;
+	snapshot.filesTotal = FilesTotal;
+	snapshot.move = Move;
+	snapshot.showTotal = Total;
+	snapshot.showTime = Time;
+	snapshot.scanning = Scanning;
+
+	if (Time && BackgroundStartTime) {
+		const DWORD elapsedMilliseconds = GetProcessUptimeMSec() - BackgroundStartTime;
+		snapshot.elapsedSeconds = elapsedMilliseconds / 1000;
+		if (snapshot.elapsedSeconds) {
+			uint64_t completed = CurrentCompleted;
+			uint64_t total = CurrentTotal;
+			if (Total) {
+				completed = OverallCompleted - Min(OverallCompleted, OverallSkipped);
+				total = OverallTotal;
+			}
+			snapshot.bytesPerSecond = completed / snapshot.elapsedSeconds;
+			const uint64_t sizeLeft = total > (Total ? OverallCompleted : completed)
+					? total - (Total ? OverallCompleted : completed)
+					: 0;
+			if (snapshot.bytesPerSecond) {
+				snapshot.remainingSeconds = static_cast<DWORD>(sizeLeft / snapshot.bytesPerSecond);
+			}
+		}
+	}
+}
+
+void CopyProgress::SetFileCounts(int processed, int total)
+{
+	if (!Background)
+		return;
+
+	std::lock_guard<std::mutex> lock(StateMutex);
+	FilesProcessed = processed;
+	FilesTotal = total;
+}
+
+void CopyProgress::SetTotalInfo(uint64_t totalSize, int totalFiles)
+{
+	if (!Background)
+		return;
+
+	std::lock_guard<std::mutex> lock(StateMutex);
+	OverallTotal = totalSize;
+	FilesTotal = totalFiles;
+}
 // CopyProgress end
 
-static CopyProgress *CP = nullptr;
+static std::mutex BackgroundCopyMutex;
+struct BackgroundCopyTask
+{
+	std::shared_ptr<ShellCopy> operation;
+	CopyProgress *progress;
+};
+static std::map<BackgroundFileOperationId, BackgroundCopyTask> BackgroundCopies;
+static BackgroundFileOperationId NextBackgroundCopyId = 0;
+
+static constexpr int BackgroundCopyDialogHorizontalPadding = 10;
+static constexpr int BackgroundCopyDialogWidth =
+		static_cast<int>(CopyProgressContentWidth) + BackgroundCopyDialogHorizontalPadding;
+static constexpr int BackgroundCopyDialogMaximumHeight = 17;
+static constexpr int BackgroundCopyDialogContentLeft = 5;
+static constexpr int BackgroundCopyDialogContentRight = BackgroundCopyDialogWidth - 6;
+static constexpr size_t BackgroundCopyDialogContentWidth =
+		BackgroundCopyDialogContentRight - BackgroundCopyDialogContentLeft + 1;
+static constexpr size_t BackgroundCopyMenuProgressWidth = 21;
+
+enum BackgroundCopyDialogItem
+{
+	BCD_BORDER,
+	BCD_OPERATION,
+	BCD_SOURCE,
+	BCD_TO,
+	BCD_DESTINATION,
+	BCD_CURRENT_PROGRESS,
+	BCD_TOTAL_SEPARATOR,
+	BCD_TOTAL_PROGRESS,
+	BCD_FILES_SEPARATOR,
+	BCD_FILES,
+	BCD_TIME_SEPARATOR,
+	BCD_TIME,
+	BCD_BUTTONS_SEPARATOR,
+	BCD_BACKGROUND,
+	BCD_ABORT,
+};
+
+struct BackgroundCopyDialogData
+{
+	CopyProgress *progress;
+};
+
+static void FormatCopyProgress(FARString &text, uint64_t completed, uint64_t total,
+		size_t width, bool showScanning)
+{
+	if (!total) {
+		if (showScanning) {
+			text = Msg::CopyScanning;
+		} else {
+			text.Clear();
+			text.Append(BoxSymbols[BS_X_B0], width - 5);
+			text+= L"  ...";
+		}
+		return;
+	}
+
+	const int percent = ToPercent64(completed, total);
+	const size_t barWidth = width - 5;
+	const size_t filled = static_cast<size_t>(percent) * barWidth / 100;
+	text.Clear();
+	text.Reserve(width);
+	text.Append(BoxSymbols[BS_X_DB], filled);
+	text.Append(BoxSymbols[BS_X_B0], barWidth - filled);
+	FormatString percentText;
+	percentText << L" " << fmt::Expand(3) << percent << L"%";
+	text+= percentText;
+}
+
+static void UpdateBackgroundCopyDialog(HANDLE dialog, CopyProgress *progress)
+{
+	CopyProgressSnapshot snapshot;
+	progress->GetSnapshot(snapshot);
+
+	FARString sourceText = snapshot.source;
+	TruncPathStr(sourceText, static_cast<int>(BackgroundCopyDialogContentWidth));
+	FARString destinationText;
+	if (!snapshot.destination.empty()) {
+		FormatString destinationFormat;
+		destinationFormat << fmt::Cells() << fmt::LeftAlign()
+				<< fmt::Size(BackgroundCopyDialogContentWidth) << snapshot.destination.c_str();
+		destinationText = std::move(destinationFormat.strValue());
+	}
+	if (sourceText.IsEmpty())
+		sourceText = L" ";
+	if (destinationText.IsEmpty())
+		destinationText = Msg::CopyScanning;
+
+	FARString currentProgressText;
+	FormatCopyProgress(currentProgressText, snapshot.currentCompleted, snapshot.currentTotal,
+			BackgroundCopyDialogContentWidth, snapshot.scanning);
+
+	FARString totalProgressText;
+	FormatCopyProgress(totalProgressText, snapshot.overallCompleted, snapshot.overallTotal,
+			BackgroundCopyDialogContentWidth, snapshot.scanning);
+
+	FARString totalSizeText;
+	InsertCommas(snapshot.overallTotal, totalSizeText);
+	FARString totalSeparator;
+	totalSeparator.Format(L"%ls: %ls", Msg::CopyDlgTotal.CPtr(), totalSizeText.CPtr());
+
+	FARString filesText;
+	if (snapshot.showTotal) {
+		filesText.Format(Msg::CopyProcessedTotal, snapshot.filesProcessed, snapshot.filesTotal);
+	} else {
+		filesText.Format(Msg::CopyProcessed, snapshot.filesProcessed);
+	}
+
+	FARString timeText;
+	if (!snapshot.elapsedSeconds) {
+		timeText.Format(Msg::CopyTimeInfo, L" ", L" ", L" ");
+	} else {
+		FARString elapsedText;
+		FARString remainingText;
+		FARString speedText;
+		GetTimeText(snapshot.elapsedSeconds, elapsedText);
+		GetTimeText(snapshot.remainingSeconds, remainingText);
+		FileSizeToStr(speedText, snapshot.bytesPerSecond, 8, COLUMN_FLOATSIZE | COLUMN_COMMAS);
+		if (speedText.At(0) == L' ' && speedText.At(speedText.GetLength() - 1) >= L'0'
+				&& speedText.At(speedText.GetLength() - 1) <= L'9') {
+			speedText.LShift(1);
+			speedText+= L" ";
+		}
+		timeText.Format(Msg::CopyTimeInfo, elapsedText.CPtr(), remainingText.CPtr(), speedText.CPtr());
+	}
+
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_OPERATION,
+			reinterpret_cast<LONG_PTR>((snapshot.move ? Msg::CopyMoving : Msg::CopyCopying).CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_SOURCE, reinterpret_cast<LONG_PTR>(sourceText.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_DESTINATION,
+			reinterpret_cast<LONG_PTR>(destinationText.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_CURRENT_PROGRESS,
+			reinterpret_cast<LONG_PTR>(currentProgressText.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_TOTAL_SEPARATOR,
+			reinterpret_cast<LONG_PTR>(totalSeparator.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_TOTAL_PROGRESS,
+			reinterpret_cast<LONG_PTR>(totalProgressText.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_FILES,
+			reinterpret_cast<LONG_PTR>(filesText.CPtr()));
+	SendDlgMessage(dialog, DM_SETTEXTPTR, BCD_TIME,
+			reinterpret_cast<LONG_PTR>(timeText.CPtr()));
+}
+
+static LONG_PTR WINAPI BackgroundCopyDlgProc(HANDLE dialog, int message, int param1, LONG_PTR param2)
+{
+	auto *data = reinterpret_cast<BackgroundCopyDialogData *>(
+			SendDlgMessage(dialog, DM_GETDLGDATA, 0, 0));
+
+	if (message == DN_INITDIALOG || message == DN_ENTERIDLE) {
+		if (data && data->progress) {
+			if (data->progress->Finished()) {
+				SendDlgMessage(dialog, DM_CLOSE, -1, 0);
+				return TRUE;
+			}
+			UpdateBackgroundCopyDialog(dialog, data->progress);
+		}
+	}
+
+	return DefDlgProc(dialog, message, param1, param2);
+}
+
+enum class BackgroundCopyDialogResult
+{
+	Finished,
+	Backgrounded,
+	Aborted,
+};
+
+static BackgroundCopyDialogResult ShowBackgroundCopyDialog(
+		const std::shared_ptr<ShellCopy> &operation, CopyProgress *progress, bool alreadyBackground)
+{
+	if (!operation || !progress)
+		return BackgroundCopyDialogResult::Finished;
+
+	for (;;) {
+		if (progress->Finished())
+			return BackgroundCopyDialogResult::Finished;
+
+		const wchar_t *dialogTitle = alreadyBackground
+				? Msg::BackgroundFileOperationTitle.CPtr()
+				: (progress->IsMove() ? Msg::MoveDlgTitle.CPtr() : Msg::CopyDlgTitle.CPtr());
+		int dialogHeight = BackgroundCopyDialogMaximumHeight;
+		DialogDataEx dialogData[] = {
+			{DI_DOUBLEBOX, 3, 1, BackgroundCopyDialogWidth - 4,
+					BackgroundCopyDialogMaximumHeight - 2,
+					{}, 0, dialogTitle},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 2, BackgroundCopyDialogContentRight, 2,
+					{}, 0, L" "},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 3, BackgroundCopyDialogContentRight, 3,
+					{}, 0, L" "},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 4, BackgroundCopyDialogContentRight, 4,
+					{}, 0, Msg::CopyTo},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 5, BackgroundCopyDialogContentRight, 5,
+					{}, 0, L" "},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 6, BackgroundCopyDialogContentRight, 6,
+					{}, 0, Msg::CopyScanning},
+			{DI_TEXT, 3, 7, BackgroundCopyDialogWidth - 4, 7, {}, DIF_SEPARATOR, Msg::CopyDlgTotal},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 8, BackgroundCopyDialogContentRight, 8,
+					{}, 0, Msg::CopyScanning},
+			{DI_TEXT, 3, 9, BackgroundCopyDialogWidth - 4, 9, {}, DIF_SEPARATOR, L""},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 10, BackgroundCopyDialogContentRight, 10,
+					{}, 0, L" "},
+			{DI_TEXT, 3, 11, BackgroundCopyDialogWidth - 4, 11, {}, DIF_SEPARATOR, L""},
+			{DI_TEXT, BackgroundCopyDialogContentLeft, 12, BackgroundCopyDialogContentRight, 12,
+					{}, 0, L" "},
+			{DI_TEXT, 3, 13, BackgroundCopyDialogWidth - 4, 13, {}, DIF_SEPARATOR, L""},
+			{DI_BUTTON, 0, 14, 0, 14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Background},
+			{DI_BUTTON, 0, 14, 0, 14, {}, DIF_CENTERGROUP, Msg::Abort},
+		};
+		if (!progress->ShowsTotal()) {
+			dialogData[BCD_TOTAL_SEPARATOR].Flags|= DIF_HIDDEN;
+			dialogData[BCD_TOTAL_PROGRESS].Flags|= DIF_HIDDEN;
+			for (size_t i = BCD_FILES_SEPARATOR; i < ARRAYSIZE(dialogData); ++i) {
+				dialogData[i].Y1-= 2;
+				dialogData[i].Y2-= 2;
+			}
+			dialogHeight-= 2;
+		}
+		if (!progress->ShowsTime()) {
+			dialogData[BCD_TIME_SEPARATOR].Flags|= DIF_HIDDEN;
+			dialogData[BCD_TIME].Flags|= DIF_HIDDEN;
+			for (size_t i = BCD_BUTTONS_SEPARATOR; i < ARRAYSIZE(dialogData); ++i) {
+				dialogData[i].Y1-= 2;
+				dialogData[i].Y2-= 2;
+			}
+			dialogHeight-= 2;
+		}
+		dialogData[BCD_BORDER].Y2 = dialogHeight - 2;
+		MakeDialogItemsEx(dialogData, dialogItems);
+		BackgroundCopyDialogData data{progress};
+		Dialog dialog(dialogItems, ARRAYSIZE(dialogItems), BackgroundCopyDlgProc,
+				reinterpret_cast<LONG_PTR>(&data));
+		dialog.SetPosition(-1, -1, BackgroundCopyDialogWidth, dialogHeight);
+		dialog.SetRegularIdle(true);
+		dialog.Process();
+
+		if (progress->Finished())
+			return BackgroundCopyDialogResult::Finished;
+
+		const int exitCode = dialog.GetExitCode();
+		if (exitCode == BCD_BACKGROUND || (exitCode < 0 && alreadyBackground))
+			return BackgroundCopyDialogResult::Backgrounded;
+
+		if ((exitCode == BCD_ABORT || exitCode < 0) && ConfirmAbortOp()) {
+			progress->Cancel();
+			return BackgroundCopyDialogResult::Aborted;
+		}
+	}
+}
+
+bool HasBackgroundFileOperation()
+{
+	std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+	return !BackgroundCopies.empty();
+}
+
+static bool GetBackgroundCopyTask(BackgroundFileOperationId id,
+		std::shared_ptr<ShellCopy> &operation, CopyProgress *&progress)
+{
+	std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+	const auto task = BackgroundCopies.find(id);
+	if (task == BackgroundCopies.end())
+		return false;
+	operation = task->second.operation;
+	progress = task->second.progress;
+	return true;
+}
+
+static void FormatBackgroundCopyTask(BackgroundFileOperationId id, CopyProgress *progress,
+		FARString &text)
+{
+	CopyProgressSnapshot snapshot;
+	progress->GetSnapshot(snapshot);
+	const bool useTotal = snapshot.showTotal && snapshot.overallTotal;
+	const uint64_t completed = useTotal ? snapshot.overallCompleted : snapshot.currentCompleted;
+	const uint64_t total = useTotal ? snapshot.overallTotal : snapshot.currentTotal;
+
+	FARString progressText;
+	FormatCopyProgress(progressText, completed, total, BackgroundCopyMenuProgressWidth, false);
+	text.Format(L"%ls #%llu  %ls", Msg::BackgroundFileOperationTitle.CPtr(),
+			static_cast<unsigned long long>(id), progressText.CPtr());
+}
+
+void GetBackgroundFileOperations(std::vector<BackgroundFileOperationInfo> &operations)
+{
+	std::vector<std::pair<BackgroundFileOperationId, BackgroundCopyTask>> tasks;
+	{
+		std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+		tasks.reserve(BackgroundCopies.size());
+		for (const auto &task : BackgroundCopies) {
+			if (task.second.progress && !task.second.progress->Finished())
+				tasks.emplace_back(task);
+		}
+	}
+
+	operations.clear();
+	operations.reserve(tasks.size());
+	for (const auto &task : tasks) {
+		BackgroundFileOperationInfo info{task.first, {}};
+		FormatBackgroundCopyTask(task.first, task.second.progress, info.text);
+		operations.emplace_back(std::move(info));
+	}
+}
+
+bool GetBackgroundFileOperationProgress(BackgroundFileOperationId id, FARString &text)
+{
+	std::shared_ptr<ShellCopy> operation;
+	CopyProgress *progress = nullptr;
+	if (!GetBackgroundCopyTask(id, operation, progress))
+		return false;
+
+	if (!progress)
+		return false;
+	if (progress->Finished())
+		return false;
+
+	FormatBackgroundCopyTask(id, progress, text);
+	return true;
+}
+
+static bool HasBackgroundFileOperation(BackgroundFileOperationId id)
+{
+	std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+	return BackgroundCopies.find(id) != BackgroundCopies.end();
+}
+
+static void AbortAndWaitForBackgroundFileOperation(BackgroundFileOperationId id)
+{
+	std::shared_ptr<ShellCopy> operation;
+	CopyProgress *progress = nullptr;
+	if (GetBackgroundCopyTask(id, operation, progress) && progress)
+		progress->Cancel();
+
+	for (;;) {
+		DispatchInterThreadCalls();
+		InterThreadLock lock;
+		if (!HasBackgroundFileOperation(id))
+			break;
+		lock.WaitForWake(100);
+	}
+}
+
+void ShowBackgroundFileOperation(BackgroundFileOperationId id)
+{
+	std::shared_ptr<ShellCopy> operation;
+	CopyProgress *progress = nullptr;
+	if (!GetBackgroundCopyTask(id, operation, progress))
+		return;
+
+	if (!operation || !progress)
+		return;
+
+	if (ShowBackgroundCopyDialog(operation, progress, true) == BackgroundCopyDialogResult::Aborted)
+		AbortAndWaitForBackgroundFileOperation(id);
+}
+
+void AbortAndWaitForBackgroundFileOperations()
+{
+	{
+		std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+		for (const auto &task : BackgroundCopies)
+			if (task.second.progress)
+				task.second.progress->Cancel();
+	}
+
+	for (;;) {
+		DispatchInterThreadCalls();
+		InterThreadLock lock;
+		if (!HasBackgroundFileOperation())
+			break;
+		lock.WaitForWake(100);
+	}
+}
 
 /*
 	$ 25.05.2002 IS
@@ -582,21 +1091,132 @@ ShellCopyBuffer::~ShellCopyBuffer()
 	delete[] Buffer;
 }
 
-ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (активная)
+ShellCopy::ShellCopy()
+	:
+	RPT(RP_EXACTCOPY)
+{}
+
+void ShellCopy::AddTreeName(const wchar_t *name)
+{
+	if (Background)
+		TreeUpdates.push_back({TreeUpdate::Add, name, {}});
+	else
+		TreeList::AddTreeName(name);
+}
+
+void ShellCopy::DeleteTreeName(const wchar_t *name)
+{
+	if (Background)
+		TreeUpdates.push_back({TreeUpdate::Delete, name, {}});
+	else
+		TreeList::DelTreeName(name);
+}
+
+void ShellCopy::RenameTreeName(const wchar_t *source, const wchar_t *destination)
+{
+	if (Background)
+		TreeUpdates.push_back({TreeUpdate::Rename, source, destination});
+	else
+		TreeList::RenTreeName(source, destination);
+}
+
+void ShellCopy::ApplyTreeUpdates()
+{
+	for (const auto &update : TreeUpdates) {
+		switch (update.type) {
+			case TreeUpdate::Add:
+				TreeList::AddTreeName(update.source);
+				break;
+			case TreeUpdate::Delete:
+				TreeList::DelTreeName(update.source);
+				break;
+			case TreeUpdate::Rename:
+				TreeList::RenTreeName(update.source, update.destination);
+				break;
+		}
+	}
+	TreeUpdates.clear();
+}
+
+void ShellCopy::CreatePath(FARString &path)
+{
+	if (!Background) {
+		::CreatePath(path);
+		return;
+	}
+
+	wchar_t *part = path.GetBuffer();
+	for (;;) {
+		const bool end = !*part;
+		if (end || IsSlash(*part)) {
+			if (!end)
+				*part = 0;
+			if (apiCreateDirectory(path, nullptr))
+				AddTreeName(path);
+			if (end)
+				break;
+			*part = GOOD_SLASH;
+		}
+		++part;
+	}
+	path.ReleaseBuffer();
+}
+
+void ShellCopy::CopyDiz(const wchar_t *source, const wchar_t *destination)
+{
+	if (!Background) {
+		SrcPanel->CopyDiz(source, destination, &DestDiz);
+		return;
+	}
+
+	FARString sourceDirectory = source;
+	CutToSlash(sourceDirectory);
+	if (CmpFullNames(sourceDirectory, SourceDir))
+		SourceDiz.CopyDiz(PointToName(source), PointToName(destination), &DestDiz);
+}
+
+void ShellCopy::DeleteDiz(const wchar_t *source)
+{
+	if (!Background) {
+		SrcPanel->DeleteDiz(source);
+		return;
+	}
+
+	FARString sourceDirectory = source;
+	CutToSlash(sourceDirectory);
+	if (CmpFullNames(sourceDirectory, SourceDir))
+		SourceDiz.DeleteDiz(PointToName(source));
+}
+
+void ShellCopy::FlushDiz()
+{
+	if (Background)
+		SourceDiz.Flush(SourceDir);
+	else
+		SrcPanel->FlushDiz();
+}
+
+void ShellCopy::Execute(Panel *SrcPanel, int Move, int Link, int CurrentOnly, int Ask, int &ToPlugin,
+		const wchar_t *PluginDestPath, bool ToSubdir)
+{
+	auto self = std::shared_ptr<ShellCopy>(new ShellCopy());
+	self->Start(self, SrcPanel, Move, Link, CurrentOnly, Ask, ToPlugin, PluginDestPath, ToSubdir);
+}
+
+void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 		int Move,							// =1 - операция Move
 		int Link,							// =1 - Sym/Hard Link
 		int CurrentOnly,					// =1 - только текущий файл, под курсором
 		int Ask,							// =1 - выводить диалог?
 		int &ToPlugin,						// =?
 		const wchar_t *PluginDestPath, bool ToSubdir)
-	:
-	RPT(RP_EXACTCOPY)
 {
 	Flags.ErrorMessageFlags = MSG_WARNING | MSG_ERRORTYPE;
 	if (Opt.NotifOpt.OnFileOperation) {
 		Flags.ErrorMessageFlags|= MSG_DISPLAYNOTIFY;
 	}
 	Filter = nullptr;
+	UseFilter = DefaultUseFilter;
 	DestList.SetParameters(0, 0, ULF_UNIQUE);
 	CopyDlgParam CDP{};
 	if (!(CDP.SelCount = SrcPanel->GetSelCount()))
@@ -617,6 +1237,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	// $ 26.05.2001 OT Запретить перерисовку панелей во время копирования
 	_tran(SysLog(L"call (*FrameManager)[0]->LockRefresh()"));
 	(*FrameManager)[0]->Lock();
+	FrameLocked = true;
 
 	// Progress bar update threshold
 	CDP.thisClass = this;
@@ -629,10 +1250,11 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		Flags.LINK = true;
 	if (CurrentOnly)
 		Flags.CURRENTONLY = true;
-	ShowTotalCopySize = Opt.CMOpt.CopyShowTotal != 0;
-	strTotalCopySizeText.Clear();
+	ProgressState.ShowTotalCopySize = Opt.CMOpt.CopyShowTotal != 0;
+	ProgressState.strTotalCopySizeText.Clear();
 	SelectedFolderNameLength = 0;
 	int DestPlugin = ToPlugin;
+	CDP.AllowBackground = !Link && !DestPlugin && SrcPanel->GetMode() == NORMAL_PANEL;
 	ToPlugin = FALSE;
 	this->SrcPanel = SrcPanel;
 	DestPanel = CtrlObject->Cp()->GetAnotherPanel(SrcPanel);
@@ -801,6 +1423,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	}
 	FARString strSrcDir;
 	SrcPanel->GetCurDir(strSrcDir);
+	ConvertNameToFull(strSrcDir, SourceDir);
 
 	if (CurrentOnly) {
 		// При копировании только элемента под курсором берем его имя в кавычки, если оно содержит разделители.
@@ -991,6 +1614,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 				if (DestList.Set(strCopyDlgValue)) {
 					// Запомнить признак использования фильтра. KM
 					UseFilter = CopyDlg[ID_SC_USEFILTER].Selected;
+					DefaultUseFilter = UseFilter;
 					break;
 				} else {
 					Message(MSG_WARNING, 1, Msg::Warning, Msg::CopyIncorrectTargetList, Msg::Ok);
@@ -1006,7 +1630,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 
 			return;
 		}
+
 	}
+	Background = CDP.AllowBackground && !UseFilter;
 
 	/*
 	 ***********************************************************************
@@ -1100,8 +1726,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		return;
 	}
 
-	if ((Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && SrcPanel->IsDizDisplayed())
-			|| Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS) {
+	UpdateDiz = (Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && SrcPanel->IsDizDisplayed())
+			|| Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS;
+	if (UpdateDiz) {
 		CtrlObject->Cp()->LeftPanel->ReadDiz();
 		CtrlObject->Cp()->RightPanel->ReadDiz();
 	}
@@ -1115,8 +1742,126 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	DestPanel->CloseFile();
 	strDestDizPath.Clear();
 	SrcPanel->SaveSelection();
+	OperationItems.clear();
+	SelectedPanelItems.clear();
+	if (Background) {
+		SrcPanel->GetSelNameCompat(nullptr, CDP.FileAttr);
+		while (SrcPanel->GetSelNameCompat(&strSelName, CDP.FileAttr)) {
+			FARString fullName;
+			ConvertNameToFull(strSelName, fullName);
+			OperationItems.emplace_back(fullName);
+			SelectedPanelItems.emplace_back(fullName);
+		}
+	}
+
+	OperationDestinations.clear();
+	if (DestList.Set(strCopyDlgValue)) {
+		for (size_t i = 0; ; ++i) {
+			const wchar_t *destination = DestList.Get(i);
+			if (!destination)
+				break;
+			if (Background) {
+				FARString fullDestination;
+				ConvertNameToFull(destination, fullDestination);
+				OperationDestinations.emplace_back(fullDestination);
+			} else {
+				OperationDestinations.emplace_back(destination);
+			}
+		}
+	}
 	// нужно ли показывать время копирования?
 	bool ShowCopyTime = (Opt.CMOpt.CopyTimeRule & COPY_RULE_FILES) != 0;
+
+	if (Background) {
+		if (UpdateDiz)
+			SourceDiz.Read(SourceDir);
+		delete ProgressState.Progress;
+		ProgressState.Progress = new CopyProgress(ProgressState, Move != 0,
+				ProgressState.ShowTotalCopySize, ShowCopyTime, true);
+		UnlockFrame();
+		BackgroundFileOperationId taskId;
+		{
+			std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+			taskId = ++NextBackgroundCopyId;
+			BackgroundCopies.emplace(taskId, BackgroundCopyTask{self, ProgressState.Progress});
+		}
+		CtrlObject->Plugins.BackgroundTaskStarted(L"CP");
+		CopyProgress *progress = ProgressState.Progress;
+
+		try {
+			std::thread([self, progress, taskId, Move, AddSlash, CDP, strSelName, ShowCopyTime]() mutable {
+				try {
+					self->PerformCopy(Move, AddSlash, CDP.SelCount, CDP.FolderPresent,
+							CDP.FileAttr, strSelName, ShowCopyTime);
+				} catch (...) {
+					InterThreadCall<int>([self]() {
+						self->ApplyTreeUpdates();
+						if (CtrlObject && CtrlObject->Cp()) {
+							CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+							CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+						}
+						Message(MSG_WARNING, 1, Msg::Error,
+								Msg::BackgroundFileOperationFailed, Msg::Ok);
+						return 0;
+					});
+				}
+				progress->Finish();
+				InterThreadCallAsync([self, taskId]() {
+					if (CtrlObject)
+						CtrlObject->Plugins.BackgroundTaskFinished(L"CP");
+					std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+					const auto task = BackgroundCopies.find(taskId);
+					if (task != BackgroundCopies.end() && task->second.operation == self)
+						BackgroundCopies.erase(task);
+				});
+			}).detach();
+		} catch (...) {
+			CtrlObject->Plugins.BackgroundTaskFinished(L"CP");
+			{
+				std::lock_guard<std::mutex> lock(BackgroundCopyMutex);
+				BackgroundCopies.erase(taskId);
+			}
+			Background = false;
+			OperationDestinations.clear();
+			if (DestList.Set(strCopyDlgValue)) {
+				for (size_t i = 0; ; ++i) {
+					const wchar_t *destination = DestList.Get(i);
+					if (!destination)
+						break;
+					OperationDestinations.emplace_back(destination);
+				}
+			}
+			(*FrameManager)[0]->Lock();
+			FrameLocked = true;
+			Message(MSG_WARNING, 1, Msg::Error, Msg::BackgroundFileOperationStartFailed, Msg::Ok);
+		}
+
+		if (Background) {
+			if (!Flags.CURRENTONLY) {
+				DWORD fileAttributes = 0;
+				FARString selectedName;
+				SrcPanel->GetSelNameCompat(nullptr, fileAttributes);
+				while (SrcPanel->GetSelNameCompat(&selectedName, fileAttributes))
+					SrcPanel->ClearLastGetSelection();
+				SrcPanel->Redraw();
+			}
+			if (ShowBackgroundCopyDialog(self, progress, false) == BackgroundCopyDialogResult::Aborted)
+				AbortAndWaitForBackgroundFileOperation(taskId);
+			return;
+		}
+	}
+
+	PerformCopy(Move, AddSlash, CDP.SelCount, CDP.FolderPresent, CDP.FileAttr, strSelName, ShowCopyTime);
+}
+
+void ShellCopy::PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPresent,
+		DWORD FileAttr, FARString strSelName, bool ShowCopyTime)
+{
+	CopyDlgParam CDP{};
+	CDP.SelCount = SelCount;
+	CDP.FolderPresent = FolderPresent;
+	CDP.FileAttr = FileAttr;
+	FARString strSrcDir = SourceDir;
 	/*
 	 ***********************************************************************
 	 **** Здесь все подготовительные операции закончены, можно приступать
@@ -1134,28 +1879,30 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	{
 		Flags.MOVE = false;
 
-		if (DestList.Set(strCopyDlgValue))		// если список успешно "скомпилировался"
+		if (!OperationDestinations.empty())
 		{
-			const wchar_t *NamePtr;
 			FARString strNameTmp;
 			// посчитаем количество целей.
-			CountTarget = DestList.GetTotal();
-			TotalFiles = 0;
-			TotalCopySize = TotalCopiedSize = TotalSkippedSize = 0;
-			ProgressUpdateTime = 0;
+			ProgressState.CountTarget = OperationDestinations.size();
+			ProgressState.TotalFiles = 0;
+			ProgressState.TotalCopySize = ProgressState.TotalCopiedSize =
+					ProgressState.TotalSkippedSize = 0;
+			ProgressState.ProgressUpdateTime = 0;
 
 			// Запомним время начала
 			if (ShowCopyTime) {
-				CopyStartTime = GetProcessUptimeMSec();
-				WaitUserTime = OldCalcTime = 0;
+				ProgressState.CopyStartTime = GetProcessUptimeMSec();
+				ProgressState.OldCalcTime = 0;
+				if (!Background)
+					WaitUserTime = 0;
 			}
 
-			if (CountTarget > 1)
+			if (ProgressState.CountTarget > 1)
 				Move = 0;
 
-			for (size_t DLI = 0; nullptr != (NamePtr = DestList.Get(DLI)); ++DLI) {
-				CurCopiedSize = 0;
-				strNameTmp = NamePtr;
+			for (size_t DLI = 0; DLI < OperationDestinations.size(); ++DLI) {
+				ProgressState.CurCopiedSize = 0;
+				strNameTmp = OperationDestinations[DLI];
 
 				if (!StrCmp(strNameTmp, L"..") && IsLocalRootPath(strSrcDir)) {
 					if (!Message(MSG_WARNING, 2, Msg::Error,
@@ -1166,7 +1913,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 					break;
 				}
 
-				if (DestList.IsLastElement(DLI)) {	// для последней операции нужно учесть моменты связанные с операцией Move.
+				if (DLI + 1 == OperationDestinations.size()) {	// для последней операции нужно учесть моменты связанные с операцией Move.
 					Flags.COPYLASTTIME = true;
 					if (Move)
 						Flags.MOVE = true;
@@ -1179,23 +1926,28 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 					AddEndSlash(strNameTmp);
 
 				if (CDP.SelCount == 1 && !CDP.FolderPresent) {
-					ShowTotalCopySize = false;
-					TotalFilesToProcess = 1;
+					ProgressState.ShowTotalCopySize = false;
+					ProgressState.TotalFilesToProcess = 1;
 				}
 
-				if (Move) {
+				if (Move && !Background) {
 					if (CDP.SelCount == 1 && CDP.FolderPresent
 							&& CheckUpdateAnotherPanel(SrcPanel, strSelName)) {
 						NeedUpdateAPanel = TRUE;
 					}
 				}
 
-				CP = new CopyProgress(Move != 0, ShowTotalCopySize, ShowCopyTime);
+				if (!Background || !ProgressState.Progress) {
+					delete ProgressState.Progress;
+					ProgressState.Progress = new CopyProgress(ProgressState, Move != 0,
+							ProgressState.ShowTotalCopySize, ShowCopyTime, Background);
+				}
 				// Обнулим инфу про дизы
 				strDestDizPath.Clear();
 				Flags.DIZREAD = false;
 				// сохраним выделение
-				SrcPanel->SaveSelection();
+				if (!Background)
+					SrcPanel->SaveSelection();
 				const auto OldFlagsSYMLINK = Flags.SYMLINK;
 				// собственно - один проход копирования
 				// Mantis#45: Необходимо привести копирование ссылок на папки с NTFS на FAT к более логичному виду
@@ -1203,12 +1955,15 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 					// todo: If dst does not support symlinks
 					// Flags.SYMLINK = COPY_SYMLINK_ASFILE;
 				}
-				PreRedraw.Push(PR_ShellCopyMsg);
-				PreRedrawItem preRedrawItem = PreRedraw.Peek();
-				preRedrawItem.Param.Param1 = CP;
-				PreRedraw.SetParam(preRedrawItem.Param);
+				if (!Background) {
+					PreRedraw.Push(PR_ShellCopyMsg);
+					PreRedrawItem preRedrawItem = PreRedraw.Peek();
+					preRedrawItem.Param.Param1 = ProgressState.Progress;
+					PreRedraw.SetParam(preRedrawItem.Param);
+				}
 				int I = CopyFileTree(strNameTmp);
-				PreRedraw.Pop();
+				if (!Background)
+					PreRedraw.Pop();
 				Flags.SYMLINK = OldFlagsSYMLINK;
 
 				if (I == COPY_CANCEL) {
@@ -1217,7 +1972,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 				}
 
 				// если "есть порох в пороховницах" - восстановим выделение
-				if (!DestList.IsLastElement(DLI))
+				if (!Background && DLI + 1 != OperationDestinations.size())
 					SrcPanel->RestoreSelection();
 
 				// Позаботимся о дизах.
@@ -1227,9 +1982,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 					DWORD Attr = apiGetFileAttributes(strDestDizName);
 					int DestReadOnly = (Attr != INVALID_FILE_ATTRIBUTES && (Attr & FILE_ATTRIBUTE_READONLY));
 
-					if (DestList.IsLastElement(DLI))	// Скидываем только во время последней Op.
+					if (DLI + 1 == OperationDestinations.size())	// Скидываем только во время последней Op.
 						if (Move && !DestReadOnly)
-							SrcPanel->FlushDiz();
+							FlushDiz();
 
 					DestDiz.Flush(strDestDizPath);
 				}
@@ -1253,38 +2008,58 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 			int DestReadOnly = (Attr != INVALID_FILE_ATTRIBUTES && (Attr & FILE_ATTRIBUTE_READONLY));
 
 			if (Move && !DestReadOnly)
-				SrcPanel->FlushDiz();
+				FlushDiz();
 
 			DestDiz.Flush(strDestDizPath);
 		}
 	}
 
-	SrcPanel->Update(UPDATE_KEEP_SELECTION);
+	auto finish = [this, CDP, NeedUpdateAPanel, strSelName]() {
+		if (Background) {
+			ApplyTreeUpdates();
+			if (CtrlObject && CtrlObject->Cp()) {
+				CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+				CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+			}
 
-	if (CDP.SelCount == 1 && !strRenamedName.IsEmpty())
-		SrcPanel->GoToFile(strRenamedName);
+			if (Opt.NotifOpt.OnFileOperation)
+				DisplayNotification(Msg::FileOperationComplete, strSelName);
 
-	if (NeedUpdateAPanel && CDP.FileAttr != INVALID_FILE_ATTRIBUTES
-			&& (CDP.FileAttr & FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL) {
-		FARString strTmpSrcDir;
-		SrcPanel->GetCurDir(strTmpSrcDir);
-		DestPanel->SetCurDir(strTmpSrcDir, FALSE);
-	}
+			return 0;
+		}
 
-	// проверим "нужность" апдейта пассивной панели
-	if (Flags.UPDATEPPANEL) {
-		DestPanel->SortFileList(TRUE);
-		DestPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
-	}
+		SrcPanel->Update(UPDATE_KEEP_SELECTION);
 
-	if (SrcPanelMode == PLUGIN_PANEL)
-		SrcPanel->SetPluginModified();
+		if (CDP.SelCount == 1 && !strRenamedName.IsEmpty())
+			SrcPanel->GoToFile(strRenamedName);
 
-	CtrlObject->Cp()->Redraw();
+		if (NeedUpdateAPanel && CDP.FileAttr != INVALID_FILE_ATTRIBUTES
+				&& (CDP.FileAttr & FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL) {
+			FARString strTmpSrcDir;
+			SrcPanel->GetCurDir(strTmpSrcDir);
+			DestPanel->SetCurDir(strTmpSrcDir, FALSE);
+		}
 
-	if (Opt.NotifOpt.OnFileOperation) {
-		DisplayNotification(Msg::FileOperationComplete, strSelName);	// looks like strSelName is best choice
-	}
+		if (Flags.UPDATEPPANEL) {
+			DestPanel->SortFileList(TRUE);
+			DestPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+		}
+
+		if (SrcPanelMode == PLUGIN_PANEL)
+			SrcPanel->SetPluginModified();
+
+		CtrlObject->Cp()->Redraw();
+
+		if (Opt.NotifOpt.OnFileOperation)
+			DisplayNotification(Msg::FileOperationComplete, strSelName);
+
+		return 0;
+	};
+
+	if (Background)
+		InterThreadCall<int>(finish);
+	else
+		finish();
 }
 
 LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
@@ -1315,7 +2090,8 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 			if (Param1 == ID_SC_USEFILTER)		// "Use filter"
 			{
-				UseFilter = (int)Param2;
+				DlgParam->thisClass->UseFilter = (int)Param2;
+				DefaultUseFilter = (int)Param2;
 				return TRUE;
 			}
 
@@ -1339,7 +2115,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			*/
 			else if (Param1 == ID_SC_BTNFILTER)		// Filter
 			{
-				Filter->FilterEdit();
+				DlgParam->thisClass->Filter->FilterEdit();
 				return TRUE;
 			}
 
@@ -1481,19 +2257,28 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 ShellCopy::~ShellCopy()
 {
 	_tran(SysLog(L"[%p] ShellCopy::~ShellCopy(), CopyBuffer=%p", this, CopyBuffer));
+	UnlockFrame();
 
-	// $ 26.05.2001 OT Разрешить перерисовку панелей
+	if (Filter) {
+		delete Filter;
+		Filter = nullptr;
+	}
+
+	if (ProgressState.Progress) {
+		delete ProgressState.Progress;
+		ProgressState.Progress = nullptr;
+	}
+}
+
+void ShellCopy::UnlockFrame()
+{
+	if (!FrameLocked)
+		return;
+
 	_tran(SysLog(L"call (*FrameManager)[0]->UnlockRefresh()"));
 	(*FrameManager)[0]->Unlock();
 	(*FrameManager)[0]->Refresh();
-
-	if (Filter)		// Уничтожим объект фильтра
-		delete Filter;
-
-	if (CP) {
-		delete CP;
-		CP = nullptr;
-	}
+	FrameLocked = false;
 }
 
 COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
@@ -1508,22 +2293,24 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	if (!(Length = StrLength(Dest)) || !StrCmp(Dest, L"."))
 		return COPY_FAILURE;	//????
 
-	SetCursorType(FALSE, 0);
+	if (!Background)
+		SetCursorType(FALSE, 0);
 
-	if (!TotalCopySize) {
-		strTotalCopySizeText.Clear();
+	if (!ProgressState.TotalCopySize) {
+		ProgressState.strTotalCopySizeText.Clear();
 
 		// ! Не сканируем каталоги при создании линков
-		if (ShowTotalCopySize && !Flags.LINK && !CalcTotalSize())
+		if (ProgressState.ShowTotalCopySize && !Flags.LINK && !CalcTotalSize())
 			return COPY_FAILURE;
 	} else {
-		CurCopiedSize = 0;
+		ProgressState.CurCopiedSize = 0;
 	}
 
 	// Создание структуры каталогов в месте назначения
 	FARString strNewPath = Dest;
 
-	if (!IsSlash(strNewPath.At(strNewPath.GetLength() - 1)) && SrcPanel->GetSelCount() > 1
+	const size_t sourceCount = Background ? OperationItems.size() : SrcPanel->GetSelCount();
+	if (!IsSlash(strNewPath.At(strNewPath.GetLength() - 1)) && sourceCount > 1
 			&& !strNewPath.ContainsAnyOf("*?")
 			&& apiGetFileAttributes(strNewPath) == INVALID_FILE_ATTRIBUTES) {
 		switch (Message(FMSG_WARNING, 3, Msg::Warning, strNewPath, Msg::CopyDirectoryOrFile,
@@ -1547,7 +2334,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 		if (Attr == INVALID_FILE_ATTRIBUTES) {
 			if (apiCreateDirectory(strNewPath, nullptr))
-				TreeList::AddTreeName(strNewPath);
+				AddTreeName(strNewPath);
 			else
 				CreatePath(strNewPath);
 		} else if (!(Attr & FILE_ATTRIBUTE_DIRECTORY)) {
@@ -1563,20 +2350,36 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	if (Flags.MOVE) {
 		FARString strTmpSrcDir;
-		SrcPanel->GetCurDir(strTmpSrcDir);
+		if (Background)
+			strTmpSrcDir = SourceDir;
+		else
+			SrcPanel->GetCurDir(strTmpSrcDir);
 		AllowMoveByOS = (CheckDisksProps(strTmpSrcDir, Dest, CHECKEDPROPS_ISSAMEDISK)) != 0;
 	}
 
-	// Основной цикл копирования одной порции.
-	SrcPanel->GetSelNameCompat(nullptr, FileAttr);
-	while (SrcPanel->GetSelNameCompat(&strSelName, FileAttr)) {
-		SelectedPanelItems.emplace_back();
-		ConvertNameToFull(strSelName, SelectedPanelItems.back());
+	if (!Background) {
+		SelectedPanelItems.clear();
+		SrcPanel->GetSelNameCompat(nullptr, FileAttr);
+		while (SrcPanel->GetSelNameCompat(&strSelName, FileAttr)) {
+			SelectedPanelItems.emplace_back();
+			ConvertNameToFull(strSelName, SelectedPanelItems.back());
+		}
+		SrcPanel->GetSelNameCompat(nullptr, FileAttr);
 	}
 
-	SrcPanel->GetSelNameCompat(nullptr, FileAttr);
+	size_t operationItemIndex = 0;
+	auto nextOperationItem = [&]() {
+		if (!Background)
+			return SrcPanel->GetSelNameCompat(&strSelName, FileAttr) != 0;
+		if (operationItemIndex == OperationItems.size())
+			return false;
+		strSelName = OperationItems[operationItemIndex++];
+		FileAttr = apiGetFileAttributes(strSelName);
+		return true;
+	};
+
 	{
-		while (SrcPanel->GetSelNameCompat(&strSelName, FileAttr)) {
+		while (nextOperationItem()) {
 			FARString strDest = Dest;
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -1604,7 +2407,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					case 1:
 
 						// Отметим (Ins) несколько каталогов, ALT-F6 Enter - выделение с папок не снялось.
-						if (!Flags.CURRENTONLY && Flags.COPYLASTTIME)
+						if (!Background && !Flags.CURRENTONLY && Flags.COPYLASTTIME)
 							SrcPanel->ClearLastGetSelection();
 
 						continue;
@@ -1616,7 +2419,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 				if (!apiGetFindDataForExactPathName(strSelName, SrcData)) {
 					strDestPath = strSelName;
-					CP->SetNames(strSelName, strDestPath);
+					ProgressState.Progress->SetNames(strSelName, strDestPath);
 
 					if (Message(MSG_WARNING, 2, Msg::Error, Msg::CopyCannotFind, strSelName, Msg::Skip,
 								Msg::Cancel)
@@ -1655,13 +2458,13 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 						if (!strDestDizPath.IsEmpty()) {
 							if (!strRenamedName.IsEmpty()) {
 								DestDiz.DeleteDiz(strSelName);
-								SrcPanel->CopyDiz(strSelName, strRenamedName, &DestDiz);
+								CopyDiz(strSelName, strRenamedName);
 							} else {
 								if (strCopiedName.IsEmpty())
 									strCopiedName = strSelName;
 
-								SrcPanel->CopyDiz(strSelName, strCopiedName, &DestDiz);
-								SrcPanel->DeleteDiz(strSelName);
+								CopyDiz(strSelName, strCopiedName);
+								DeleteDiz(strSelName);
 							}
 						}
 
@@ -1673,8 +2476,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 					if (CopyCode == COPY_NEXT) {
 						uint64_t CurSize = SrcData.nFileSize;
-						TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
-						TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
+						ProgressState.TotalCopiedSize = ProgressState.TotalCopiedSize
+								- ProgressState.CurCopiedSize + CurSize;
+						ProgressState.TotalSkippedSize = ProgressState.TotalSkippedSize
+								+ CurSize - ProgressState.CurCopiedSize;
 						continue;
 					}
 
@@ -1697,10 +2502,12 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					uint64_t CurSize = SrcData.nFileSize;
 
 					if (CopyCode != COPY_NOFILTER)	//????
-						TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
+						ProgressState.TotalCopiedSize = ProgressState.TotalCopiedSize
+								- ProgressState.CurCopiedSize + CurSize;
 
 					if (CopyCode == COPY_NEXT)
-						TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
+						ProgressState.TotalSkippedSize = ProgressState.TotalSkippedSize
+								+ CurSize - ProgressState.CurCopiedSize;
 
 					continue;
 				}
@@ -1710,7 +2517,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				if (strCopiedName.IsEmpty())
 					strCopiedName = strSelName;
 
-				SrcPanel->CopyDiz(strSelName, strCopiedName, &DestDiz);
+				CopyDiz(strSelName, strCopiedName);
 			}
 
 			/*
@@ -1770,8 +2577,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 									return COPY_CANCEL;
 								case COPY_NEXT: {
 									uint64_t CurSize = SrcData.nFileSize;
-									TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
-									TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
+									ProgressState.TotalCopiedSize = ProgressState.TotalCopiedSize
+											- ProgressState.CurCopiedSize + CurSize;
+									ProgressState.TotalSkippedSize = ProgressState.TotalSkippedSize
+											+ CurSize - ProgressState.CurCopiedSize;
 									continue;
 								}
 								case COPY_SUCCESS_MOVE: {
@@ -1782,8 +2591,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 									if (!NeedRename)	// вариант при перемещении содержимого симлинка с опцией "копировать содержимое сим..."
 									{
 										uint64_t CurSize = SrcData.nFileSize;
-										TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
-										TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
+										ProgressState.TotalCopiedSize = ProgressState.TotalCopiedSize
+												- ProgressState.CurCopiedSize + CurSize;
+										ProgressState.TotalSkippedSize = ProgressState.TotalSkippedSize
+												+ CurSize - ProgressState.CurCopiedSize;
 										continue;	// ... т.к. мы ЭТО не мувили, а скопировали, то все, на этом закончим бодаться с этим файлов
 									}
 							}
@@ -1807,8 +2618,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 					if (SubCopyCode == COPY_NEXT) {
 						uint64_t CurSize = SrcData.nFileSize;
-						TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
-						TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
+						ProgressState.TotalCopiedSize = ProgressState.TotalCopiedSize
+								- ProgressState.CurCopiedSize + CurSize;
+						ProgressState.TotalSkippedSize = ProgressState.TotalSkippedSize
+								+ CurSize - ProgressState.CurCopiedSize;
 					}
 
 					if (SubCopyCode == COPY_SUCCESS) {
@@ -1822,7 +2635,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 									//	apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
 
 									if (apiRemoveDirectory(strFullName))
-										TreeList::DelTreeName(strFullName);
+										DeleteTreeName(strFullName);
 								}
 							}
 							/*
@@ -1843,10 +2656,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					//	apiMakeWritable(strSelName); //apiSetFileAttributes(strSelName,FILE_ATTRIBUTE_NORMAL);
 
 					if (apiRemoveDirectory(strSelName)) {
-						TreeList::DelTreeName(strSelName);
+						DeleteTreeName(strSelName);
 
 						if (!strDestDizPath.IsEmpty())
-							SrcPanel->DeleteDiz(strSelName);
+							DeleteDiz(strSelName);
 					}
 				}
 			} else if (Flags.MOVE && CopyCode == COPY_SUCCESS) {
@@ -1856,10 +2669,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					return COPY_CANCEL;
 
 				if (DeleteCode == COPY_SUCCESS && !strDestDizPath.IsEmpty())
-					SrcPanel->DeleteDiz(strSelName);
+					DeleteDiz(strSelName);
 			}
 
-			if (!Flags.CURRENTONLY && Flags.COPYLASTTIME) {
+			if (!Background && !Flags.CURRENTONLY && Flags.COPYLASTTIME) {
 				SrcPanel->ClearLastGetSelection();
 			}
 		}
@@ -2069,9 +2882,9 @@ COPY_CODES ShellCopy::ShellCopyOneFile(const wchar_t *Src, const FAR_FIND_DATA_E
 COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND_DATA_EX &SrcData,
 		FARString &strDest, int KeepPathPos, int Rename)
 {
-	CurCopiedSize = 0;	// Сбросить текущий прогресс
+	ProgressState.CurCopiedSize = 0;	// Сбросить текущий прогресс
 
-	if (CP->Cancelled()) {
+	if (ProgressState.Progress->Cancelled()) {
 		return (COPY_CANCEL);
 	}
 
@@ -2141,8 +2954,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 
 	SetDestDizPath(strDestPath);
 
-	CP->SetProgressValue(0, 0);
-	CP->SetNames(Src, strDestPath);
+	ProgressState.Progress->SetProgressValue(0, 0);
+	ProgressState.Progress->SetNames(Src, strDestPath);
 
 	const bool copy_sym_link = (RPT == RP_EXACTCOPY
 			&& (SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0
@@ -2192,7 +3005,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 						strCopiedName = PointToName(strDestPath);
 
 					ConvertNameToFull(strDest, strDestFullName);
-					TreeList::RenTreeName(strSrcFullName, strDestFullName);
+					RenameTreeName(strSrcFullName, strDestFullName);
 					return (SameName ? COPY_NEXT : COPY_SUCCESS_MOVE);
 				} else {
 					int MsgCode = Message(Flags.ErrorMessageFlags, 3, Msg::Error,
@@ -2209,7 +3022,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 								else
 									strCopiedName = PointToName(strDestPath);
 
-								TreeList::AddTreeName(strDestPath);
+								AddTreeName(strDestPath);
 								return (COPY_SUCCESS);
 							}
 						}
@@ -2237,7 +3050,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 				return CopyRetCode;
 		}
 		if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			TreeList::AddTreeName(strDestPath);
+			AddTreeName(strDestPath);
 		if (Flags.MOVE && PointToName(strDestPath) == strDestPath.CPtr())
 			strRenamedName = strDestPath;
 		return COPY_SUCCESS;
@@ -2288,7 +3101,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 
 	for (;;) {
 		int CopyCode = 0;
-		uint64_t SaveTotalSize = TotalCopiedSize;
+		uint64_t SaveTotalSize = ProgressState.TotalCopiedSize;
 
 		if (Rename) {
 			int MoveCode = FALSE, AskDelete;
@@ -2304,9 +3117,10 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 					return COPY_FAILURE;
 				}
 
-				if (ShowTotalCopySize && MoveCode) {
-					TotalCopiedSize+= SrcData.nFileSize;
-					CP->SetTotalProgressValue(TotalCopiedSize, TotalCopySize);
+				if (ProgressState.ShowTotalCopySize && MoveCode) {
+					ProgressState.TotalCopiedSize+= SrcData.nFileSize;
+					ProgressState.Progress->SetTotalProgressValue(
+							ProgressState.TotalCopiedSize, ProgressState.TotalCopySize);
 				}
 
 				AskDelete = 0;
@@ -2340,7 +3154,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 						strCopiedName = PointToName(strDestPath);
 				}
 
-				TotalFiles++;
+				ProgressState.TotalFiles++;
+				ProgressState.Progress->SetFileCounts(
+						ProgressState.TotalFiles, ProgressState.TotalFilesToProcess);
 
 				if (AskDelete && DeleteAfterMove(Src, SrcData.dwFileAttributes) == COPY_CANCEL)
 					return COPY_CANCEL;
@@ -2359,7 +3175,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 			}
 			if (CopyCode == COPY_SUCCESS) {
 				strCopiedName = PointToName(strDestPath);
-				TotalFiles++;
+				ProgressState.TotalFiles++;
+				ProgressState.Progress->SetFileCounts(
+						ProgressState.TotalFiles, ProgressState.TotalFilesToProcess);
 				return COPY_SUCCESS;
 			} else if (CopyCode == COPY_CANCEL || CopyCode == COPY_NEXT) {
 				return ((COPY_CODES)CopyCode);
@@ -2400,7 +3218,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 				return COPY_CANCEL;
 		}
 
-		TotalCopiedSize = SaveTotalSize;
+		ProgressState.TotalCopiedSize = SaveTotalSize;
 		int RetCode;
 		FARString strNewName;
 
@@ -2479,27 +3297,30 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name, DWORD Attr)
 	return (COPY_SUCCESS);
 }
 
-static void ProgressUpdate(bool force, const FAR_FIND_DATA_EX &SrcData, const wchar_t *DestName)
+static void ProgressUpdate(ShellCopyProgressState &state, bool force,
+		const FAR_FIND_DATA_EX &SrcData, const wchar_t *DestName)
 {
-	if (force || GetProcessUptimeMSec() - ProgressUpdateTime >= PROGRESS_REFRESH_THRESHOLD) {
-		CP->SetProgressValue(CurCopiedSize, SrcData.nFileSize);
+	if (force || GetProcessUptimeMSec() - state.ProgressUpdateTime >= PROGRESS_REFRESH_THRESHOLD) {
+		state.Progress->SetProgressValue(state.CurCopiedSize, SrcData.nFileSize);
 
-		if (ShowTotalCopySize) {
-			CP->SetTotalProgressValue(TotalCopiedSize, TotalCopySize);
+		if (state.ShowTotalCopySize) {
+			state.Progress->SetTotalProgressValue(state.TotalCopiedSize, state.TotalCopySize);
 		}
 
-		CP->SetNames(SrcData.strFileName, DestName);
+		state.Progress->SetNames(SrcData.strFileName, DestName);
 
-		ProgressUpdateTime = GetProcessUptimeMSec();
+		state.ProgressUpdateTime = GetProcessUptimeMSec();
 	}
 }
 
 /////////////////////////////////////////////////////////// BEGIN OF ShellFileTransfer
 
 ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
-		const FARString &strDestName, bool Append, bool Resume, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags)
+		const FARString &strDestName, bool Append, bool Resume, ShellCopyBuffer &CopyBuffer,
+		COPY_FLAGS &Flags, ShellCopyProgressState &ProgressState)
 	:
-	_SrcName(SrcName), _strDestName(strDestName), _CopyBuffer(CopyBuffer), _Flags(Flags), _SrcData(SrcData)
+	_SrcName(SrcName), _strDestName(strDestName), _CopyBuffer(CopyBuffer), _Flags(Flags),
+	_ProgressState(ProgressState), _SrcData(SrcData)
 {
 	if (!_SrcFile.Open(SrcName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
 				OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
@@ -2566,7 +3387,7 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 		ErrnoSaver ErSr;
 		_SrcFile.Close();
 		_LOGCOPYR(SysLog(L"return COPY_FAILURE -> %d CreateFile=-1, LastError=%d (0x%08X)", __LINE__,
-				_localLastError, _localLastError));
+				ErSr.Get(), ErSr.Get()));
 		throw ErSr;
 	}
 
@@ -2590,8 +3411,8 @@ ShellFileTransfer::~ShellFileTransfer()
 		try {
 			fprintf(stderr, "~ShellFileTransfer: discarding '%ls'\n", _strDestName.CPtr());
 			_SrcFile.Close();
-			CP->SetProgressValue(0, 0);
-			CurCopiedSize = 0;	// Сбросить текущий прогресс
+			_ProgressState.Progress->SetProgressValue(0, 0);
+			_ProgressState.CurCopiedSize = 0;	// Сбросить текущий прогресс
 
 			if (_AppendPos != -1) {
 				_DestFile.SetPointer(_AppendPos, nullptr, FILE_BEGIN);
@@ -2605,7 +3426,7 @@ ShellFileTransfer::~ShellFileTransfer()
 				apiDeleteFile(_strDestName);
 			}
 
-			ProgressUpdate(true, _SrcData, _strDestName);
+			ProgressUpdate(_ProgressState, true, _SrcData, _strDestName);
 		} catch (std::exception &ex) {
 			fprintf(stderr, "~ShellFileTransfer: %s\n", ex.what());
 		} catch (...) {
@@ -2615,21 +3436,22 @@ ShellFileTransfer::~ShellFileTransfer()
 
 void ShellFileTransfer::Do()
 {
-	CP->SetProgressValue(0, 0);
+	_ProgressState.Progress->SetProgressValue(0, 0);
 
 	for (;;) {
-		ProgressUpdate(false, _SrcData, _strDestName);
+		ProgressUpdate(_ProgressState, false, _SrcData, _strDestName);
 
-		if (OrigScrX != ScrX || OrigScrY != ScrY) {
-			OrigScrX = ScrX;
-			OrigScrY = ScrY;
+		if (!_ProgressState.Progress->IsBackground()
+				&& (_ProgressState.OrigScrX != ScrX || _ProgressState.OrigScrY != ScrY)) {
+			_ProgressState.OrigScrX = ScrX;
+			_ProgressState.OrigScrY = ScrY;
 			PR_ShellCopyMsg();
 		}
 
-		if (CP->Cancelled())
+		if (_ProgressState.Progress->Cancelled())
 			return;
 
-		_Stopwatch = (_SrcData.nFileSize - CurCopiedSize > (uint64_t)_CopyBuffer.Size)
+		_Stopwatch = (_SrcData.nFileSize - _ProgressState.CurCopiedSize > (uint64_t)_CopyBuffer.Size)
 				? GetProcessUptimeMSec()
 				: 0;
 
@@ -2637,7 +3459,7 @@ void ShellFileTransfer::Do()
 		if (BytesWritten == 0)
 			break;
 
-		CurCopiedSize+= BytesWritten;
+		_ProgressState.CurCopiedSize+= BytesWritten;
 
 		if (_Stopwatch != 0 && BytesWritten == _CopyBuffer.Size) {
 			_Stopwatch = GetProcessUptimeMSec() - _Stopwatch;
@@ -2652,8 +3474,8 @@ void ShellFileTransfer::Do()
 			}
 		}
 
-		if (ShowTotalCopySize)
-			TotalCopiedSize+= BytesWritten;
+		if (_ProgressState.ShowTotalCopySize)
+			_ProgressState.TotalCopiedSize+= BytesWritten;
 	}
 
 	_SrcFile.Close();
@@ -2687,7 +3509,7 @@ void ShellFileTransfer::Do()
 
 	_Done = true;
 
-	ProgressUpdate(false, _SrcData, _strDestName);
+	ProgressUpdate(_ProgressState, false, _SrcData, _strDestName);
 }
 
 void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
@@ -2697,7 +3519,8 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	const int MsgCode =
 			Message(_Flags.ErrorMessageFlags, 2, Msg::Error, Text, Object, Msg::Retry, Msg::Cancel);
 
-	PR_ShellCopyMsg();
+	if (!_ProgressState.Progress->IsBackground())
+		PR_ShellCopyMsg();
 
 	if (MsgCode != 0)
 		throw ErSr;
@@ -2765,7 +3588,8 @@ DWORD ShellFileTransfer::PieceCopy()
 		while (BytesWritten < WriteSize) {
 			const unsigned char *Data = (const unsigned char *)_CopyBuffer.Ptr + BytesWritten;
 			const std::pair<DWORD, DWORD> &NH =
-					LookupNextHole(Data, WriteSize - BytesWritten, CurCopiedSize + BytesWritten);
+					LookupNextHole(Data, WriteSize - BytesWritten,
+							_ProgressState.CurCopiedSize + BytesWritten);
 			DWORD LeadingNonzeroesWritten = NH.first ? PieceWrite(Data, NH.first) : 0;
 			BytesWritten+= LeadingNonzeroesWritten;
 			if (NH.second && LeadingNonzeroesWritten == NH.first) {
@@ -2829,8 +3653,10 @@ static dev_t GetRDev(FARString SrcName)
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, FARString &strDestName,
 		int Append, int Resume)
 {
-	OrigScrX = ScrX;
-	OrigScrY = ScrY;
+	if (!Background) {
+		ProgressState.OrigScrX = ScrX;
+		ProgressState.OrigScrY = ScrY;
+	}
 
 	if (Flags.LINK) {
 		if (RPT == RP_HARDLINK) {
@@ -2841,13 +3667,12 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &Src
 		}
 	}
     if (SrcData.dwFileAttributes & (FILE_ATTRIBUTE_DEVICE_FIFO | FILE_ATTRIBUTE_DEVICE_BLOCK | FILE_ATTRIBUTE_DEVICE_CHAR)) {
-        int r = (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE_FIFO)
-                    ? sdc_mkfifo(strDestName.GetMB().c_str(), SrcData.dwUnixMode)
-                    : sdc_mknod(strDestName.GetMB().c_str(), SrcData.dwUnixMode, GetRDev(SrcName));
-        if (r == -1) {
-            _localLastError = errno;
-            return COPY_FAILURE;
-        }
+		int r = (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE_FIFO)
+					? sdc_mkfifo(strDestName.GetMB().c_str(), SrcData.dwUnixMode)
+					: sdc_mknod(strDestName.GetMB().c_str(), SrcData.dwUnixMode, GetRDev(SrcName));
+		if (r == -1) {
+			return COPY_FAILURE;
+		}
         return COPY_SUCCESS;
     }
 
@@ -2859,12 +3684,12 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &Src
 			int r = clonefile(mbSrc.c_str(), mbDest.c_str(), 0);
 			if (r == 0) {
 				// fprintf(stderr, "CoW succeeded for '%s' -> '%s'\n", mbSrc.c_str(), mbDest.c_str());
-				CurCopiedSize = SrcData.nFileSize;
-				if (ShowTotalCopySize)
-					TotalCopiedSize+= SrcData.nFileSize;
+				ProgressState.CurCopiedSize = SrcData.nFileSize;
+				if (ProgressState.ShowTotalCopySize)
+					ProgressState.TotalCopiedSize+= SrcData.nFileSize;
 
-				ProgressUpdate(false, SrcData, strDestName);
-				return CP->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
+				ProgressUpdate(ProgressState, false, SrcData, strDestName);
+				return ProgressState.Progress->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
 			}
 
 			ErrnoSaver ErSr;
@@ -2876,13 +3701,13 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &Src
 		}
 #endif
 
-		ShellFileTransfer(SrcName, SrcData, strDestName, Append != 0, Resume != 0, CopyBuffer, Flags).Do();
-		return CP->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
-	} catch (ErrnoSaver &ErSr) {
-		_localLastError = ErSr.Get();
+		ShellFileTransfer(SrcName, SrcData, strDestName, Append != 0, Resume != 0,
+				CopyBuffer, Flags, ProgressState).Do();
+		return ProgressState.Progress->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
+	} catch (ErrnoSaver &) {
 	}
 
-	return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
+	return ProgressState.Progress->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
 }
 
 void ShellCopy::SetDestDizPath(const wchar_t *DestPath)
@@ -2894,12 +3719,11 @@ void ShellCopy::SetDestDizPath(const wchar_t *DestPath)
 		if (strDestDizPath.IsEmpty())
 			strDestDizPath = L".";
 
-		if ((Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && !SrcPanel->IsDizDisplayed())
-				|| Opt.Diz.UpdateMode == DIZ_NOT_UPDATE)
+		if (!UpdateDiz)
 			strDestDizPath.Clear();
 
 		if (!strDestDizPath.IsEmpty())
-			DestDiz.Read(strDestDizPath);
+			DestDiz.Read(strDestDizPath, nullptr, Background);
 
 		Flags.DIZREAD = true;
 	}
@@ -3006,10 +3830,22 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 }
 
 int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcName, const wchar_t *DestName,
-		DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append, 
+		DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append,
 		bool askResume, bool &Resume,
 		FARString &strNewName, int &RetCode)
 {
+	if (Background && ProgressState.Progress->Cancelled()) {
+		RetCode = COPY_CANCEL;
+		return FALSE;
+	}
+
+	if (Background && !IsCurrentThreadDispatchesInterThreadCalls()) {
+		return InterThreadCall<int, FALSE>([&]() {
+			return AskOverwrite(SrcData, SrcName, DestName, DestAttr, SameName, Rename,
+					AskAppend, Append, askResume, Resume, strNewName, RetCode);
+		});
+	}
+
 	enum
 	{
 		WARN_DLG_HEIGHT = 13,
@@ -3262,41 +4098,6 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 	return TRUE;
 }
 
-BOOL ShellCopySecuryMsg(const wchar_t *Name)
-{
-	static clock_t PrepareSecuryStartTime;
-
-	if (!Name || !*Name
-			|| (static_cast<DWORD>(GetProcessUptimeMSec() - PrepareSecuryStartTime)
-					> Opt.ShowTimeoutDACLFiles)) {
-		static int Width = 30;
-		int WidthTemp;
-		if (Name && *Name) {
-			PrepareSecuryStartTime = GetProcessUptimeMSec();	// Первый файл рисуется всегда
-			WidthTemp = Max(StrLength(Name), 30);
-		} else
-			Width = WidthTemp = 30;
-
-		// ширина месага - 38%
-		WidthTemp = Min(WidthTemp, WidthNameForMessage);
-		Width = Max(Width, WidthTemp);
-
-		FARString strOutFileName = Name;	//??? nullptr ???
-		TruncPathStr(strOutFileName, Width);
-		CenterStr(strOutFileName, strOutFileName, Width + 4);
-		Message(0, 0, Msg::MoveDlgTitle, Msg::CopyPrepareSecury, strOutFileName);
-
-		if (CP->Cancelled()) {
-			return FALSE;
-		}
-	}
-
-	PreRedrawItem preRedrawItem = PreRedraw.Peek();
-	preRedrawItem.Param.Param1 = Name;
-	PreRedraw.SetParam(preRedrawItem.Param);
-	return TRUE;
-}
-
 bool ShellCopy::CalcTotalSize()
 {
 	FARString strSelName;
@@ -3304,33 +4105,56 @@ bool ShellCopy::CalcTotalSize()
 	uint64_t FileSize;
 	// Для фильтра
 	FAR_FIND_DATA_EX fd;
-	PreRedraw.Push(PR_ShellCopyMsg);
-	PreRedrawItem preRedrawItem = PreRedraw.Peek();
-	preRedrawItem.Param.Param1 = CP;
-	PreRedraw.SetParam(preRedrawItem.Param);
-	TotalCopySize = CurCopiedSize = 0;
-	TotalFilesToProcess = 0;
-	SrcPanel->GetSelNameCompat(nullptr, FileAttr);
+	if (!Background) {
+		PreRedraw.Push(PR_ShellCopyMsg);
+		PreRedrawItem preRedrawItem = PreRedraw.Peek();
+		preRedrawItem.Param.Param1 = ProgressState.Progress;
+		PreRedraw.SetParam(preRedrawItem.Param);
+	}
+	ProgressState.TotalCopySize = ProgressState.CurCopiedSize = 0;
+	ProgressState.TotalFilesToProcess = 0;
+	if (!Background)
+		SrcPanel->GetSelNameCompat(nullptr, FileAttr);
 
-	while (SrcPanel->GetSelNameCompat(&strSelName, FileAttr, &fd)) {
+	size_t operationItemIndex = 0;
+	auto nextOperationItem = [&]() {
+		if (!Background)
+			return SrcPanel->GetSelNameCompat(&strSelName, FileAttr, &fd) != 0;
+		if (operationItemIndex == OperationItems.size())
+			return false;
+		strSelName = OperationItems[operationItemIndex++];
+		fd.Clear();
+		if (!apiGetFindDataForExactPathName(strSelName, fd))
+			return true;
+		FileAttr = fd.dwFileAttributes;
+		return true;
+	};
+
+	while (nextOperationItem()) {
+		if (Background && fd.strFileName.IsEmpty())
+			continue;
 		if ((FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) && Flags.SYMLINK != COPY_SYMLINK_ASFILE)
 			continue;
 
 		if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 			{
 				DirInfo di;
-				CP->SetScanName(strSelName);
-				int __Ret = di.FromFS(strSelName,
-					((Flags.SYMLINK == COPY_SYMLINK_ASFILE) ? GETDIRINFO_SCANSYMLINK : 0),
-					UseFilter ? Filter : nullptr);
+				ProgressState.Progress->SetScanName(strSelName);
+				DWORD dirInfoFlags =
+						((Flags.SYMLINK == COPY_SYMLINK_ASFILE) ? GETDIRINFO_SCANSYMLINK : 0);
+				if (Background)
+					dirInfoFlags|= GETDIRINFO_DONTREDRAWFRAME;
+				int __Ret = di.FromFS(strSelName, dirInfoFlags,
+						UseFilter ? Filter : nullptr, Background ? ProgressState.Progress : nullptr);
 				if (__Ret <= 0) {
-					ShowTotalCopySize = false;
-					PreRedraw.Pop();
+					ProgressState.ShowTotalCopySize = false;
+					if (!Background)
+						PreRedraw.Pop();
 					return FALSE;
 				}
 
-				TotalCopySize+= di.FileSize;
-				TotalFilesToProcess+= di.DeviceCount + di.FileCount;
+				ProgressState.TotalCopySize+= di.FileSize;
+				ProgressState.TotalFilesToProcess+= di.DeviceCount + di.FileCount;
 			}
 		} else {
 			// Подсчитаем количество файлов
@@ -3339,18 +4163,21 @@ bool ShellCopy::CalcTotalSize()
 					continue;
 			}
 
-			FileSize = SrcPanel->GetLastSelectedSize();
+			FileSize = Background ? fd.nFileSize : SrcPanel->GetLastSelectedSize();
 
 			if (FileSize != (uint64_t)-1) {
-				TotalCopySize+= FileSize;
-				TotalFilesToProcess++;
+				ProgressState.TotalCopySize+= FileSize;
+				ProgressState.TotalFilesToProcess++;
 			}
 		}
 	}
 
 	// INFO: Это для варианта, когда "ВСЕГО = общий размер * количество целей"
-	TotalCopySize = TotalCopySize * CountTarget;
-	InsertCommas(TotalCopySize, strTotalCopySizeText);
-	PreRedraw.Pop();
+	ProgressState.TotalCopySize = ProgressState.TotalCopySize * ProgressState.CountTarget;
+	InsertCommas(ProgressState.TotalCopySize, ProgressState.strTotalCopySizeText);
+	ProgressState.Progress->SetTotalInfo(
+			ProgressState.TotalCopySize, ProgressState.TotalFilesToProcess);
+	if (!Background)
+		PreRedraw.Pop();
 	return true;
 }

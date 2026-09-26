@@ -89,6 +89,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
 	std::atomic<DWORD> _focused_ts{1};
+	std::vector<std::wstring> _external_drag_files;
+	bool _external_drag_active{false};
 	MOUSE_EVENT_RECORD _prev_mouse_event{};
 	DWORD _prev_mouse_event_ts{0};
 
@@ -141,6 +143,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void OnConsoleSaveWindowStateSync(wxCommandEvent& event);
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnConsoleSetCursorBlinkTimeSync(wxCommandEvent& event);
+	void OnConsoleSetFileDragDataSync(wxCommandEvent& event);
 	void OnIdle( wxIdleEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
@@ -149,6 +152,9 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void OnSize(wxSizeEvent &event);
 	void OnMouse( wxMouseEvent &event );
 	void OnMouseNormal( wxMouseEvent &event, COORD pos_char);
+	void BeginExternalFileDrag();
+	void TryStartExternalFileDrag();
+	void EndExternalFileDrag();
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char);
 	void OnSetFocus( wxFocusEvent &event );
 	void OnKillFocus( wxFocusEvent &event );
@@ -178,6 +184,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
+	virtual void OnConsoleSetFileDragData(const std::vector<std::wstring> &files);
 	virtual const char *OnConsoleBackendInfo(int entity);
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);

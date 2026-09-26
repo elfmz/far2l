@@ -833,6 +833,12 @@ void ConsoleOutput::ConsoleDisplayNotification(const WCHAR *title, const WCHAR *
 		_backend->OnConsoleDisplayNotification(title, text);
 }
 
+void ConsoleOutput::SetFileDragData(const std::vector<std::wstring> &files)
+{
+	if (_backend)
+		_backend->OnConsoleSetFileDragData(files);
+}
+
 bool ConsoleOutput::ConsoleBackgroundMode(bool TryEnterBackgroundMode)
 {
 	return (_backend && _backend->OnConsoleBackgroundMode(TryEnterBackgroundMode));

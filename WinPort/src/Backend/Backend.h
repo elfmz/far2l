@@ -1,6 +1,7 @@
 #pragma once
 #include "WinCompat.h"
 #include <string>
+#include <vector>
 
 /// This file defines all interfacing between console API and rendering backends.
 
@@ -8,7 +9,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x11
+#define FAR2L_BACKEND_ABI_VERSION	0x12
 
 class IConsoleOutputBackend
 {
@@ -37,6 +38,7 @@ public:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 	virtual void OnConsoleOutputFlushDrawing() = 0;
+	virtual void OnConsoleSetFileDragData(const std::vector<std::wstring> &) {}
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
@@ -216,6 +218,7 @@ public:
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void RepaintsDeferStart() = 0;
 	virtual void RepaintsDeferFinish(bool force) = 0;
+	virtual void SetFileDragData(const std::vector<std::wstring> &files) = 0;
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;

@@ -1,11 +1,11 @@
 #include "wxMain.h"
 #include <dlfcn.h>
+#include <wx/dnd.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
 #include "wxKeyboardLedsState.h"
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
-#include <memory>
 #include "wxPrinterSupport.h"
 
 #define AREAS_REDUCTION
@@ -294,6 +294,7 @@ struct EventWithRect : EventWith<SMALL_RECT>
 typedef EventWith<bool> EventWithBool;
 typedef EventWith<DWORD> EventWithDWORD;
 typedef EventWith<DWORD64> EventWithDWORD64;
+typedef EventWith<std::vector<std::wstring>> EventWithFiles;
 
 ///////////////////////////////////////////
 
@@ -309,6 +310,7 @@ wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SAVE_WIN_STATE, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SET_CURSOR_BLINK_TIME, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SET_FILE_DRAG_DATA, wxCommandEvent);
 
 
 ////////////////////////////////////////// app
@@ -583,6 +585,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_CURSOR_BLINK_TIME, WinPortPanel::OnConsoleSetCursorBlinkTimeSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_FILE_DRAG_DATA, WinPortPanel::OnConsoleSetFileDragDataSync)
 
 	EVT_IDLE(WinPortPanel::OnIdle)
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
@@ -1841,6 +1844,8 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	ResetTimerIdling();
 
 	COORD pos_char = TranslateMousePosition( event );
+	const bool left_down = event.LeftDown() && !_last_mouse_event.LeftDown();
+	const bool left_up = event.LeftUp();
 
 	DWORD mode = 0;
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
@@ -1857,8 +1862,57 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 
 	if ((mode&ENABLE_QUICK_EDIT_MODE) || _adhoc_quickedit)
 		OnMouseQEdit( event, pos_char );
-	else if (mode&ENABLE_MOUSE_INPUT)
+	else if (mode&ENABLE_MOUSE_INPUT) {
 		OnMouseNormal( event, pos_char );
+		if (left_down)
+			BeginExternalFileDrag();
+		else if (event.Dragging())
+			TryStartExternalFileDrag();
+		else if (left_up)
+			EndExternalFileDrag();
+	}
+}
+
+void WinPortPanel::BeginExternalFileDrag()
+{
+	EndExternalFileDrag();
+
+	if (!HasCapture())
+		CaptureMouse();
+}
+
+void WinPortPanel::TryStartExternalFileDrag()
+{
+	if (_external_drag_active || _external_drag_files.empty() || !HasCapture())
+		return;
+
+	const wxPoint cursor = ScreenToClient(wxGetMousePosition());
+	if (GetClientRect().Contains(cursor))
+		return;
+
+	_external_drag_active = true;
+	ReleaseMouse();
+
+	wxFileDataObject data;
+	for (const auto &file : _external_drag_files)
+		data.AddFile(wxString(file.c_str()));
+	wxDropSource source(this);
+	source.SetData(data);
+	source.DoDragDrop(wxDrag_CopyOnly);
+
+	INPUT_RECORD release{MOUSE_EVENT};
+	release.Event.MouseEvent.dwMousePosition = _last_mouse_click;
+	wxConsoleInputShim::Enqueue(&release, 1);
+	_mouse_state &= ~FROM_LEFT_1ST_BUTTON_PRESSED;
+	_external_drag_active = false;
+	_external_drag_files.clear();
+}
+
+void WinPortPanel::EndExternalFileDrag()
+{
+	if (!_external_drag_active && HasCapture())
+		ReleaseMouse();
+	_external_drag_files.clear();
 }
 
 void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
@@ -2189,6 +2243,18 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(interval, WX_CONSOLE_SET_CURSOR_BLINK_TIME);
 	if (event)
 		wxQueueEvent(this, event);
+}
+
+void WinPortPanel::OnConsoleSetFileDragData(const std::vector<std::wstring> &files)
+{
+	EventWithFiles *event = new(std::nothrow) EventWithFiles(files, WX_CONSOLE_SET_FILE_DRAG_DATA);
+	if (event)
+		wxQueueEvent(this, event);
+}
+
+void WinPortPanel::OnConsoleSetFileDragDataSync(wxCommandEvent &event)
+{
+	_external_drag_files = static_cast<EventWithFiles &>(event).cookie;
 }
 
 const char *WinPortPanel::OnConsoleBackendInfo(int entity)

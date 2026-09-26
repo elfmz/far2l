@@ -2052,17 +2052,22 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		if (GetEditorInfo(ei)) {
 			EditorState &st = g_editors[ei.EditorID];
 			st.editor_id = ei.EditorID;
+			bool state_updated = false;
 			if (RepoStateChanged(st)) {
 				st.dirty = true;
 				st.last_update_ms = 0;
 			}
 			if (st.dirty) {
 				UpdateEditorState(st);
+				state_updated = !st.dirty;
 				did_work = true;
 				if (st.dirty)
 					MaybeScheduleTick();
 			}
 			if (ApplyGutterRequest(st)) {
+				redraw_current_dialog = dialog_current;
+			} else if (state_updated) {
+				g_info.EditorControl(ECTL_REDRAW, nullptr);
 				redraw_current_dialog = dialog_current;
 			}
 		}

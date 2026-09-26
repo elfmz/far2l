@@ -930,6 +930,12 @@ void Editor::ShowEditor(int CurLineOnly)
 			}
 	}
 
+	if (CurLineOnly && HasLineNumArea) {
+		const int CurLineY = Y1 + CalcDistance(TopScreen, CurLine, -1);
+		SetScreen(LineNumX1 - 1, CurLineY, LineNumX1 - 1, CurLineY, L' ', FarColorToReal(COL_EDITORLINENUMBER));
+		DrawGutterMark(NumLine, CurLineY, LineNumX1);
+	}
+
 	CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 	CurLine->SetCursorVisibleFlag(m_showCursor);
 	CurLine->Show();

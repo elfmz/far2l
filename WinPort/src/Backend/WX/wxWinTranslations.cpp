@@ -310,8 +310,10 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		_right_control = true;
 	}
+	// Only ISO_Level3_Shift (RAW_CONTEXT) is AltGr. Alt_R (RAW_ALTGR) is emitted by
+	// layouts without AltGr, e.g. us and ru, and must stay a plain Alt (see #3619).
 	if ((event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) &&
-		(event.GetRawKeyCode() == RAW_ALTGR || event.GetRawKeyCode() == RAW_CONTEXT)) {
+		event.GetRawKeyCode() == RAW_CONTEXT) {
 		_right_alt = true;
 	}
 #endif
@@ -626,7 +628,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if ((!event.GetKeyCode() || event.GetKeyCode() == WXK_ALT) &&
-		(event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR)) {
+		event.GetRawKeyCode() == RAW_CONTEXT) { // AltGr only, Alt_R stays plain Alt (#3619)
 		if (KeyDown) {
 			Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
 		}

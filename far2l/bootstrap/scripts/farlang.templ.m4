@@ -484,6 +484,17 @@ upd:"Background terminal commands [F3]"
 "Фонові команди терміналу [F3]"
 "Фонавыя каманды тэрмінала [F3]"
 
+BackgroundFileOperations
+"Фоновые файловые операции"
+"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+"Фонові файлові операції"
+"Фонавыя файлавыя аперацыі"
+
 MultilinePaste
 "Вставка нескольких строк"
 "Multiline paste"
@@ -5953,16 +5964,27 @@ upd:"File operation complete"
 "Файлова операція виконана"
 "Файлавая дзея выканана"
 
-BackgroundFileOperationTitle
-"Фоновая файловая операция"
-"Background file operation"
-upd:"Background file operation"
-upd:"Background file operation"
-upd:"Background file operation"
-upd:"Background file operation"
-upd:"Background file operation"
-"Фонова файлова операція"
-"Фонавая файлавая аперацыя"
+BackgroundFileOperationTitleCopy
+"Фоновое копирование"
+"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+"Фонове копіювання"
+"Фонавае капіяванне"
+
+BackgroundFileOperationTitleMove
+"Фоновый перенос"
+"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+"Фонове перенесення"
+"Фонавае перамяшчэнне"
 
 BackgroundFileOperationStartFailed
 "Не удалось запустить фоновую файловую операцию."

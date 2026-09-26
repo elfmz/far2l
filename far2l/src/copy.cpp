@@ -781,7 +781,8 @@ static BackgroundCopyDialogResult ShowBackgroundCopyDialog(
 			return BackgroundCopyDialogResult::Finished;
 
 		const wchar_t *dialogTitle = alreadyBackground
-				? Msg::BackgroundFileOperationTitle.CPtr()
+				? (progress->IsMove() ? Msg::BackgroundFileOperationTitleMove.CPtr()
+						: Msg::BackgroundFileOperationTitleCopy.CPtr())
 				: (progress->IsMove() ? Msg::MoveDlgTitle.CPtr() : Msg::CopyDlgTitle.CPtr());
 		int dialogHeight = BackgroundCopyDialogMaximumHeight;
 		DialogDataEx dialogData[] = {
@@ -881,7 +882,10 @@ static void FormatBackgroundCopyTask(BackgroundFileOperationId id, CopyProgress 
 
 	FARString progressText;
 	FormatCopyProgress(progressText, completed, total, BackgroundCopyMenuProgressWidth, false);
-	text.Format(L"%ls #%llu  %ls", Msg::BackgroundFileOperationTitle.CPtr(),
+	const wchar_t *operationTitle = progress->IsMove()
+			? Msg::BackgroundFileOperationTitleMove.CPtr()
+			: Msg::BackgroundFileOperationTitleCopy.CPtr();
+	text.Format(L"%ls #%llu  %ls", operationTitle,
 			static_cast<unsigned long long>(id), progressText.CPtr());
 }
 

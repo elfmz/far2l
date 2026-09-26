@@ -436,20 +436,30 @@ public:
 		}
 
 		MenuItemEx mi;
-		mi.Clear();
-		mi.strName = Msg::BackgroundCommands;
-		mi.Flags = LIF_SEPARATOR;
-		AddItem(&mi);
-
 		_copy_tasks.clear();
-		for (const auto &operation : copy_operations) {
+		if (!copy_operations.empty()) {
 			mi.Clear();
-			mi.strName = operation.text;
-			_copy_tasks.push_back({operation.id, GetItemCount()});
+			mi.strName = Msg::BackgroundFileOperations;
+			mi.Flags = LIF_SEPARATOR;
 			AddItem(&mi);
+
+			for (const auto &operation : copy_operations) {
+				mi.Clear();
+				mi.strName = operation.text;
+				_copy_tasks.push_back({operation.id, GetItemCount()});
+				AddItem(&mi);
+			}
 		}
 
-		_vts_base_index = GetItemCount();
+		_vts_base_index = -1;
+		if (!_vts.empty()) {
+			mi.Clear();
+			mi.strName = Msg::BackgroundCommands;
+			mi.Flags = LIF_SEPARATOR;
+			AddItem(&mi);
+			_vts_base_index = GetItemCount();
+		}
+
 		for (size_t i = 0; i < _vts.size(); ++i) {
 			const auto &vt = _vts[i];
 			mi.Clear();

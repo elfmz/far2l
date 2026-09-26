@@ -1725,13 +1725,14 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 	}
 
 	if (deviceInfos.empty()) {
-		DBG("No ADB devices found\n");
-		SetPanelTitle(_PanelTitle, Lng(MNoDevicesPanelTitle));
+		const bool adbMissing = ADBShell::findAdbExecutable().empty();
+		DBG("No ADB devices found (adbMissing=%d)\n", (int)adbMissing);
+		SetPanelTitle(_PanelTitle, Lng(adbMissing ? MNoAdbPanelTitle : MNoDevicesPanelTitle));
 		PluginPanelItem placeholder{};
-		placeholder.FindData.lpwszFileName = ADBDevice::AllocateItemString("<Not found>");
+		placeholder.FindData.lpwszFileName = ADBDevice::AllocateItemString(adbMissing ? "<No adb>" : "<Not found>");
 		placeholder.FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
 		wchar_t **cd = new wchar_t*[3];
-		cd[0] = ADBDevice::AllocateItemString("<Connect device>");
+		cd[0] = ADBDevice::AllocateItemString(adbMissing ? "<check $PATH>" : "<Connect device>");
 		cd[1] = ADBDevice::AllocateItemString("");
 		cd[2] = ADBDevice::AllocateItemString("");
 		placeholder.CustomColumnData = cd;

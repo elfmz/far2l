@@ -46,6 +46,7 @@ public:
     // which is the only case where no status could be collected.
     static constexpr int kPtyExitKilled = -2;
     static int lastPtyExit() { return _last_pty_exit.load(); }
+    static std::string findAdbExecutable();
 
 private:
     std::string _device_serial;
@@ -64,7 +65,6 @@ private:
     std::atomic<uint32_t> _command_counter;
     
     // Private methods
-    static std::string findAdbExecutable();
     static std::vector<std::string> splitCommandArgs(const std::string& command);
     // Total wall-clock ceiling for one metadata `adb` invocation (device enumeration and the
     // like - transfers use the idle bound above instead, since they can be arbitrarily long).

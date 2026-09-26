@@ -111,6 +111,8 @@ enum ADBLng
     MUnknownError,          // "unknown error"
     MDeleteFolderTitle,     // "Delete folder"
     MItemsSuffix,           // " items"
+
+    MNoAdbPanelTitle,       // "ADB: adb binary not found"
 };
 
 inline const wchar_t* Lng(ADBLng id)

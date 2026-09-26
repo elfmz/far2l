@@ -2002,6 +2002,9 @@ int Viewer::ProcessKey(FarKey Key)
 						case CP_UTF16BE:
 							len*= 2;
 							break;
+						default:
+							len = 0x10;
+							break;
 					}
 					FilePos&= ~(len - 1);
 					Show();
@@ -2313,6 +2316,9 @@ int Viewer::ProcessKey(FarKey Key)
 						case CP_UTF16LE:
 						case CP_UTF16BE:
 							len*= 2;
+							break;
+						default:
+							len = 0x10;
 							break;
 					}
 					FilePos&= ~(len - 1);

@@ -297,6 +297,7 @@ bool FileFilter::FilterEdit()
 			}
 			case KEY_NUMPAD0:
 			case KEY_INS:
+			case KEY_CTRLN:
 			case KEY_F5: {
 				int pos = FilterList.GetSelectPos();
 				if (pos < 0)

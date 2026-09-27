@@ -1195,6 +1195,7 @@ void MacroBrowser::Show(class KeyMacro *KMacro)
 					}
 					break;
 				case KEY_INS:
+				case KEY_CTRLN:
 				case KEY_NUMPAD0:
 					if (!Macro->IsExecuting() && !Macro->IsRecording()) {
 							if (Edit(-1)) {

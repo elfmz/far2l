@@ -1496,7 +1496,7 @@ $ #Menus: commands menu#
                         #Del# to delete and #F4# to edit menu records.
 
    #Edit associations#    Displays the list of ~file associations~@FileAssoc@.
-                        You may press #Ins# to insert, #Del# to delete
+                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
                         and #F4# to edit file associations.
 
    #Bookmarks#     Displays current ~Bookmarks~@Bookmarks@.
@@ -2362,15 +2362,15 @@ desired association from the menu.
 
     The following actions are available in the associations list:
 
-    #Ins#        - ~add~@FileAssocModify@ a new association
+    #Ins# or #Ctrl+N# - ~add~@FileAssocModify@ a new association
 
-    #F4#         - ~edit~@FileAssocModify@ the current association
+    #F4#            - ~edit~@FileAssocModify@ the current association
 
-    #Del#        - delete the current association
+    #Del#           - delete the current association
 
-    #Ctrl-Up#    - move association up
+    #Ctrl-Up#       - move association up
 
-    #Ctrl-Down#  - move association down
+    #Ctrl-Down#     - move association down
 
     If no execute command is associated with file and
 #Use OS registered types# option in ~System settings~@SystemSettings@
@@ -3554,25 +3554,25 @@ $ #Files highlighting and sort groups: control keys#
 perform various operations with the list of the groups. The following key
 combinations are available:
 
-  #Space#        - (De)Activate current group
+  #Space#         - (De)Activate current group
 
-  #Ins#          - Add a new highlighting group
+  #Ins# or #Ctrl+N# - Add a new highlighting group
 
-  #F5#           - Duplicate the current group
+  #F5#            - Duplicate the current group
 
-  #Del#          - Delete the current group
+  #Del#           - Delete the current group
 
-  #Enter# or #F4#  - ~Edit~@HighlightEdit@ the current highlighting group
+  #Enter# or #F4#   - ~Edit~@HighlightEdit@ the current highlighting group
 
-  #F3#           - Show for current item file masks after expand all masks groups
+  #F3#            - Show for current item file masks after expand all masks groups
 
-  #Ctrl-R#       - Restore the default file highlighting groups
+  #Ctrl-R#        - Restore the default file highlighting groups
 
-  #Ctrl-Up#      - Move a group up
+  #Ctrl-Up#       - Move a group up
 
-  #Ctrl-Down#    - Move a group down
+  #Ctrl-Down#     - Move a group down
 
-  #Ctrl-M#       - Toggle attribute column view: short/long
+  #Ctrl-M#        - Toggle attribute column view: short/long
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked,
@@ -3922,7 +3922,7 @@ that match those mask in the current panel).
 
     For the #User filters# the following commands are available:
 
-   #Ins#        Create a new filter, an empty ~filter~@Filter@ settings
+   #Ins# or #Ctrl+N# Create a new filter, an empty ~filter~@Filter@ settings
               dialog will open for you to set.
 
    #F4#         Edit an existing ~filter~@Filter@.
@@ -4158,7 +4158,7 @@ belonging to this group files will be higher than those belonging to
 following groups.
 
     The command #Edit sort groups# from the ~Commands menu~@CmdMenu@ is used to
-delete, create and edit sort groups, using #Del#, #Ins# and #F4#. The groups
+delete, create and edit sort groups, using #Del#, #Ins# (#Ctrl+N#) and #F4#. The groups
 above the menu separator are applicable to the file panel start, and included
 files will be placed higher than those not included to any group. The groups
 below the menu separator are applicable to the file panel end, and included
@@ -4241,17 +4241,17 @@ To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be us
 
  Control keys:
 
- #Ctrl+R#      - ^<wrap>restore the default predefined groups
+ #Ctrl+R#        - ^<wrap>restore the default predefined groups
 
- #Ins#         - ^<wrap>add a new group
+ #Ins# or #Ctrl+N# - ^<wrap>add a new group
 
- #Del#         - ^<wrap>remove the current group
+ #Del#           - ^<wrap>remove the current group
 
- #Enter#/#F4#    - ^<wrap>edit the current group
+ #Enter#/#F4#      - ^<wrap>edit the current group
 
- #F3#          - view the current group with wrap long line of masks
+ #F3#            - view the current group with wrap long line of masks
 
- #F7#          - ^<wrap>find all groups containing the specified mask
+ #F7#            - ^<wrap>find all groups containing the specified mask
 
  Also see ~Options menu~@OptMenu@.
 

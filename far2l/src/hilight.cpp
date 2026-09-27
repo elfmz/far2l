@@ -898,6 +898,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 					break;
 				}
 				case KEY_INS:
+				case KEY_CTRLN:
 				case KEY_NUMPAD0: {
 					int *Count = nullptr;
 					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count, true);

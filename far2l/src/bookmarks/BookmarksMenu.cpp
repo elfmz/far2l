@@ -128,7 +128,8 @@ static int ShowBookmarksMenuIteration(int Pos)
 					return (SelPos);
 
 				case KEY_NUMPAD0:
-				case KEY_INS: {
+				case KEY_INS: 
+				case KEY_CTRLN: {
 					Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 					FARString strNewDir, strNewPluginModule, strNewPluginFile, strNewPluginData;
 					CtrlObject->CmdLine->GetCurDir(strNewDir);

@@ -189,7 +189,7 @@ static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG
 
 int ShowMultilinePasteDialog(FARString &text)
 {
-	static const wchar_t kCmdlineMemoFilename[] = L"cmdline.bash";
+	static const wchar_t kCmdlineMemoFilename[] = L"Far2lUserMenu.bash";
 	const int min_width = 40;
 	const int min_height = 12;
 	const int dlg_w = Max(min_width, Min(ScrX - 2, Max(76, (ScrX * 3) / 4)));

@@ -572,7 +572,8 @@ but vanilla PuTTY can not transfer clipboard.
 
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
  * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
-    <sub>(contain separate packages with external plugins;<br>in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
+    <sub>(contain separate packages with external plugins;<br>in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)<br>
+    _⚠ Note:_ viklequick's packages contains some **additional and experimental code**, that is **ahead** of elfmz master, see description in section "Main differences to master" in [readme in his branch main](https://github.com/viklequick/far2l/tree/main#main-differences-to-master)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
  * **Flatpak**: https://github.com/spvkgn/far2l-flatpak <sub>(access only to part of real filesystem via sandbox)</sub>

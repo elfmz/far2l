@@ -882,11 +882,11 @@ static void FormatBackgroundCopyTask(BackgroundFileOperationId id, CopyProgress 
 
 	FARString progressText;
 	FormatCopyProgress(progressText, completed, total, BackgroundCopyMenuProgressWidth, false);
-	const wchar_t *operationTitle = progress->IsMove()
-			? Msg::BackgroundFileOperationTitleMove.CPtr()
-			: Msg::BackgroundFileOperationTitleCopy.CPtr();
-	text.Format(L"%ls #%llu  %ls", operationTitle,
-			static_cast<unsigned long long>(id), progressText.CPtr());
+	const wchar_t *operationName = progress->IsMove()
+			? Msg::BackgroundFileOperationNameMove.CPtr()
+			: Msg::BackgroundFileOperationNameCopy.CPtr();
+	text.Format(L"#%llu  %ls  %ls", static_cast<unsigned long long>(id),
+			operationName, progressText.CPtr());
 }
 
 void GetBackgroundFileOperations(std::vector<BackgroundFileOperationInfo> &operations)

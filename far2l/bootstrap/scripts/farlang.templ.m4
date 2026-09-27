@@ -5986,6 +5986,28 @@ upd:"Background move"
 "Фонове перенесення"
 "Фонавае перамяшчэнне"
 
+BackgroundFileOperationNameCopy
+"Копирование"
+"Copy"
+"Kopírování"
+"Kopieren"
+"Másolás"
+"Kopiowanie"
+"Copiar"
+"Копіювання"
+"Капіраванне"
+
+BackgroundFileOperationNameMove
+"Перенос"
+"Move"
+"Přesun"
+"Verschieben"
+"Áthelyezés"
+"Przenoszenie"
+"Mover"
+"Перенесення"
+"Перамяшчэнне"
+
 BackgroundFileOperationStartFailed
 "Не удалось запустить фоновую файловую операцию."
 "Cannot start the background file operation."

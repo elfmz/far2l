@@ -64,7 +64,7 @@ FarEditorSet::~FarEditorSet()
   farViewerInstances.clear();
 }
 
-void FarEditorSet::openMenu()
+void FarEditorSet::openMenu(bool fullMenu)
 {
   std::array<int, 12> iMenuItems {
       mListTypes,    mMatchPair,      mSelectBlock, mSelectPair,      mListFunctions, mFindErrors,
@@ -83,6 +83,45 @@ void FarEditorSet::openMenu()
         configure(true);
       }
 
+      return;
+    }
+
+    if (!fullMenu) {
+      std::wstring buf1 = GetMsg(mViewerColoring);
+      buf1 += L" ";
+      buf1 += GetMsg(mViewerColoringDisabled);
+      std::wstring buf2 = GetMsg(mViewerColoring);
+      buf2 += L" ";
+      buf2 += GetMsg(mViewerColoringQuickView);
+      std::wstring buf3 = GetMsg(mViewerColoring);
+      buf3 += L" ";
+      buf3 += GetMsg(mViewerColoringAll);
+      menuElements[0].Text = buf1.c_str();
+      menuElements[1].Text = buf2.c_str();
+      menuElements[2].Text = buf3.c_str();
+      menuElements[Opt.viewerColoring].Checked = 1;
+      menuElements[3].Separator = 1;
+      menuElements[4].Text = GetMsg(mReloadBase);
+      menuElements[5].Text = GetMsg(mConfigure);
+      menuElements[0].Selected = 1;
+      int res = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, GetMsg(mName), nullptr,
+                          L"menu", nullptr, nullptr, menuElements, 6);
+      switch (res) {
+        case 0:
+        case 1:
+        case 2:
+          if (Opt.viewerColoring != res) {
+            Opt.viewerColoring = res;
+            farViewerInstances.clear();
+          }
+          break;
+        case 4:
+          ReloadBase();
+          break;
+        case 5:
+          configure(true);
+          break;
+      }
       return;
     }
 

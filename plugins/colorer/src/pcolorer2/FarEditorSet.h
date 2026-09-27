@@ -130,7 +130,7 @@ class FarEditorSet
   ~FarEditorSet();
 
   /** Shows editor actions menu */
-  void openMenu();
+  void openMenu(bool fullMenu = true);
   /** Shows plugin's configuration dialog */
   void configure(bool fromEditor);
 

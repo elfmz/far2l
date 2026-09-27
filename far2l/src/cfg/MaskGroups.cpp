@@ -287,6 +287,7 @@ void MaskGroupsSettings()
 
 				case KEY_NUMPAD0:
 				case KEY_INS:
+				case KEY_CTRLN:
 					if (bFilter) break;
 					MenuModified = EditMaskRecord(MenuPos < 0 ? 0 : MenuPos, true);
 					break;

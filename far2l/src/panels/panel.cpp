@@ -568,6 +568,7 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 						return -1;
 				} break;
 				case KEY_INS:
+				case KEY_CTRLN:
 				case KEY_NUMPAD0: {
 					//					if (item && item->kind == PanelMenuItem::SHORTCUT)
 					//					{

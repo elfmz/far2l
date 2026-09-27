@@ -11,6 +11,7 @@
 #include <wchar.h>
 #include <errno.h>
 #include <utils.h>
+#include <UnixModeStr.h>
 #include <fstream>
 #include <chrono>
 #include <cctype>
@@ -53,47 +54,6 @@ void TrimTrailingNewlines(std::string& s)
     while (!s.empty() && (s.back() == '\n' || s.back() == '\r')) {
         s.pop_back();
     }
-}
-
-// "drwxr-xr-x" -> S_IFDIR|0755. Panels need the real bits: far2l derives the permission
-// column, the executable/symlink highlighting and the attribute flags from dwUnixMode, so a
-// hardcoded 0755/0644 makes all three wrong.
-// NB: a fixed variant of NetRocks' ShellParseUtils::{Char2FileType,Triplet2FileMode,Str2Mode},
-// which is private to that plugin, omits the setuid/setgid/sticky bits and tests the wrong
-// character for 's'. Promoting a shared implementation to utils/ would suit both.
-mode_t LsPermsToMode(const std::string &perms)
-{
-    static const auto triplet = [](const char *c) -> mode_t {
-        mode_t out = 0;
-        if (c[0] == 'r') out |= 4;
-        if (c[1] == 'w') out |= 2;
-        // x, or s/t which mean "set-id/sticky *and* executable"; S/T mean the bit without x.
-        if (c[2] == 'x' || c[2] == 's' || c[2] == 't') out |= 1;
-        return out;
-    };
-
-    mode_t mode = 0;
-    switch (perms.empty() ? '-' : perms[0]) {
-        case 'd': mode = S_IFDIR; break;
-        case 'l': mode = S_IFLNK; break;
-        case 'c': mode = S_IFCHR; break;
-        case 'b': mode = S_IFBLK; break;
-        case 'p': mode = S_IFIFO; break;
-        case 's': mode = S_IFSOCK; break;
-        default:  mode = S_IFREG; break;
-    }
-    // Entries the shell could not stat come back as "d?????????" - keep the type, no bits.
-    if (perms.size() >= 4)  mode |= triplet(perms.c_str() + 1) << 6;
-    if (perms.size() >= 7)  mode |= triplet(perms.c_str() + 4) << 3;
-    if (perms.size() >= 10) mode |= triplet(perms.c_str() + 7);
-
-    // The set-id and sticky bits live in the x positions as s/S (user, group) and t/T (other);
-    // far2l renders them in the permission column, so losing them shows a setuid binary as a
-    // plain -rwxr-xr-x.
-    if (perms.size() >= 4  && (perms[3] == 's' || perms[3] == 'S')) mode |= S_ISUID;
-    if (perms.size() >= 7  && (perms[6] == 's' || perms[6] == 'S')) mode |= S_ISGID;
-    if (perms.size() >= 10 && (perms[9] == 't' || perms[9] == 'T')) mode |= S_ISVTX;
-    return mode;
 }
 
 int CheckConnection(bool connected)
@@ -636,7 +596,7 @@ std::string ADBDevice::DirectoryEnum(const std::string &path, std::vector<Plugin
 
         PluginPanelItem item{};
         item.FindData.lpwszFileName = AllocateItemString(filename);
-        item.FindData.dwUnixMode = ADBUtils::LsPermsToMode(perms);
+        item.FindData.dwUnixMode = UnixModeStr::Parse(perms.c_str(), perms.size());
         item.FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(item.FindData.dwUnixMode, filename.c_str());
         if (perms[0] == 'd') item.FindData.dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
 

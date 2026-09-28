@@ -1472,12 +1472,17 @@ enum VIEWER_CONTROL_COMMANDS
 	VCTL_SETPOSITION,
 	VCTL_SELECT,
 	VCTL_SETMODE,
+	VCTL_GETSTRING,
+	VCTL_ADDCOLOR,
+	VCTL_ADDTRUECOLOR,
+	VCTL_GETCONTEXT,
 };
 
 enum VIEWER_OPTIONS
 {
 	VOPT_SAVEFILEPOSITION=1,
 	VOPT_AUTODETECTCODEPAGE=2,
+	VOPT_QUICKVIEW=4,
 };
 
 enum VIEWER_SETMODE_TYPES
@@ -1508,6 +1513,34 @@ struct ViewerSelect
 {
 	int64_t BlockStartPos;
 	int     BlockLen;
+};
+
+struct ViewerGetString
+{
+	size_t StringNumber;
+	const wchar_t *StringText;
+	size_t StringLength;
+	DWORD Flags;
+};
+
+enum VIEWER_GETSTRING_FLAGS
+{
+	VGS_WRAPS_TO_NEXT=1,
+	VGS_CONTEXT_RETAINED=2,
+};
+
+struct ViewerColor
+{
+	size_t StringNumber;
+	size_t StartPos;
+	size_t EndPos;
+	uint64_t Color;
+};
+
+struct ViewerTrueColor
+{
+	struct ViewerColor Base;
+	struct FarTrueColorForeAndBack TrueColor;
 };
 
 enum VIEWER_SETPOS_FLAGS
@@ -1559,6 +1592,7 @@ enum VIEWER_EVENTS
 {
 	VE_READ       =0,
 	VE_CLOSE      =1,
+	VE_REDRAW     =2,
 
 	VE_GOTFOCUS   =6,
 	VE_KILLFOCUS  =7,

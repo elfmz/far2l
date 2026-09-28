@@ -249,22 +249,27 @@ func far2l_ReqRecvSync(tmout uint32) bool {
 	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
 	far2l_WriteToPeer(g_buf[0:8])
 	far2l_ReadSocket(1, tmout)
-	if g_buf[0] == 0 {
+	return g_buf[0] != 0
+}
+
+func far2l_Sync(tmout uint32) bool {
+	if tmout == 0 {
+		tmout = g_autosync
+	}
+	log.Println("Sync:", tmout)
+	g_autosync_needed = false
+	if !far2l_ReqRecvSync(tmout) {
 		setErrorString("Sync timout")
 		return false
 	}
 	return true
 }
 
-func far2l_Sync(tmout uint32) bool {
-	log.Println("Sync:", tmout)
-	g_autosync_needed = false
-	return far2l_ReqRecvSync(tmout)
-}
-
-func far2l_AutoSync(tmout uint32) {
-	log.Println("AutoSync:", tmout)
+func far2l_AutoSync(tmout uint32) uint32 {
+	prev:= g_autosync
 	g_autosync = tmout
+	log.Println("AutoSync:", prev, "->", tmout)
+	return prev
 }
 
 func performAutoSync() {
@@ -525,6 +530,7 @@ func runTest(file string) {
 	defer far2l_Close()
 	defer aux_Snapshot("exit")
 	typingReset()
+	g_autosync = 10000
 	g_calm = false
 	g_last_error = ""
 	data, err := ioutil.ReadFile(file)

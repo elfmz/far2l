@@ -67,9 +67,10 @@ Waits (with given msec timeout) for all input events being processed.
 Fails/Returns false if wait timed out.
 
 ---------------------------------------------------------
-`AutoSync(tmout uint32)`  
+`AutoSync(tmout uint32) uint32`  
 if tmout is non-zero - enables autosync mode, when Sync with given timeout invoked automatically between simulated input and output control functions  
 if tmout is zero - then autosync is not performed  
+Returns previuos setting value  
 By default AutoSync is enabled with 10000 msec timeout
 
 ---------------------------------------------------------
@@ -219,12 +220,12 @@ Simulate changing state of specific named control key. Changed state affects all
 
 ---------------------------------------------------------
 
-`TypeEnter()`  
-`TypeEscape()`  
-`TypeEnd()`  
-`TypeHome()`  
-`TypeIns()`  
-`TypeDel()`  
+`TypeEnter(count int)`  
+`TypeEscape(count int)`  
+`TypeEnd(count int)`  
+`TypeHome(count int)`  
+`TypeIns(count int)`  
+`TypeDel(count int)`  
 `TypeTab(count int)`  
 `TypeBack(count int)`  
 `TypePageUp(count int)`  
@@ -233,27 +234,31 @@ Simulate changing state of specific named control key. Changed state affects all
 `TypeUp(count int)`  
 `TypeRight(count int)`  
 `TypeDown(count int)`  
-Simulate typing of specific named key. Those with cnt specified - typed cnt times, but at least 1 time.  
+Simulate typing of specific named key.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeAdd()`  
-`TypeSub()`  
-`TypeMul()`  
-`TypeDiv()`  
-`TypeSeparator()`  
-`TypeDecimal()`  
-Simulate typing of specific named NumPad key
+`TypeAdd(count int)`  
+`TypeSub(count int)`  
+`TypeMul(count int)`  
+`TypeDiv(count int)`  
+`TypeSeparator(count int)`  
+`TypeDecimal(count int)`  
+Simulate typing of specific named NumPad key.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeDigit(n)`  
-Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on
+`TypeDigit(n, count int)`  
+Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 
-`TypeFKey(n)`  
-Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on
+`TypeFKey(n, count int)`  
+Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on.  
+Key typed cnt times, but at least 1 time.
 
 ---------------------------------------------------------
 

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="solidity">
+    <annotation>
+      <documentation>
+        Solidity language.
+        https://docs.soliditylang.org/en/latest/grammar.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Type" parent="def:TypeKeyword"/>
+
+    <scheme name="solidity">
+      <block start="/\/\/\//" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="def:Comment"
+             region00="def:PairStart" region10="def:PairEnd"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <regexp match="/\bu?int\d*\b/" region="Type"/>
+      <regexp match="/\bbytes\d*\b/" region="Type"/>
+      <keywords region="Type">
+        <word name="address"/>
+        <word name="bool"/>
+        <word name="string"/>
+        <word name="bytes"/>
+        <word name="byte"/>
+      </keywords>
+      <keywords region="def:Keyword">
+        <word name="pragma"/>
+        <word name="import"/>
+        <word name="from"/>
+        <word name="using"/>
+        <word name="abstract"/>
+        <word name="contract"/>
+        <word name="interface"/>
+        <word name="library"/>
+        <word name="is"/>
+        <word name="function"/>
+        <word name="modifier"/>
+        <word name="event"/>
+        <word name="error"/>
+        <word name="struct"/>
+        <word name="enum"/>
+        <word name="mapping"/>
+        <word name="constructor"/>
+        <word name="fallback"/>
+        <word name="receive"/>
+        <word name="public"/>
+        <word name="private"/>
+        <word name="internal"/>
+        <word name="external"/>
+        <word name="pure"/>
+        <word name="view"/>
+        <word name="payable"/>
+        <word name="virtual"/>
+        <word name="override"/>
+        <word name="immutable"/>
+        <word name="constant"/>
+        <word name="returns"/>
+        <word name="memory"/>
+        <word name="storage"/>
+        <word name="calldata"/>
+        <word name="indexed"/>
+        <word name="anonymous"/>
+        <word name="if"/>
+        <word name="else"/>
+        <word name="for"/>
+        <word name="while"/>
+        <word name="do"/>
+        <word name="break"/>
+        <word name="continue"/>
+        <word name="return"/>
+        <word name="try"/>
+        <word name="catch"/>
+        <word name="unchecked"/>
+        <word name="assembly"/>
+        <word name="emit"/>
+        <word name="revert"/>
+        <word name="require"/>
+        <word name="assert"/>
+        <word name="new"/>
+        <word name="delete"/>
+        <word name="this"/>
+        <word name="super"/>
+      </keywords>
+      <keywords region="def:BooleanConstant">
+        <word name="true"/>
+        <word name="false"/>
+      </keywords>
+      <regexp match="/\b\d+\.\d+\.\d+\b/" region="def:Number"/>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="solidity"/>
+      </inherit>
+      <keywords region="def:Symbol">
+        <symb name="=&gt;"/>
+        <symb name="=="/>
+        <symb name="!="/>
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name=";"/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name=":"/>
+        <symb name="="/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="!"/>
+        <symb name="?"/>
+        <symb name="|"/>
+        <symb name="&amp;"/>
+        <symb name="^"/>
+      </keywords>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

@@ -77,11 +77,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "xlat.hpp"
 #include "vt/vtshell.h"
 #include <StackHeapArray.hpp>
+#include <src/Backend/Backend.h>
 
 static int DragX, DragY, DragMove;
 static Panel *SrcDragPanel;
 static SaveScreen *DragSaveScr = nullptr;
 static FARString strDragName;
+static bool DragFileDataSet = false;
+
+static void SetFileDragData(Panel *panel)
+{
+	if (!g_winport_con_out || panel->GetType() != FILE_PANEL || panel->GetMode() != NORMAL_PANEL)
+		return;
+
+	FARString directory, name;
+	DWORD attributes;
+	std::vector<std::wstring> files;
+	panel->GetCurDir(directory);
+	panel->GetSelNameCompat(nullptr, attributes);
+	while (panel->GetSelNameCompat(&name, attributes)) {
+		if (TestParentFolderName(name))
+			continue;
+
+		FARString path = directory;
+		AddEndSlash(path);
+		path += name;
+		files.emplace_back(path.CPtr());
+	}
+
+	g_winport_con_out->SetFileDragData(files);
+	DragFileDataSet = true;
+}
 
 /*
 	$ 21.08.2002 IS
@@ -542,6 +568,7 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 						return -1;
 				} break;
 				case KEY_INS:
+				case KEY_CTRLN:
 				case KEY_NUMPAD0: {
 					//					if (item && item->kind == PanelMenuItem::SHORTCUT)
 					//					{
@@ -1253,6 +1280,7 @@ int Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent, int &RetCode)
 			DragX = MouseEvent->dwMousePosition.X;
 			DragY = MouseEvent->dwMousePosition.Y;
 			DragMove = ShiftPressed;
+			SetFileDragData(this);
 		}
 	}
 
@@ -1266,6 +1294,11 @@ int Panel::IsDragging()
 
 void Panel::EndDrag()
 {
+	if (DragFileDataSet) {
+		if (g_winport_con_out)
+			g_winport_con_out->SetFileDragData({});
+		DragFileDataSet = false;
+	}
 	delete DragSaveScr;
 	DragSaveScr = nullptr;
 	DragX = DragY = -1;

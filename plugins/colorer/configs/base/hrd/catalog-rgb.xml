@@ -1,0 +1,117 @@
+        <hrd class="rgb" name="eclipse" description="A'la Eclipse (minimal)">
+            <location link="&hrd;/rgb/eclipse.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="hs" description="A'la HomeSite">
+            <location link="&hrd;/rgb/hs.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="ayu-dark" description="Ayu Dark">
+            <location link="&hrd;/rgb/ayu-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="ayu-light" description="Ayu Light">
+            <location link="&hrd;/rgb/ayu-light.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="ayu-mirage" description="Ayu Mirage">
+            <location link="&hrd;/rgb/ayu-mirage.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="black" description="Black (scarlet)">
+            <location link="&hrd;/rgb/black.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="blue" description="Blue (far-truemod)">
+            <location link="&hrd;/rgb/blue.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="mirror" description="Blue a'la NC">
+            <location link="&hrd;/rgb/mirror.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="bred3" description="Bred3 colors">
+            <location link="&hrd;/rgb/contrib/bred3.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="catppuccin-latte" description="Catppuccin Latte">
+            <location link="&hrd;/rgb/catppuccin-latte.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="catppuccin-mocha" description="Catppuccin Mocha">
+            <location link="&hrd;/rgb/catppuccin-mocha.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="dn" description="Dos Navigator">
+            <location link="&hrd;/rgb/dn.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="dracula" description="Dracula">
+            <location link="&hrd;/rgb/dracula.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="Fallout Red" description="Fallout Red by Kate tempergate">
+            <location link="&hrd;/rgb/FalloutRed.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="default" description="far2l">
+            <location link="&hrd;/rgb/far2l.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="fmx" description="FMX">
+            <location link="&hrd;/rgb/contrib/fmx.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="github-dark" description="GitHub Dark">
+            <location link="&hrd;/rgb/github-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="github-light" description="GitHub Light">
+            <location link="&hrd;/rgb/github-light.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="grayscale" description="Grayscale (colour neutral)">
+            <location link="&hrd;/rgb/grayscale.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="gruvbox-dark" description="Gruvbox Dark">
+            <location link="&hrd;/rgb/gruvbox-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="gruvbox-light" description="Gruvbox Light">
+            <location link="&hrd;/rgb/gruvbox-light.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="mirice" description="Ice Mirror">
+            <location link="&hrd;/rgb/mirice.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="palenight" description="Material Palenight">
+            <location link="&hrd;/rgb/palenight.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="monokai" description="Monokai">
+            <location link="&hrd;/rgb/monokai.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="navy" description="Navy (seashore)">
+            <location link="&hrd;/rgb/navy.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="navy-mirror" description="Navy Blue a'la NC">
+            <location link="&hrd;/rgb/contrib/navy-mirror.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="neo" description="Neo (and Morpheus)">
+            <location link="&hrd;/rgb/neo.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="night-owl" description="Night Owl">
+            <location link="&hrd;/rgb/night-owl.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="nord" description="Nord">
+            <location link="&hrd;/rgb/nord.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="one-dark" description="One Dark">
+            <location link="&hrd;/rgb/one-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="one-light" description="One Light">
+            <location link="&hrd;/rgb/one-light.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="solarized-dark" description="Solarized Dark">
+            <location link="&hrd;/rgb/solarized-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="solarized-light" description="Solarized Light">
+            <location link="&hrd;/rgb/solarized-light.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="tokyo-night" description="Tokyo Night">
+            <location link="&hrd;/rgb/tokyo-night.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="tomorrow-night" description="Tomorrow Night">
+            <location link="&hrd;/rgb/tomorrow-night.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="violet" description="Violet by Kate tempergate">
+            <location link="&hrd;/rgb/violet.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="visual" description="Visual by Roman Kuzmin">
+            <location link="&hrd;/rgb/contrib/visual-rgb.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="vscode-dark" description="VS Code Dark+">
+            <location link="&hrd;/rgb/vscode-dark.hrd"/>
+        </hrd>
+        <hrd class="rgb" name="white" description="White (crimsoned)">
+            <location link="&hrd;/rgb/white.hrd"/>
+        </hrd>

@@ -269,8 +269,10 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 			Opt.WidthDecrement = (ScrX / 2 - 10);
 
 		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
-		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement - extra;
-		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement - extra;
+		const int LeftDecrement = extra ? std::max(Opt.LeftHeightDecrement, extra) : Opt.LeftHeightDecrement;
+		const int RightDecrement = extra ? std::max(Opt.RightHeightDecrement, extra) : Opt.RightHeightDecrement;
+		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - LeftDecrement;
+		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - RightDecrement;
 
 		if (LeftFullScreen) {
 			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
@@ -324,7 +326,8 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 
 		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
 		const int LeftY2 = (ScrY - Opt.ShowMenuBar) / 2 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement / 2;
-		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement - extra;
+		const int RightDecrement = extra ? std::max(Opt.RightHeightDecrement, extra) : Opt.RightHeightDecrement;
+		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - RightDecrement;
 
 #if 0
 		if (LeftFullScreen) {
@@ -703,6 +706,10 @@ int FilePanels::ProcessKey(FarKey Key)
 
 			break;
 		}
+		case KEY_CTRLSHIFTD: {
+			PresentFileDiff(true);
+			break;
+		}
 		case KEY_CTRLUP:
 		case KEY_CTRLNUMPAD8: {
 			bool Set = false;
@@ -724,11 +731,12 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLDOWN:
 		case KEY_CTRLNUMPAD2: {
 			bool Set = false;
-			if (Opt.LeftHeightDecrement >= 0) {
+			const int min_decrement = CtrlObject->CmdLine->IsNotEmpty() ? 0 : -1;
+			if (Opt.LeftHeightDecrement > min_decrement) {
 				Opt.LeftHeightDecrement--;
 				Set = true;
 			}
-			if (Opt.RightHeightDecrement >= 0) {
+			if (Opt.RightHeightDecrement > min_decrement) {
 				Opt.RightHeightDecrement--;
 				Set = true;
 			}
@@ -758,7 +766,8 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD2: {
 			int &HeightDecrement =
 					(ActivePanel == LeftPanel) ? Opt.LeftHeightDecrement : Opt.RightHeightDecrement;
-			if (HeightDecrement >= 0) {
+			const int min_decrement = CtrlObject->CmdLine->IsNotEmpty() ? 0 : -1;
+			if (HeightDecrement > min_decrement) {
 				HeightDecrement--;
 				SetScreenPosition();
 				FrameManager->RefreshFrame();

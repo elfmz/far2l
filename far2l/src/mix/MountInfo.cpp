@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 # if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 #  include <sys/param.h>
 #  include <sys/ucred.h>
@@ -272,7 +272,7 @@ MountInfo::MountInfo(bool for_location_menu)
 		}
 	}
 
-#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 
 #ifdef __NetBSD__
 	int r = getvfsstat(nullptr, 0, MNT_NOWAIT);
@@ -373,6 +373,9 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 	if (out.empty()) {
 		struct statfs sfs{};
 		if (sdc_statfs(path.c_str(), &sfs) == 0) {
+#ifdef __OpenBSD__
+			out = sfs.f_fstypename;
+#else
 #ifdef __APPLE__
 		out = sfs.f_fstypename;
 		if (out.empty())
@@ -383,6 +386,7 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 					break;
 				}
 			}
+#endif
 		}
 	}
 #else

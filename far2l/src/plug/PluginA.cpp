@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 // #include "farexcpt.hpp"
 #include "fileedit.hpp"
-#include "RefreshFrameManager.hpp"
 #include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginA.hpp"

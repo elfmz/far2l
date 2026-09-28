@@ -27,9 +27,6 @@ class VTAnsi
 	VTAnsi(IVTShell *vtsh);
 	~VTAnsi();
 
-	void DisableOutput();
-	void EnableOutput();
-
 	void Write(const char *str, size_t len);
 
 	struct VTAnsiState *Suspend();

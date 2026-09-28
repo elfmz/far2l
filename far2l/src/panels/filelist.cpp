@@ -4165,8 +4165,7 @@ bool FileList::ApplyCommand()
 
 void FileList::CountDirSize(DWORD PluginFlags)
 {
-	uint32_t DirCount, DirFileCount, ClusterSize;
-	uint64_t FileSize, PhysicalSize;
+	DirInfo di;
 	DWORD SelDirCount = 0;
 
 	/*
@@ -4194,10 +4193,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 				if (!(Item->FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 					DoubleDotDir->FileSize+= Item->FileSize;
 					DoubleDotDir->PhysicalSize+= Item->PhysicalSize;
-				} else if (GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize,
-								PhysicalSize)) {
-					DoubleDotDir->FileSize+= FileSize;
-					DoubleDotDir->PhysicalSize+= PhysicalSize;
+				} else if (di.FromPlugin(hPlugin, Item->strName)) {
+					DoubleDotDir->FileSize+= di.FileSize;
+					DoubleDotDir->PhysicalSize+= di.PhysicalSize;
 				}
 			}
 		}
@@ -4211,21 +4209,17 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			SelDirCount++;
 
 			if ((PanelMode == PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES)
-						&& GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize,
-								PhysicalSize))
+						&& di.FromPlugin(hPlugin, Item->strName))
 					|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
-							&& GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount,
-										FileSize, PhysicalSize, ClusterSize, 0, Filter,
-										GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF)
-									== 1)) {
+							&& di.FromFS(Item->strName, GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) { // Filter was here but wasnt used due to missing GETDIRINFO_USEFILTER
 				SelFileSize-= Item->FileSize;
-				SelFileSize+= FileSize;
-				Item->FileSize = FileSize;
-				Item->PhysicalSize = PhysicalSize;
+				SelFileSize+= di.FileSize;
+				Item->FileSize = di.FileSize;
+				Item->PhysicalSize = di.PhysicalSize;
 				Item->ShowFolderSize = 1;
-				LargestFilSize = std::max(FileSize, LargestFilSize);
-				LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
-				LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
+				LargestFilSize = std::max(di.FileSize, LargestFilSize);
+				LargestFilSizeL = std::max(di.FileSize, LargestFilSizeL);
+				LargestFilPhysSize = std::max(di.PhysicalSize, LargestFilPhysSize);
 			} else
 				break;
 		}
@@ -4234,22 +4228,16 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	if (!SelDirCount) {
 		ASSERT(CurFile < ListData.Count());
 		if ((PanelMode == PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES)
-					&& GetPluginDirInfo(hPlugin, ListData[CurFile]->strName, DirCount, DirFileCount, FileSize,
-							PhysicalSize))
+					&& di.FromPlugin(hPlugin, ListData[CurFile]->strName))
 				|| ((PanelMode != PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES))
-						&& GetDirInfo(Msg::DirInfoViewTitle,
-									TestParentFolderName(ListData[CurFile]->strName)
-											? L"."
-											: ListData[CurFile]->strName,
-									DirCount, DirFileCount, FileSize, PhysicalSize, ClusterSize, 0, Filter,
-									GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF)
-								== 1)) {
-			ListData[CurFile]->FileSize = FileSize;
-			ListData[CurFile]->PhysicalSize = PhysicalSize;
+						&& di.FromFS(TestParentFolderName(ListData[CurFile]->strName) ? L"." : ListData[CurFile]->strName,
+									GETDIRINFO_DONTREDRAWFRAME | GETDIRINFO_SCANSYMLINKDEF) == 1)) { // Filter was here but wasnt used due to missing GETDIRINFO_USEFILTER
+			ListData[CurFile]->FileSize = di.FileSize;
+			ListData[CurFile]->PhysicalSize = di.PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;
-			LargestFilSize = std::max(FileSize, LargestFilSize);
-			LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
-			LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
+			LargestFilSize = std::max(di.FileSize, LargestFilSize);
+			LargestFilSizeL = std::max(di.FileSize, LargestFilSizeL);
+			LargestFilPhysSize = std::max(di.PhysicalSize, LargestFilPhysSize);
 		}
 	}
 

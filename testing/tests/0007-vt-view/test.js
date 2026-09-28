@@ -5,9 +5,9 @@ paneldir=mydir + "/test-paneldir"
 MkdirsAll([profile, paneldir], 0700)
 StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", paneldir, "-cd", paneldir]);
 ExpectString("Help - FAR2L");
-TypeEscape(10)
+TypeEscape()
 ExpectString("OSC52");
-TypeEscape(10)
+TypeEscape()
 status = AppStatus();
 
 // Ctrl+O and wait until panels will be hidden

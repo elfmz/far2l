@@ -181,7 +181,7 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest);
 
 BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolumeName,
 		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
-		FARString *pFileSystemName, FARString *pFileSystemMountPoint = nullptr);
+		LPDWORD pClusterSize, FARString *pFileSystemName, FARString *pFileSystemMountPoint);
 
 void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest);
 

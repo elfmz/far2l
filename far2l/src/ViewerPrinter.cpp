@@ -42,7 +42,10 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 	int out;
 	bool joining = false;
 	for (out = 0; *str && limit != 0; ++str, --limit) {
-		if (!ShouldSkip(*str)) {
+		if (static_cast<uint32_t>(*str) <= 0x7f) {
+			if (!joining) ++out;
+			joining = false;
+		} else if (!ShouldSkip(*str)) {
 			if (*str == CharClasses::ZERO_WIDTH_JOINER) {
 				joining = true;
 			} else if (CharClasses::IsFullWidth(str)) {

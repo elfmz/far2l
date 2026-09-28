@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="zig">
+    <annotation>
+      <documentation>
+        Zig language.
+        https://ziglang.org/documentation/master/
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Builtin" parent="def:FunctionKeyword"/>
+    <region name="Type" parent="def:TypeKeyword"/>
+
+    <scheme name="StringEscapes">
+      <regexp match="/\\[nrt'\\&quot;\\x]/" region="def:SymbolStrong"/>
+      <regexp match="/\\x[\da-fA-F]{2}/" region="def:SymbolStrong"/>
+      <regexp match="/\\u\{[\da-fA-F]+\}/" region="def:SymbolStrong"/>
+    </scheme>
+
+    <scheme name="zig">
+      <block start="/\/\/!/" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\/\//" end="/$/" scheme="def:Comment" region="def:CommentDoc"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <regexp match="/^\\\\.*$/" region="def:String"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="StringEscapes" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <regexp match="/'(\\.|.)'/" region="def:Character"/>
+      <regexp match="/@[A-Za-z_]\w*/" region="Builtin"/>
+      <regexp match="/[iu]\d+\b/" region="Type"/>
+      <keywords region="Type">
+        <word name="bool"/>
+        <word name="f16"/>
+        <word name="f32"/>
+        <word name="f64"/>
+        <word name="f80"/>
+        <word name="f128"/>
+        <word name="isize"/>
+        <word name="usize"/>
+        <word name="void"/>
+        <word name="noreturn"/>
+        <word name="type"/>
+        <word name="anytype"/>
+        <word name="anyerror"/>
+        <word name="comptime_int"/>
+        <word name="comptime_float"/>
+      </keywords>
+      <keywords region="def:Keyword">
+        <word name="addrspace"/>
+        <word name="align"/>
+        <word name="allowzero"/>
+        <word name="and"/>
+        <word name="anyframe"/>
+        <word name="asm"/>
+        <word name="async"/>
+        <word name="await"/>
+        <word name="break"/>
+        <word name="callconv"/>
+        <word name="catch"/>
+        <word name="comptime"/>
+        <word name="const"/>
+        <word name="continue"/>
+        <word name="defer"/>
+        <word name="else"/>
+        <word name="enum"/>
+        <word name="errdefer"/>
+        <word name="error"/>
+        <word name="export"/>
+        <word name="extern"/>
+        <word name="fn"/>
+        <word name="for"/>
+        <word name="if"/>
+        <word name="inline"/>
+        <word name="linksection"/>
+        <word name="noalias"/>
+        <word name="noinline"/>
+        <word name="nosuspend"/>
+        <word name="opaque"/>
+        <word name="or"/>
+        <word name="orelse"/>
+        <word name="packed"/>
+        <word name="pub"/>
+        <word name="resume"/>
+        <word name="return"/>
+        <word name="struct"/>
+        <word name="suspend"/>
+        <word name="switch"/>
+        <word name="test"/>
+        <word name="threadlocal"/>
+        <word name="try"/>
+        <word name="union"/>
+        <word name="unreachable"/>
+        <word name="usingnamespace"/>
+        <word name="var"/>
+        <word name="volatile"/>
+        <word name="while"/>
+      </keywords>
+      <keywords region="def:BooleanConstant">
+        <word name="true"/>
+        <word name="false"/>
+        <word name="null"/>
+        <word name="undefined"/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="zig"/>
+      </inherit>
+      <keywords region="def:Symbol">
+        <symb name="=="/>
+        <symb name="!="/>
+        <symb name="=&gt;"/>
+        <symb name="&lt;="/>
+        <symb name="&gt;="/>
+        <symb name=";"/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name=":"/>
+        <symb name="="/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="!"/>
+        <symb name="?"/>
+        <symb name="|"/>
+      </keywords>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrd PUBLIC "-//Cail Lomecb//DTD Colorer HRD take5//EN"
+  "http://colorer.sf.net/2003/hrd.dtd">
+<hrd xmlns="http://colorer.sf.net/2003/hrd">
+  <documentation>
+    Tokyo Night (enkia).
+  </documentation>
+
+  <assign name="def:Text" fore="#c0caf5" back="#1a1b26"/>
+  <assign name="def:HorzCross" fore="#c0caf5" back="#292e42"/>
+  <assign name="def:VertCross" fore="#c0caf5" back="#292e42"/>
+
+  <assign name="def:Number" fore="#ff9e64"/>
+  <assign name="def:NumberDec" fore="#ff9e64"/>
+  <assign name="def:NumberHex" fore="#ff9e64"/>
+  <assign name="def:NumberBin" fore="#ff9e64"/>
+  <assign name="def:NumberOct" fore="#ff9e64"/>
+  <assign name="def:NumberFloat" fore="#ff9e64"/>
+  <assign name="def:NumberSuffix" fore="#ff9e64"/>
+  <assign name="def:NumberPrefix" fore="#ff9e64"/>
+
+  <assign name="def:String" fore="#9ece6a"/>
+  <assign name="def:StringContent" fore="#7dcfff"/>
+  <assign name="def:StringEdge" fore="#9ece6a"/>
+  <assign name="def:Character" fore="#9ece6a"/>
+  <assign name="def:CharacterContent" fore="#9ece6a"/>
+
+  <assign name="def:Comment" fore="#565f89" style='2'/>
+  <assign name="def:CommentContent" fore="#737aa2" style='2'/>
+  <assign name="def:CommentEdge" fore="#565f89"/>
+  <assign name="def:LineComment" fore="#565f89" style='2'/>
+  <assign name="def:CommentDoc" fore="#737aa2" style='2'/>
+  <assign name="def:CommentDocContent" fore="#737aa2" style='2'/>
+  <assign name="def:CommentDocEdge" fore="#737aa2"/>
+
+  <assign name="def:Symbol" fore="#89ddff"/>
+  <assign name="def:SymbolStrong" fore="#bb9af7"/>
+  <assign name="def:Prefix" fore="#7dcfff"/>
+  <assign name="def:PrefixStrong" fore="#7dcfff"/>
+  <assign name="def:Operator" fore="#89ddff"/>
+
+  <assign name="def:Keyword" fore="#bb9af7"/>
+  <assign name="def:KeywordStrong" fore="#bb9af7"/>
+  <assign name="def:FunctionKeyword" fore="#7aa2f7"/>
+  <assign name="def:DeprecatedKeyword" fore="#565f89" style='4'/>
+  <assign name="def:InterfaceKeyword" fore="#2ac3de"/>
+  <assign name="def:ClassKeyword" fore="#2ac3de"/>
+  <assign name="def:StructKeyword" fore="#2ac3de"/>
+  <assign name="def:TypeKeyword" fore="#2ac3de"/>
+
+  <assign name="def:Function" fore="#7aa2f7"/>
+  <assign name="def:Register" fore="#ff9e64"/>
+  <assign name="def:Constant" fore="#ff9e64"/>
+  <assign name="def:BooleanConstant" fore="#ff9e64"/>
+  <assign name="def:Var" fore="#c0caf5"/>
+  <assign name="def:VarStrong" fore="#e0af68"/>
+  <assign name="def:Identifier" fore="#c0caf5"/>
+
+  <assign name="def:Directive" fore="#7dcfff"/>
+  <assign name="def:DirectiveContent" fore="#7dcfff"/>
+  <assign name="def:DirectiveEdge" fore="#7dcfff"/>
+  <assign name="def:Parameter" fore="#e0af68"/>
+  <assign name="def:ParameterStrong" fore="#e0af68"/>
+  <assign name="def:ParameterUnknown" fore="#f7768e"/>
+
+  <assign name="def:Tag" fore="#f7768e"/>
+  <assign name="def:OpenTag" fore="#f7768e"/>
+  <assign name="def:CloseTag" fore="#f7768e"/>
+  <assign name="def:EmbeddedTag" fore="#bb9af7"/>
+
+  <assign name="def:Label" fore="#7aa2f7"/>
+  <assign name="def:LabelStrong" fore="#1a1b26" back="#e0af68"/>
+
+  <assign name="def:Insertion" fore="#c0caf5" back="#16161e"/>
+  <assign name="def:InsertionStart" fore="#bb9af7" back="#e0af68"/>
+  <assign name="def:InsertionEnd" fore="#bb9af7" back="#e0af68"/>
+  <assign name="def:InsertionEmbed" fore="#c0caf5" back="#16161e"/>
+
+  <assign name="def:Error" fore="#c0caf5" back="#f7768e" style='1'/>
+  <assign name="def:ErrorText" fore="#f7768e"/>
+  <assign name="def:TODO" fore="#1a1b26" back="#e0af68" style='1'/>
+  <assign name="def:Debug" fore="#1a1b26" back="#7dcfff"/>
+
+  <assign name="def:URI" fore="#7dcfff" style='4'/>
+  <assign name="def:URL" fore="#7dcfff" style='4'/>
+  <assign name="def:Path" fore="#9ece6a"/>
+  <assign name="def:EMail" fore="#7dcfff" style='4'/>
+
+  <assign name="def:Date" fore="#ff9e64"/>
+  <assign name="def:Time" fore="#ff9e64"/>
+
+  <assign name="def:PairStart" fore="#c0caf5" back="#3b4261"/>
+  <assign name="def:PairEnd" fore="#c0caf5" back="#3b4261"/>
+  <assign name="def:PairStrongStart" fore="#1a1b26" back="#7aa2f7"/>
+  <assign name="def:PairStrongEnd" fore="#1a1b26" back="#7aa2f7"/>
+</hrd>

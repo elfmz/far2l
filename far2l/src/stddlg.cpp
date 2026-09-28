@@ -78,13 +78,14 @@ static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 
 int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARString *pReplaceStr,
 		const wchar_t *TextHistoryName, const wchar_t *ReplaceHistoryName, int *Case, int *WholeWords,
-		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic)
+		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic, bool ShowAllButton)
 {
 	if (!pSearchStr || (IsReplaceMode && !pReplaceStr))
-		return FALSE;
+		return SEARCHDLG_CANCEL;
 
 	static const wchar_t *TextHistoryName0 = L"SearchText", *ReplaceHistoryName0 = L"ReplaceText";
 	int HeightDialog, DeltaCol1, DeltaCol2, DeltaCol, I;
+	int Result = SEARCHDLG_OK;
 
 	PosCheckBoxRegexp = -1;
 
@@ -236,7 +237,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			Dlg.Process();
 
 			if (Dlg.GetExitCode() != 11)
-				return FALSE;
+				return SEARCHDLG_CANCEL;
 		}
 
 		*pSearchStr = ReplaceDlg[2].strData;
@@ -268,7 +269,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 		06   | [ ] Whole words                    [ ] Select found                |
 		07   | [ ] Reverse search                                                 |
 		08   +--------------------------------------------------------------------+
-		09   |                       [ Search ]  [ Cancel ]                       |
+		09   |                  [ Search ]  [ All ]  [ Cancel ]                   |
 		10   +--------------------------------------------------------------------+
 		*/
 		DialogDataEx SearchDlgData[] = {
@@ -283,6 +284,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			{DI_CHECKBOX,  40, 6, 0,  6,  {}, 0, Msg::EditSearchSelFound},
 			{DI_TEXT,      3,  8, 0,  8,  {}, DIF_SEPARATOR, L""},
 			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::EditSearchSearch},
+			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_CENTERGROUP, Msg::EditSearchAll},
 			{DI_BUTTON,    0,  9, 0,  9,  {}, DIF_CENTERGROUP, Msg::EditSearchCancel}
 		};
 		// индекс самого нижнего чекбокса каждой колонки в диалоге.
@@ -386,8 +388,18 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			}
 		}
 
+		const int PosButtonSearch = 10, PosButtonAll = 11, PosButtonCancel = 12;
+		int SearchDlgItemCount = (int)ARRAYSIZE(SearchDlg);
+
+		if (!ShowAllButton) {
+			// кнопку "Все" не прячем, а выкидываем совсем - спрятанные элементы
+			// всё равно учитываются при центрировании группы кнопок
+			SearchDlg[PosButtonAll] = SearchDlg[PosButtonCancel];
+			SearchDlgItemCount--;
+		}
+
 		{
-			Dialog Dlg(SearchDlg, ARRAYSIZE(SearchDlg), SearchReplaceDlgProc);
+			Dialog Dlg(SearchDlg, SearchDlgItemCount, SearchReplaceDlgProc);
 			Dlg.SetPosition(-1, -1, 76, HeightDialog);
 
 			if (HelpTopic && *HelpTopic)
@@ -395,8 +407,13 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 
 			Dlg.Process();
 
-			if (Dlg.GetExitCode() != 10)
-				return FALSE;
+			const int ExitCode = Dlg.GetExitCode();
+
+			if (ExitCode != PosButtonSearch && !(ShowAllButton && ExitCode == PosButtonAll))
+				return SEARCHDLG_CANCEL;
+
+			if (ExitCode == PosButtonAll)
+				Result = SEARCHDLG_ALL;
 		}
 
 		*pSearchStr = SearchDlg[2].strData;
@@ -420,7 +437,7 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 			*SelectFound = SearchDlg[8].Selected;
 	}
 
-	return TRUE;
+	return Result;
 }
 
 // Функция для коррекции аля Shift-F4 Shift-Enter без отпускания Shift ;-)

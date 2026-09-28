@@ -1731,18 +1731,10 @@ void FileEditor::BaseContentWriter::EncodeAndWrite(UINT codepage, const wchar_t 
 		Wide2MB(Str, Length, _tmpstr);
 		Write(_tmpstr.data(), _tmpstr.size());
 	} else {
-		int cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
-
-		if (cnt <= 0)
-			return;
-
-		if (_tmpcvec.size() < (size_t)cnt)
-			_tmpcvec.resize(cnt + 0x20);
-
-		cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, _tmpcvec.data(), _tmpcvec.size(),
-				nullptr, nullptr);
-		if (cnt > 0)
-			Write(_tmpcvec.data(), cnt);
+		_tmpcvec.assign(codepage, Str, Length);
+		if (!_tmpcvec.empty()) {
+			Write(_tmpcvec.data(), _tmpcvec.size());
+		}
 	}
 }
 

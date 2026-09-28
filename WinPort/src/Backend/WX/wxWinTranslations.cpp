@@ -312,11 +312,15 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		_right_control = true;
 	}
-	// Linux AltGr: ISO_Level3_Shift (RAW_CONTEXT) or XF86 alternate (RAW_ALTGR).
-	if (event.GetKeyCode() == WXK_ALT
-	    && (event.GetRawKeyCode() == RAW_ALTGR || event.GetRawKeyCode() == RAW_CONTEXT)
-	    && WinPortGetUseRightAltAsAltGr()) {
-		_composing = true;
+	// Only ISO_Level3_Shift is AltGr by default. Alt_R must remain a plain
+	// Alt on layouts such as us/ru unless composing is explicitly enabled.
+	if (event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) {
+		if (event.GetRawKeyCode() == RAW_CONTEXT) {
+			_right_alt = true;
+		}
+		if (event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR) {
+			_composing = WinPortGetUseRightAltAsAltGr();
+		}
 	}
 #endif
 }
@@ -630,7 +634,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if ((!event.GetKeyCode() || event.GetKeyCode() == WXK_ALT) &&
-		(event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR)) {
+		event.GetRawKeyCode() == RAW_CONTEXT) { // AltGr only, Alt_R stays plain Alt (#3619)
 		if (KeyDown) {
 			Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
 		}

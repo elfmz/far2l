@@ -438,13 +438,20 @@ DWORD ConsoleInput::Count(unsigned int requestor_priority)
 
 DWORD ConsoleInput::Flush(unsigned int requestor_priority)
 {
-	std::unique_lock<std::mutex> lock(_mutex);
-	if (requestor_priority < CurrentPriority())
-		return 0;
-
-	DWORD rv = _pending.size();
-	_pending.clear();
-	return rv;
+	std::deque<INPUT_RECORD> flushed;
+	{
+		std::unique_lock<std::mutex> lock(_mutex);
+		if (requestor_priority < CurrentPriority())
+			return 0;
+		_pending.swap(flushed);
+	}
+	for (auto &it : flushed) {
+		if (it.EventType == CALLBACK_EVENT) {
+			std::unique_lock<std::mutex> lock(_mutex);
+			_pending.emplace_back(it);
+		}
+	}
+	return flushed.size();
 }
 
 void ConsoleInput::WaitForNonEmpty(unsigned int requestor_priority)

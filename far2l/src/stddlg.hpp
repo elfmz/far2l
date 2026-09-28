@@ -90,13 +90,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 			Имя темы помощи.
 			Если nullptr или пустая строка - тема помощи не назначается.
 
+		ShowAllButton
+			Показывать ли в диалоге поиска кнопку "Все" (поиск всех вхождений сразу).
+			Для диалога замены игнорируется.
+
 	Возвращаемое значение:
-		TRUE  - пользователь подтвердил свои намериния
-		FALSE - пользователь отказался от диалога (Esc)
+		SEARCHDLG_OK     - пользователь подтвердил свои намериния
+		SEARCHDLG_ALL    - пользователь нажал кнопку "Все"
+		SEARCHDLG_CANCEL - пользователь отказался от диалога (Esc)
 */
+
+enum
+{
+	SEARCHDLG_CANCEL = 0,	// Esc или кнопка "Отменить"
+	SEARCHDLG_OK = 1,		// кнопка "Искать"/"Заменить"
+	SEARCHDLG_ALL = 2,		// кнопка "Все"
+};
+
 int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARString *pReplaceStr,
 		const wchar_t *TextHistoryName, const wchar_t *ReplaceHistoryName, int *Case, int *WholeWords,
-		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic = nullptr);
+		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic = nullptr,
+		bool ShowAllButton = false);
 
 int WINAPI GetString(const wchar_t *Title, const wchar_t *SubTitle, const wchar_t *HistoryName,
 		const wchar_t *SrcText, FARString &strDestText, const wchar_t *HelpTopic = nullptr, DWORD Flags = 0,

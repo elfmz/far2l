@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 'Build in docker'
         run: |
@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
   
       - name: Install far2l dependencies
         run: >
@@ -110,7 +110,7 @@ jobs:
   
       - name: Test
         shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        # Execute the test.
         run: |
           cd testing && ./far2l-smoke-run.sh ../_build/install/far2l
 
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
   
       - name: Install far2l dependencies
         run: >
@@ -189,7 +189,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install far2l dependencies
         run: >
@@ -232,11 +232,14 @@ jobs:
     steps:
 
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
   
       - name: Install far2l dependencies
         # libx11, openssl is already installed
-        run: brew bundle -v
+        run: |
+          # Untap aws to silence Homebrew trust warnings
+          brew untap aws/tap
+          brew bundle -v
 
       - name: Relink 'keg-only' packages
         run: brew link libarchive --force
@@ -265,11 +268,14 @@ jobs:
     steps:
 
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install far2l dependencies
         # libx11, openssl is already installed
-        run: brew bundle -v
+        run: |
+          # Untap aws to silence Homebrew trust warnings
+          brew untap aws/tap
+          brew bundle -v
 
       - name: Relink 'keg-only' packages
         run: brew link libarchive --force

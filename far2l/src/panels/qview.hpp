@@ -36,26 +36,44 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "CriticalSections.hpp"
 #include "FARString.hpp"
+#include "dirinfo.hpp"
+#include "format.hpp"
 
 class Viewer;
 
-class QuickView : public Panel
+class QuickView : public Panel, protected DirInfoProgressTracker
 {
 private:
+	friend class FormatToPrintText<QuickView>;
+	typedef FormatToPrintText<QuickView> QuickViewFormat;
+
+
 	Viewer *QView;
 
 	FARString strCurFileName;
 	FARString strCurFileType;
 	FARString strTempName;
+	FARString strTmp;
 
 	CriticalSection CS;
 
+	int ScrollOffset{0};
 	int Directory;
 	int PrevMacroMode;
-	uint32_t DirCount, FileCount, ClusterSize;
-	uint64_t FileSize, PhysicalSize;
+	DirInfo di;
 	int OldWrapMode;
 	int OldWrapType;
+
+	void PrintBox();
+	void PrintContent(const wchar_t *WalkedNowDir = nullptr);
+
+	void PrintBoxAndContent()
+	{
+		PrintBox();
+		PrintContent();
+	}
+
+	int ProcessScroll(int NewOffset);
 
 private:
 	virtual void DisplayObject();
@@ -64,6 +82,10 @@ private:
 	void SetMacroMode(int Restore = FALSE);
 
 	void DynamicUpdateKeyBar();
+	virtual void OnDirInfoProgress(const wchar_t *WalkedNowDir);
+
+	void PrintNamedValue(int x, int y, int NameWidth, const wchar_t *Name, const wchar_t *Value);
+	void PrintTypeStat(int x, int y, int NameWidth, int SizeWidth, const wchar_t *Name, const DirInfoTypeStats &ts);
 
 public:
 	QuickView();

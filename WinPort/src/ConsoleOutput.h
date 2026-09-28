@@ -68,6 +68,8 @@ class ConsoleOutput : public IConsoleOutput
 
 public:
 	ConsoleOutput();
+	virtual ~ConsoleOutput();
+
 	virtual void SetBackend(IConsoleOutputBackend *listener);
 
 	virtual void SetAttributes(DWORD64 attributes);
@@ -122,6 +124,7 @@ public:
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void RepaintsDeferStart();
 	virtual void RepaintsDeferFinish(bool force);
+	virtual void SetFileDragData(const std::vector<std::wstring> &files);
 
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle);
 	virtual void ReleaseConsoleOutput(IConsoleOutput *con_out, bool join);

@@ -1334,6 +1334,15 @@ $ #Меню команд#
  Додаткова інформація про цю команду
 міститься в темі Порівняння папок @CompFolders@.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
  #Меню користувача# Дозволяє редагувати головне або місцеве
 ~меню користувача~@UserMenu@. Для вставки пункту
  використовується #Ins# чи #Ctrl+N#, для видалення - #Del#,
@@ -1341,7 +1350,7 @@ $ #Меню команд#
 
 #Асоціації файлів# Показує список ~асоціацій файлів~@FileAssoc@.
  Для вставки нової асоціації може
- використовуватися #Ins#, для видалення - #Del#,
+ використовуватися #Ins# або #Ctrl+N#, для видалення - #Del#,
  для редагування – #F4#.
 
 #Закладки# Показує поточні ~закладки~@Bookmarks@.
@@ -2116,8 +2125,20 @@ $ #Історія зміни папок#
 
 @TaskList
 $ #Список завдань#
-    Список завдань відображає активні завдання, використовуючи #htop# (якщо доступно)
-або #top# як резервний варіант.
+    Список завдань відображає активні завдання.
+
+    #Del#                Kill process: sends #SIGTERM# and checks if process really exited as result
+    #Shift-Del#          Kill process: sends #SIGKILL#
+    #Ctrl-R#             Autorefresh on/off (if on, autorefresh each 1 s)
+    #t#/#T#                Sort by time
+    #n#/#N#                Sort by name
+    #i#/#I#                Sort by PID
+    #c#/#C#                Sort by CPU
+    #m#/#M#                Sort by memory (Resident Set Size, RSS)
+    #Ctrl-Alt-F#         Filter list items (autorefresh paused during filtering)
+    #Enter#              Go to #/proc/PID# directory in active panel (only in Linux)
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CompFolders
 $ #Порівняння папок#
@@ -2207,9 +2228,9 @@ $ #Асоціації файлів#
 
  У списку асоціацій доступні такі дії:
 
-#Ins# - ~додати~@FileAssocModify@ нову асоціацію
+ #Ins# або #Ctrl+N# - ~додати~@FileAssocModify@ нову асоціацію
 
-#F4# - ~змінити~@FileAssocModify@ налаштування поточної асоціації
+ #F4# - ~змінити~@FileAssocModify@ налаштування поточної асоціації
 
  #Del# - видалити поточну асоціацію
 
@@ -3152,6 +3173,11 @@ $ #Редактор: пошук та заміна#
 
  #Виділяти знайдене# - ^<wrap>знайдені послідовності будуть виділені.
 
+ У діалозі пошуку є також кнопка #Всі#: за нею виконується пошук одразу по всьому
+файлу, а всі знайдені входження показуються списком з номерами рядків та позицій.
+#Enter# у цьому списку переводить курсор до вибраного входження, #Esc# залишає
+поточну позицію без змін.
+
 
 @FileOpenCreate
 $ #Редактор: Відкрити/створити файл#
@@ -3409,7 +3435,7 @@ $ #Розмальовка файлів та групи сортування: к�
 
  #Space# - (De)Activate current group
 
- #Ins# - Додати нову групу розмальовки
+ #Ins# або #Ctrl+N# - Додати нову групу розмальовки
 
  #F5# - Дублювати поточну групу
 
@@ -3803,7 +3829,7 @@ $ #Меню фільтрів#
 
  Для Фільтру користувача доступні такі клавіші:
 
- #Ins# Створити новий фільтр, відкриється порожній діалог для
+ #Ins# або #Ctrl+N# Створити новий фільтр, відкриється порожній діалог для
 завдання параметрів ~фільтра~@Filter@.
 
 #F4# Змінити існуючий ~фільтр~@Filter @.
@@ -4058,7 +4084,7 @@ $ #Групи сортування#
 групі.
 
 Команда #Групи сортування з ~Меню команд~@CmdMenu@ дозволяє видаляти,
-створювати та редагувати групи сортування, використовуючи клавіші #Del#, #Ins# та
+створювати та редагувати групи сортування, використовуючи клавіші #Del#, #Ins# (#Ctrl+N#) та
 # F4 #. Групи, що знаходяться вище роздільника меню, відносяться до початку файлової
 панелі, і всі файли, що потрапили в ці групи, будуть розташовані вище не потрапили
 у них файлів. Групи, що знаходяться нижче роздільника меню, належать до кінця
@@ -4142,7 +4168,7 @@ $ #Групи масок файлів#
 
  #Ctrl+R#      - ^<wrap>відновити групи за замовчуванням
 
- #Ins#         - ^<wrap>додати групу
+ #Ins# або #Ctrl+N# - ^<wrap>додати групу
 
  #Del#         - ^<wrap>видалити поточну групу
 
@@ -5191,7 +5217,7 @@ $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
   Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
-  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch);
   - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 

@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__) || defined(__CYGWIN__)
 #include <sys/mount.h>
 #elif !defined(__HAIKU__)
 #include <sys/statfs.h>
@@ -496,7 +496,7 @@ int TreeList::ReadTree(int depth)
 	TreeCount = 1;
 	int FirstCall = TRUE, AscAbort = FALSE;
 	TreeStartTime = GetProcessUptimeMSec();
-	RefreshFrameManager frref(ScrX, ScrY, TreeStartTime, FALSE);	// DontRedrawFrame);
+	RefreshFrameManager frref;
 
 	if (depth < 0 && Opt.Tree.ScanDepthEnabled)
 		ScTree.SetMaxDepth(Opt.Tree.DefaultScanDepth);

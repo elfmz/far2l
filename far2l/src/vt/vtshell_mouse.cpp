@@ -32,11 +32,13 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	if (MouseEvent.dwEventFlags & MOUSE_WHEELED)                 button = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0x40 : 0x41;
 
 	//track previos button for proper released event in SGR
- 	if (no_pressed && (_mode & MODE_SGR_EXT_MOUSE) && _sgr_prev_ibut != 0) {
-		button = _sgr_prev_ibut;
-		_sgr_prev_ibut = 0;
-	} else {
-		_sgr_prev_ibut = button;
+	if (_mode & MODE_SGR_EXT_MOUSE) {
+		if (!no_pressed) {
+			_sgr_prev_ibut = button;
+		} else if (_sgr_prev_ibut != -1) {
+			button = _sgr_prev_ibut;
+			_sgr_prev_ibut = -1;
+		}
 	}
 
 	if (MouseEvent.dwEventFlags & MOUSE_MOVED) button |= 0x20;

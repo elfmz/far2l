@@ -299,7 +299,6 @@ struct VTAnsiContext
 	std::mutex title_mutex;
 	IVTShell *vt_shell = nullptr;
 	std::string cur_title;
-	std::atomic<bool> output_disabled{false};
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
 	std::optional<VTAnsiKitty> vta_kitty;
 	std::mutex vta_kitty_mtx;
@@ -339,15 +338,15 @@ struct VTAnsiContext
 
 // ========== Print Buffer functions
 
-	void ApplyConsoleTitle(HANDLE con_hnd)
+	void ApplyConsoleTitle()
 	{
 		std::wstring title(1, L'[');
 		{
 			std::lock_guard<std::mutex> lock(title_mutex);
-			title+= StrMB2Wide(cur_title);
+			StrMB2Wide(cur_title, title, true);
 		}
 		title+= L']';
-		WINPORT(SetConsoleTitle)(con_hnd, title.c_str());
+		vt_shell->OnSetTitle(title.c_str());
 	}
 
 //-----------------------------------------------------------------------------
@@ -358,18 +357,12 @@ struct VTAnsiContext
 	void WriteConsoleIfEnabled(const WCHAR *str, DWORD len)
 	{
 		DWORD written;
-		if (!output_disabled) {
-			WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
-		}
+		WINPORT(WriteConsole)(vt_shell->ConsoleHandle(), str, len, &written, NULL );
 	}
 
 	void FlushBuffer( void )
 	{
 		DWORD nWritten;
-
-		if (output_disabled) {
-			chars_in_buffer = 0;
-		}
 
 //fprintf(stderr, "FlushBuffer: %u\n", chars_in_buffer);
 		if (chars_in_buffer <= 0)
@@ -1248,7 +1241,7 @@ struct VTAnsiContext
 					cur_title.swap(os_cmd_arg);
 				}
 				os_cmd_arg.clear();
-				ApplyConsoleTitle(con_hnd);
+				ApplyConsoleTitle();
 
 			} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
@@ -1313,7 +1306,9 @@ struct VTAnsiContext
 				}
 
 			} else {
-				_crds.reset(); // prevent clipboard dialog miss repaints
+				// prevent clipboard dialog miss repaints and discard reference to
+				// console handle which can be invalidated due to start marker arrival
+				_crds.reset();
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}
@@ -1629,19 +1624,6 @@ VTAnsi::~VTAnsi()
 	_ctx->vt_shell = nullptr;
 }
 
-void VTAnsi::DisableOutput()
-{
-	_ctx->output_disabled = true;
-}
-
-void VTAnsi::EnableOutput()
-{
-	if (_ctx->output_disabled) {
-		_ctx->chars_in_buffer = 0;
-		_ctx->output_disabled = false;
-	}
-}
-
 struct VTAnsiState *VTAnsi::Suspend()
 {
 	VTAnsiState *out = new(std::nothrow) VTAnsiState;
@@ -1699,7 +1681,7 @@ void VTAnsi::OnReattached()
 		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
-	_ctx->ApplyConsoleTitle(con_hnd);
+	_ctx->ApplyConsoleTitle();
 	_ctx->ShowImages();
 }
 

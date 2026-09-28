@@ -1307,6 +1307,15 @@ között vált.
    #Mappakeresés#         ^<wrap>Mappát keres a mappák fáiban. További
 információk a ~mappakeresés~@FindFolder@ témakörben.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
    #Fájl előzmények#      ^<wrap>A korábban
 ~megnézett vagy szerkesztett~@HistoryViews@ fájlok listáját mutatja meg.
 
@@ -1889,8 +1898,20 @@ $ #Előzmények: mappa előzmények#
 
 @TaskList
 $ #Futó programok#
-    The task list displays active tasks by using #htop# (if available)
-or #top# as a fallback.
+    The task list displays active tasks.
+
+    #Del#                Kill process: sends #SIGTERM# and checks if process really exited as result
+    #Shift-Del#          Kill process: sends #SIGKILL#
+    #Ctrl-R#             Autorefresh on/off (if on, autorefresh each 1 s)
+    #t#/#T#                Sort by time
+    #n#/#N#                Sort by name
+    #i#/#I#                Sort by PID
+    #c#/#C#                Sort by CPU
+    #m#/#M#                Sort by memory (Resident Set Size, RSS)
+    #Ctrl-Alt-F#         Filter list items (autorefresh paused during filtering)
+    #Enter#              Go to #/proc/PID# directory in active panel (only in Linux)
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CompFolders
 $ #Mappák összehasonlítása#
@@ -1982,11 +2003,11 @@ társításokat menüből választhatjuk ki.
 
     A társítások menüjében a következő szerkesztőfunkciókat használhatjuk:
 
-    #Ins#        - Új ~társítás~@FileAssocModify@ létrehozása
+    #Ins# vagy #Ctrl+N# - Új ~társítás~@FileAssocModify@ létrehozása
 
-    #F4#         - Meglévő társítás ~szerkesztése~@FileAssocModify@
+    #F4#                - Meglévő társítás ~szerkesztése~@FileAssocModify@
 
-    #Del#        - Jelenlegi társítás törlése
+    #Del#               - Jelenlegi társítás törlése
 
     Ha egy fájltípushoz nincs definiált társítás és a
 ~Rendszer beállítások~@SystemSettings@ menüben a #Windows regisztrált#
@@ -3070,26 +3091,26 @@ $ #Fájlkiemelések, rendezési csoportok: vezérlőbillentyűk#
     A ~Fájlkiemelések, rendezési csoportok~@Highlight@ menüben különféle
 műveleteket hajthatunk végre a csoportok listáján, a következő billentyűkkel:
 
-  #Space#          - (De)Activate current group
+  #Space#             - (De)Activate current group
 
-  #Ins#            - Új kiemelési csoport létrehozása
+  #Ins# vagy #Ctrl+N# - Új kiemelési csoport létrehozása
 
-  #F5#             - Az aktuális csoport duplikálása
+  #F5#                - Az aktuális csoport duplikálása
 
-  #Del#            - Az aktuális csoport törlése
+  #Del#               - Az aktuális csoport törlése
 
-  #Enter# vagy #F4#  - Az aktuális kiemelési csoport ~szerkesztése~@HighlightEdit@
+  #Enter# vagy #F4#   - Az aktuális kiemelési csoport ~szerkesztése~@HighlightEdit@
 
-  #F3#             - Show for current item file masks after expand all masks groups
+  #F3#                - Show for current item file masks after expand all masks groups
 
-  #Ctrl-R#         - ^<wrap>Visszaállítja az alapértelmezett kiemelési
+  #Ctrl-R#            - ^<wrap>Visszaállítja az alapértelmezett kiemelési
 csoportokat
 
-  #Ctrl-Fel#       - A csoportot felfelé mozgatja
+  #Ctrl-Fel#          - A csoportot felfelé mozgatja
 
-  #Ctrl-Le#        - A csoportot lefelé mozgatja
+  #Ctrl-Le#           - A csoportot lefelé mozgatja
 
-  #Ctrl-M#         - Toggle attribute column view: short/long
+  #Ctrl-M#            - Toggle attribute column view: short/long
 
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
 hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja,
@@ -3435,7 +3456,7 @@ panelen egyetlen fájl sem felel meg.)
 
     A #Felhasználói szűrők# menüben a következő parancsokat használhatjuk:
 
-   #Ins#        ^<wrap>Új szűrő létrehozása (egy üres ~szűrő~@Filter@
+   #Ins# vagy #Ctrl+N# ^<wrap>Új szűrő létrehozása (egy üres ~szűrő~@Filter@
 párbeszédablakot kapunk, amit nekünk kell beállítani).
 
    #F4#         Meglévő ~szűrő~@Filter@ szerkesztése.
@@ -3760,7 +3781,7 @@ To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be us
 
  #Ctrl+R#      - ^<wrap>restore the default predefined groups
 
- #Ins#         - ^<wrap>add a new group
+ #Ins# vagy #Ctrl+N# - ^<wrap>add a new group
 
  #Del#         - ^<wrap>remove the current group
 

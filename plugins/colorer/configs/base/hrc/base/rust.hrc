@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+	"http://colorer.sf.net/2003/hrc.dtd"[
+]>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+>
+
+  <type name='rust'>
+    <annotation>
+      <documentation>Rust syntax description</documentation>
+      <contributors>
+        <![CDATA[
+        Maksim Galkin <maksim.galkin@gmail.com>
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]>
+      </contributors>
+    </annotation>
+
+    <!--
+    Keywords: https://doc.rust-lang.org/reference/keywords.html
+    -->
+
+    <scheme name="StringEscapes">
+      <regexp match="/\\[nrt0'\\&quot;\\]/" region="def:SymbolStrong"/>
+      <regexp match="/\\x[\da-fA-F]{2}/" region="def:SymbolStrong"/>
+      <regexp match="/\\u\{[\da-fA-F]+\}/" region="def:SymbolStrong"/>
+    </scheme>
+
+    <scheme name="rust">
+      <regexp match="/\/\*\*\//" region="def:CommentDoc"/>
+      <block start="/\/\/\//" end="/$/" scheme="doxygen:doxygen" region="def:CommentDoc"/>
+      <block start="/\/\*\*/" end="/\*\//" scheme="doxygen:doxygen" region="def:CommentDoc"
+             region00="def:PairStart" region10="def:PairEnd"/>
+
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="def:LineComment"/>
+      <block scheme="def:Comment" region="def:Comment">
+        <start region0="def:PairStart"><![CDATA[/\/\*/]]></start>
+        <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
+      </block>
+
+      <!-- raw strings: fixed one or two hashes, not an arbitrary run -->
+      <block start="/(br##&quot;)/" end="/(&quot;##)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r##&quot;)/" end="/(&quot;##)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(br#&quot;)/" end="/(&quot;#)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r#&quot;)/" end="/(&quot;#)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(br&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(r&quot;)/" end="/(&quot;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(b&quot;)/" end="/(&quot;)/" scheme="StringEscapes" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="StringEscapes" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+
+      <!-- char literals before lifetimes so 'x' is not 'x -->
+      <regexp match="/b?'(\\.|.)'/" region="def:Character"/>
+      <regexp match="/'[A-Za-z_][\w]*/" region="def:Var"/>
+
+      <inherit scheme="def:Number"/>
+
+      <block start="/(#\!?)(\[)/" end="/(\])/" scheme="rust" region="def:Directive"
+             region00="def:DirectiveEdge" region01="def:DirectiveEdge" region02="def:PairStart"
+             region10="def:DirectiveEdge" region11="def:PairEnd"/>
+
+      <block start="/(\{)/" end="/(\})/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\()/" end="/(\))/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="rust"
+             region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+
+      <keywords region="def:Keyword">
+        <word name='as'/>
+        <word name='async'/>
+        <word name='await'/>
+        <word name='break'/>
+        <word name='const'/>
+        <word name='continue'/>
+        <word name='crate'/>
+        <word name='dyn'/>
+        <word name='else'/>
+        <word name='enum'/>
+        <word name='extern'/>
+        <word name='false'/>
+        <word name='fn'/>
+        <word name='for'/>
+        <word name='if'/>
+        <word name='impl'/>
+        <word name='in'/>
+        <word name='let'/>
+        <word name='loop'/>
+        <word name='match'/>
+        <word name='mod'/>
+        <word name='move'/>
+        <word name='mut'/>
+        <word name='pub'/>
+        <word name='ref'/>
+        <word name='return'/>
+        <word name='self'/>
+        <word name='Self'/>
+        <word name='static'/>
+        <word name='struct'/>
+        <word name='super'/>
+        <word name='trait'/>
+        <word name='true'/>
+        <word name='type'/>
+        <word name='unsafe'/>
+        <word name='use'/>
+        <word name='where'/>
+        <word name='while'/>
+        <!-- reserved for future use -->
+        <word name='abstract'/>
+        <word name='become'/>
+        <word name='box'/>
+        <word name='do'/>
+        <word name='final'/>
+        <word name='gen'/>
+        <word name='macro'/>
+        <word name='override'/>
+        <word name='priv'/>
+        <word name='try'/>
+        <word name='typeof'/>
+        <word name='unsized'/>
+        <word name='virtual'/>
+        <word name='yield'/>
+      </keywords>
+
+      <keywords region="def:Symbol">
+        <symb name="::" />
+        <symb name="->" />
+        <symb name="#" />
+        <symb name="," />
+        <symb name=";" />
+      </keywords>
+
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) Maksim Galkin <maksim.galkin@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

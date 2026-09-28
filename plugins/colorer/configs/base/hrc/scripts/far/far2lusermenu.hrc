@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<type name="far2lusermenu">
+
+ <annotation>
+  <documentation>
+   far2l settings/user_menu.ini: INI sections UserMenu/MainMenu/ItemN
+   with HotKey, Label, Submenu, and CommandN bash/far2l-macro lines.
+  </documentation>
+  <contributors><![CDATA[
+   Aleksey Dobrunov <ctapmex@ctapmex.com>
+  ]]></contributors>
+ </annotation>
+
+<import type="def"/>
+<import type="ini"/>
+<import type="far2lmenu"/>
+
+<region name="group.name" parent="ini:group.name.defined"/>
+<region name="param.name" parent="ini:param.name.defined"/>
+<region name="param.content" parent="ini:param.content.defined"/>
+
+<scheme name="group.name">
+ <inherit scheme="ini:group.name"/>
+ <keywords region="group.name">
+  <word name="UserMenu"/>
+  <word name="MainMenu"/>
+ </keywords>
+ <regexp match="/Item\d+/" region="group.name"/>
+ <keywords region="ini:Symbol">
+  <symb name="/"/>
+ </keywords>
+</scheme>
+
+<scheme name="param.name">
+ <keywords region="param.name" ignorecase="yes">
+  <word name="HotKey"/>
+  <word name="Label"/>
+  <word name="Submenu"/>
+ </keywords>
+ <regexp match="/Command\d+/" region="param.name"/>
+</scheme>
+
+<scheme name="param-hotkey.content">
+ <keywords region="param.content" ignorecase="yes">
+  <word name="--"/>
+  <word name="F1"/>
+  <word name="F2"/>
+  <word name="F3"/>
+  <word name="F4"/>
+  <word name="F5"/>
+  <word name="F6"/>
+  <word name="F7"/>
+  <word name="F8"/>
+  <word name="F9"/>
+  <word name="F10"/>
+  <word name="F11"/>
+  <word name="F12"/>
+  <word name="F13"/>
+  <word name="F14"/>
+  <word name="F15"/>
+  <word name="F16"/>
+  <word name="F17"/>
+  <word name="F18"/>
+  <word name="F19"/>
+  <word name="F20"/>
+  <word name="F21"/>
+  <word name="F22"/>
+  <word name="F23"/>
+  <word name="F24"/>
+ </keywords>
+ <inherit scheme="ini:param.content"/>
+</scheme>
+
+<scheme name="param-submenu.content">
+ <regexp match="/\b[01]\b/" region="ini:Number"/>
+ <inherit scheme="ini:error"/>
+</scheme>
+
+<scheme name="param-command">
+ <block start="/~/" end="/\=/" scheme="param.name" region="param.name" region10="ini:param.equ"/>
+ <block start="//" end="/$/" scheme="far2lmenu:far2lmenu"/>
+</scheme>
+
+<scheme name="param-label">
+ <block start="/~/" end="/\=/" scheme="param.name" region="param.name" region10="ini:param.equ"/>
+ <block start="//" end="/$/" scheme="far2lmenu:far2lsymb"/>
+</scheme>
+
+<scheme name="param-hotkey">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-hotkey.content"/>
+ </inherit>
+</scheme>
+
+<scheme name="param-submenu">
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+  <virtual scheme="ini:param.content" subst-scheme="param-submenu.content"/>
+ </inherit>
+</scheme>
+
+<scheme name="param">
+ <block start="/\M^Command\d+\s*=/" end="/$/" scheme="param-command"/>
+ <block start="/\M^Label\s*=/i" end="/$/" scheme="param-label"/>
+ <block start="/\M^HotKey\s*=/i" end="/$/" scheme="param-hotkey"/>
+ <block start="/\M^Submenu\s*=/i" end="/$/" scheme="param-submenu"/>
+ <inherit scheme="ini:param">
+  <virtual scheme="ini:param.name" subst-scheme="param.name"/>
+ </inherit>
+</scheme>
+
+<scheme name="group">
+ <inherit scheme="ini:group">
+  <virtual scheme="ini:group.name" subst-scheme="group.name"/>
+  <virtual scheme="ini:param" subst-scheme="param"/>
+ </inherit>
+</scheme>
+
+<scheme name="far2lusermenu">
+ <block start="/\M^\[[^\]]+\]/" end="/\M^\[[^\]]+\]/" scheme="group"/>
+ <inherit scheme="ini:comment"/>
+</scheme>
+
+</type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

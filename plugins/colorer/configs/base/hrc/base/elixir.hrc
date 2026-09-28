@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="elixir">
+    <annotation>
+      <documentation>
+        Elixir language.
+        https://hexdocs.pm/elixir/syntax-reference.html
+      </documentation>
+      <contributors><![CDATA[
+        Aleksey Dobrunov <ctapmex@ctapmex.com>
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Atom" parent="def:Constant"/>
+    <region name="Module" parent="def:TypeKeyword"/>
+
+    <scheme name="Interp">
+      <block start="/#(\{)/" end="/(\})/"
+             scheme="elixir"
+             region00="def:Symbol" region10="def:Symbol"
+             region01="def:PairStart" region11="def:PairEnd"/>
+    </scheme>
+
+    <scheme name="elixir">
+      <regexp match="/#.*$/" region="def:Comment"/>
+      <block start="/(&quot;&quot;&quot;)/" end="/(&quot;&quot;&quot;)/" scheme="Interp" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(&quot;)/" end="/(&quot;)/" scheme="Interp" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(&apos;)/" end="/(&apos;)/" scheme="def:empty" region="def:String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <regexp match="/\~[a-zA-Z]/" region="def:Keyword"/>
+      <regexp match="/:[&quot;'][^&quot;']+[&quot;']/" region="Atom"/>
+      <regexp match="/:[A-Za-z_]\w*[?!]?/" region="Atom"/>
+      <regexp match="/\b[A-Z][\w.]*\b/" region="Module"/>
+      <keywords region="def:Keyword">
+        <word name="after"/>
+        <word name="alias"/>
+        <word name="and"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="cond"/>
+        <word name="def"/>
+        <word name="defp"/>
+        <word name="defmacro"/>
+        <word name="defmacrop"/>
+        <word name="defmodule"/>
+        <word name="defprotocol"/>
+        <word name="defimpl"/>
+        <word name="defstruct"/>
+        <word name="do"/>
+        <word name="else"/>
+        <word name="end"/>
+        <word name="fn"/>
+        <word name="for"/>
+        <word name="if"/>
+        <word name="import"/>
+        <word name="in"/>
+        <word name="not"/>
+        <word name="or"/>
+        <word name="quote"/>
+        <word name="raise"/>
+        <word name="receive"/>
+        <word name="require"/>
+        <word name="rescue"/>
+        <word name="try"/>
+        <word name="unless"/>
+        <word name="unquote"/>
+        <word name="use"/>
+        <word name="when"/>
+        <word name="with"/>
+      </keywords>
+      <keywords region="def:BooleanConstant">
+        <word name="true"/>
+        <word name="false"/>
+        <word name="nil"/>
+      </keywords>
+      <inherit scheme="def:Number"/>
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="elixir"/>
+      </inherit>
+      <keywords region="def:Symbol">
+        <symb name="-&gt;"/>
+        <symb name="=&gt;"/>
+        <symb name="::"/>
+        <symb name=":"/>
+        <symb name="|"/>
+        <symb name="="/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name=";"/>
+      </keywords>
+    </scheme>
+  </type>
+</hrc>
+<!--
+Copyright (C) 2026 Aleksey Dobrunov <ctapmex@ctapmex.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->

@@ -885,7 +885,7 @@ int Manager::ProcessKey(DWORD Key)
 		{
 			switch (Key) {
 				case KEY_CTRLW:
-					ShowProcessList();
+					ShowProcessList(CtrlObject->Cp()->ActivePanel);
 					return TRUE;
 				case KEY_F11:
 					PluginsMenu();

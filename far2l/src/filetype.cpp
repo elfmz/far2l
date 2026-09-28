@@ -606,6 +606,7 @@ void EditFileTypes()
 					break;
 				case KEY_NUMPAD0:
 				case KEY_INS:
+				case KEY_CTRLN:
 					EditTypeRecord(MenuPos, NumLine, true);
 					MenuModified = true;
 					break;

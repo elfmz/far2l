@@ -1482,12 +1482,21 @@ $ #Menus: commands menu#
                         See ~Compare folders~@CompFolders@ for the
                         detailed description.
 
+   #File diff#            ~Compare current files~@FileDiff@ from active
+                        and passive panels.
+                        Shortcut #Ctrl+D# only if command line empty.
+
+   #File diff#            ~Compare current file~@FileDiff@ from active panel
+   #same name#            with same name file from passive panel
+                        (if passive panel has such file).
+                        Shortcut #Ctrl+Shift+D#.
+
    #Edit user menu#       Allows to edit main or local ~user menu~@UserMenu@.
-                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
-                        and #F4# to edit menu records.
+                        You may press #Ins# or #Ctrl+N# to insert,
+                        #Del# to delete and #F4# to edit menu records.
 
    #Edit associations#    Displays the list of ~file associations~@FileAssoc@.
-                        You may press #Ins# to insert, #Del# to delete
+                        You may press #Ins# or #Ctrl+N# to insert, #Del# to delete
                         and #F4# to edit file associations.
 
    #Bookmarks#     Displays current ~Bookmarks~@Bookmarks@.
@@ -2256,8 +2265,20 @@ of time if a folder was located on a currently unavailable remote resource.
 
 @TaskList
 $ #Task list#
-    The task list displays active tasks by using #htop# (if available)
-or #top# as a fallback.
+    The task list displays active tasks.
+
+    #Del#                Kill process: sends #SIGTERM# and checks if process really exited as result
+    #Shift-Del#          Kill process: sends #SIGKILL#
+    #Ctrl-R#             Autorefresh on/off (if on, autorefresh each 1 s)
+    #t#/#T#                Sort by time
+    #n#/#N#                Sort by name
+    #i#/#I#                Sort by PID
+    #c#/#C#                Sort by CPU
+    #m#/#M#                Sort by memory (Resident Set Size, RSS)
+    #Ctrl-Alt-F#         Filter list items (autorefresh paused during filtering)
+    #Enter#              Go to #/proc/PID# directory in active panel (only in Linux)
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CompFolders
 $ #Compare folders#
@@ -2341,15 +2362,15 @@ desired association from the menu.
 
     The following actions are available in the associations list:
 
-    #Ins#        - ~add~@FileAssocModify@ a new association
+    #Ins# or #Ctrl+N# - ~add~@FileAssocModify@ a new association
 
-    #F4#         - ~edit~@FileAssocModify@ the current association
+    #F4#            - ~edit~@FileAssocModify@ the current association
 
-    #Del#        - delete the current association
+    #Del#           - delete the current association
 
-    #Ctrl-Up#    - move association up
+    #Ctrl-Up#       - move association up
 
-    #Ctrl-Down#  - move association down
+    #Ctrl-Down#     - move association down
 
     If no execute command is associated with file and
 #Use OS registered types# option in ~System settings~@SystemSettings@
@@ -3279,6 +3300,11 @@ $ #Editor: search/replace#
 
       #Select found#        - ^<wrap>found text is selected
 
+    The search dialog also has the #All# button: it searches the whole file at once
+and shows the list of all found occurrences with their line and column numbers.
+Pressing #Enter# in that list moves the cursor to the selected occurrence, #Esc#
+leaves the current position unchanged.
+
 
 @FileOpenCreate
 $ #Editor: Open/Create file#
@@ -3528,25 +3554,25 @@ $ #Files highlighting and sort groups: control keys#
 perform various operations with the list of the groups. The following key
 combinations are available:
 
-  #Space#        - (De)Activate current group
+  #Space#         - (De)Activate current group
 
-  #Ins#          - Add a new highlighting group
+  #Ins# or #Ctrl+N# - Add a new highlighting group
 
-  #F5#           - Duplicate the current group
+  #F5#            - Duplicate the current group
 
-  #Del#          - Delete the current group
+  #Del#           - Delete the current group
 
-  #Enter# or #F4#  - ~Edit~@HighlightEdit@ the current highlighting group
+  #Enter# or #F4#   - ~Edit~@HighlightEdit@ the current highlighting group
 
-  #F3#           - Show for current item file masks after expand all masks groups
+  #F3#            - Show for current item file masks after expand all masks groups
 
-  #Ctrl-R#       - Restore the default file highlighting groups
+  #Ctrl-R#        - Restore the default file highlighting groups
 
-  #Ctrl-Up#      - Move a group up
+  #Ctrl-Up#       - Move a group up
 
-  #Ctrl-Down#    - Move a group down
+  #Ctrl-Down#     - Move a group down
 
-  #Ctrl-M#       - Toggle attribute column view: short/long
+  #Ctrl-M#        - Toggle attribute column view: short/long
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked,
@@ -3896,7 +3922,7 @@ that match those mask in the current panel).
 
     For the #User filters# the following commands are available:
 
-   #Ins#        Create a new filter, an empty ~filter~@Filter@ settings
+   #Ins# or #Ctrl+N# Create a new filter, an empty ~filter~@Filter@ settings
               dialog will open for you to set.
 
    #F4#         Edit an existing ~filter~@Filter@.
@@ -4132,7 +4158,7 @@ belonging to this group files will be higher than those belonging to
 following groups.
 
     The command #Edit sort groups# from the ~Commands menu~@CmdMenu@ is used to
-delete, create and edit sort groups, using #Del#, #Ins# and #F4#. The groups
+delete, create and edit sort groups, using #Del#, #Ins# (#Ctrl+N#) and #F4#. The groups
 above the menu separator are applicable to the file panel start, and included
 files will be placed higher than those not included to any group. The groups
 below the menu separator are applicable to the file panel end, and included
@@ -4215,17 +4241,17 @@ To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be us
 
  Control keys:
 
- #Ctrl+R#      - ^<wrap>restore the default predefined groups
+ #Ctrl+R#        - ^<wrap>restore the default predefined groups
 
- #Ins#         - ^<wrap>add a new group
+ #Ins# or #Ctrl+N# - ^<wrap>add a new group
 
- #Del#         - ^<wrap>remove the current group
+ #Del#           - ^<wrap>remove the current group
 
- #Enter#/#F4#    - ^<wrap>edit the current group
+ #Enter#/#F4#      - ^<wrap>edit the current group
 
- #F3#          - view the current group with wrap long line of masks
+ #F3#            - view the current group with wrap long line of masks
 
- #F7#          - ^<wrap>find all groups containing the specified mask
+ #F7#            - ^<wrap>find all groups containing the specified mask
 
  Also see ~Options menu~@OptMenu@.
 

@@ -420,6 +420,13 @@ public:
 	void EnableAC(bool Permanent = false);
 	void DisableAC(bool Permanent = false);
 	void RevertAC() { ACState ? EnableAC() : DisableAC(); }
+	void SetFNComplete(bool Enable)
+	{
+		if (Enable)
+			ECFlags.Set(EC_ENABLEFNCOMPLETE);
+		else
+			ECFlags.Clear(EC_ENABLEFNCOMPLETE);
+	}
 	void ShowCustomCompletionList(const std::vector<std::string> &list);
 	void SetOverflowArrowsColor(uint64_t Color) { OverflowArrowsColor = Color; }
 };

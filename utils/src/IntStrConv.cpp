@@ -91,9 +91,9 @@ wchar_t * _itow(int i, wchar_t *w, int radix)
 
 }
 
-unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos)
+unsigned long long HexToULongLong(const char *str, size_t maxlen, size_t *pos)
 {
-	unsigned long out = 0;
+	unsigned long long out = 0;
 	size_t i;
 	for (i = pos ? *pos : 0; i < maxlen; ++i) {
 		unsigned char x = ParseHexDigit(str[i]);
@@ -110,9 +110,9 @@ unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos)
 	return out;
 }
 
-unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
+unsigned long long DecToULongLong(const char *str, size_t maxlen, size_t *pos)
 {
-	unsigned long out = 0;
+	unsigned long long out = 0;
 	size_t i;
 	for (i = pos ? *pos : 0; i < maxlen; ++i) {
 		const auto ch = str[i];
@@ -128,10 +128,10 @@ unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
 	return out;
 }
 
-long DecToLong(const char *str, size_t maxlen, size_t *pos)
+long long DecToLongLong(const char *str, size_t maxlen, size_t *pos)
 {
 	const bool minus = maxlen && *str == '-';
-	long out = DecToULong(minus ? str + 1 : str, minus ? maxlen - 1 : maxlen, pos);
+	long long out = DecToULongLong(minus ? str + 1 : str, minus ? maxlen - 1 : maxlen, pos);
 	if (minus) {
 		if (pos) {
 			++*pos;

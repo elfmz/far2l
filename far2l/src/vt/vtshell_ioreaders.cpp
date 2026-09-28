@@ -6,6 +6,7 @@
 #include "vtshell_ioreaders.h"
 #include "InterThreadCall.hpp"
 
+
 WithThread::WithThread()
 	: _started(false), _thread(0)
 {
@@ -112,18 +113,36 @@ void *VTOutputReader::ThreadProc()
 		FD_ZERO(&rfds);
 		FD_SET(_fd_out, &rfds);
 		FD_SET(_pipe[0], &rfds);
-
 		int r = os_call_int(select, std::max(_fd_out, _pipe[0]) + 1, &rfds, (fd_set *)nullptr, (fd_set *)nullptr, (timeval *)nullptr);
 		if (r <= 0) {
 			perror("VTOutputReader select");
 			break;
 		}
 		if (FD_ISSET(_fd_out, &rfds)) {
-			r = os_call_ssize(read, _fd_out, (void *)buf, sizeof(buf));
-			if (r <= 0) break;
-#if 1 //set to 0 to test extremely fragmented output processing
-			if (!_processor->OnProcessOutput(buf, r)) break;
+#if 0 // set 1 to force output characters parsed by big force-concatenated chunks
+			r = 0;
+			while (r < (int)sizeof(buf) && _started) {
+				int x = os_call_ssize(read, _fd_out, (void *)&buf[r], sizeof(buf) - r);
+				if (x > 0) {
+					r+= x;
+				} else {
+					if (r == 0) {
+						r = x;
+					}
+					break;
+				}
+				fd_set xrfds;
+				FD_ZERO(&xrfds);
+				FD_SET(_fd_out, &xrfds);
+				timeval tv{0, 200000};
+				int s = os_call_int(select, _fd_out + 1, &xrfds, (fd_set *)nullptr, (fd_set *)nullptr, &tv);
+				if (s <= 0 || !FD_ISSET(_fd_out, &rfds)) break;
+			}
 #else
+			r = os_call_ssize(read, _fd_out, (void *)buf, sizeof(buf));
+#endif
+			if (r <= 0) break;
+#if 0 // set 1 to force output characters parsed one by one: 
 			for (int i = 0; r > 0;) {
 				int n = 1 + (rand()%7);
 				if (n > r) n = r;
@@ -132,6 +151,8 @@ void *VTOutputReader::ThreadProc()
 				r-= n;
 			}
 			if (r) break;
+#else
+			if (!_processor->OnProcessOutput(buf, r)) break;
 #endif
 		}
 		if (FD_ISSET(_pipe[0], &rfds)) {

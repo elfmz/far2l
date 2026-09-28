@@ -7,7 +7,7 @@ Files: *
 Copyright:
 License: GPL-2
 
-Files: colorer/* colorer/src/pcolorer2/ConsoleAnnotation.h
+Files: plugins/colorer/* plugins/colorer/src/pcolorer2/ConsoleAnnotation.h
 Copyright: 1999-2010 Igor Ruskih
            2009-2020 Aleksey Dobrunov
            2009-2020 Eugene Efremov
@@ -16,7 +16,7 @@ Copyright: 1999-2010 Igor Ruskih
            2009-2020 Max Galkin
 License: BSD-3-clause
 
-Files: colorer/src/Colorer-library/src/colorer/unicode/x_tables_generator.pl colorer/src/Colorer-library/src/colorer/unicode/x_encodings.pl colorer/src/pcolorer2/ChooseTypeMenu.cpp colorer/src/pcolorer2/ConsoleAnnotation.h colorer/src/pcolorer2/FarEditor.h colorer/src/pcolorer2/FarEditorSet.h colorer/src/pcolorer2/FarHrcSettings.h colorer/src/pcolorer2/pcolorer.h colorer/src/pcolorer2/StringBuffer.cpp colorer/src/pcolorer2/tools.cpp colorer/src/pcolorer2/ChooseTypeMenu.h colorer/src/pcolorer2/FarEditor.cpp colorer/src/pcolorer2/FarEditorSet.cpp colorer/src/pcolorer2/FarHrcSettings.cpp colorer/src/pcolorer2/pcolorer.cpp colorer/src/pcolorer2/resource.h colorer/src/pcolorer2/StringBuffer.h colorer/src/pcolorer2/tools.h
+Files: plugins/colorer/src/Colorer-library/src/colorer/unicode/x_tables_generator.pl plugins/colorer/src/Colorer-library/src/colorer/unicode/x_encodings.pl plugins/colorer/src/pcolorer2/ChooseTypeMenu.cpp plugins/colorer/src/pcolorer2/ConsoleAnnotation.h plugins/colorer/src/pcolorer2/FarEditor.h plugins/colorer/src/pcolorer2/FarEditorSet.h plugins/colorer/src/pcolorer2/FarHrcSettings.h plugins/colorer/src/pcolorer2/pcolorer.h plugins/colorer/src/pcolorer2/StringBuffer.cpp plugins/colorer/src/pcolorer2/tools.cpp plugins/colorer/src/pcolorer2/ChooseTypeMenu.h plugins/colorer/src/pcolorer2/FarEditor.cpp plugins/colorer/src/pcolorer2/FarEditorSet.cpp plugins/colorer/src/pcolorer2/FarHrcSettings.cpp plugins/colorer/src/pcolorer2/pcolorer.cpp plugins/colorer/src/pcolorer2/resource.h plugins/colorer/src/pcolorer2/StringBuffer.h plugins/colorer/src/pcolorer2/tools.h
 Copyright: 1999-2009 Igor Ruskih
            2009-2020 Aleksey Dobrunov
            2009-2020 Eugene Efremov
@@ -25,7 +25,7 @@ Copyright: 1999-2009 Igor Ruskih
            2009-2020 Max Galkin
 License: GPL-2
 
-Files: colorer/configs/*
+Files: plugins/colorer/configs/*
 Copyright: 1999-2009 Igor Ruskih
 License: LGPL-2.1
 
@@ -34,32 +34,32 @@ Copyright: 2003-2005 WARP ItSelf
            2005 Alex Yaroslavsky
 License: BSD-3-clause
 
-Files: compare/* drawline/* editcase/* align/* autowrap/* farftp/* FARStdlib/* filecase/* multiarc/* SimpleIndent/* tmppanel/*
+Files: plugins/compare/* plugins/drawline/* plugins/editcase/* plugins/align/* plugins/autowrap/* plugins/farftp/* plugins/filecase/* plugins/multiarc/* plugins/SimpleIndent/* plugins/tmppanel/*
 Copyright: 1996-2000 Eugene Roshal
            2000-2021 Far Group
 License: BSD-3-clause
 
-Files: calc/*
+Files: plugins/calc/*
 Copyright: 1998-2001 Igor Russkih
            2009-2012 uncle-vunkis
            2020-2020 FarPlugins Team
 License: BSD-3-clause
 
-Files: calc/src/shared/mathexpression/*
+Files: plugins/calc/src/shared/mathexpression/*
 Copyright: 2009-2009 Andrey Myznikov
            2009-2009 Sergey Prokopenko
            2009-2009 Elizaveta Evstifeeva
 License: BSD-3-clause
 
-Files: calc/src/shared/ttmath/*
+Files: plugins/calc/src/shared/ttmath/*
 Copyright: 2006-2012 Tomasz Sowa
 License: BSD-3-clause
 
-Files: calc/src/shared/trex/*
+Files: plugins/calc/src/shared/trex/*
 Copyright: 2003-2006 Alberto Demichelis
 License: T-Rex
 
-Files: editorcomp/*
+Files: plugins/editorcomp/*
 Copyright:
 License: GPL-2
 
@@ -76,27 +76,27 @@ Files: far2l/src/shoco/*
 Copyright: 2014-2015 Christian Schramm
 License: MIT
 
-Files: multiarc/src/formats/rar/unrar/*
+Files: plugins/multiarc/src/formats/rar/unrar/*
 Copyright: 2009-2020 Alexander L. Roshal
 License: UnRAR
 
-Files: multiarc/src/formats/ha/ha/*
+Files: plugins/multiarc/src/formats/ha/ha/*
 Copyright: 1993-1993 Harri Hirvola
 License: GPL-2
 
-Files: multiarc/src/formats/7z/C/* multiarc/src/formats/7z/7zMain.c
+Files: plugins/multiarc/src/formats/7z/C/* plugins/multiarc/src/formats/7z/7zMain.c
 Copyright: 2013-2019 Igor Pavlov
 License: public-domain
 
-Files: NetRocks/*
+Files: plugins/NetRocks/*
 Copyright:
 License: GPL-2+OpenSSL-Exception
 
-Files: incsrch/*
+Files: plugins/incsrch/*
 Copyright:
 License: GPL-2
 
-Files: inside/*
+Files: plugins/inside/*
 Copyright:
 License: GPL-2
 
@@ -104,7 +104,7 @@ Files: packaging/*
 Copyright:
 License: GPL-2
 
-Files: python/*
+Files: plugins/python/*
 Copyright:
 License: GPL-2
 

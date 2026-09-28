@@ -36,8 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 #include "FARString.hpp"
 
-int ToPercent(uint32_t N1, uint32_t N2);
-int ToPercent64(uint64_t N1, uint64_t N2);
+int ToPercent(uint32_t N1, uint32_t N2, bool unlimited = false);
+int ToPercent64(uint64_t N1, uint64_t N2, bool unlimited = false);
 
 #ifdef __cplusplus
 extern "C" {

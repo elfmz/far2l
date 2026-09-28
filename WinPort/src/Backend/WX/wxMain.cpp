@@ -1748,7 +1748,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
-		if (event.AltDown() && !_key_tracker.RightAlt() && isLayoutDependentKey(event)) {
+		if (event.AltDown() && !_key_tracker.RightAlt() && !_key_tracker.Composing()
+			&& isLayoutDependentKey(event)) {
 
 			// workaround for wx issue #23421
 

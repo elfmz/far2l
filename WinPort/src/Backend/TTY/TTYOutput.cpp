@@ -394,7 +394,7 @@ void TTYOutput::Flush()
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-void TTYOutput::ChangeCursorHeight(unsigned int height)
+void TTYOutput::ChangeCursorHeight(unsigned int height, unsigned int insert_shape, unsigned int overtype_shape)
 {
 	// See also:
 	// https://unix.stackexchange.com/questions/49485/escape-code-to-change-cursor-shape
@@ -406,26 +406,32 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 		stk_ser.PushNum(FARTTY_INTERACT_SET_CURSOR_HEIGHT);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInteract(stk_ser);
+		return;
+	}
 
-	} else if (height < 30) {
+	const auto shape = height < 30 ? insert_shape : overtype_shape;
+	if (_tty_caps.kind == TTYCaps::KERNEL) {
+		// The Linux console has no vertical-bar cursor. Its closest available
+		// shape is an underline; block retains the previous full-height shape.
+		Format(shape == CONSOLE_TTY_CURSOR_SHAPE_BLOCK ? ESC "[?6c" : ESC "[?2c");
+		return;
+	}
 
-		if (_tty_caps.kind == TTYCaps::KERNEL) {
+	switch (shape) {
+		case CONSOLE_TTY_CURSOR_SHAPE_BAR:
+			Format(ESC "[5 q"); // Blink Bar
+			Format(ESC "]1337;CursorShape=1\x07"); // Same for iTerm2
+			break;
 
-			// Available sizes are from 2 to 8
-			Format(ESC "[?2c");
-
-		} else {
+		case CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE:
 			Format(ESC "[3 q"); // Blink Underline
 			Format(ESC "]1337;CursorShape=2\x07"); // Same for iTerm2
-		}
+			break;
 
-	} else if (_tty_caps.kind == TTYCaps::KERNEL) {
-		// Available sizes are from 2 to 8
-		Format(ESC "[?6c");
-
-	} else {
-		Format(ESC "[0 q"); // Blink Block (Default)
-		Format(ESC "]1337;CursorShape=0\x07"); // Same for iTerm2
+		default:
+			Format(ESC "[0 q"); // Blink Block (Default)
+			Format(ESC "]1337;CursorShape=0\x07"); // Same for iTerm2
+			break;
 	}
 }
 

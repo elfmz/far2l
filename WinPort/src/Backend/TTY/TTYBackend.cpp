@@ -660,9 +660,15 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	tty_out.MoveCursorLazy(cursor_pos.Y + 1, cursor_pos.X + 1);
 	tty_out.ChangeCursor(cursor_visible);
 
-	if (_far2l_cursor_height != (int)(unsigned int)cursor_height) {
+	const auto cursor_shape_insert = _cursor_shape_insert.load();
+	const auto cursor_shape_overtype = _cursor_shape_overtype.load();
+	if (_far2l_cursor_height != (int)(unsigned int)cursor_height
+			|| _last_cursor_shape_insert != (int)cursor_shape_insert
+			|| _last_cursor_shape_overtype != (int)cursor_shape_overtype) {
 		_far2l_cursor_height = (int)(unsigned int)cursor_height;
-		tty_out.ChangeCursorHeight(cursor_height);
+		_last_cursor_shape_insert = cursor_shape_insert;
+		_last_cursor_shape_overtype = cursor_shape_overtype;
+		tty_out.ChangeCursorHeight(cursor_height, cursor_shape_insert, cursor_shape_overtype);
 	}
 }
 
@@ -872,6 +878,20 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 			_ae.palette = true;
 			WaitForOutputIdleOrDead(lock);
 		}
+
+		const auto cursor_shape_insert = CONSOLE_TTY_CURSOR_SHAPE_VALUE(tweaks,
+				CONSOLE_TTY_CURSOR_SHAPE_INSERT_SHIFT);
+		const auto cursor_shape_overtype = CONSOLE_TTY_CURSOR_SHAPE_VALUE(tweaks,
+				CONSOLE_TTY_CURSOR_SHAPE_OVERTYPE_SHIFT);
+		const auto insert_shape_changed =
+				_cursor_shape_insert.exchange(cursor_shape_insert) != cursor_shape_insert;
+		const auto overtype_shape_changed =
+				_cursor_shape_overtype.exchange(cursor_shape_overtype) != cursor_shape_overtype;
+		if (insert_shape_changed || overtype_shape_changed) {
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_ae.output = true;
+			WaitForOutputIdleOrDead(lock);
+		}
 	}
 
 
@@ -879,6 +899,9 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 	if (_tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
 		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
+	}
+	if (_tty_caps.kind != TTYCaps::FAR2L) {
+		out|= TWEAK_STATUS_SUPPORT_TTY_CURSOR_SHAPE;
 	}
 
 	return out;

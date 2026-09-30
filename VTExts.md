@@ -1,432 +1,108 @@
-# Far2l Terminal Extensions Protocol Specification
+# far2l terminal extensions
 
-## 1. Introduction
+## 1. What this is
 
-The `far2l` terminal extensions protocol provides a mechanism for bidirectional communication between a `far2l` internal virtual terminal (VT) and a terminal client application. It enables advanced features not available through standard terminal escape codes, such as native clipboard integration, rich desktop notifications, and direct graphics rendering.
+far2l can run in two ways: as a native GUI application (wx or SDL) or as a console application inside some terminal (the "TTY backend", `far2l --tty`). Inside an ordinary terminal far2l has only what escape sequences give it, which means no real clipboard, no F-key titles, no images beyond what the terminal's own graphics protocol offers, and so on.
 
-Communication is achieved through specially formatted ANSI escape sequences, where the payload is a Base64-encoded binary stack.
+The **far2l terminal extensions** are a small private protocol that lets a terminal application talk to the terminal it runs in, in both directions, through APC escape sequences (`ESC _ ... BEL`). Terminals that do not implement APC strings ignore them, so a program can probe for the extensions safely (a few old terminals print what they do not know; far2l prints a short hint and erases it after the probe). The protocol is defined by the source code of far2l; its C header is [`WinPort/FarTTY.h`](WinPort/FarTTY.h) (public domain) and the image constants live in [`WinPort/WinCompat.h`](WinPort/WinCompat.h).
 
-## 2. Core Concepts
+The extensions cover:
 
-### 2.1. Command and Notification Structure
+- a clipboard with authorization, several formats per clipboard including application-defined ones, caching and chunked uploads (section 5.7);
+- desktop notifications (5.4);
+- the maximum possible window size, window maximize/restore (5.2, 5.3);
+- titles of the F-keys (for example for the Touch Bar of a Mac) (5.5);
+- images (5.8);
+- a color depth query (5.6);
+- richer keyboard and mouse events than plain escape sequences can carry (section 6);
+- an "ad-hoc quick edit" request, cursor height and in-band terminal size (5.1, 5.2).
 
-The protocol defines two primary message types, distinguished by their prefix:
+The protocol is also how far2l talks to itself: far2l running in TTY mode inside the far2l built-in terminal (Ctrl+O, and NetRocks remote shells) uses exactly these sequences. This document is written from the source code (as of elfmz/far2l `master`, see the list of sources in section 9), including its quirks, and "far2l" below means what the code does, not what the comments in the header say. Where the two disagree this is stated explicitly.
 
--   **Client-to-Server (Commands):** Sent from the terminal application to `far2l`.
-    > `\x1B_far2l:<payload>\x07`
--   **Server-to-Client (Notifications):** Sent from `far2l` to the terminal application.
-    > `\x1B_f2l:<payload>\x07`
+## 4. Protocol basics
 
-Where:
-- `\x1B` is the `ESC` character.
-- `<payload>` is the Base64-encoded binary stack.
-- `\x07` is the `BEL` character, which terminates the sequence.
+### 4.1. Roles
 
-### 2.2. The Stack Serializer
+The header `FarTTY.h` names the two sides *client* and *server*, and this document follows it:
 
-The payload of every message is a binary **stack**. This follows a **Last-In, First-Out (LIFO)** data structure.
+| Side | Who it is | In far2l |
+| ---- | --------- | -------- |
+| **Client** | The application that draws its UI on the terminal and wants the extras. It sends *requests* and receives *replies* and *events*. | The TTY backend: `WinPort/src/Backend/TTY/` |
+| **Server** | The terminal (emulator, terminal multiplexer, terminal widget). It executes requests, answers them and sends input events to the client. | The far2l built-in terminal: `far2l/src/vt/VTFar2lExtensios.cpp` and `far2l/src/vt/vtshell.cpp` |
 
-This is the most critical concept to understand: **arguments must be pushed onto the stack in the reverse order of how they are to be read.**
+Do not confuse "server" with a network server: the terminal may be a GUI application, and the client may run on a remote host behind SSH. Other texts use the names the other way round: the first description of the protocol, in KiTTY issue 74 (section 9), calls the application the *server* and the terminal the *client*. The roles in this document are those of `FarTTY.h`.
 
-For example, if the server needs to read `Argument A`, then `Argument B`, the client must construct the stack by first pushing `Argument B`, then `Argument A`.
+Some implementations play only one role (a terminal emulator is a server; a text-mode application is a client), some play both (see section 3).
 
-> **Note:** Throughout this document, arguments for "In" (client to server) and "Out" (server to client) stacks are listed in the order they are **popped off the stack (top to bottom)**. This represents the logical order of processing, not the order of construction.
+### 4.2. Framing
 
-### 2.3. Data Types
+Everything is an APC string: `ESC _` (`0x1B 0x5F`), a body, and a terminator, which is either `BEL` (`0x07`) or ST (`ESC \`, `0x1B 0x5C`). Only the 7-bit forms are recognized; the 8-bit C1 forms (`0x9F`, `0x9C`) are not. Both far2l sides accept either terminator on input. What far2l emits itself is shown below.
 
--   **Integers:** All integer types (`uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`, etc.) are encoded in **little-endian** byte order.
--   **Strings:** A string is pushed onto the stack as the raw byte sequence followed by its size as a `uint32_t`.
--   **Raw Data:** A raw byte buffer is pushed onto the stack without a size prefix. Its size is typically inferred from other arguments (e.g., image dimensions).
+| Direction | Bytes | Emitted by far2l with |
+| --------- | ----- | --------------------- |
+| client to server: enable | `ESC _ far2l1 ST` | ST (GNU screen understands only ST) |
+| server to client: acknowledge | `ESC _ far2lok BEL` | BEL |
+| client to server: disable | `ESC _ far2l0 BEL` | BEL, no reply |
+| client to server: host identity (optional) | `ESC _ far2l#<text> BEL` | BEL, no reply (see 4.6) |
+| client to server: **request** | `ESC _ far2l:<base64> BEL` | BEL |
+| server to client: **reply** | `ESC _ far2l<base64> BEL` | BEL |
+| server to client: **event** | `ESC _ f2l<base64> BEL` | BEL |
 
-### 2.4. Request/Response Mechanism (Client-to-Server)
+Note the difference in the prefixes, which is easy to get wrong and is what the code really does:
 
-Client-to-Server commands use an 8-bit Request ID to manage responses. This ID is **always the last item pushed onto the stack**.
+- a request has a colon after `far2l`: `ESC _ far2l:` followed by Base64;
+- a reply has **no** colon: `ESC _ far2l` followed directly by Base64;
+- an event has **no** colon either: `ESC _ f2l` followed directly by Base64.
 
--   **Request ID = 0:** An asynchronous command. The server will not send a reply.
--   **Request ID > 0:** A synchronous command. After processing, the server will send a reply using the same command structure (`\x1B_far2l:...`). The reply stack will contain the same Request ID on top, followed by any return values.
+The client recognizes an incoming APC body by its first characters: `f2l` (an event), then `far2l` (a reply). The Base64 decoder used by far2l stops at the first character that is not part of the Base64 alphabet, so a stray colon in `f2l:...` or `far2l:...` would make the whole payload decode as empty. The comment in `FarTTY.h` that shows events as `"\x1b_f2l:"BASE64` is wrong; replies, which it does not show at all, follow the same rule.
 
-## 3. Protocol Handshake
+The server recognizes a body that begins with `far2l`, and then looks at the next character: `1`, `0`, `:` and `#` are the four forms above. `far2l_` is used internally by far2l for shell integration markers and is not part of the extensions protocol.
 
-Before sending any commands, the client must enable the extension protocol.
+A terminal that does not know the extensions should ignore all of this as unknown APC strings.
 
-1.  **Client Sends Activation:** The client sends the raw sequence:
-    ```
-    \x1B_far2l1\x07
-    ```
-2.  **Server Acknowledges:** The server (`far2l`) responds with:
-    ```
-    \x1B_far2lok\x07
-    ```
-The client must wait for this acknowledgment before proceeding.
+### 4.3. The stack serializer
 
-NB! Better approach is to add `\x1b[5n` after `\x1B_far2l1\x07` that will cause non-far2l terminal to respond with (typically) `\x1b[0n`. This avoids the use of timeouts, the counting of which can be long in terminals that do not support far2l extensions.
+The payload of requests, replies and events is a binary **stack**, Base64-encoded as a whole. The encoding is implemented in `utils/include/StackSerializer.h`, `utils/src/StackSerializer.cpp` and `utils/src/base64.cpp`.
 
-## 4. Client-to-Server Commands (`FARTTY_INTERACT_*`)
+- The stack is a byte array. **Push** appends to the end; **pop** removes from the end. The serialized form is the array from its first byte (the bottom of the stack) to its last byte (the top).
+- Consequently the arguments must be pushed **in the reverse order** of how the receiver pops them. All tables in this document list arguments in **pop order: top of the stack first**, as `FarTTY.h` does. The byte that comes first on the wire is the one popped last.
+- Integers (`uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `uint64_t`) are fixed-width and **little-endian**. A `bool` is one byte; a `char` is one byte.
+- A **string** is pushed as its raw bytes, followed by its length as a `uint32_t` (so the length is on top and is popped first, then the bytes). There is no terminator and no padding. far2l uses UTF-8.
+- **Raw data** (image pixels, clipboard bytes) is pushed as is, without a length. Its size is given by other arguments.
+- Base64 is the standard alphabet (`A-Z a-z 0-9 + /`), with `=` padding on output. far2l's decoder stops at the first `=` or at the first character outside the alphabet and does not require padding; it does not accept line breaks or whitespace.
+- An empty stack encodes to an empty string.
+- Popping more bytes than the stack holds is an error. What the error does is different on each side, see section 8.
 
-These commands are sent by the client to request an action from `far2l`.
+### 4.4. Requests, request IDs and replies
 
----
+The top byte of a request stack is an 8-bit **request ID**. Below it is the command letter (`FARTTY_INTERACT_*`) and then the command arguments. In other words, a client builds a request by pushing the arguments (last argument first), then the command letter, then the ID.
 
-### `FARTTY_INTERACT_CHOOSE_EXTRA_FEATURES` ('x')
+- **ID = 0**: the client does not want a reply. The server sends nothing.
+- **ID != 0**: the server replies, after executing the request, with `ESC _ far2l<base64> BEL`. The top of the reply stack is the same ID, and below it are the return values of the command (if any), in pop order as listed for each command.
 
-Declares that the client supports a set of optional features. `far2l` may change its behavior accordingly. This should be sent after the initial handshake.
+far2l's own server replies to **every** request with a non-zero ID: for commands that have no return values the reply consists of the ID only, and for unknown commands and for commands that failed with an exception it is also the ID only (the client then fails to pop the values it expected).
 
--   **In Stack:**
-    | Argument        | Type       | Description                                  |
-    | --------------- | ---------- | -------------------------------------------- |
-    | Feature Flags   | `uint64_t` | A bitmask of `FARTTY_FEAT_*` flags.          |
--   **Out Stack:** None.
+The far2l client **waits for the reply without any timeout**. A server that silently ignores a request with a non-zero ID makes the client hang, unless the connection breaks. So a server implementation has to answer every non-zero ID, even if it does not know the command; an empty reply (the ID alone) is the proper way to say "unsupported".
 
-`FARTTY_FEAT_*` (Client Features)
+The far2l client allocates IDs from an 8-bit counter, skipping zero and IDs that are still in flight; it allows at most 255 requests in flight. Replies with unknown IDs are ignored.
 
--   `FARTTY_FEAT_COMPACT_INPUT` (0x01): Client supports receiving compact input events.
--   `FARTTY_FEAT_TERMINAL_SIZE` (0x02): Client supports receiving terminal size events via this protocol (in addition to `SIGWINCH`).
+Which far2l requests are sent with a non-zero ID (that is, need an answer) is stated for each command below.
 
----
+### 4.5. Activation and detection
 
-### `FARTTY_INTERACT_CONSOLE_ADHOC_QEDIT` ('e')
+1. The client sends `ESC _ far2l1 ESC \`.
+2. A server that supports the extensions answers `ESC _ far2lok BEL`. The far2l client searches for exactly these bytes, **with the BEL terminator**; an acknowledgement ended with ST is not recognized.
+3. From now on the server accepts requests. Requests that arrive before activation, or after `far2l0`, are ignored without any reply.
 
-Initiates a quick-edit (text selection) operation in `far2l` starting from the last mouse click position.
+To avoid waiting for a timeout in terminals that do not know the extensions, the client follows the activation string with an ordinary query that every terminal answers, the device status report `ESC [ 5 n`, to which a terminal replies `ESC [ 0 n`. The answer to the DSR marks the end of the probe: if `far2lok` was not received before it, the extensions are not supported. Therefore **the acknowledgement has to be sent before the reply to `ESC [ 5 n`** (a terminal that handles its input in order does this naturally).
 
--   **In Stack:** None.
--   **Out Stack:** None.
+This is exactly what far2l does (in `WinPort/src/Backend/TTY/TTYCaps.cpp`): it writes `ESC _ far2l1 ESC \`, a human-readable hint ("Press <ENTER> if tired of watching this message"), `ESC E`, a test of VS16 emoji width with `ESC [ 6 n`, and `ESC [ 5 n`; then it reads the answers, waiting up to 10 seconds for each next byte. The probe is skipped if far2l runs on the Linux/BSD kernel console, or if detection was disabled with `--nodetect` (`--nodetect=f` disables only this one).
 
----
+Repeated `far2l1` is harmless: the server answers with `far2lok` again and keeps its state. The client sends `ESC _ far2l0 BEL` when it exits, is suspended (`SIGTSTP`) or hangs up; it probes again after resuming.
 
-### `FARTTY_INTERACT_WINDOW_MAXIMIZE` ('M')
+When the server receives `far2l0` it drops the extension state: the clipboard is closed if it was open, F-key titles are cleared, negotiated features are forgotten.
 
-Requests that the `far2l` window be maximized.
+### 4.6. Host identity (`far2l#`)
 
--   **In Stack:** None.
--   **Out Stack:** None.
-
----
-
-### `FARTTY_INTERACT_WINDOW_RESTORE` ('m')
-
-Requests that the `far2l` window be restored from a maximized state.
-
--   **In Stack:** None.
--   **Out Stack:** None.
-
----
-
-### `FARTTY_INTERACT_SET_CURSOR_HEIGHT` ('h')
-
-Changes the height of the terminal cursor.
-
--   **In Stack:**
-    | Argument       | Type      | Description                         |
-    | -------------- | --------- | ----------------------------------- |
-    | Cursor Height  | `uint8_t` | Height in percent (0-100).          |
--   **Out Stack:** None.
-
----
-
-### `FARTTY_INTERACT_GET_WINDOW_MAXSIZE` ('w')
-
-Gets the maximum possible window size in character cells (columns and rows).
-
--   **In Stack:** None.
--   **Out Stack:**
-    | Argument    | Type       | Description                 |
-    | ----------- | ---------- | --------------------------- |
-    | Height      | `uint16_t` | Maximum height in rows.     |
-    | Width       | `uint16_t` | Maximum width in columns.   |
-
----
-
-### `FARTTY_INTERACT_DESKTOP_NOTIFICATION` ('n')
-
-Displays a desktop notification.
-
--   **In Stack:**
-    | Argument  | Type     | Description             |
-    | --------- | -------- | ----------------------- |
-    | Title     | `string` | The notification title. |
-    | Text      | `string` | The notification body.  |
--   **Out Stack:** None.
-
----
-
-### `FARTTY_INTERACT_SET_FKEY_TITLES` ('f')
-
-Sets the titles for the F-key bar (e.g., on a Mac Touch Bar). The stack contains 12 elements, from F12 down to F1.
-
--   **In Stack:**
-    | Argument           | Type          | Description                                                                     |
-    | ------------------ | ------------- | ------------------------------------------------------------------------------- |
-    | 12 x Title Blocks | (see below)  | A sequence of 12 blocks, one for each F-key from F12 down to F1. Each block contains a state and an optional title. If state is `0`, the title is cleared. If state is non-zero, the following string is the new title. |
--   **Out Stack:**
-    | Argument  | Type   | Description                                 |
-    | --------- | ------ | ------------------------------------------- |
-    | Success   | `bool` | `true` if the operation was supported and succeeded. |
-
----
-
-### `FARTTY_INTERACT_GET_COLOR_PALETTE` ('p')
-
-Queries the color capabilities of the host terminal.
-
--   **In Stack:** None.
--   **Out Stack:**
-    | Argument      | Type      | Description                                                |
-    | ------------- | --------- | ---------------------------------------------------------- |
-    | Color Bits    | `uint8_t` | Maximum supported color resolution (e.g., 4, 8, or 24).    |
-    | Reserved      | `uint8_t` | Reserved for future use (currently zero).                   |
-
----
-
-### `FARTTY_INTERACT_CLIPBOARD` ('c')
-
-Namespace for all clipboard-related operations.
-
--   **In Stack:**
-    | Argument     | Type   | Description                                         |
-    | ------------ | ------ | --------------------------------------------------- |
-    | Sub-command  | `char` | A character identifying the specific clipboard action. |
-    | ...          | ...    | Arguments specific to the sub-command.              |
--   **Out Stack:** Varies by sub-command.
-
-#### Clipboard Operations
-
-##### `FARTTY_INTERACT_CLIP_OPEN` ('o')
-Authorizes and opens the clipboard for subsequent operations.
-
--   **In Stack:**
-    | Argument     | Type     | Description                                         |
-    | ------------ | -------- | --------------------------------------------------- |
-    | Passcode     | `string` | A unique client identifier (32-256 chars).         |
--   **Out Stack:**
-    | Argument          | Type       | Description                                                                      |
-    | ----------------- | ---------- | -------------------------------------------------------------------------------- |
-    | Status            | `int8_t`   | `1` for success, `0` for failure, `-1` for access denied.                          |
-    | Server Features   | `uint64_t` | (Optional) A bitmask of `FARTTY_FEATCLIP_*` flags supported by the server.         |
-
-`FARTTY_FEATCLIP_*` (Server Clipboard Features)
-
--   `FARTTY_FEATCLIP_DATA_ID` (0x01): Server can provide a unique ID for clipboard data, allowing for client-side caching.
--   `FARTTY_FEATCLIP_CHUNKED_SET` (0x02): Server supports setting clipboard data in multiple chunks.
-
-##### `FARTTY_INTERACT_CLIP_CLOSE` ('c')
-Closes the clipboard, finalizing the transaction.
-
--   **In Stack:** None.
--   **Out Stack:**
-    | Argument   | Type     | Description                                         |
-    | ---------- | -------- | --------------------------------------------------- |
-    | Status     | `int8_t` | `1` for success, `0` for failure, `-1` if not open.   |
-
-##### `FARTTY_INTERACT_CLIP_EMPTY` ('e')
-Clears the clipboard content.
-
--   **In Stack:** None.
--   **Out Stack:**
-    | Argument   | Type     | Description                                         |
-    | ---------- | -------- | --------------------------------------------------- |
-    | Status     | `int8_t` | `1` for success, `0` for failure, `-1` if not open.   |
-
-##### `FARTTY_INTERACT_CLIP_ISAVAIL` ('a')
-Checks if a specific data format is available on the clipboard.
-
--   **In Stack:**
-    | Argument   | Type       | Description                                         |
-    | ---------- | ---------- | --------------------------------------------------- |
-    | Format ID  | `uint32_t` | The format to check (e.g., `1` for CF_TEXT).        |
--   **Out Stack:**
-    | Argument   | Type     | Description                                         |
-    | ---------- | -------- | --------------------------------------------------- |
-    | Available  | `int8_t` | `1` if available, `0` if not.                         |
-
-##### `FARTTY_INTERACT_CLIP_SETDATA` ('s')
-Puts data onto the clipboard.
-
--   **In Stack:**
-    | Argument   | Type        | Description                                                               |
-    | ---------- | ----------- | ------------------------------------------------------------------------- |
-    | Format ID  | `uint32_t`  | The ID of the data format.                                                |
-    | Data Size  | `uint32_t`  | The size of the data buffer that follows.                                 |
-    | Data       | `raw bytes` | The data buffer. (Prepended by any data from previous `..._SETDATACHUNK` calls). |
--   **Out Stack:**
-    | Argument   | Type       | Description                                  |
-    | ---------- | ---------- | -------------------------------------------- |
-    | Status     | `int8_t`   | `1` for success, `0` for failure, `-1` if not open. |
-    | Data ID    | `uint64_t` | (Optional) A unique ID for the data (e.g., CRC64). |
-
-##### `FARTTY_INTERACT_CLIP_SETDATACHUNK` ('S')
-(Optional) Sends a chunk of data to the server. This allows for sending large amounts of data in the background, which can be canceled. This command can be used multiple times before a final `FARTTY_INTERACT_CLIP_SETDATA` call appends the last part of the data and finalizes the operation.
-
-> **Note:** This feature is optional and can only be used if the server reported the `FARTTY_FEATCLIP_CHUNKED_SET` flag during the `CLIP_OPEN` response.
-
--   **In Stack:**
-    | Argument           | Type       | Description                                                                                                        |
-    | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-    | Encoded Chunk Size | `uint16_t` | The size of the chunk's data, right-shifted by 8 bits. The actual size is `value << 8`. A value of `0` cancels all pending chunks. |
-    | Chunk Data         | `raw bytes`| The raw byte data for this chunk.                                                                                  |
--   **Out Stack:** None.
-
-##### `FARTTY_INTERACT_CLIP_GETDATA` ('g')
-Retrieves data from the clipboard.
-
--   **In Stack:**
-    | Argument   | Type       | Description                  |
-    | ---------- | ---------- | ---------------------------- |
-    | Format ID  | `uint32_t` | The format to retrieve.      |
--   **Out Stack:**
-    | Argument   | Type        | Description                                  |
-    | ---------- | ----------- | -------------------------------------------- |
-    | Data Size  | `uint32_t`  | The size of the retrieved data. `0` on failure, `-1` if not open. |
-    | Data       | `raw bytes` | The data buffer.                             |
-    | Data ID    | `uint64_t`  | (Optional) A unique ID for the data.         |
-
----
-
-### `FARTTY_INTERACT_IMAGE` ('i')
-
-Namespace for all image rendering operations.
-
--   **In Stack:**
-    | Argument     | Type   | Description                                         |
-    | ------------ | ------ | --------------------------------------------------- |
-    | Sub-command  | `char` | A character identifying the specific image action.    |
-    | ...          | ...    | Arguments specific to the sub-command.              |
--   **Out Stack:** Varies by sub-command.
-
-#### Image Operations
-
-##### `FARTTY_INTERACT_IMAGE_CAPS` ('c')
-Queries the terminal's image rendering capabilities.
-
--   **In Stack:** None.
--   **Out Stack:**
-    | Argument          | Type       | Description                                  |
-    | ----------------- | ---------- | -------------------------------------------- |
-    | Capabilities      | `uint64_t` | A bitmask of `WP_IMGCAP_*` flags, see below. |
-    | Cell Width (px)   | `uint16_t` | The width of a character cell in pixels.     |
-    | Cell Height (px)  | `uint16_t` | The height of a character cell in pixels.    |
-
-`WP_IMGCAP_*` (Rendering Capabilities)
-
--   `WP_IMGCAP_RGBA` (0x01): Client supports supports WP_IMG_RGB/WP_IMG_RGBA formats (see below).
--   `WP_IMGCAP_SCROLL` (0x02): Client supports existing image scrolling.
--   `WP_IMGCAP_ROTATE` (0x03): Client supports existing image rotation.
-
-##### `FARTTY_INTERACT_IMAGE_SET` ('s')
-Uploads and displays an image.
-
--   **In Stack:**
-    | Argument      | Type        | Description                                  |
-    | ------------- | ----------- | -------------------------------------------- |
-    | Image ID      | `string`    | A unique identifier for the image.           |
-    | Flags         | `uint64_t`  | The image format flags, see below.           |
-    | Position X    | `uint16_t`  | The horizontal character column.             |
-    | Position Y    | `uint16_t`  | The vertical character row.                  |
-    | Image Width   | `uint32_t`  | Image width in pixels.                       |
-    | Image Height  | `uint32_t`  | Image height in pixels.                      |
-    | Image Data    | `raw bytes` | The raw pixel data.                          |
--   **Out Stack:**
-    | Argument   | Type      | Description                                  |
-    | ---------- | --------- | -------------------------------------------- |
-    | Success    | `uint8_t` | `1` on success, `0` on failure.                |
-
-`WP_IMG_*` (Image Format Flags)
-
--   `WP_IMG_RGBA` (0x00): Supported if WP_IMGCAP_RGBA was set
--   `WP_IMG_RGB` (0x01): Supported if WP_IMGCAP_RGBA was set
-
-Flags below are supported only if WP_IMGCAP_SCROLL was reported. They are intended to scroll existing image instead of displaying a new one.
-
--   `WP_IMG_SCROLL_AT_LEFT` (0x10000): Left->right scrolling, sending rectangle to insert at left
--   `WP_IMG_SCROLL_AT_RIGHT` (0x20000): Right->left scrolling, sending rectangle to insert at right
--   `WP_IMG_SCROLL_AT_TOP` (0x30000): Top->bottom scrolling, sending rectangle to insert at top
--   `WP_IMG_SCROLL_AT_BOTTOM` (0x40000): Bottom->top scrolling, sending rectangle to insert at bottom
-
-##### `FARTTY_INTERACT_IMAGE_DEL` ('d')
-Removes a previously displayed image.
-
--   **In Stack:**
-    | Argument   | Type     | Description                           |
-    | ---------- | -------- | ------------------------------------- |
-    | Image ID   | `string` | The identifier of the image to remove. |
--   **Out Stack:**
-    | Argument   | Type      | Description                                  |
-    | ---------- | --------- | -------------------------------------------- |
-    | Success    | `uint8_t` | `1` on success, `0` on failure.                |
-
-##### `FARTTY_INTERACT_IMAGE_ROT` ('r')
-Rotates and repositions a previously displayed image.
-
--   **In Stack:**
-    | Argument      | Type       | Description                                                                 |
-    | ------------- | ---------- | --------------------------------------------------------------------------- |
-    | Image ID      | `string`   | The unique identifier of the image to rotate.                               |
-    | Position X    | `uint16_t` | The new horizontal character column for the image's top-left corner.        |
-    | Position Y    | `uint16_t` | The new vertical character row for the image's top-left corner.             |
-    | Rotation Angle| `uint8_t`  | The angle of rotation in 90-degree increments (`0`=0°, `1`=90°, `2`=180°, `3`=270°). |
--   **Out Stack:**
-    | Argument   | Type      | Description                                  |
-    | ---------- | --------- | -------------------------------------------- |
-    | Success    | `uint8_t` | `1` on success, `0` on failure.                |
-
-## 5. Server-to-Client Notifications (`FARTTY_INPUT_*`)
-
-These messages are sent asynchronously from `far2l` to the client to report events like keyboard and mouse input. They do not have a Request ID and do not expect a reply.
-
----
-
-### `FARTTY_INPUT_MOUSE` ('M') / `FARTTY_INPUT_MOUSE_COMPACT` ('m')
-
-Reports a mouse event. The compact version uses smaller data types if negotiated via `FARTTY_FEAT_COMPACT_INPUT`.
-
--   **Payload Stack (Normal):**
-    | Argument         | Type       | Description (`MOUSE_EVENT_RECORD`) |
-    | ---------------- | ---------- | -------------------------------- |
-    | Event Flags      | `uint32_t` | `dwEventFlags`                   |
-    | Control Key State| `uint32_t` | `dwControlKeyState`              |
-    | Button State     | `uint32_t` | `dwButtonState`                  |
-    | Position Y       | `int16_t`  | `dwMousePosition.Y`              |
-    | Position X       | `int16_t`  | `dwMousePosition.X`              |
-
--   **Payload Stack (Compact):**
-    | Argument         | Type       | Description (`MOUSE_EVENT_RECORD`) |
-    | ---------------- | ---------- | -------------------------------- |
-    | Event Flags      | `uint8_t`  | `dwEventFlags`                   |
-    | Control Key State| `uint8_t`  | `dwControlKeyState`              |
-    | Button State     | `uint16_t` | `dwButtonState` (encoded)        |
-    | Position Y       | `int16_t`  | `dwMousePosition.Y`              |
-    | Position X       | `int16_t`  | `dwMousePosition.X`              |
-
----
-
-### `FARTTY_INPUT_KEYDOWN` ('K') / `FARTTY_INPUT_KEYUP` ('k')
-
-Reports a key press or release event.
-
--   **Payload Stack (Normal):**
-    | Argument         | Type       | Description (`KEY_EVENT_RECORD`)   |
-    | ---------------- | ---------- | -------------------------------- |
-    | Unicode Char     | `uint32_t` | `uChar.UnicodeChar` (UTF-32)     |
-    | Control Key State| `uint32_t` | `dwControlKeyState`              |
-    | Virtual Scan Code| `uint16_t` | `wVirtualScanCode`               |
-    | Virtual Key Code | `uint16_t` | `wVirtualKeyCode`                |
-    | Repeat Count     | `uint16_t` | `wRepeatCount`                   |
-
--   **Payload Stack (Compact):**
-    | Argument         | Type       | Description (`KEY_EVENT_RECORD`)   |
-    | ---------------- | ---------- | -------------------------------- |
-    | Unicode Char     | `uint16_t` | `uChar.UnicodeChar` (fit to UTF-16) |
-    | Control Key State| `uint16_t` | `dwControlKeyState` (fit to 16 bits) |
-    | Virtual Key Code | `uint8_t`  | `wVirtualKeyCode` (fit to 8 bits)   |
-
----
-
-### `FARTTY_INPUT_TERMINAL_SIZE` ('S')
-
-Reports a change in the terminal dimensions.
-
--   **Payload Stack:**
-    | Argument   | Type       | Description            |
-    | ---------- | ---------- | ---------------------- |
-    | Width      | `uint16_t` | New width in columns.  |
-    | Height     | `uint16_t` | New height in rows.    |
+`ESC _ far2l#<text> BEL` passes a string that identifies the remote host to the server. It has to be sent **before** `far2l1`. far2l NetRocks sends `user@host` (control characters replaced by a space) when it runs a remote shell, before the remote command starts. The server keeps it for the lifetime of the command and ignores later values if one was already set, so the remote command cannot replace it; and uses it as a prefix of the clipboard client ID (see 5.7.1), so that a remote host cannot impersonate a client of another host even if it knows that client's clipboard passcode. The far2l TTY backend itself never sends it. The text must not contain BEL or ESC.
 

@@ -138,6 +138,7 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuViewWordWrap,	0,	KEY_F3  },
 		{Msg::EditorMenuViewNumbers,	0,	KEY_CTRLF3  },
 		{Msg::EditorMenuViewSpaces,	0,	KEY_F5  },
+		{Msg::EditorMenuViewEOL,	0,	KEY_CTRLSHIFTF5  },
 		{Msg::EditorMenuViewOvertype,	0,	KEY_INS  },
 		{Msg::EditorMenuViewFullScreen,	0,	KEY_ALTF9  },
 		{Msg::EditorMenuViewLock,	0,	KEY_CTRLL  },

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
@@ -49,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class FileEditor;
 class KeyBar;
 class EditorMenuBar;
+struct MultilineSearchBuffer;
 
 struct InternalEditorBookMark
 {
@@ -72,7 +74,8 @@ struct EditorFoundCoord
 {
 	int Line;
 	int Pos;
-	int SearchLen;
+	int EndLine;
+	int EndPos;
 };
 
 // чем закончился сбор вхождений для поиска по кнопке "Все"
@@ -298,6 +301,7 @@ private:
 	bool m_showCursor;
 	clock_t m_BulkLoadStartTime;
 	FARString m_virtualFileName;
+	std::unique_ptr<MultilineSearchBuffer> m_MultilineSearchBuffer;
 
 private:
 	struct MouseTarget
@@ -335,6 +339,11 @@ private:
 	BOOL SearchAll(const FARString &strSearchStr, int Case, int WholeWords, int Regexp, int SelectFound);
 	EditorFindAllResult CollectFoundItems(const FARString &strSearchStr, int Case, int WholeWords,
 			int Regexp, std::vector<EditorFoundCoord> &FoundItems);
+	MultilineSearchBuffer &GetMultilineSearchBuffer();
+	bool ReplaceAllRegexp(MultilineSearchBuffer &Buffer, const FARString &SearchStr,
+			const FARString &ReplaceStr, int MatchPosition, int MatchLength,
+			const FARString &CurrentReplaceStr, int Case, int WholeWords, int Reverse);
+	void PasteRegexpReplacement(const FARString &Text, const wchar_t *EndEol);
 	void ShowFoundItems(const std::vector<EditorFoundCoord> &FoundItems, int SelectFound);
 	void SelectFoundPattern(const EditorFoundCoord &Coord, int SelectFound);
 
@@ -484,6 +493,8 @@ public:
 
 	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 	void SetShowWhiteSpace(int NewMode);
+	int GetShowEOL() const { return EdOpt.ShowEOL; }
+	void SetShowEOL(int NewMode);
 
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);

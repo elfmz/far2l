@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <map>
 #include <mutex>
+#include <vector>
 
 extern const char *FmtDiskMenuStringD;
 extern const char *FmtPluginMenuStringD;
@@ -141,6 +142,16 @@ enum OPENFILEPLUGINTYPE
 	OFP_COMMANDS,
 };
 
+struct PluginMenuItemData {
+	Plugin *pPlugin;
+	int nItem;
+};
+
+struct MenuItemData {
+	std::wstring name;
+	PluginMenuItemData pluginItem;
+};
+
 struct PluginHandle
 {
 	HANDLE hPlugin;
@@ -221,6 +232,8 @@ public:
 	int CommandsMenu(int ModalType, int StartPos, const wchar_t *HistoryName = nullptr);
 	bool GetDiskMenuItem(Plugin *pPlugin, int PluginItem, bool &ItemPresent, wchar_t &PluginHotkey,
 			FARString &strPluginText);
+
+	std::vector<MenuItemData> GetMenuItems(int ModalType, int StartPos = 0, const wchar_t *HistoryName = nullptr);
 
 	int UseFarCommand(HANDLE hPlugin, int CommandType);
 	void ReloadLanguage();

@@ -106,3 +106,113 @@ When the server receives `far2l0` it drops the extension state: the clipboard is
 
 `ESC _ far2l#<text> BEL` passes a string that identifies the remote host to the server. It has to be sent **before** `far2l1`. far2l NetRocks sends `user@host` (control characters replaced by a space) when it runs a remote shell, before the remote command starts. The server keeps it for the lifetime of the command and ignores later values if one was already set, so the remote command cannot replace it; and uses it as a prefix of the clipboard client ID (see 5.7.1), so that a remote host cannot impersonate a client of another host even if it knows that client's clipboard passcode. The far2l TTY backend itself never sends it. The text must not contain BEL or ESC.
 
+## 5. Requests (client to server)
+
+Every request is sent as described in 4.4: the stack has the request ID on top, then the command letter, then the arguments. The tables list the arguments and the return values in **pop order (top first)**, after the ID and the command letter have been removed.
+
+| Letter | Name | Reply needed by far2l client | Section |
+| ------ | ---- | ---------------------------- | ------- |
+| `x` | `FARTTY_INTERACT_CHOOSE_EXTRA_FEATURES` | no | 5.1 |
+| `e` | `FARTTY_INTERACT_CONSOLE_ADHOC_QEDIT` | no | 5.2 |
+| `M` | `FARTTY_INTERACT_WINDOW_MAXIMIZE` | no | 5.2 |
+| `m` | `FARTTY_INTERACT_WINDOW_RESTORE` | no | 5.2 |
+| `h` | `FARTTY_INTERACT_SET_CURSOR_HEIGHT` | no | 5.2 |
+| `w` | `FARTTY_INTERACT_GET_WINDOW_MAXSIZE` | yes | 5.3 |
+| `n` | `FARTTY_INTERACT_DESKTOP_NOTIFICATION` | no | 5.4 |
+| `f` | `FARTTY_INTERACT_SET_FKEY_TITLES` | first time only | 5.5 |
+| `p` | `FARTTY_INTERACT_GET_COLOR_PALETTE` | yes | 5.6 |
+| `c` | `FARTTY_INTERACT_CLIPBOARD` (sub-commands) | depends | 5.7 |
+| `i` | `FARTTY_INTERACT_IMAGE` (sub-commands) | yes | 5.8 |
+
+### 5.1. `FARTTY_INTERACT_CHOOSE_EXTRA_FEATURES` (`x`)
+
+Declares the optional features the client can handle. The client sends it once, right after the extensions are activated, with ID 0.
+
+| In | Type | Description |
+| -- | ---- | ----------- |
+| Feature flags | `uint64_t` | A combination of `FARTTY_FEAT_*`. |
+
+No return values.
+
+| Flag | Value | Meaning |
+| ---- | ----- | ------- |
+| `FARTTY_FEAT_COMPACT_INPUT` | `0x00000001` | The client understands compact keyboard and mouse events (`C`, `c`, `m`, see section 6). |
+| `FARTTY_FEAT_TERMINAL_SIZE` | `0x00000002` | The client wants in-band terminal size events (`S`), in addition to or instead of `SIGWINCH`. |
+
+far2l always asks for `FARTTY_FEAT_COMPACT_INPUT`, and adds `FARTTY_FEAT_TERMINAL_SIZE` only when its standard output is **not** a TTY (that is, when it cannot ask the kernel for the size of the terminal). A far2l server **replaces** its set of features by every request rather than adding to it, and, if `FARTTY_FEAT_TERMINAL_SIZE` is set, immediately sends the current size as an event. The server may ignore features it does not know; events that the client has not asked for must not be sent.
+
+Features of the other direction (clipboard) are reported by the server in the reply to `CLIP_OPEN`, see 5.7.
+
+### 5.2. Window, cursor and quick edit
+
+| Letter | Name | In | Effect on far2l server |
+| ------ | ---- | -- | ---------------------- |
+| `e` | `CONSOLE_ADHOC_QEDIT` | none | Turns the left mouse button press that is in progress into a selection of text on the screen, as if the quick edit mode were on: the selection starts at the position of the last mouse click and is copied to the clipboard the usual way. It is ignored if the middle or right button is held, if the left button is not held, or if such a selection is already going on. |
+| `M` | `WINDOW_MAXIMIZE` | none | Maximizes the window. |
+| `m` | `WINDOW_RESTORE` | none | Restores the window from the maximized state. |
+| `h` | `SET_CURSOR_HEIGHT` | `uint8_t` height, 0 to 100 (percent) | Sets the height of the cursor as a percentage of the cell height. |
+
+None of them has return values and far2l sends all of them with ID 0. far2l sends `e` for Shift+click in its viewer and editor, and for a click on its command line that the command line itself does not use. far2l sends `h` instead of the usual `ESC [ n q` (DECSCUSR) when it knows it talks to a far2l server, at start and whenever the cursor height changes. `M` and `m` are sent by the "toggle window size" command (Alt+F9): far2l compares its current size with the result of `w` and maximizes if they differ, or restores otherwise.
+
+### 5.3. `FARTTY_INTERACT_GET_WINDOW_MAXSIZE` (`w`)
+
+Gets the maximum possible size of the window, in character cells.
+
+| In | none |
+| -- | ---- |
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Height | `int16_t` | Maximum number of rows. |
+| Width | `int16_t` | Maximum number of columns. |
+
+The far2l client sends it with a non-zero ID and **caches the first successful answer for the life of the process**. If the terminal can be resized (for example to another monitor) the cached value goes stale.
+
+### 5.4. `FARTTY_INTERACT_DESKTOP_NOTIFICATION` (`n`)
+
+Shows a desktop notification.
+
+| In | Type | Description |
+| -- | ---- | ----------- |
+| Title | `string` | Notification title, UTF-8. |
+| Text | `string` | Notification body, UTF-8. |
+
+No return values. The far2l client sends it with ID 0. far2l raises notifications when a file operation or a command run in the terminal completes, and in a few other places (for example when a search is finished); which ones is configurable in the notification options. By default notifications are shown only if the far2l window is not the active one; to know that, far2l enables focus reports (`ESC [ ? 1004 h`) and tracks `ESC [ I` and `ESC [ O`. A server that cannot show notifications should just ignore the request. If the extensions are not available, the client runs its own `notify.sh` helper on the local machine when it finds X11 or Wayland.
+
+For a text-mode program, and especially for one that runs on a remote host, this is a way to reach the desktop of the user without anything installed on the remote side.
+
+### 5.5. `FARTTY_INTERACT_SET_FKEY_TITLES` (`f`)
+
+Sets the titles of the F-keys, for hosts that have a place for them (the Touch Bar of a Mac).
+
+There are twelve entries, for F1 to F12, **popped in this order: F1 first**. The client pushes F12 first. Each entry is:
+
+| Entry part | Type | Description |
+| ---------- | ---- | ----------- |
+| State | `uint8_t` | `0`: this key has no title (clear it). Non-zero: a string follows. |
+| Title | `string` | Only when State is non-zero. The title, UTF-8. |
+
+The state is on top of the title. A server must stop when it runs out of data: fewer than twelve entries are allowed and the missing ones mean "no title" (far2l's server does exactly this). Passing no titles at all clears all of them.
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Success | `bool` (1 byte) | `1` if the host can show the titles, `0` if not. |
+
+The far2l client sends the **first** request with a non-zero ID to find out whether the host supports the feature. If the answer is `0`, or the stack is broken, it never tries again. After a positive answer all subsequent requests are sent with ID 0 and the server is not asked about it any more. That means a server that can show titles only sometimes cannot report "not now" after the first positive answer.
+
+far2l sends the titles of the key bar as it is currently shown, so they follow the state of the modifier keys: when Shift, Ctrl or Alt is pressed, the titles of the corresponding key bar are sent, and they are sent only when they have changed since the last request. A cleared entry is an entry for which the key bar has no label.
+
+### 5.6. `FARTTY_INTERACT_GET_COLOR_PALETTE` (`p`)
+
+Asks how many colors the terminal can show.
+
+| In | none |
+| -- | ---- |
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Color bits | `uint8_t` | The maximum supported color resolution in bits: `4` (16 colors), `8` (256 colors), `24` (true color). |
+| Reserved | `uint8_t` | Zero. A client has to ignore it. |
+
+The far2l client sends it with a non-zero ID, and asks every time it needs the answer; if `--norgb` is given or GNU screen is detected (`TERM=screen*`) it answers `4` by itself without asking. When the extensions are not available, far2l guesses from `COLORTERM` (`truecolor` or `24bit`: 24 bits) and `TERM` (containing `256`: 8 bits), and otherwise assumes 4 bits.
+

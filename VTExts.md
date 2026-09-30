@@ -463,3 +463,88 @@ In the far2l GUI the images are an overlay that is independent of the text: they
 
 If the terminal is not a far2l server, far2l can show images through the Kitty graphics protocol (APC `G`), if the terminal supports it. In this mode it reports only `WP_IMGCAP_RGBA` and can display RGB, RGBA and PNG; there is no attach, scroll, transform or JPEG.
 
+## 6. Events (server to client)
+
+Events are sent by the server, as `ESC _ f2l<base64> BEL` (no colon, see 4.2), only after the extensions have been activated. They have **no request ID** and no reply. The **top of the stack is the event code**, a `char`; the arguments follow in pop order. Once the extensions are activated, the far2l server sends keyboard and mouse input to the application **only** as events: they replace the usual escape sequences for keys and the mouse. (The far2l server puts the bytes of an event into the input stream of the application, in order with all other bytes it writes there, for instance the replies.) The only key that the far2l server does not forward as an event is the emergency exit: the third Ctrl+Alt+C key press in a row (any other key press between them starts the count again) is left to the terminal itself, which kills the shell.
+
+The arguments of keyboard and mouse events are the fields of the Win32 `KEY_EVENT_RECORD` and `MOUSE_EVENT_RECORD` structures, because far2l is built on the WinPort layer, which emulates the Windows console. Virtual key codes (`VK_*`), scan codes and the control key state bits are those of Windows; see `WinPort/WinCompat.h`.
+
+| Code | Name | Meaning |
+| ---- | ---- | ------- |
+| `K` / `k` | `FARTTY_INPUT_KEYDOWN` / `FARTTY_INPUT_KEYUP` | Key press / release. |
+| `C` / `c` | `FARTTY_INPUT_KEYDOWN_COMPACT` / `FARTTY_INPUT_KEYUP_COMPACT` | Compact key press / release. |
+| `M` | `FARTTY_INPUT_MOUSE` | Mouse event. |
+| `m` | `FARTTY_INPUT_MOUSE_COMPACT` | Compact mouse event. |
+| `S` | `FARTTY_INPUT_TERMINAL_SIZE` | The size of the terminal. |
+
+An event with an unknown code is reported in the log of far2l and ignored, so new events can be added in the future; the client has to ignore unknown codes, too.
+
+### 6.1. Key events: `K`, `k`
+
+| Argument | Type | `KEY_EVENT_RECORD` field |
+| -------- | ---- | ------------------------ |
+| Character | `uint32_t` | `uChar.UnicodeChar`: the character the key produced, as a Unicode code point (UTF-32), or 0. |
+| Control key state | `uint32_t` | `dwControlKeyState`. |
+| Virtual scan code | `uint16_t` | `wVirtualScanCode`. |
+| Virtual key code | `uint16_t` | `wVirtualKeyCode`. |
+| Repeat count | `uint16_t` | `wRepeatCount`. |
+
+`K` is sent for a press, `k` for a release (`bKeyDown` is true or false). Both are needed: far2l uses the key releases too.
+
+The control key state is a combination of:
+
+| Flag | Value |
+| ---- | ----- |
+| `RIGHT_ALT_PRESSED` | `0x0001` |
+| `LEFT_ALT_PRESSED` | `0x0002` |
+| `RIGHT_CTRL_PRESSED` | `0x0004` |
+| `LEFT_CTRL_PRESSED` | `0x0008` |
+| `SHIFT_PRESSED` | `0x0010` |
+| `NUMLOCK_ON` | `0x0020` |
+| `SCROLLLOCK_ON` | `0x0040` |
+| `CAPSLOCK_ON` | `0x0080` |
+| `ENHANCED_KEY` | `0x0100` |
+
+As in Windows, the left and right Shift keys cannot be told apart by the virtual key code (it is `VK_SHIFT` for both); the right Shift key has the virtual scan code 54 (`RIGHT_SHIFT_VSC` = `54`).
+
+### 6.2. Compact key events: `C`, `c`
+
+| Argument | Type | Description |
+| -------- | ---- | ----------- |
+| Character | `uint16_t` | `uChar.UnicodeChar`, only if it fits in 16 bits. |
+| Control key state | `uint16_t` | `dwControlKeyState`, only if it fits in 16 bits. |
+| Virtual key code | `uint8_t` | `wVirtualKeyCode`, only if it fits in 8 bits. |
+
+There is no scan code and no repeat count: the client takes `MapVirtualKey(vk, MAPVK_VK_TO_VSC)` as the scan code, and the repeat count is 1. Compact events may be used only when the client has negotiated `FARTTY_FEAT_COMPACT_INPUT` (5.1), and only if nothing is lost. The far2l server sends the compact form when **all** of this is true: the repeat count is at most 1, the scan code is not the one of the right Shift key, the character is below 0x10000, the control key state is below 0x10000 and the virtual key code is below 0x100. Otherwise it sends `K` or `k`. A client has to be ready to receive both forms at any time, even if it has negotiated the compact one.
+
+### 6.3. Mouse events: `M`, `m`
+
+| Argument | `M` type | `m` type | `MOUSE_EVENT_RECORD` field |
+| -------- | -------- | -------- | -------------------------- |
+| Event flags | `uint32_t` | `uint8_t` | `dwEventFlags` |
+| Control key state | `uint32_t` | `uint8_t` | `dwControlKeyState` |
+| Button state | `uint32_t` | `uint16_t` | `dwButtonState` (compact: encoded, see below) |
+| Y | `int16_t` | `int16_t` | `dwMousePosition.Y`: the row, counted from 0 |
+| X | `int16_t` | `int16_t` | `dwMousePosition.X`: the column, counted from 0 |
+
+`dwEventFlags`: `MOUSE_MOVED` `0x0001`, `DOUBLE_CLICK` `0x0002`, `MOUSE_WHEELED` `0x0004` (vertical wheel), `MOUSE_HWHEELED` `0x0008` (horizontal wheel), or `0` for a press or a release of a button. There is no separate "release" event: a release is an event where the bit of the button is no more set in `dwButtonState`.
+
+`dwButtonState`: the low bits show the buttons that are held: `FROM_LEFT_1ST_BUTTON_PRESSED` `0x0001` (left), `RIGHTMOST_BUTTON_PRESSED` `0x0002` (right), `FROM_LEFT_2ND_BUTTON_PRESSED` `0x0004` (middle), `FROM_LEFT_3RD_BUTTON_PRESSED` `0x0008`, `FROM_LEFT_4TH_BUTTON_PRESSED` `0x0010`. For wheel events the high 16 bits are a signed wheel delta; far2l looks only at its sign: positive is up (or right), negative is down (or left). The far2l TTY backend itself produces `+1` and `-1` (`0x0001` and `0xFFFF` in the high word) when it translates the wheel reports of an ordinary terminal.
+
+Compact form. The 32-bit button state is squeezed in 16 bits as `(state & 0xFF) | ((state >> 8) & 0xFF00)`, which keeps the bits 0 to 7 and the bits 16 to 23, and the client undoes it with `(v & 0xFF) | ((v & 0xFF00) << 8)`. The far2l server uses the compact form if `(state & 0xFF00FF00) == 0`, the control key state is below `0x100` and the event flags are below `0x100`. So a wheel-up event can be compact, and a wheel-down cannot: its delta has the bits 24 to 31 set.
+
+The far2l client enqueues the mouse event as it is given; the server is responsible for the coordinates, which are counted in character cells of the client's screen.
+
+### 6.4. `FARTTY_INPUT_TERMINAL_SIZE` (`S`)
+
+The size of the terminal in cells. Sent if the client asked for `FARTTY_FEAT_TERMINAL_SIZE`, at once when it asked and then whenever the size changes.
+
+| Argument | Type | Description |
+| -------- | ---- | ----------- |
+| Height | `uint16_t` | The number of rows. |
+| Width | `uint16_t` | The number of columns. |
+
+**The order is the opposite of what `FarTTY.h` says** (there it is width, then height): both far2l sides use height on top, and the server pushes width first, then height, then the code `S`.
+
+This event is useful for a client that cannot ask the kernel for the size (its standard output is not a TTY, for instance it runs in a pipe or over a socket). The far2l client uses the received size **only as a fallback**: it looks first at the TTY size of its standard output and then of its standard input; if that fails, or gives 0 by 0 (a serial console), it uses the `LINES` and `COLUMNS` environment variables, if they are between 11 and 4095, and only then the size from the event (80 by 25 until something is received). As a consequence, a client that has `LINES` and `COLUMNS` set in its environment ignores the event.
+

@@ -1,4 +1,6 @@
 # far2l terminal extensions
+as of far2l 2.9.0
+30 September 2026
 
 ## 1. What this is
 

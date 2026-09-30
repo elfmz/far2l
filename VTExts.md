@@ -342,3 +342,124 @@ A format is a `uint32_t`. The Windows numbers are used for the standard formats:
 
 far2l itself uses this for **vertical block copy** (rectangular selection in the editor): the application puts the text as `CF_UNICODETEXT` and, in addition, an entry of the format named `FAR_VerticalBlock_Unicode` with 4 zero bytes of data. The presence of that format next to the text tells the paste side that the text is a vertical block. A client can do the same with its own formats, for instance for a richer clipboard of its own kind, and the server keeps them together with the standard ones for as long as the user does not overwrite them.
 
+### 5.8. `FARTTY_INTERACT_IMAGE` (`i`)
+
+Images are displayed by the terminal in the cell grid, over the text. The client uploads the pixels (raw or PNG/JPEG), says where they go, and can later move, flip, rotate, extend, scroll or delete them by the image identity, which is a string chosen by the client. The command `i` takes a sub-command letter, and the arguments follow.
+
+| Sub-command | Name | In | Out | far2l client waits |
+| ----------- | ---- | -- | --- | ------------------ |
+| `c` | `IMAGE_CAPS` | none | capabilities, cell size | yes |
+| `s` | `IMAGE_SET` | see below | `uint8_t` success | yes |
+| `t` | `IMAGE_TRANSFORM` | see below | `uint8_t` success | yes |
+| `d` | `IMAGE_DEL` | `string` image ID | `uint8_t` success | yes |
+
+All image requests are sent with a non-zero ID. The success value is `1` or `0`.
+
+Versions of far2l before December 2025 had a sub-command `r` (rotate) and the capability `WP_IMGCAP_ROTATE` (`0x400`); they were replaced by `t` (transform) and `WP_IMGCAP_ROTMIR`, and `r` no longer exists.
+
+#### 5.8.1. `IMAGE_CAPS` (`c`)
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Cell height | `int16_t` | The height of a character cell in pixels. |
+| Cell width | `int16_t` | The width of a character cell in pixels. |
+| Capabilities | `uint64_t` | A combination of `WP_IMGCAP_*`, or `0` if images are not available. |
+
+**The order is the opposite of what the comment in `FarTTY.h` shows** (it lists capabilities, width, height). In the code both sides use the other order: the server pushes capabilities, then width, then height, and the client pops height first. The same holds for the terminal size event (section 6).
+
+| Flag | Value | Meaning |
+| ---- | ----- | ------- |
+| `WP_IMGCAP_RGBA` | `0x001` | The server supports `WP_IMG_RGB` and `WP_IMG_RGBA`. |
+| `WP_IMGCAP_PNG` | `0x002` | The server supports `WP_IMG_PNG`. |
+| `WP_IMGCAP_JPG` | `0x003` | The server supports `WP_IMG_JPG`. |
+| `WP_IMGCAP_ATTACH` | `0x100` | The server supports attaching to an existing image. |
+| `WP_IMGCAP_SCROLL` | `0x200` | The server supports scrolling of an existing image (with attaching). |
+| reserved | `0x400` | Was `WP_IMGCAP_ROTATE` in versions before December 2025; do not use it. |
+| `WP_IMGCAP_ROTMIR` | `0x800` | The server supports rotation and mirroring of an existing image. |
+
+`WP_IMGCAP_JPG` is **not a separate bit**: `0x003` is `WP_IMGCAP_RGBA | WP_IMGCAP_PNG`. A test of the form `caps & WP_IMGCAP_JPG` is true when only RGBA or only PNG is reported; to check for JPEG exactly, compare `(caps & 3) == 3`. far2l does not use JPEG (its image viewer needs `WP_IMGCAP_RGBA`, and the optional `ATTACH`, `SCROLL`, `ROTMIR`) and the wx GUI of far2l reports all of these bits at once.
+
+The client needs a non-zero cell size to be able to place images in pixels; far2l's image viewer refuses to work with a zero size.
+
+#### 5.8.2. `IMAGE_SET` (`s`)
+
+Displays a new image, or changes an existing one.
+
+| In | Type | Description |
+| -- | ---- | ----------- |
+| Image ID | `string` | The identity of the image. Setting an existing identity replaces the image (or modifies it, with the attach flags). |
+| Flags | `uint64_t` | The format, the attach mode and other options: `WP_IMG_*`, see below. |
+| Left | `int16_t` | Cell column of the left edge, or `-1`. |
+| Top | `int16_t` | Cell row of the top edge, or `-1`. |
+| Right | `int16_t` | Cell column of the right edge, or an extra pixel offset, or `-1`. |
+| Bottom | `int16_t` | Cell row of the bottom edge, or an extra pixel offset, or `-1`. |
+| Width | `uint32_t` | Width in pixels for RGB and RGBA, the size in bytes of the encoded data for PNG and JPEG. |
+| Height | `uint32_t` | Height in pixels for RGB and RGBA, `1` for PNG and JPEG. |
+| Data | raw | `Width * Height * 3` bytes for RGB, `Width * Height * 4` bytes for RGBA (rows top to bottom, bytes `R G B [A]` without padding), `Width` bytes for PNG and JPEG. |
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Success | `uint8_t` | `1` if the image was loaded and is displayed, `0` if not. |
+
+The fields `Left`, `Top`, `Right` and `Bottom` are `int16_t` (`-1` is `0xFFFF`). `Width` and `Height` are popped in this order, each one is a `uint32_t`. A server with `Width` or `Height` equal to zero answers `0` without reading the rest. An unknown format in the flags makes the far2l server fail the request with an empty reply.
+
+**Flags.**
+
+| Flag | Value | Meaning |
+| ---- | ----- | ------- |
+| `WP_IMG_RGBA` | `0` | Pixels `R G B A`. Needs `WP_IMGCAP_RGBA`. |
+| `WP_IMG_RGB` | `1` | Pixels `R G B`. Needs `WP_IMGCAP_RGBA`. |
+| `WP_IMG_PNG` | `2` | A PNG file. Needs `WP_IMGCAP_PNG`. |
+| `WP_IMG_JPG` | `3` | A JPEG file. Needs `WP_IMGCAP_JPG`. |
+| `WP_IMG_ATTACH_LEFT` | `0x010000` | Attach the given image at the left edge of the existing one. Needs `WP_IMGCAP_ATTACH`. |
+| `WP_IMG_ATTACH_RIGHT` | `0x020000` | Attach at the right edge. |
+| `WP_IMG_ATTACH_TOP` | `0x030000` | Attach at the top edge. |
+| `WP_IMG_ATTACH_BOTTOM` | `0x040000` | Attach at the bottom edge. |
+| `WP_IMG_SCROLL` | `0x080000` | With an attach flag: the image keeps its size; the existing content moves to the side opposite to the edge where the new part was attached, so that the new part fits in. Needs `WP_IMGCAP_SCROLL`. |
+| `WP_IMG_PIXEL_OFFSET` | `0x100000` | The image is not scaled; `Right` and `Bottom` are pixel offsets, see below. |
+
+The format is the low 16 bits (mask `WP_IMG_MASK_FMT` = `0x00FFFF`), which is **a number, not a set of bits**. The attach mode is the value in bits 16 to 18 (mask `WP_IMG_MASK_ATTACH` = `0x070000`), which is also a number: `1` to `4` shifted left by 16; the four values are **not** independent bits. `WP_IMG_SCROLL` and `WP_IMG_PIXEL_OFFSET` are ordinary bits.
+
+**Position and size on the screen.** If the four numbers are given and `WP_IMG_PIXEL_OFFSET` is not set, the image is stretched over the cells from (`Left`, `Top`) to (`Right`, `Bottom`), inclusive. With `WP_IMG_PIXEL_OFFSET`, the image is not scaled: it is drawn at its own size at the top-left corner of the cell (`Left`, `Top`), moved by `Right` pixels to the right and `Bottom` pixels down (if these are greater than zero). A value of `-1` in `Right` or `Bottom` means the image is drawn at its own size. For an existing image `-1` in any field means "keep the current value". For a new image the far2l GUI backends use the cursor position if `Left` and `Top` are `-1`; the column is the current one, and the row is chosen so that the image ends at the current cursor row (the cursor row minus the number of rows the image takes, but not less than 0). Clients that care should always give `Left` and `Top` explicitly.
+
+**Attaching.** Attaching is defined only for an existing image with the same identity. In the far2l GUI, with `ATTACH_LEFT` or `ATTACH_RIGHT` the new piece has to have the same height in pixels as the existing image; with `ATTACH_TOP` or `ATTACH_BOTTOM` the same width; otherwise the request fails. Without `WP_IMG_SCROLL` the image grows by the size of the piece; with it the size is kept and the content moves. This is how far2l's image viewer scrolls a large image without sending it again. Through the far2l extensions an "empty" attach (a request with zero size used to only move an image) is not possible because of the zero size rule above; use `IMAGE_TRANSFORM` to move.
+
+#### 5.8.3. `IMAGE_TRANSFORM` (`t`)
+
+Moves, mirrors or rotates an existing image.
+
+| In | Type | Description |
+| -- | ---- | ----------- |
+| Image ID | `string` | The identity of the image. |
+| Left | `int16_t` | As in `IMAGE_SET`; `-1` keeps the current value. |
+| Top | `int16_t` | |
+| Right | `int16_t` | |
+| Bottom | `int16_t` | |
+| Transform | `uint16_t` | A combination of `WP_IMGTF_*`. |
+
+| Out | Type | Description |
+| --- | ---- | ----------- |
+| Success | `uint8_t` | `1` if the image was changed, `0` if not (for instance, there is no such image). |
+
+| Flag | Value | Meaning |
+| ---- | ----- | ------- |
+| `WP_IMGTF_ROTATE0` | `0x00` | No rotation (so the request can be used only to move the image). |
+| `WP_IMGTF_ROTATE90` | `0x01` | Rotate by 90 degrees clockwise. |
+| `WP_IMGTF_ROTATE180` | `0x02` | Rotate by 180 degrees. |
+| `WP_IMGTF_ROTATE270` | `0x03` | Rotate by 270 degrees clockwise. |
+| `WP_IMGTF_MASK_ROTATE` | `0x03` | The mask of the rotation value. |
+| `WP_IMGTF_MIRROR_H` | `0x04` | Flip horizontally. |
+| `WP_IMGTF_MIRROR_V` | `0x08` | Flip vertically. |
+
+The rotation is a number in the two low bits, not a set of flags. Mirroring is applied before rotation. Rotation and mirroring need `WP_IMGCAP_ROTMIR`; moving does not.
+
+#### 5.8.4. `IMAGE_DEL` (`d`)
+
+Removes the image. The success value is `0` if there is no such image.
+
+#### 5.8.5. Images and the screen
+
+In the far2l GUI the images are an overlay that is independent of the text: they stay on the screen until they are deleted, and they do not follow the text that is changed under them. A client has to keep track of the images that it displayed and delete them; far2l deletes its image when its image viewer is closed.
+
+If the terminal is not a far2l server, far2l can show images through the Kitty graphics protocol (APC `G`), if the terminal supports it. In this mode it reports only `WP_IMGCAP_RGBA` and can display RGB, RGBA and PNG; there is no attach, scroll, transform or JPEG.
+

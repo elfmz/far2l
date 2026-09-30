@@ -19,6 +19,36 @@ The extensions cover:
 
 The protocol is also how far2l talks to itself: far2l running in TTY mode inside the far2l built-in terminal (Ctrl+O, and NetRocks remote shells) uses exactly these sequences. This document is written from the source code (as of elfmz/far2l `master`, see the list of sources in section 9), including its quirks, and "far2l" below means what the code does, not what the comments in the header say. Where the two disagree this is stated explicitly.
 
+## 2. What it gives over the existing solutions
+
+A terminal application can use the escape sequences that other terminals provide: OSC 52 for the clipboard, OSC 9, OSC 99 and OSC 777 for notifications, sixel and the Kitty graphics protocol for pictures, the Kitty keyboard protocol and the `win32-input-mode` for keys. The far2l extensions are one uniform channel that covers all of these and several things that have no standard equivalent, with requests that get replies. Specifically:
+
+1. **Safe clipboard reading.** OSC 52 can ask the terminal for the clipboard (`ESC ] 52 ; c ; ?`), which lets any program that can write to the terminal, including a remote one or one that has just `cat`-ed a hostile file, read what the user copied. Because of that most terminals turn it off or ask every time, and far2l's terminal ignores it. The far2l clipboard requires that the client be authorized by the user and hands out data only within a few seconds after the user's own paste gesture (Ctrl+V, Shift+Insert, middle button), so a paste works without a question and a silent theft does not (5.7.1, 5.7.2).
+2. **Desktop notifications** through one request with a title and a text in UTF-8, the same in a local terminal and over SSH; the other conventions (OSC 9, OSC 777, OSC 99) are mutually incompatible and differently supported (5.4).
+3. **Ad-hoc copy to the clipboard on demand.** An application that reads the mouse can ask the terminal to turn the mouse press that is in progress into an ordinary text selection, which is then copied to the clipboard. The application decides by itself on the gesture (far2l does it for Shift+click in its viewer and editor, and for a click on its command line), instead of depending on the modifier that a particular terminal uses to bypass the mouse reporting of applications (commonly Shift) (5.2).
+4. **The maximum possible size of the window**, which is what the application needs to offer "maximize" (Alt+F9 in far2l), plus requests to maximize and restore the window (5.2, 5.3).
+5. **Titles of the F-keys** for hosts that have a place for them: far2l sends the labels of its key bar for the current state of Shift, Ctrl and Alt, and they are shown on the Touch Bar of a Mac (5.5).
+6. **Images** that are simpler than sixel and lighter than the Kitty graphics protocol. In contrast to sixel, which paints a palette-based bitmap into the screen contents, a far2l image has a name chosen by the application, is true color (RGB, RGBA) or an ordinary PNG or JPEG file, and can be moved, mirrored, rotated, extended and scrolled on the terminal side and deleted by its name. The whole protocol is four sub-commands; it has no shared-memory transport, no chunked transmission, no animation and no layers, so the protocol stays small (5.8).
+7. **Several clipboard formats at the same time, including the application's own.** OSC 52 carries text. Here the clipboard is a set of formats: plain text, HTML, and formats that an application registers by name, such as the format far2l uses to keep the fact that a text is a vertical block. In addition, the client can cache the data by an ID and skip a repeated transfer, and large data can be sent in pieces that are cancelable and do not block the interface (5.7.3, 5.7.5, 5.7.6).
+8. **Complete input events.** Key presses and releases with the virtual key code, scan code, the exact state of the modifiers (left and right Ctrl and Alt, lock keys), and mouse events with five buttons, both wheels and the double-click flag, in the form that far2l uses internally, optionally in a compact form. Besides that, terminals that run the application over a pipe can tell it the terminal size (section 6).
+9. **Questions to the terminal** with answers: how many colors it can show (4, 8 or 24 bits; instead of guessing from `TERM` and `COLORTERM`), its cell size in pixels, the cursor height. Because the answer comes from the terminal and not from the environment of the application, it stays correct over SSH and in nested terminals (5.6, 5.8.1).
+10. **Safe to probe.** A terminal that does not know the extensions ignores the APC strings (or, at worst, prints them, which far2l erases), and one additional standard query (`ESC [ 5 n`) tells the application at once that there is nobody to answer, so no timeout has to be waited for (4.5).
+
+All of this is optional and piecemeal: a terminal can implement the clipboard and the keyboard and leave the rest, and the application keeps working.
+
+## 3. Implementations
+
+| Implementation | Role | What it has |
+| -------------- | ---- | ----------- |
+| [far2l](https://github.com/elfmz/far2l) | client and server (the reference) | Everything in this document. The client is the TTY backend (`far2l --tty`), the server is the built-in terminal (Ctrl+O and the remote shells of NetRocks). |
+| [f4](https://github.com/unxed/f4) (with its libraries [vtui](https://github.com/unxed/vtui) and [vtinput](https://github.com/unxed/vtinput)) | client and server | Server: the built-in terminal; clipboard with chunked upload and an authorization dialog, images (RGB, RGBA), notifications, terminal size event, the drop proposal (section 11). Client: all input events, the clipboard (text), images. |
+| [Turbo Vision for C++ (tvision)](https://github.com/magiblot/tvision), and the applications built on it, such as [turbo](https://github.com/magiblot/turbo) | client | Key press and mouse events; clipboard text, get and set. |
+| [putty4far2l](https://github.com/ivanshatsky/putty4far2l) (PuTTY 0.78) and [its older fork](https://github.com/unxed/putty4far2l) (PuTTY 0.76) | server (Windows) | Key events; the clipboard, through the clipboard of Windows (text and registered formats); the color depth (24 bits); cursor height and notifications in the older fork. |
+| [KiTTY](https://github.com/cyd01/KiTTY) (a PuTTY fork; the support is enabled by the `MOD_FAR2L` build option) | server (Windows) | Key events; the clipboard, through the clipboard of Windows (text and registered formats); the color depth (24 bits). |
+| [thruPTY](https://github.com/Dazzar56/thruPTY) | server | The terminal part of f4 ported to a GPU-accelerated terminal: clipboard (text), window size, notifications, terminal size event; F-key titles and color depth are answered; images are refused. |
+
+The roles are those of section 4.1: a *client* is an application that runs in the terminal, a *server* is the terminal. Notes on each of them, and on what to look out for, are in section 10, and the links to their sources are in section 9.
+
 ## 4. Protocol basics
 
 ### 4.1. Roles
@@ -850,3 +880,76 @@ For a **client** (an application):
 5. Use a stable client ID (store it in a file). A new ID at each start makes the terminal ask the user again each time. The client ID has 32 to 256 characters of `0`-`9`, `a`-`z`, `-`, `_`.
 6. Never assume that a missing reply means a failure: a clipboard read without the user's gesture answers "no data".
 
+## 9. Links to implementations
+
+The state of the code in the list below was checked in September 2026. Permanent links point to the commits that were examined.
+
+**far2l** (the reference implementation)
+
+- The protocol: [`WinPort/FarTTY.h`](https://github.com/elfmz/far2l/blob/master/WinPort/FarTTY.h), [`WinPort/WinCompat.h`](https://github.com/elfmz/far2l/blob/master/WinPort/WinCompat.h) (image and key constants).
+- The stack serializer: [`utils/include/StackSerializer.h`](https://github.com/elfmz/far2l/blob/master/utils/include/StackSerializer.h), [`utils/src/StackSerializer.cpp`](https://github.com/elfmz/far2l/blob/master/utils/src/StackSerializer.cpp), [`utils/src/base64.cpp`](https://github.com/elfmz/far2l/blob/master/utils/src/base64.cpp).
+- Client (the TTY backend): [`WinPort/src/Backend/TTY/`](https://github.com/elfmz/far2l/tree/master/WinPort/src/Backend/TTY): `TTYCaps.cpp` (detection), `TTYBackend.cpp`, `TTYOutput.cpp`, `TTYInputSequenceParser.cpp`, `TTYFar2lClipboardBackend.cpp`.
+- Server (the built-in terminal): [`far2l/src/vt/VTFar2lExtensios.cpp`](https://github.com/elfmz/far2l/blob/master/far2l/src/vt/VTFar2lExtensios.cpp), [`far2l/src/vt/vtshell.cpp`](https://github.com/elfmz/far2l/blob/master/far2l/src/vt/vtshell.cpp) (`OnApplicationProtocolCommand`).
+- The reference of how images are drawn: [`WinPort/src/Backend/WX/wxConsoleImages.cpp`](https://github.com/elfmz/far2l/blob/master/WinPort/src/Backend/WX/wxConsoleImages.cpp).
+
+**f4** (client and server), Go
+
+- Repository: <https://github.com/unxed/f4>; the terminal side is in [`internal/terminal/`](https://github.com/unxed/f4/tree/70586aaa3d9ab954c180a53d7984988df481ac7a/internal/terminal): [`view.go`](https://github.com/unxed/f4/blob/70586aaa3d9ab954c180a53d7984988df481ac7a/internal/terminal/view.go) (`HandleFar2lAPC`, `ProcessFar2lInteract`), [`far2l_image.go`](https://github.com/unxed/f4/blob/70586aaa3d9ab954c180a53d7984988df481ac7a/internal/terminal/far2l_image.go) (images).
+- The application side: <https://github.com/unxed/vtui> ([`far2l_extensions.go`](https://github.com/unxed/vtui/blob/4521c325683770a21d8acee3b93809b41023bda6/far2l_extensions.go): clipboard; [`graphics_far2l.go`](https://github.com/unxed/vtui/blob/4521c325683770a21d8acee3b93809b41023bda6/graphics_far2l.go): images), <https://github.com/unxed/vtinput> ([`terminal.go`](https://github.com/unxed/vtinput/blob/63fc0dd897598de3ae3b13835a6c8bb8592a9ce1/terminal.go): activation; [`parser.go`](https://github.com/unxed/vtinput/blob/63fc0dd897598de3ae3b13835a6c8bb8592a9ce1/parser.go): events; [`far2l_stack.go`](https://github.com/unxed/vtinput/blob/63fc0dd897598de3ae3b13835a6c8bb8592a9ce1/far2l_stack.go): the stack serializer in Go).
+- The drop proposal (section 11): [`docs/FAR2L_DND.md`](https://github.com/unxed/f4/blob/70586aaa3d9ab954c180a53d7984988df481ac7a/docs/FAR2L_DND.md).
+
+**Turbo Vision for C++ and turbo** (client), C++
+
+- <https://github.com/magiblot/tvision>: [`source/platform/far2l.cpp`](https://github.com/magiblot/tvision/blob/b4831e2ca16652db327fb7cc964f1c8c2d512524/source/platform/far2l.cpp), [`include/tvision/internal/far2l.h`](https://github.com/magiblot/tvision/blob/b4831e2ca16652db327fb7cc964f1c8c2d512524/include/tvision/internal/far2l.h), its use in [`source/platform/termio.cpp`](https://github.com/magiblot/tvision/blob/b4831e2ca16652db327fb7cc964f1c8c2d512524/source/platform/termio.cpp); the README lists far2l among the supported terminal extensions.
+- <https://github.com/magiblot/turbo> has no code of its own for it: it includes tvision as the submodule `deps/tvision` and gets the support from there.
+
+**putty4far2l** (server), C, Windows
+
+- <https://github.com/ivanshatsky/putty4far2l>, branch `far2l`, based on PuTTY 0.78; releases there. Code: [`terminal/terminal.c`](https://github.com/ivanshatsky/putty4far2l/blob/9d2ec04f84a912dc96be798e47faaf419420cfd3/terminal/terminal.c) (APC handling), [`windows/window.c`](https://github.com/ivanshatsky/putty4far2l/blob/9d2ec04f84a912dc96be798e47faaf419420cfd3/windows/window.c) (key events).
+- <https://github.com/unxed/putty4far2l>, based on PuTTY 0.76; in December 2024 all changes of the repository above were imported into it. Code: [`terminal/terminal.c`](https://github.com/unxed/putty4far2l/blob/1816bdba0554f9f4465b92bc0df95fb845ff4170/terminal/terminal.c).
+
+**KiTTY** (server), C, Windows
+
+- <https://github.com/cyd01/KiTTY>: built with `MOD_FAR2L` (enabled in `0.76b_My_PuTTY/windows/MAKEFILE.MINGW`); code in [`0.76b_My_PuTTY/terminal/terminal.c`](https://github.com/cyd01/KiTTY/blob/75fa2abcd220c17249ff7252f8d5224137001f2d/0.76b_My_PuTTY/terminal/terminal.c) and [`0.76b_My_PuTTY/windows/window.c`](https://github.com/cyd01/KiTTY/blob/75fa2abcd220c17249ff7252f8d5224137001f2d/0.76b_My_PuTTY/windows/window.c). The request to add the support and the first description of the protocol are in [KiTTY issue 74](https://github.com/cyd01/KiTTY/issues/74).
+
+**thruPTY** (server), Go
+
+- <https://github.com/Dazzar56/thruPTY>: [`far2l.go`](https://github.com/Dazzar56/thruPTY/blob/758410d1633ba01898cbe8149904b3180429ca96/far2l.go), ported from the terminal of f4.
+
+**Other discussions**
+
+- [hpjansson/chafa issue 311](https://github.com/hpjansson/chafa/issues/311): a request to support the far2l image protocol in the chafa image viewer, with a test program.
+
+## 10. Experience of other implementations
+
+What follows is not a part of the specification. It is what was seen in the sources of the implementations listed above, to help the next one and, where it is useful, to explain what the protocol expects.
+
+**The prefixes are easy to copy wrongly.** The comment in `FarTTY.h` writes the events as `"\x1b_f2l:"`. Code that follows it literally sends far2l a payload that decodes to nothing; the event is lost and, for the size event, the client drops its whole input buffer (8.2). The reply has no colon either. The colon belongs to the request only (4.2). The same header lists the `IMAGE_CAPS` values and the size event in an order that is opposite to what the code does, so the order of the code has to be followed (8.1). More than one implementation has been caught by these; the examples in section 7 were produced by the code of far2l and can be used to test a new one.
+
+**ST or BEL.** far2l itself ends what it writes with BEL (and the activation with ST), and accepts both. Other terminal emulators are less tolerant: BEL is a widely accepted terminator of OSC, but far from all terminals accept it for APC, and a standard-conforming ST is the safe choice (this was pointed out in the discussion of the chafa issue, section 9). Turbo Vision and vtinput send ST for everything they send, far2l accepts it. The opposite direction needs care: the input parser of Turbo Vision reads an incoming event up to BEL only, so a terminal should end events and replies with BEL, as far2l does. In short, a client should send ST and a server should send BEL.
+
+**Request pipelining.** The TTY backend of far2l waits for the reply to `CLIP_OPEN` before it goes on. Turbo Vision sends `CLIP_OPEN`, `CLIP_GETDATA` and `CLIP_CLOSE` at once, with no reply requested for the first and the last (ID 0) and one fixed ID, `0xA0`, for the read, and puts the text into the application when that reply arrives. It works, because a server executes the requests in the order they come and the read is refused until the user has authorized the client, and it saves two round trips. The price is that the client does not learn whether the open was permitted. Turbo Vision also sends a NUL-terminated string in `CLIP_SETDATA` and removes the NUL on read; the far2l server handles both.
+
+**The client ID.** A client ID has to be random, stay the same between runs, and not be known to others. Turbo Vision builds it from the current time: each start of the application is a new client for the terminal, which asks the user again each time. A constant that is compiled into the program is also no good: anybody can read it, and the authorization that the user gave to that ID is then given to everybody who uses the same constant. far2l generates 64 characters from the host name and a random string and keeps them in `~/.config/far2l/tty_clipboard/me`.
+
+**Terminals that keep little state.** The Windows PuTTY forks (putty4far2l, KiTTY) do not store the client ID. They ask a single question, whether the far2l clipboard synchronization is allowed, which is governed by a setting of the session, and they forget the answer when the extensions are activated again (that is, each time far2l is started). They give the answer `-1` ("use your own clipboard") to a client that was refused. Once the client is allowed in, they work with the clipboard of Windows directly: `CF_TEXT` and `CF_UNICODETEXT` (converted between UTF-8, UTF-32 and UTF-16), and registered formats, which are registered in Windows by name (`CLIP_REGISTER_FORMAT`) and given out and accepted as opaque data.
+
+**Limits of the size of a sequence.** far2l has no limit on the length of an APC string, and its TTY backend sends the whole clipboard in one `CLIP_SETDATA` if the server did not report `FARTTY_FEATCLIP_CHUNKED_SET`. A terminal that holds the sequence in a fixed buffer has to report that flag, which makes far2l send pieces of 16 KiB, and has to refuse giving out data that do not fit into its buffer, answering with the size 0 (there is no chunked download). The PuTTY forks have a limit of about 680 KB for what they accept, and KiTTY, which has a buffer of 1 MiB, shows a message and exits when it receives a larger sequence, because the request ID would be lost with the rest of the data.
+
+**Stub replies are taken literally.** The PuTTY forks answer the requests that they do not implement with four zero bytes. For `SET_FKEY_TITLES` this is a correct "not supported" (the success flag is 0). For `GET_WINDOW_MAXSIZE` it is 0 by 0, which far2l takes as the answer and keeps for the whole run. The better answer to a request that is not supported is an empty reply (the ID alone), which the client notices as missing values.
+
+**The first answer to `f` decides.** far2l asks about F-key titles once (5.5). A terminal that answered "yes" is not asked again, whatever it does with the titles afterwards; f4 and thruPTY answer "yes" and ignore the titles.
+
+**Images and the Kitty fallback.** far2l that runs inside a terminal that acknowledged `far2l1` uses the far2l image requests and does not try the Kitty graphics protocol, so a terminal that acknowledges the extensions has to answer the image requests, at least with `0` capabilities, and not leave them unanswered, otherwise far2l does not show pictures at all. f4 reports only `WP_IMGCAP_RGBA` and answers `0` to `IMAGE_TRANSFORM`, and far2l then resends whole pictures instead of rotating and scrolling them, which is slower but works. f4 handles `WP_IMG_PIXEL_OFFSET` (the picture is not scaled, and the right and bottom values are pixel shifts), which is the usual case for the image viewer of far2l, and a right-hand value taken as a column there gives a picture of a negative width. thruPTY answers `0` to all image requests.
+
+**Clipboard formats in other terminals.** f4 and thruPTY treat any format as text. `CLIP_ISAVAIL` always says "yes", `CLIP_REGISTER_FORMAT` always gives `0xC000`, the data IDs are not reported, and the clipboard that is given out is cut to 64 KiB. That is enough to paste text into far2l; the vertical block mark and HTML are then not preserved.
+
+**Handshake interference.** An application or a library that probes the terminal with other queries may swallow the `far2lok` acknowledgement. f4 handles it by announcing again when the acknowledgement was among the swallowed bytes, which is harmless (4.5).
+
+**Order of replies.** f4 executes each request in its own goroutine, so in principle two replies can be sent in a different order than their requests arrived. far2l matches the replies by ID and does not depend on the order, but a client that does should not rely on it with such a terminal.
+
+**The image protocol and chafa.** The issue [hpjansson/chafa#311](https://github.com/hpjansson/chafa/issues/311) asks for support for the far2l image protocol in chafa. Since November 2025 far2l also understands the Kitty graphics protocol, and chafa works in far2l through it; the image part of the far2l extensions described here has been stable since December 2025.
+
+## 11. Related proposal: drag and drop
+
+A proposal to receive **drag and drop** of files in a terminal over this same channel is open as pull request [elfmz/far2l#3647](https://github.com/elfmz/far2l/pull/3647) (the document `WinPort/DND.md`, related to issue #555). It adds four sub-commands (`BIND`, `LIST`, `READ`, `CLOSE`) and one event, `INPUT_DND`: the terminal announces a drop by an *offer*; the application enumerates it and reads the files only in the pieces that it asks for, so it works the same on a local machine and over SSH. Nothing in it is implemented in far2l yet; the letters `d` for the request and `D` for the event are proposed and not allocated, so no other use should be made of them. Both sides are implemented in f4, see section 9. It is not a part of the protocol described in this document until it is merged.

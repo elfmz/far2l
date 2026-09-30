@@ -782,3 +782,71 @@ The terminal is 80 columns by 25 rows. Top to bottom: code `S`, height `25`, wid
 Stack bytes, bottom to top: `50 00 19 00 53`
 
 
+## 8. How far2l really behaves: details and oddities
+
+The text above describes the protocol; this section collects what a developer of the other side has to know about the behavior of far2l, including the places where the code differs from the comments in `FarTTY.h`. Everything here was checked in the source.
+
+### 8.1. Differences between `FarTTY.h` and the code
+
+The code is authoritative; these are the places where the header is misleading.
+
+| Place | What the header says | What the code does |
+| ----- | -------------------- | ------------------ |
+| Events | `ESC _ f2l:` + Base64 | `ESC _ f2l` + Base64, no colon (4.2). |
+| Replies | not shown | `ESC _ far2l` + Base64, no colon (4.2). |
+| `IMAGE_CAPS` reply | capabilities, then cell width, then cell height | Popped as: cell height, cell width, capabilities (5.8.1). |
+| `FARTTY_INPUT_TERMINAL_SIZE` | width, then height | Popped as: height, then width (6.4). |
+| `CLIP_GETDATAID` (overview near the top of the header) | "(STATUS, ID of remote data)" | The ID alone (5.7). |
+| `SET_FKEY_TITLES` | "12 elements" | Popped F1 first; fewer than 12 are accepted by the server (5.5). |
+| Clipboard data ID | "OPTIONAL", "only if server reported `FARTTY_FEATCLIP_DATA_ID`" | The far2l server always includes the ID in `CLIP_GETDATA` replies, and in `CLIP_SETDATA` replies when the status is `1`, even if it did not report `FARTTY_FEATCLIP_DATA_ID` (never a problem, because the client ignores the extra bytes). |
+| `WP_IMGCAP_JPG` | a capability | It is `0x003`, both low bits, so it overlaps `WP_IMGCAP_RGBA` and `WP_IMGCAP_PNG` (5.8.1). |
+| `FARTTY_FEAT_*` | 32-bit constants | They are sent as a `uint64_t`. |
+
+### 8.2. Client (TTY backend)
+
+- **Activation and exit.** `ESC _ far2l1 ESC \` is written when the client starts, together with the `ESC [ 5 n` probe (4.5). `ESC _ far2l0 BEL` is written on exit, on `SIGTSTP`, `SIGHUP` and `SIGTERM`, and when the client is detached from the terminal to be revived later. After resuming, and after a revive in another terminal, the client probes again, so the server can see `far2l1` repeatedly.
+- **Flow control.** The client queues the requests and a writer thread sends them. The calls that need an answer block the calling thread until the reply arrives or the input breaks (an exception in the input parser, a read error, a lost connection), with no timeout. Up to 255 requests can wait at once.
+- **Malformed input.** Events and replies whose stack cannot be popped are dealt with differently depending on the place. A broken key or mouse event is dropped and logged. An event with an empty stack (the event code is missing), a truncated size event and a reply without an ID throw out of the parser: the client then discards its whole input buffer and **fails all requests that are waiting for replies** (they see an empty stack). A server must not send such events; in particular the colon in `f2l:` makes the payload decode as empty.
+- **Unknown codes.** An event with an unknown code is logged and ignored.
+- **Strings.** Strings are not validated; the client converts them with its own multibyte routines (UTF-8).
+- **Focus.** Notifications depend on focus reports (`ESC [ I`, `ESC [ O`) that far2l asks for with `ESC [ ? 1004 h`. While the extensions are active, far2l assumes that its window is **not** focused until the first focus report arrives, so that notifications work best-effort with servers that do not send focus reports.
+- **Startup sequences.** Besides the activation, a far2l client switches on the alternate screen (`?47`, `?1049`), bracketed paste (`?2004`), focus reports (`?1004`), the `win32-input-mode` (`?9001`), the iTerm2 input mode (`?1337`), the Kitty keyboard protocol (`CSI = 15 ; 1 u`) and the mouse modes (`?1000`, `?1001`, `?1002`, `?1003`, `?1006`); the `--nodetect=w`, `--nodetect=a` and `--nodetect=k` options skip `?9001`, `?1337` and the Kitty mode. A far2l server that delivers input as events can ignore them.
+- **Clipboard.** Once any `CLIP_OPEN` has been answered with `-1`, the client uses its local file clipboard for the rest of the process, even if the user changes their mind in the terminal. A `CLIP_OPEN` answered with `0` is retried on the next use.
+- **Window size.** The answer to `w` is cached for the life of the process, including an answer of `0` by `0`; a reply that the server gave "to mean unsupported" by two zero numbers is taken literally.
+- **F-key titles.** After the first answer (see 5.5) the support status is fixed.
+
+### 8.3. Server (far2l built-in terminal)
+
+- The server accepts requests only between `far2l1` and `far2l0`, and only from the top-level input of the terminal; `far2l:` with an empty payload is ignored. Only the first character after `far2l` decides what the string is, so the four forms are `far2l1`, `far2l0`, `far2l:...` and `far2l#...`; other characters after `far2l1` or `far2l0` are ignored.
+- Requests are executed in the order in which they arrive, one at a time, on the thread that parses the output of the application, so the parsing of further output waits for each request. A slow request (the clipboard authorization dialog) therefore blocks the terminal until the user has decided; the client waits for the reply.
+- Replies are written to the input of the application, in order with the keyboard and mouse events.
+- Exceptions inside a request (a stack that is too short, an unknown image format) are caught: the stack is cleared and a reply with only the ID is sent if the ID was not zero.
+- The clipboard read check (5.7.2) uses a 32-bit millisecond tick counter that starts at zero on boot. The "last allowed" time of a new activation starts at zero, so if the counter is below 5000 (within 5 seconds of the boot of the host, and again each time the counter wraps around, about every 49.7 days) a read is permitted without a paste gesture. The counter is compared with wrap-around taken into account.
+- When the clipboard is not open, `CLIP_GETDATA` answers with the size `0xFFFFFFFF`, and the four bytes of the format the client sent stay in the reply stack under it (the client ignores them).
+- If the clipboard is open but a paste gesture is absent, `CLIP_GETDATA` answers size 0 and a data ID 0, so the application cannot tell a refusal from an empty clipboard.
+- `CLIP_ISAVAIL` does not check authorization, so any client can find out which formats are on the clipboard.
+- When the extensions are deactivated (`far2l0`, or the end of the command that was run in the terminal), the server closes every clipboard it had open and clears the F-key titles. The host identity (`far2l#`) is forgotten at the start and at the end of each command.
+- The clipboard operations are forwarded to the clipboard of the host of the terminal (`OpenClipboard`, `EmptyClipboard`, `SetClipboardData`, `GetClipboardData`, `IsClipboardFormatAvailable`, `RegisterClipboardFormat` of the WinPort layer).
+- OSC 52: the far2l terminal also understands the OSC 52 write; it asks the user (allow once, allow for this command, or block) and ignores the read form, for security reasons.
+
+### 8.4. Advice to implementers
+
+For a **server** (a terminal):
+
+1. Reply `ESC _ far2lok BEL` to `far2l1` (BEL, and before the answer to `ESC [ 5 n`) and accept both BEL and ST as terminators of everything. Do not reply to `far2l0`.
+2. Reply to **every** request with a non-zero ID, even to those that you do not implement, at least with the ID alone. Clients that wait without a timeout (far2l) would otherwise hang. For requests with ID 0 never reply.
+3. Answer `CLIP_OPEN` with `-1` or `0` if you do not want to give out your clipboard; do not implement what you cannot do safely. Report `FARTTY_FEATCLIP_CHUNKED_SET` if you have a limit on the length of an escape sequence, so that the client sends its data in pieces of 16 KiB. The reading of the clipboard can not be split, so answer with size 0 when the data is too large for you.
+4. Protect reading as far2l does (5.7.2), or by another method of your own that needs the user's action.
+5. Send events only after the client asked for the compact ones and only when nothing is lost (6.2, 6.3).
+6. Answer `SET_FKEY_TITLES` with `0` (not supported) rather than with a stub of zero bytes; answer `GET_WINDOW_MAXSIZE` with the real values, or with the current size if you do not know better, but remember that far2l caches the answer.
+7. Put `far2l#<identity>` handling in if the terminal runs commands of several remote hosts.
+
+For a **client** (an application):
+
+1. Send `ESC _ far2l1 ESC \` followed by `ESC [ 5 n`, and read until the reply to the DSR; accept `far2lok` with both terminators. If the acknowledgement was consumed by some other code that reads the input (for instance another terminal probe), announce again: it is safe, the server answers every time.
+2. Send `ESC _ far2l0 ESC \` (or BEL) on exit.
+3. Put a timeout on replies. far2l has none, but another terminal may fail to answer a request, and nothing in the protocol tells you.
+4. Prefer the ST terminator for what you send. BEL is accepted by far2l and by all implementations known to the authors of this document, but it is not a standard terminator of APC in other terminals and multiplexers.
+5. Use a stable client ID (store it in a file). A new ID at each start makes the terminal ask the user again each time. The client ID has 32 to 256 characters of `0`-`9`, `a`-`z`, `-`, `_`.
+6. Never assume that a missing reply means a failure: a clipboard read without the user's gesture answers "no data".
+

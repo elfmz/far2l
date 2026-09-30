@@ -548,3 +548,237 @@ The size of the terminal in cells. Sent if the client asked for `FARTTY_FEAT_TER
 
 This event is useful for a client that cannot ask the kernel for the size (its standard output is not a TTY, for instance it runs in a pipe or over a socket). The far2l client uses the received size **only as a fallback**: it looks first at the TTY size of its standard output and then of its standard input; if that fails, or gives 0 by 0 (a serial console), it uses the `LINES` and `COLUMNS` environment variables, if they are between 11 and 4095, and only then the size from the event (80 by 25 until something is received). As a consequence, a client that has `LINES` and `COLUMNS` set in its environment ignores the event.
 
+## 7. Worked examples
+
+Every wire string below was generated with the code of far2l itself (`StackSerializer` and `base64` from `utils/`, compiled and run), and the stacks were decoded back with it; the bytes are shown as they are on the wire, with `\x1b` for `ESC`, `\x5c` for the backslash and `\x07` for `BEL`, followed by the serialized stack in hexadecimal, from the bottom (the first byte) to the top (the last byte, which is popped first).
+
+### 7.1. Enabling, and a request with no reply
+
+The client enables the extensions and waits for the answer (the `ESC [ 5 n` that follows it in far2l is a separate, ordinary query):
+
+```
+client:  \x1b_far2l1\x1b\x5c
+server:  \x1b_far2lok\x07
+```
+
+Setting the cursor height to 50 percent. The stack, top to bottom, is: ID `0`, command `h`, the height `50`; so the client pushes `50`, then `h`, then `0`:
+
+<!-- ex:cursor-height -->
+```
+\x1b_far2l:MmgA\x07
+```
+Stack bytes, bottom to top: `32 68 00`
+
+### 7.2. A request and its reply
+
+`GET_WINDOW_MAXSIZE` with ID 1. The stack, top to bottom: ID `1`, `w`:
+
+<!-- ex:maxsize-request -->
+```
+\x1b_far2l:dwE=\x07
+```
+Stack bytes, bottom to top: `77 01`
+
+The server answers that the largest window is 200 columns by 50 rows. The reply stack, top to bottom: ID `1`, height `50`, width `200`; so the server pushes the width first, then the height, then the ID:
+
+<!-- ex:maxsize-reply -->
+```
+\x1b_far2lyAAyAAE=\x07
+```
+Stack bytes, bottom to top: `c8 00 32 00 01`
+
+### 7.3. Strings
+
+A desktop notification with the title "Done" and the text "OK", ID 0. The string is its bytes followed by its length as `uint32_t`; the title is popped first, so it is pushed last:
+
+<!-- ex:notification -->
+```
+\x1b_far2l:T0sCAAAARG9uZQQAAABuAA==\x07
+```
+Stack bytes, bottom to top: `4f 4b 02 00 00 00 44 6f 6e 65 04 00 00 00 6e 00`
+
+### 7.4. Titles of F-keys
+
+F1 is "Help", F2 is "Menu", F3 to F12 have no title; ID 1. Popping order is F1, F2, ... F12, so F12 is pushed first (ten zero bytes, the states), then F2, then F1; the state is above the string of each entry:
+
+<!-- ex:fkeys -->
+```
+\x1b_far2l:AAAAAAAAAAAAAE1lbnUEAAAAAUhlbHAEAAAAAWYB\x07
+```
+Stack bytes, bottom to top: `00 00 00 00 00 00 00 00 00 00 4d 65 6e 75 04 00 00 00 01 48 65 6c 70 04 00 00 00 01 66 01`
+
+The reply is the success flag:
+
+<!-- ex:fkeys-reply -->
+```
+\x1b_far2lAQE=\x07
+```
+Stack bytes, bottom to top: `01 01`
+
+### 7.5. Clipboard
+
+Opening the clipboard with the client ID `0123456789abcdef0123456789abcdef` (32 characters), ID 1. Top to bottom: ID, `c`, `o`, the string:
+
+<!-- ex:clip-open -->
+```
+\x1b_far2l:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYgAAAAb2MB\x07
+```
+Stack bytes, bottom to top: `30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 20 00 00 00 6f 63 01`
+
+The server authorized the client and supports both clipboard features (value 3). Top to bottom: ID `1`, status `1`, features `3`:
+
+<!-- ex:clip-open-reply -->
+```
+\x1b_far2lAwAAAAAAAAABAQ==\x07
+```
+Stack bytes, bottom to top: `03 00 00 00 00 00 00 00 01 01`
+
+Setting the text "hello" (format 1, `CF_TEXT`), ID 2. Top to bottom: ID, `c`, `s`, the format, the size, the data:
+
+<!-- ex:clip-setdata -->
+```
+\x1b_far2l:aGVsbG8FAAAAAQAAAHNjAg==\x07
+```
+Stack bytes, bottom to top: `68 65 6c 6c 6f 05 00 00 00 01 00 00 00 73 63 02`
+
+The server reports success and the data ID `0x1122334455667788`. Top to bottom: ID `2`, status `1`, data ID:
+
+<!-- ex:clip-setdata-reply -->
+```
+\x1b_far2liHdmVUQzIhEBAg==\x07
+```
+Stack bytes, bottom to top: `88 77 66 55 44 33 22 11 01 02`
+
+Getting the text, ID 3:
+
+<!-- ex:clip-getdata -->
+```
+\x1b_far2l:AQAAAGdjAw==\x07
+```
+Stack bytes, bottom to top: `01 00 00 00 67 63 03`
+
+The reply holds the size, the data and the data ID. Top to bottom: ID `3`, size `5`, the five bytes of "hello", the data ID:
+
+<!-- ex:clip-getdata-reply -->
+```
+\x1b_far2liHdmVUQzIhFoZWxsbwUAAAAD\x07
+```
+Stack bytes, bottom to top: `88 77 66 55 44 33 22 11 68 65 6c 6c 6f 05 00 00 00 03`
+
+Closing the clipboard; far2l sends it with ID 0 and does not wait for a reply:
+
+<!-- ex:clip-close -->
+```
+\x1b_far2l:Y2MA\x07
+```
+Stack bytes, bottom to top: `63 63 00`
+
+Registering a custom format, ID 4, and the answer (the ID of the format is `0xC000`):
+
+<!-- ex:clip-register -->
+```
+\x1b_far2l:RkFSX1ZlcnRpY2FsQmxvY2tfVW5pY29kZRkAAAByYwQ=\x07
+```
+Stack bytes, bottom to top: `46 41 52 5f 56 65 72 74 69 63 61 6c 42 6c 6f 63 6b 5f 55 6e 69 63 6f 64 65 19 00 00 00 72 63 04`
+
+<!-- ex:clip-register-reply -->
+```
+\x1b_far2lAMAAAAQ=\x07
+```
+Stack bytes, bottom to top: `00 c0 00 00 04`
+
+### 7.6. Images
+
+Asking for the image capabilities, ID 5. Top to bottom: ID, `i`, `c`:
+
+<!-- ex:image-caps -->
+```
+\x1b_far2l:Y2kF\x07
+```
+Stack bytes, bottom to top: `63 69 05`
+
+The server reports the cell size 8 by 16 pixels and the capabilities `0xB03` (`RGBA`, `PNG`, `ATTACH`, `SCROLL`, `ROTMIR`). Top to bottom: ID `5`, height `16`, width `8`, capabilities:
+
+<!-- ex:image-caps-reply -->
+```
+\x1b_far2lAwsAAAAAAAAIABAABQ==\x07
+```
+Stack bytes, bottom to top: `03 0b 00 00 00 00 00 00 08 00 10 00 05`
+
+Showing a 1 by 1 pixel RGBA image of one red pixel (`ff 00 00 ff`), named `img`, at column 2, row 3, at its own size; ID 6. Top to bottom: ID, `i`, `s`, the name, the flags (`0`: RGBA, nothing else), Left `2`, Top `3`, Right `-1`, Bottom `-1`, width `1`, height `1`, the pixels:
+
+<!-- ex:image-set -->
+```
+\x1b_far2l:/wAA/wEAAAABAAAA/////wMAAgAAAAAAAAAAAGltZwMAAABzaQY=\x07
+```
+Stack bytes, bottom to top: `ff 00 00 ff 01 00 00 00 01 00 00 00 ff ff ff ff 03 00 02 00 00 00 00 00 00 00 00 00 69 6d 67 03 00 00 00 73 69 06`
+
+The answer is `1` (shown):
+
+<!-- ex:image-set-reply -->
+```
+\x1b_far2lAQY=\x07
+```
+Stack bytes, bottom to top: `01 06`
+
+Rotating by 90 degrees and mirroring horizontally (`0x05`) the image `img` without moving it (`-1` in all four coordinates), ID 7:
+
+<!-- ex:image-transform -->
+```
+\x1b_far2l:BQD//////////2ltZwMAAAB0aQc=\x07
+```
+Stack bytes, bottom to top: `05 00 ff ff ff ff ff ff ff ff 69 6d 67 03 00 00 00 74 69 07`
+
+### 7.7. Choosing features
+
+The client declares that it understands compact input (`FARTTY_FEAT_COMPACT_INPUT`, 1), ID 0:
+
+<!-- ex:features -->
+```
+\x1b_far2l:AQAAAAAAAAB4AA==\x07
+```
+Stack bytes, bottom to top: `01 00 00 00 00 00 00 00 78 00`
+
+### 7.8. Events
+
+A key press of the letter `a` (code point 0x61, virtual key `0x41`, scan code `0x1E`, no modifiers, repeat count 1). Events have no ID. The full form, `K`:
+
+<!-- ex:key-down -->
+```
+\x1b_f2lAQBBAB4AAAAAAGEAAABL\x07
+```
+Stack bytes, bottom to top: `01 00 41 00 1e 00 00 00 00 00 61 00 00 00 4b`
+
+The same press in the compact form, `C` (the client takes the scan code from the virtual key):
+
+<!-- ex:key-down-compact -->
+```
+\x1b_f2lQQAAYQBD\x07
+```
+Stack bytes, bottom to top: `41 00 00 61 00 43`
+
+A press of the left mouse button at column 10, row 5, in the compact form `m` (the button state `1` fits in the 16 bits):
+
+<!-- ex:mouse-compact -->
+```
+\x1b_f2lCgAFAAEAAABt\x07
+```
+Stack bytes, bottom to top: `0a 00 05 00 01 00 00 00 6d`
+
+A wheel turned down at the same place. The wheel delta `0xFFFF` is in the high half of the button state, which does not fit in the compact form, so the full form `M` is used. Top to bottom: code, flags `4` (`MOUSE_WHEELED`), control state `0`, button state `0xFFFF0000`, row `5`, column `10`:
+
+<!-- ex:mouse-wheel-down -->
+```
+\x1b_f2lCgAFAAAA//8AAAAABAAAAE0=\x07
+```
+Stack bytes, bottom to top: `0a 00 05 00 00 00 ff ff 00 00 00 00 04 00 00 00 4d`
+
+The terminal is 80 columns by 25 rows. Top to bottom: code `S`, height `25`, width `80`:
+
+<!-- ex:terminal-size -->
+```
+\x1b_f2lUAAZAFM=\x07
+```
+Stack bytes, bottom to top: `50 00 19 00 53`
+
+

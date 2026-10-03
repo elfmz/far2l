@@ -47,13 +47,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "codepage.hpp"
 #include "cache.hpp"
 
-static DizRecord *SearchDizData;
-static int _cdecl SortDizIndex(const void *el1, const void *el2);
+static int _cdecl SortDizIndex(const void *el1, const void *el2, void *context);
 static int _cdecl SortDizSearch(const void *key, const void *elem);
 struct DizSearchKey
 {
 	const wchar_t *Str;
 	const int Len;
+	const DizRecord *Data;
 };
 
 DizList::DizList()
@@ -101,10 +101,12 @@ void DizList::PR_ReadingMsg()
 	Message(0, 0, L"", Msg::ReadingDiz);
 }
 
-void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
+void DizList::Read(const wchar_t *Path, const wchar_t *DizName, bool silent)
 {
 	Reset();
-	TPreRedrawFuncGuard preRedrawFuncGuard(DizList::PR_ReadingMsg);
+	std::unique_ptr<TPreRedrawFuncGuard> preRedrawFuncGuard;
+	if (!silent)
+		preRedrawFuncGuard.reset(new TPreRedrawFuncGuard(DizList::PR_ReadingMsg));
 	const wchar_t *NamePtr = Opt.Diz.strListNames;
 
 	for (;;) {
@@ -141,7 +143,7 @@ void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
 				CodePage = Opt.Diz.AnsiByDefault ? CP_ACP : CP_OEMCP;
 
 			while (GetStr.GetString(&DizText, CodePage, DizLength) > 0) {
-				if (!(DizCount & 127) && GetProcessUptimeMSec() - StartTime > 1000) {
+				if (!silent && !(DizCount & 127) && GetProcessUptimeMSec() - StartTime > 1000) {
 					SetCursorType(FALSE, 0);
 					PR_ReadingMsg();
 
@@ -286,8 +288,7 @@ int DizList::GetDizPos(const wchar_t *Name, int *TextPos)
 	if (NeedRebuild)
 		BuildIndex();
 
-	SearchDizData = DizData;
-	DizSearchKey Key = {Name, StrLength(Name)};
+	DizSearchKey Key = {Name, StrLength(Name), DizData};
 	int *DestIndex = (int *)bsearch(&Key, IndexData, IndexCount, sizeof(*IndexData), SortDizSearch);
 
 	if (DestIndex) {
@@ -321,17 +322,19 @@ void DizList::BuildIndex()
 	for (int I = 0; I < IndexCount; I++)
 		IndexData[I] = I;
 
-	SearchDizData = DizData;
-	far_qsort((void *)IndexData, IndexCount, sizeof(*IndexData), SortDizIndex);
+	far_qsortex((void *)IndexData, IndexCount, sizeof(*IndexData), SortDizIndex, DizData);
 	NeedRebuild = false;
 }
 
-int _cdecl SortDizIndex(const void *el1, const void *el2)
+int _cdecl SortDizIndex(const void *el1, const void *el2, void *context)
 {
-	const wchar_t *Diz1 = SearchDizData[*(int *)el1].DizText + SearchDizData[*(int *)el1].NameStart;
-	const wchar_t *Diz2 = SearchDizData[*(int *)el2].DizText + SearchDizData[*(int *)el2].NameStart;
-	int Len1 = SearchDizData[*(int *)el1].NameLength;
-	int Len2 = SearchDizData[*(int *)el2].NameLength;
+	const DizRecord *Data = static_cast<const DizRecord *>(context);
+	const DizRecord &Record1 = Data[*static_cast<const int *>(el1)];
+	const DizRecord &Record2 = Data[*static_cast<const int *>(el2)];
+	const wchar_t *Diz1 = Record1.DizText + Record1.NameStart;
+	const wchar_t *Diz2 = Record2.DizText + Record2.NameStart;
+	int Len1 = Record1.NameLength;
+	int Len2 = Record2.NameLength;
 	int CmpCode = StrCmpNI(Diz1, Diz2, Min(Len1, Len2));
 
 	if (!CmpCode) {
@@ -342,8 +345,8 @@ int _cdecl SortDizIndex(const void *el1, const void *el2)
 			return -1;
 
 		// for equal names, deleted is bigger
-		bool Del1 = SearchDizData[*(int *)el1].Deleted;
-		bool Del2 = SearchDizData[*(int *)el2].Deleted;
+		bool Del1 = Record1.Deleted;
+		bool Del2 = Record2.Deleted;
 
 		if (Del1 && !Del2)
 			return 1;
@@ -357,10 +360,12 @@ int _cdecl SortDizIndex(const void *el1, const void *el2)
 
 int _cdecl SortDizSearch(const void *key, const void *elem)
 {
-	const wchar_t *SearchName = ((DizSearchKey *)key)->Str;
-	wchar_t *DizName = SearchDizData[*(int *)elem].DizText + SearchDizData[*(int *)elem].NameStart;
-	int DizNameLength = SearchDizData[*(int *)elem].NameLength;
-	int NameLength = ((DizSearchKey *)key)->Len;
+	const DizSearchKey &Key = *static_cast<const DizSearchKey *>(key);
+	const DizRecord &Record = Key.Data[*static_cast<const int *>(elem)];
+	const wchar_t *SearchName = Key.Str;
+	const wchar_t *DizName = Record.DizText + Record.NameStart;
+	int DizNameLength = Record.NameLength;
+	int NameLength = Key.Len;
 	int CmpCode = StrCmpNI(SearchName, DizName, Min(DizNameLength, NameLength));
 
 	if (!CmpCode) {
@@ -376,7 +381,7 @@ int _cdecl SortDizSearch(const void *key, const void *elem)
 			return -1;
 
 		// for equal names, deleted is bigger so deleted items are never matched
-		if (SearchDizData[*(int *)elem].Deleted)
+		if (Record.Deleted)
 			return -1;
 	}
 

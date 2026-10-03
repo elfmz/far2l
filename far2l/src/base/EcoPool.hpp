@@ -15,7 +15,7 @@ template <class T, size_t MAX_ARENA = (32 * 1024 * 1024) / sizeof(T)>
 
 	static size_t ArenaSize(size_t index)
 	{
-		const size_t out = size_t(1) << std::min(size_t(31), index * 2);
+		const size_t out = size_t(32) << std::min(size_t(26), index * 2);
 		return (out < MAX_ARENA) ? out : MAX_ARENA;
 	}
 

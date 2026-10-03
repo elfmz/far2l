@@ -173,6 +173,7 @@ jadoxa@yahoo.com.au
 #include "vtansi.h"
 #include "vtansi_kitty.h"
 #include "AnsiEsc.hpp"
+#include "farcolors.hpp"
 #include "UtfConvert.hpp"
 
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
@@ -296,6 +297,7 @@ struct VTAnsiContext
 {
 	CONSOLE_SCREEN_BUFFER_INFO save_cursor_info = {};
 	VTAnsiState saved_state;
+	DWORD64 default_attr = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
 	std::mutex title_mutex;
 	IVTShell *vt_shell = nullptr;
 	std::string cur_title;
@@ -846,7 +848,7 @@ struct VTAnsiContext
 			//fprintf(stderr, "suffix: %c argc: %u argv: %u %u\n", suffix, es_argc, es_argv[0], es_argv[1]);
 			switch (suffix) {
 			case 'm':
-				ansi_state.font_state.ParseSuffixM(es_argv, es_argc);
+				ansi_state.font_state.ParseSuffixM(es_argv, es_argc, default_attr);
 				attribute = ansi_state.font_state.ToConsoleAttributes();
 				WINPORT(SetConsoleTextAttribute)( con_hnd, attribute );
 				return;
@@ -1649,6 +1651,7 @@ void VTAnsi::OnStart()
 {
 	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
 	_ctx->saved_state.InitFromConsole(con_hnd);
+	_ctx->default_attr = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
 	TCHAR buf[MAX_PATH*2] = {0};
 	WINPORT(GetConsoleTitle)(con_hnd, buf, ARRAYSIZE(buf) - 1 );
 	_saved_title = buf;

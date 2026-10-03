@@ -77,7 +77,7 @@ FontState::FontState()
 {
 }
 
-void FontState::ParseSuffixM(const int *args, int argc)
+void FontState::ParseSuffixM(const int *args, int argc, DWORD64 default_attr)
 {
 	int argz = 0;
 	if (argc == 0) {
@@ -158,14 +158,14 @@ void FontState::ParseSuffixM(const int *args, int argc)
 		case 49: {
 			rvideo = false;
 			if (a != 49) {
-				foreground = 7; // white
-				use_rgb_foreground = false;
-				rgb_foreground = 0;
+				foreground = ConsoleColorToAnsi(default_attr & 0xf);
+				use_rgb_foreground = (default_attr & FOREGROUND_TRUECOLOR) != 0;
+				rgb_foreground = GET_RGB_FORE(default_attr);
 			}
 			if (a != 39) {
-				background = 0; // black
-				use_rgb_background = false;
-				rgb_background = 0;
+				background = ConsoleColorToAnsi((default_attr >> 4) & 0xf);
+				use_rgb_background = (default_attr & BACKGROUND_TRUECOLOR) != 0;
+				rgb_background = GET_RGB_BACK(default_attr);
 			}
 		} break;
 
@@ -306,7 +306,8 @@ const wchar_t *Parser::Parse(const wchar_t *str)
 
 Printer::Printer(WORD wAttributes)
 	:
-	_initial_attr(GetColor())
+	_initial_attr(GetColor()),
+	_default_attr(wAttributes)
 {
 	_font_state.FromConsoleAttributes(wAttributes);
 }
@@ -403,7 +404,7 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 					}
 				}
 			} else if (_parser.suffix == L'm') {
-				_font_state.ParseSuffixM(_parser.args.data(), (int)_parser.args.size());
+				_font_state.ParseSuffixM(_parser.args.data(), (int)_parser.args.size(), _default_attr);
 				EnforceStateColor();
 			}
 			str = ch = end_of_chunk;

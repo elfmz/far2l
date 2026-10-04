@@ -69,8 +69,7 @@ static bool LoadFontFromSettings(wxFont& font)
 	wxTextFile file(path);
 	if (file.Exists() && file.Open()) {
 		for (wxString str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
-			font.SetNativeFontInfo(str);
-			if (font.IsOk()) {
+			if (!str.IsEmpty() && font.SetNativeFontInfo(str) && font.IsOk()) {
 				printf("LoadFontFromSettings: used %ls\n",
 					static_cast<const wchar_t*>(str.wc_str()));
 				return true;

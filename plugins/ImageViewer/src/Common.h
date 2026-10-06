@@ -15,10 +15,9 @@ enum EXITED_DUE
 {
 	EXITED_DUE_ERROR  = 11,
 	EXITED_DUE_CANCELLED = 12,
-	EXITED_DUE_ENTER  = 42,
-	EXITED_DUE_ESCAPE = 24,
+	EXITED_DUE_ESCAPE = 24,          // Esc/F10: apply selection, move panel cursor to viewed file
+	EXITED_DUE_ESCAPE_DISCARD = 25,  // Shift+Esc: discard selection, leave panel cursor as-is
 	EXITED_DUE_RESIZE = 37,
-	EXITED_DUE_GOTO_CURFILE = 55
 };
 
 extern PluginStartupInfo g_far;

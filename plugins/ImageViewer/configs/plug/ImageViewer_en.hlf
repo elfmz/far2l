@@ -42,11 +42,11 @@ $^#Using the Plugin#
 the following shortcuts are available.
 
   #Exiting the Plugin#
-   Exit and save selection
-     changes to the file panel                #Enter#
-   Exit without changing selection            #Esc# or #F10#
-   Exit and move the panel cursor             #Ctrl+F10# or #T#
+   Exit, apply selection changes to the
+     file panel and move the panel cursor       #Esc# or #F10#
      to the currently viewed file
+   Exit without applying selection changes    #Shift+Esc#
+     or moving the panel cursor
 
   #File Selection Management#
    (selected files are marked with an asterisk #*# in the window title)

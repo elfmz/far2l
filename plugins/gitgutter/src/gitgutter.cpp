@@ -2066,9 +2066,8 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 			}
 			if (ApplyGutterRequest(st)) {
 				redraw_current_dialog = dialog_current;
-			} else if (state_updated) {
+			} else if (state_updated && !dialog_current) {
 				g_info.EditorControl(ECTL_REDRAW, nullptr);
-				redraw_current_dialog = dialog_current;
 			}
 		}
 	}

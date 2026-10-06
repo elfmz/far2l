@@ -13,42 +13,10 @@ in
 {
   nixpkgs.overlays = [
     (final: prev: {
-      # Modified 7zip package with shared library support
-      _7z-far = prev.stdenv.mkDerivation rec {
-        pname = "_7z-far";
-        version = "26.01";
-
-        src = fetchFromGitHub {
-          owner = "ip7z";
-          repo = "7zip";
-          rev = "8c63d71ff886bda90c86db28466287f977374237";
-          sha256 = "sha256-GCVZA0M7WGDyndHbnko62nQcLnb1YQYERs7U8G+yn2M=";
-        };
-
-        nativeBuildInputs = [ prev.gcc ];
-
-        buildPhase = ''
-          make -C CPP/7zip/Bundles/Format7zF -f ../../cmpl_gcc.mak
-        '';
-
-        installPhase = ''
-          mkdir -p $out/lib
-          cp -r CPP/7zip/Bundles/Format7zF/b/g/* $out/lib/
-        '';
-
-        meta = with lib; {
-          description = "7z format plugin from ip7z/7zip";
-          homepage = "https://github.com/ip7z/7zip";
-          license = licenses.lgpl21Plus;
-        };
-      };
-    })
-
-    (final: prev: {
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.9.0-59354e9";
+        version = "2.9.0-c12197b";
 
         #separateDebugInfo = true;
 
@@ -56,8 +24,8 @@ in
           owner = "elfmz";
           repo = "far2l";
 
-          rev = "59354e96e366e0bf3a2fcd9d76c45cf5ec6d0c30";
-          sha256 = "sha256-9mSi3gqZ2jpgUawD3Jr2Pmn1shLpySuFCh4iOZe7CO8=";
+          rev = "c12197bceb57b645dcbac99af6c51be815cb756b";
+          sha256 = "sha256-AzwG4w++mu/5XeURQ86xu6HfXpFlc5VuK9CbMx6kPBU=";
         };
 
         postPatch = ''
@@ -109,7 +77,8 @@ in
           prev.git
           # archivers
           prev.libarchive
-          final._7z-far
+          prev._7zip-zstd-rar
+          prev._7zz
         ]
         ++ lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba;
 
@@ -164,7 +133,8 @@ in
               gzip
               bzip2
               gnutar
-              final._7z-far
+              _7zip-zstd-rar
+              _7zz
               # cli tools
               git
               android-tools
@@ -181,7 +151,7 @@ in
             # Link p7z lib to far plugin arclite home
             echo "Linking 7zzz libraries..."
             mkdir -p $out/lib/far2l/Plugins/arclite/plug/
-            for file in ${final._7z-far}/lib/*; do
+            for file in ${prev._7zz.lib}/lib/*; do
               ln -sf "$file" "$out/lib/far2l/Plugins/arclite/plug/"
             done
           '';

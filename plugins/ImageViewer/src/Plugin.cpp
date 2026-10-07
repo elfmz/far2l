@@ -209,8 +209,7 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 			selection_to_apply.reserve(pi.ItemsNumber);
 			for (int i = 0; i < pi.ItemsNumber; ++i) {
 				const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
-				// keep whatever was already marked on the panel, add what got marked in the viewer
-				selection_to_apply.emplace_back(fn_sel.second || selection.find(fn_sel.first) != selection.end());
+				selection_to_apply.emplace_back(selection.find(fn_sel.first) != selection.end());
 			}
 			g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
 			for (size_t i = 0; i < selection_to_apply.size(); ++i) {

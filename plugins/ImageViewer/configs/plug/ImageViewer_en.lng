@@ -47,3 +47,7 @@
 "File of %s: "
 "&Skip"
 "&Info"
+
+"Please choose if you want to iterate all files or only selected and marked?"
+"&Selected only"
+"&All files"

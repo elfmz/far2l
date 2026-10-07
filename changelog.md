@@ -5,6 +5,8 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+
+## 2.9.1 beta (2026-10-07)
 * GUI|WX: Drag files out of far2l panels
 * Quick view panel: Directory summary information improvements; colorer on for file preview
 * Command line: AutoComplete more correct working inside plugin panels

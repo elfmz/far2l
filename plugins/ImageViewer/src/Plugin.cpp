@@ -201,7 +201,7 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 	std::unordered_set<std::string> selection;
 	std::string goto_file;
 	auto ed = ShowImageAtFull(initial_file, all_items, selection, false, &goto_file);
-	if (ed == EXITED_DUE_ENTER) {
+	if (ed == EXITED_DUE_ESCAPE) {
 		PanelInfo pi{};
 		g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 		if (pi.ItemsNumber > 0) {
@@ -219,7 +219,6 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 			g_far.Control(PANEL_ACTIVE, FCTL_ENDSELECTION, 0, 0);
 			g_far.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 		}
-	} else if (ed == EXITED_DUE_GOTO_CURFILE) {
 		GoToPanelFile(goto_file);
 	}
 	return ed;

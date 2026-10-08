@@ -1463,7 +1463,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 			|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
 #endif
 
-				_key_tracker.CheckForSuddenModifiersUp()) {
+				_key_tracker.CheckForSuddenModifiersUp(&event)) {
 					_exclusive_hotkeys.Reset();
 		}
 	}
@@ -1513,7 +1513,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		|| ((activeMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) // workaround is still needed at least in wx 3.2.6, see wx issue #24772
 
-			&& (/*g_wayland ||*/ (!event.AltDown() || _key_tracker.RightAlt()) || !isLayoutDependentKey(event)) // workaround for wx issue #23421
+			// however when Ctrl is pressed too, OnKeyDown unicode value is trustworthy, and
+			// newer wx (at least 3.2.8) doesn't generate EVT_CHAR for Ctrl+Alt+punctuation at all,
+			// so waiting for OnChar would swallow such keystrokes - enqueue them right here
+			&& (/*g_wayland ||*/ (!event.AltDown() || _key_tracker.RightAlt()) || event.ControlDown()
+				|| !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif
 			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1639,7 +1643,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
 		|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
 #endif
-		_key_tracker.CheckForSuddenModifiersUp()) {
+		_key_tracker.CheckForSuddenModifiersUp(&event)) {
 			_exclusive_hotkeys.Reset();
 	}
 	//event.Skip();

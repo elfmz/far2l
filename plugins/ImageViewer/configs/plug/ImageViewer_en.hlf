@@ -43,10 +43,12 @@ the following shortcuts are available.
 
   #Exiting the Plugin#
    Exit, apply selection changes to the
-     file panel and move the panel cursor       #Esc# or #F10#
+     file panel and move the panel cursor     #Esc# or #F10#
      to the currently viewed file
    Exit without applying selection changes    #Shift+Esc#
      or moving the panel cursor
+   See also in dialog ~Plugin Configuration~@settings@ check box for
+always explicit confirm changes of files selection on exit.
 
   #File Selection Management#
    (selected files are marked with an asterisk #*# in the window title)
@@ -132,7 +134,7 @@ and set the plugin as the default handler for standard shortcuts: #Enter#, #Ctrl
 and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel).
   The ~Extra commands~@ExtraCommands@ button opens the processing scripts editor (also accessible via #F4# in viewer mode).
 
-  Configuration is stored in: #~~/.config/far2l/plugins/ImageViewer/config.ini#
+  Configuration is stored in: #$FARSETTINGS/plugins/ImageViewer/config.ini#, usually in #~~/.config/far2l/plugins/ImageViewer/config.ini#
 
 @ExtraCommands
 $^#ImageViewer Plugin#

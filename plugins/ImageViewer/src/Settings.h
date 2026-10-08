@@ -26,6 +26,7 @@ private:
 	bool _open_by_cpgdn = true;
 	bool _open_in_qv = false;
 	bool _open_in_fv = false;
+	bool _confirm_selection_on_exit = true;
 
 	std::string _image_masks, _video_masks;
 
@@ -46,6 +47,7 @@ public:
 	bool OpenByCtrlPgDn() const { return _open_by_cpgdn; }
 	bool OpenInQV() const { return _open_in_qv; }
 	bool OpenInFV() const { return _open_in_fv; }
+	bool ConfirmSelectionOnExit() const { return _confirm_selection_on_exit; }
 
 	DefaultScale GetDefaultScale() const { return _default_scale; }
 	void SetDefaultScale(DefaultScale default_scale);

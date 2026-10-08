@@ -42,7 +42,11 @@ void MenuBar::DisplayObject()
 {
 	FARString strSpace = L"    ";
 	FARString strMsg = strSpace + Msg::MenuLeftTitle + strSpace + Msg::MenuFilesTitle + strSpace
-			+ Msg::MenuCommandsTitle + strSpace + Msg::MenuOptionsTitle + strSpace + Msg::MenuRightTitle;
+			+ Msg::MenuCommandsTitle + strSpace 
+            + Msg::MenuObjectTitle + strSpace
+			+ Msg::MenuOptionsTitle + strSpace
+			+ Msg::MenuNavigateTitle + strSpace+ Msg::MenuViewTitle + strSpace
+			+ Msg::MenuRightTitle;
 	RemoveHighlights(strMsg);
 	int Length = X2 - X1 + 1;
 	FARString strFullMsg;

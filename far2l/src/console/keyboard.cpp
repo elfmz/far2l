@@ -80,6 +80,21 @@ static void StripPastedBOM()
 		GPastedText.LShift(1);
 }
 
+// Pasted text is accumulated in std::wstring rather than appended to GPastedText
+// char by char, as FARString grows its buffer without reserve, so appending large
+// pasted text to it char by char has quadratic complexity
+static void AppendPastedKeyEvent(std::wstring &pasted, const KEY_EVENT_RECORD &ke)
+{
+	if (ke.bKeyDown) {
+		if (ke.uChar.UnicodeChar)
+			pasted+= ke.uChar.UnicodeChar;
+		else if (ke.wVirtualKeyCode == VK_RETURN)
+			pasted+= L'\n';
+		else if (ke.wVirtualKeyCode == VK_TAB)
+			pasted+= L'\t';
+	}
+}
+
 /* end Глобальные переменные */
 
 // static SHORT KeyToVKey[MAX_VKEY_CODE];
@@ -648,16 +663,14 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				continue;
 			}
 			if (rec->EventType == KEY_EVENT && BracketedPasteMode) {
-				Console.ReadInput(*rec);
-				if (rec->Event.KeyEvent.bKeyDown) {
-					WCHAR wc = rec->Event.KeyEvent.uChar.UnicodeChar;
-					if (wc)
-						GPastedText += wc;
-					else if (rec->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-						GPastedText += L'\n';
-					else if (rec->Event.KeyEvent.wVirtualKeyCode == VK_TAB)
-						GPastedText += L'\t';
-				}
+				// grab all already arrived pasted chars at once instead of
+				// passing them one by one, each with own paste operation
+				std::wstring pasted;
+				do {
+					Console.ReadInput(*rec);
+					AppendPastedKeyEvent(pasted, rec->Event.KeyEvent);
+				} while (Console.PeekInput(*rec) && rec->EventType == KEY_EVENT);
+				GPastedText.Append(pasted.c_str(), pasted.size());
 				StripPastedBOM();
 				if (!GPastedText.IsEmpty()) {
 					memset(rec, 0, sizeof(*rec));
@@ -826,6 +839,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 
 		if (start) {
 			GPastedText.Clear();
+			std::wstring pasted;
 			INPUT_RECORD tmprec;
 			while (true) {
 				// Wait briefly for input to avoid busy looping, but assume stream is fast
@@ -843,20 +857,13 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 					}
 				} else if (tmprec.EventType == KEY_EVENT) {
 					Console.ReadInput(tmprec);
-					if (tmprec.Event.KeyEvent.bKeyDown) {
-						WCHAR wc = tmprec.Event.KeyEvent.uChar.UnicodeChar;
-						if (wc)
-							GPastedText += wc;
-						else if (tmprec.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
-							GPastedText += L'\n';
-						else if (tmprec.Event.KeyEvent.wVirtualKeyCode == VK_TAB)
-							GPastedText += L'\t';
-					}
+					AppendPastedKeyEvent(pasted, tmprec.Event.KeyEvent);
 				} else {
 					Console.ReadInput(tmprec); // Consume other events to avoid blocking
 				}
 			}
 
+			GPastedText.Append(pasted.c_str(), pasted.size());
 			StripPastedBOM();
 			if (!GPastedText.IsEmpty()) {
 				memset(rec, 0, sizeof(*rec));

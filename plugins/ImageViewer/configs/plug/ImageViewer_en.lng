@@ -27,6 +27,8 @@
 "Potential &image file masks"
 "Potential &video file masks"
 
+"Confirm changes of files selection on exi&t"
+
 ": metadata"
 "No EXIF metadata or unsupported format"
 "No GPS metadata found in this image"
@@ -51,3 +53,6 @@
 "Please choose if you want to iterate all files or only selected and marked?"
 "&Selected only"
 "&All files"
+
+"Files selected: %d, deselected: %d"
+"Apply file selection changes on the panel?"

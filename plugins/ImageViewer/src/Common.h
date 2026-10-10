@@ -28,7 +28,7 @@ void ShowError(const std::vector<std::wstring> &lines, const wchar_t *help_topic
 void PurgeAccumulatedInputEvents();
 bool CheckForEscAndPurgeAccumulatedInputEvents();
 
-EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file = nullptr);
+EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::tuple<std::string, bool, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file = nullptr);
 EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error, std::string *goto_file = nullptr);
 
 void ShowImageAtQV(const std::string &file, const SMALL_RECT &area);

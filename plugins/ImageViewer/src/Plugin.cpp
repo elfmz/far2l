@@ -62,18 +62,18 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->CommandPrefix = L"img";
 }
 
-static std::pair<std::string, bool> GetPanelItem(int cmd, int index)
+static std::tuple<std::string, bool, bool> GetPanelItem(int cmd, int index)
 {
-	std::pair<std::string, bool> out;
-	out.second = false;
+	std::tuple<std::string, bool, bool> out;
+	std::get<1>(out) = std::get<2>(out) = false;
 	size_t sz = g_far.Control(PANEL_ACTIVE, cmd, index, 0);
 	if (sz) {
 		std::vector<char> buf(sz + 16);
 		sz = g_far.Control(PANEL_ACTIVE, cmd, index, (LONG_PTR)buf.data());
 		const PluginPanelItem *ppi = (const PluginPanelItem *)buf.data();
 		if (ppi->FindData.lpwszFileName && *ppi->FindData.lpwszFileName) {
-			out.first = Wide2MB(ppi->FindData.lpwszFileName);
-			out.second = (ppi->Flags & PPIF_SELECTED) != 0;
+			std::get<0>(out) = Wide2MB(ppi->FindData.lpwszFileName);
+			std::get<1>(out) = std::get<2>(out) = (ppi->Flags & PPIF_SELECTED) != 0;
 		}
 	}
 	return out;
@@ -125,7 +125,7 @@ static void GoToPanelFile(const std::string &file)
 	}
 
 	for (int i = 0; i < pi.ItemsNumber; ++i) {
-		if (GetPanelItem(FCTL_GETPANELITEM, i).first == target_filename) {
+		if (std::get<0>(GetPanelItem(FCTL_GETPANELITEM, i)) == target_filename) {
 			PanelRedrawInfo pri{};
 			pri.CurrentItem = i;
 			g_far.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&pri);
@@ -138,10 +138,10 @@ static void GoToPanelFile(const std::string &file)
 static std::string GetCurrentPanelItem()
 {
 	const auto &fn_sel = GetPanelItem(FCTL_GETCURRENTPANELITEM, 0);
-	return fn_sel.first;
+	return std::get<0>(fn_sel);
 }
 
-static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pair<std::string, bool>> &all_files)
+static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::tuple<std::string, bool, bool>> &all_files)
 {
 	PanelInfo pi{};
 	g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
@@ -158,25 +158,25 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 	const auto &cur_fn = GetCurrentPanelItem();
 	for (int i = 0; i < pi.ItemsNumber; ++i) {
 		const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
-		if (!fn_sel.first.empty() && fn_sel.first != "." && fn_sel.first != "..") {
-			if (fn_sel.second) {
+		if (!std::get<0>(fn_sel).empty() && std::get<0>(fn_sel) != "." && std::get<0>(fn_sel) != "..") {
+			if (std::get<1>(fn_sel)) {
 				use_real_selection = -1;
 			}
-			if (fn_sel.first == cur_fn) {
+			if (std::get<0>(fn_sel) == cur_fn) {
 				cur = all_files.size();
 			}
 			all_files.emplace_back(fn_sel);
 		}
 	}
 
-	std::vector<std::pair<std::string, bool>> chosen_files;
+	std::vector<std::tuple<std::string, bool, bool>> chosen_files;
 	const auto saved_cur = cur;
 	for (ssize_t i = 0; i != (ssize_t)all_files.size(); ++i) {
 		if (i == saved_cur) {
 			cur = chosen_files.size();
 			chosen_files.emplace_back(all_files[i]);
 		} else {
-			if (use_real_selection < 0 && !all_files[i].second) {
+			if (use_real_selection < 0 && !std::get<1>(all_files[i])) {
 				const wchar_t *msg_items[] = {g_settings.Msg(M_TITLE),
 					g_settings.Msg(M_CHOOSE_SCOPE_TEXT),
 					g_settings.Msg(M_CHOOSE_SCOPE_SELECTED),
@@ -189,10 +189,10 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 				}
 			}
 			if (use_real_selection) { // if some has marking selection - choose all such files
-				if (all_files[i].second) {
+				if (std::get<1>(all_files[i])) {
 					chosen_files.emplace_back(all_files[i]);
 				}
-			} else if (g_settings.MatchFile(all_files[i].first.c_str())) { // no marking selection - choose name-matching files
+			} else if (g_settings.MatchFile(std::get<0>(all_files[i]).c_str())) { // no marking selection - choose name-matching files
 				chosen_files.emplace_back(all_files[i]);
 			}
 		}
@@ -204,7 +204,7 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 
 static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 {
-	std::vector<std::pair<std::string, bool>> all_items;
+	std::vector<std::tuple<std::string, bool, bool>> all_items;
 	ssize_t initial_file = GetPanelItemsForView(name, all_items);
 	if (initial_file < 0) {
 		return EXITED_DUE_ERROR;
@@ -221,7 +221,7 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 			selection_to_apply.reserve(pi.ItemsNumber);
 			for (int i = 0; i < pi.ItemsNumber; ++i) {
 				const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
-				selection_to_apply.emplace_back(selection.find(fn_sel.first) != selection.end());
+				selection_to_apply.emplace_back(selection.find(std::get<0>(fn_sel)) != selection.end());
 			}
 			g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
 			for (size_t i = 0; i < selection_to_apply.size(); ++i) {

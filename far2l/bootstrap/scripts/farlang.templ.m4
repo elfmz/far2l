@@ -484,6 +484,17 @@ upd:"Background terminal commands [F3]"
 "Фонові команди терміналу [F3]"
 "Фонавыя каманды тэрмінала [F3]"
 
+BackgroundFileOperations
+"Фоновые файловые операции"
+"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+upd:"Background file operations"
+"Фонові файлові операції"
+"Фонавыя файлавыя аперацыі"
+
 MultilinePaste
 "Вставка нескольких строк"
 "Multiline paste"
@@ -5952,6 +5963,83 @@ upd:"File operation complete"
 upd:"File operation complete"
 "Файлова операція виконана"
 "Файлавая дзея выканана"
+
+BackgroundFileOperationTitleCopy
+"Фоновое копирование"
+"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+upd:"Background copy"
+"Фонове копіювання"
+"Фонавае капіяванне"
+
+BackgroundFileOperationTitleMove
+"Фоновый перенос"
+"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+upd:"Background move"
+"Фонове перенесення"
+"Фонавае перамяшчэнне"
+
+BackgroundFileOperationNameCopy
+"Копирование"
+"Copy"
+"Kopírování"
+"Kopieren"
+"Másolás"
+"Kopiowanie"
+"Copiar"
+"Копіювання"
+"Капіраванне"
+
+BackgroundFileOperationNameMove
+"Перенос"
+"Move"
+"Přesun"
+"Verschieben"
+"Áthelyezés"
+"Przenoszenie"
+"Mover"
+"Перенесення"
+"Перамяшчэнне"
+
+BackgroundFileOperationStartFailed
+"Не удалось запустить фоновую файловую операцию."
+"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+upd:"Cannot start the background file operation."
+"Не вдалося запустити фонову файлову операцію."
+"Не ўдалося запусціць фонавую файлавую аперацыю."
+
+BackgroundFileOperationFailed
+"Фоновая файловая операция завершилась с ошибкой."
+"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+upd:"The background file operation failed."
+"Фонова файлова операція завершилася з помилкою."
+"Фонавая файлавая аперацыя завяршылася з памылкай."
+
+BackgroundFileOperationExitWarning
+"Фоновые файловые операции всё ещё выполняются."
+"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+upd:"Background file operations are still running."
+"Фонові файлові операції все ще виконуються."
+"Фонавыя файлавыя аперацыі ўсё яшчэ выконваюцца."
 
 SaveSetupTitle
 l:

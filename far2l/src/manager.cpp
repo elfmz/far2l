@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vt/vtshell.h"
 #include "execute.hpp"
 #include "fileview.hpp"
+#include "copy.hpp"
 
 Manager *FrameManager;
 
@@ -360,6 +361,8 @@ static FARString FrameMenuNumTextPrefix(int i)
 	return out;
 }
 
+static constexpr int FrameMenuReload = -2;
+
 /*!
 	\return Возвращает nullptr если нажат "отказ" или если нажат текущий фрейм.
 	Другими словами, если немодальный фрейм не поменялся.
@@ -369,8 +372,16 @@ static FARString FrameMenuNumTextPrefix(int i)
 
 class FramesMenu : public VMenu
 {
+	struct CopyTaskItem
+	{
+		BackgroundFileOperationId id;
+		int menu_index;
+	};
+
 	VTInfos _vts;
 	int _vts_base_index{-1};
+	std::vector<CopyTaskItem> _copy_tasks;
+	bool _reload{false};
 
 public:
 	FramesMenu() : VMenu (Msg::ScreensTitle, nullptr, 0, ScrY - 4)
@@ -380,6 +391,30 @@ public:
 
 	virtual int ProcessKey(FarKey Key)
 	{
+		if (Key == KEY_IDLE || Key == KEY_NONE) {
+			bool updated = false;
+			for (const auto &task : _copy_tasks) {
+				FARString progressText;
+				if (!GetBackgroundFileOperationProgress(task.id, progressText)) {
+					_reload = true;
+					SetExitCode(-1);
+					return TRUE;
+				}
+
+				MenuItemEx *item = GetItemPtr(task.menu_index);
+				if (item && item->strName != progressText) {
+					FarListUpdate update{};
+					update.Index = task.menu_index;
+					update.Item.Flags = item->Flags;
+					update.Item.Text = progressText.CPtr();
+					UpdateItem(&update);
+					updated = true;
+				}
+			}
+			if (updated)
+				FastShow();
+		}
+
 		if (Key == KEY_F3 && _vts_base_index >= 0
 				&& _vts_base_index <= GetSelectPos()
 				&& _vts_base_index + int(_vts.size()) > GetSelectPos() ) {
@@ -391,21 +426,46 @@ public:
 
 	void AddVTSItems(int FramePos)
 	{
-		if (_vts.empty()) {
+		std::vector<BackgroundFileOperationInfo> copy_operations;
+		GetBackgroundFileOperations(copy_operations);
+		const int first_vt_hotkey = GetItemCount();
+		if (_vts.empty() && copy_operations.empty()) {
 			_vts_base_index = -1;
+			_copy_tasks.clear();
 			return;
 		}
-		_vts_base_index = GetItemCount() + 1;
+
 		MenuItemEx mi;
-		mi.Clear();
-		mi.strName = Msg::BackgroundCommands;
-		mi.Flags = LIF_SEPARATOR;
-		AddItem(&mi);
-		for (const auto &vt : _vts) {
+		_copy_tasks.clear();
+		if (!copy_operations.empty()) {
+			mi.Clear();
+			mi.strName = Msg::BackgroundFileOperations;
+			mi.Flags = LIF_SEPARATOR;
+			AddItem(&mi);
+
+			for (const auto &operation : copy_operations) {
+				mi.Clear();
+				mi.strName = operation.text;
+				_copy_tasks.push_back({operation.id, GetItemCount()});
+				AddItem(&mi);
+			}
+		}
+
+		_vts_base_index = -1;
+		if (!_vts.empty()) {
+			mi.Clear();
+			mi.strName = Msg::BackgroundCommands;
+			mi.Flags = LIF_SEPARATOR;
+			AddItem(&mi);
+			_vts_base_index = GetItemCount();
+		}
+
+		for (size_t i = 0; i < _vts.size(); ++i) {
+			const auto &vt = _vts[i];
 			mi.Clear();
 			mi.strName = vt.title;
 			ReplaceStrings(mi.strName, L"&", L"&&", -1);
-			mi.strName.Insert(0, FrameMenuNumTextPrefix(GetItemCount() - 1) );
+			mi.strName.Insert(0, FrameMenuNumTextPrefix(first_vt_hotkey + i));
 			mi.SetSelect(GetItemCount() == FramePos);
 			if (vt.exited)
 				mi.SetCheck(vt.exit_code ? L'!' : L'#');
@@ -417,7 +477,15 @@ public:
 	int Do()
 	{
 		VMenu::Process();
+		if (_reload)
+			return FrameMenuReload;
 		int r = Modal::GetExitCode();
+		for (const auto &task : _copy_tasks) {
+			if (r == task.menu_index) {
+				ShowBackgroundFileOperation(task.id);
+				return -1;
+			}
+		}
 		if (_vts_base_index >= 0 && r >= _vts_base_index && r < GetItemCount()) {
 			CtrlObject->CmdLine->SwitchToBackgroundTerminal(r - _vts_base_index);
 			return -1;
@@ -440,38 +508,45 @@ Frame *Manager::FrameMenu()
 
 	int ExitCode, CheckCanLoseFocus = CurrentFrame->GetCanLoseFocus();
 	{
-		MenuItemEx ModalMenuItem;
-		FramesMenu ModalMenu;
+		do {
+			{
+				MenuItemEx ModalMenuItem;
+				FramesMenu ModalMenu;
 
-		ModalMenu.SetHelp(L"ScrSwitch");
-		ModalMenu.SetFlags(VMENU_WRAPMODE);
-		ModalMenu.SetPosition(-1, -1, 0, 0);
+				ModalMenu.SetHelp(L"ScrSwitch");
+				ModalMenu.SetFlags(VMENU_WRAPMODE);
+				ModalMenu.SetPosition(-1, -1, 0, 0);
 
-		if (!CheckCanLoseFocus)
-			ModalMenuItem.SetDisable(TRUE);
+				if (!CheckCanLoseFocus)
+					ModalMenuItem.SetDisable(TRUE);
 
-		int I = 0;
-		for (; I < FrameCount; I++) {
-			/* "*" если файл изменен */
-			FARString strNumText = FrameMenuNumTextPrefix(I);
-			FARString strType, strName;
-			FrameList[I]->GetTypeAndName(strType, strName);
-			ModalMenuItem.Clear();
+				int I = 0;
+				for (; I < FrameCount; I++) {
+					/* "*" если файл изменен */
+					FARString strNumText = FrameMenuNumTextPrefix(I);
+					FARString strType, strName;
+					FrameList[I]->GetTypeAndName(strType, strName);
+					ModalMenuItem.Clear();
 
-			// TruncPathStr(strName,ScrX-24);
-			ReplaceStrings(strName, L"&", L"&&", -1);
-			ModalMenuItem.strName.Format(L"%ls%-10.10ls %ls", strNumText.CPtr(), strType.CPtr(), strName.CPtr());
-			ModalMenuItem.SetSelect(I == FramePos);
-			if (FrameList[I]->IsFileModified())
-				ModalMenuItem.SetCheck(L'*');
+					// TruncPathStr(strName,ScrX-24);
+					ReplaceStrings(strName, L"&", L"&&", -1);
+					ModalMenuItem.strName.Format(L"%ls%-10.10ls %ls", strNumText.CPtr(), strType.CPtr(), strName.CPtr());
+					ModalMenuItem.SetSelect(I == FramePos);
+					if (FrameList[I]->IsFileModified())
+						ModalMenuItem.SetCheck(L'*');
 
-			ModalMenu.AddItem(&ModalMenuItem);
-		}
+					ModalMenu.AddItem(&ModalMenuItem);
+				}
 
-		ModalMenu.AddVTSItems(FramePos);
+				ModalMenu.AddVTSItems(FramePos);
 
-		AlreadyShown = TRUE;
-		ExitCode = ModalMenu.Do();
+				AlreadyShown = TRUE;
+				ExitCode = ModalMenu.Do();
+			}
+
+			if (ExitCode == FrameMenuReload)
+				Commit();
+		} while (ExitCode == FrameMenuReload);
 		AlreadyShown = FALSE;
 //		ExitCode = ModalMenu.Modal::GetExitCode();
 	}
@@ -772,6 +847,13 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFAR = FALSE;
 		CloseFARMenu = TRUE;
 	};
+
+	if (HasBackgroundFileOperation()) {
+		if (Message(MSG_WARNING, 2, Msg::Warning,
+				Msg::BackgroundFileOperationExitWarning, Msg::Abort, Msg::Cancel) != 0)
+			return;
+		AbortAndWaitForBackgroundFileOperations();
+	}
 
 
 	size_t vts_cnt = VTShell_Count();

@@ -57,4 +57,24 @@ namespace FishPlus
 	// The marker is printed in two pieces, F4R"DY", so that a terminal echoing
 	// the line back cannot be mistaken for the shell answering.
 	std::string BootstrapLine(const std::string &token);
+
+	// The PowerShell counterpart of BootstrapLine. Unlike the POSIX variant,
+	// PowerShell has no `read` builtin that would let the bootstrap sip the
+	// helper off the wire, so the helper travels inside the bootstrap itself:
+	// base64-encoded, one printable-ASCII line, decoded with .NET on the far
+	// side and handed to Invoke-Expression.
+	//
+	// The single-line shape is what a PowerShell console host can consume
+	// without help - no here-string quoting, no locale assumption, no
+	// PSReadLine dependency, no temporary file.
+	//
+	// The marker is printed in three pieces, 'F4R'+'DY'+'<token>', so that
+	// a terminal echoing the line back cannot be mistaken for the shell
+	// answering, mirroring the POSIX version's F4R"DY" split.
+	//
+	// A "# F4B64<token>" prefix is prepended inside the encoded payload so a
+	// human debugging the wire can tell what a captured $F4B holds; it decodes
+	// to a comment PowerShell ignores.
+	std::string BootstrapLinePwshB64(const std::string &token,
+		const std::string &compact_helper);
 }

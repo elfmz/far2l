@@ -2,6 +2,9 @@
 #include "S3Auth.h"
 #include "AWSFileReader.h"
 #include "AWSFileWriter.h"
+#ifdef __APPLE__
+# include "S3SystemTrust.h"
+#endif
 #include <StringConfig.h>
 #include <neon/ne_request.h>
 #include <neon/ne_socket.h>
@@ -358,10 +361,15 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 std::shared_ptr<S3Session> S3Repository::CreateConfiguredSession(const std::string &host)
 {
 	auto s = std::make_shared<S3Session>();
+	s->host = host;
 	s->sess = ne_session_create(_scheme.c_str(), host.c_str(), _port);
 	if (s->sess) {
 		if (_verify_ssl) {
+#ifdef __APPLE__
+			ne_ssl_set_verify(s->sess, S3SystemTrustVerify, (void *)s->host.c_str());
+#else
 			ne_ssl_trust_default_ca(s->sess);
+#endif
 		} else {
 			ne_ssl_set_verify(s->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr); // NOSONAR(cpp:S5008)
 		}

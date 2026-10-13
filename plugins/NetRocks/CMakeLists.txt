@@ -235,6 +235,10 @@ if (LIBNEON_FOUND AND OPENSSL_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
     )
     target_include_directories(NetRocks-AWS PRIVATE src ${LIBNEON_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
     target_link_libraries(NetRocks-AWS utils ${LIBNEON_LIBRARIES} ${OPENSSL_LIBRARIES})
+    if (APPLE)
+        target_sources(NetRocks-AWS PRIVATE src/Protocol/AWS/S3SystemTrust.cpp)
+        target_link_libraries(NetRocks-AWS "-framework Security" "-framework CoreFoundation")
+    endif ()
 
     set_target_properties(NetRocks-AWS
         PROPERTIES

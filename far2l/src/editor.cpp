@@ -68,9 +68,6 @@ static int ReplaceMode, ReplaceAll;
 
 static int EditorID = 0;
 
-static void HighlightLinkUnderCaret(Edit *Line, int RangeStart, int RangeEnd, int DrawY,
-		Edit &ScreenEdit, int CharOffset, int CellBase, int ScreenX1, int ScreenX2);
-
 static DWORD64 MakeWordWrapTailFillColor(DWORD64 color)
 {
 	return color & ~(IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK | COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE);
@@ -943,13 +940,6 @@ void Editor::ShowEditor(int CurLineOnly)
 	CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 	CurLine->SetCursorVisibleFlag(m_showCursor);
 	CurLine->Show();
-
-	{
-		const int CurLineScreenY = Y1 + CalcDistance(TopScreen, CurLine, -1);
-		const int CellBase = CurLine->RealPosToCell(CurLine->GetLeftPos());
-		HighlightLinkUnderCaret(CurLine, 0, CurLine->GetLength(), CurLineScreenY,
-				*CurLine, 0, CellBase, HasLineNumArea ? LineNumX1 : X1, XX2);
-	}
 
 	if (VBlockStart && VBlockSizeX > 0 && VBlockSizeY > 0) {
 		int CurScreenLine = NumLine - CalcDistance(TopScreen, CurLine, -1);
@@ -2431,16 +2421,11 @@ int Editor::ProcessKey(FarKey Key)
 				} else {
 					int PrevMaxPos = MaxRightPos;
 					Edit *LastTopScreen = TopScreen;
-					Edit *OldCurLine = CurLine;
 					Up();
 
-					if (TopScreen == LastTopScreen) {
+					if (TopScreen == LastTopScreen)
 						ShowEditor(TRUE);
-						// without this the old caret line keeps any link highlight it had
-						// E.g. stale highlight survives vertical movement in non-wordwrap mode
-						if (OldCurLine != CurLine)
-							OldCurLine->FastShow();
-					} else
+					else
 						Show();
 
 					if (PrevMaxPos > CurLine->GetCellCurPos()) {
@@ -2466,15 +2451,11 @@ int Editor::ProcessKey(FarKey Key)
 				} else {
 					int PrevMaxPos = MaxRightPos;
 					Edit *LastTopScreen = TopScreen;
-					Edit *OldCurLine = CurLine;
 					Down();
 
-					if (TopScreen == LastTopScreen) {
+					if (TopScreen == LastTopScreen)
 						ShowEditor(TRUE);
-						// see KEY_UP comment above
-						if (OldCurLine != CurLine)
-							OldCurLine->FastShow();
-					} else
+					else
 						Show();
 					if (PrevMaxPos > CurLine->GetCellCurPos()) {
 						CurLine->SetCellCurPos(PrevMaxPos);
@@ -4053,60 +4034,6 @@ bool Editor::GetVisualLineHighlightCells(int LineNumber, int VisualLine, int Ran
 	return CellX1 <= CellX2;
 }
 
-// Underlines and recolors the link under the caret, if any, the same way the viewer
-// highlights its currently focused link.
-static void HighlightLinkUnderCaret(Edit *Line, int RangeStart, int RangeEnd, int DrawY,
-		Edit &ScreenEdit, int CharOffset, int CellBase, int ScreenX1, int ScreenX2)
-{
-	int Length = 0;
-	const wchar_t *Str = Line->GetStringAddr(Length);
-	const int LineCurPos = Line->GetCurPos();
-
-	std::vector<LinkHighlighter::LinkRange> ranges;
-	LinkHighlighter::DetectLinks(Str, (size_t)Length, ranges);
-
-	for (const auto &r : ranges) {
-		if (LineCurPos < r.startChar || LineCurPos >= r.startChar + r.lengthChars) {
-			continue;
-		}
-
-		const int segStart = std::max(r.startChar, RangeStart);
-		const int segEnd = std::min(r.startChar + r.lengthChars, RangeEnd);
-		if (segStart >= segEnd) {
-			return;
-		}
-
-		const int startX = std::clamp(
-			ScreenX1 + ScreenEdit.RealPosToCell(segStart - CharOffset) - CellBase,
-			ScreenX1, ScreenX2
-		);
-		const int endX = std::clamp(
-			ScreenX1 + ScreenEdit.RealPosToCell(segEnd - CharOffset) - 1 - CellBase,
-			ScreenX1, ScreenX2
-		);
-		if (startX > endX) {
-			return;
-		}
-
-		const int segmentLength = endX - startX + 1;
-		std::vector<CHAR_INFO> buffer(segmentLength);
-		GetText(startX, DrawY, endX, DrawY, buffer.data(), segmentLength * (int)sizeof(CHAR_INFO));
-
-		bool changed = false;
-		for (auto &cell : buffer) {
-			DWORD64 newAttr = LinkHighlighter::ApplyLinkColor(cell.Attributes | COMMON_LVB_UNDERSCORE, false);
-			if (newAttr != cell.Attributes) {
-				cell.Attributes = newAttr;
-				changed = true;
-			}
-		}
-		if (changed) {
-			PutText(startX, DrawY, endX, DrawY, buffer.data());
-		}
-		return;
-	}
-}
-
 bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int DrawY, int DrawX2)
 {
 	Edit *CurLogicalLine = GetStringByNumber(LineNumber);
@@ -4231,11 +4158,6 @@ bool Editor::RenderVisualLine(int LineNumber, int VisualLine, int DrawX1, int Dr
 		ShowString.Show();
 	} else {
 		ShowString.FastShow();
-	}
-
-	if (CurLogicalLine == CurLine) {
-		HighlightLinkUnderCaret(CurLogicalLine, VisualLineStart, VisualLineEnd, DrawY,
-				ShowString, VisualLineStart, 0, TextX1, DrawX2);
 	}
 
 	if (has_tail_fill_color) {

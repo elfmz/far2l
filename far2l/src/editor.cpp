@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "editor.hpp"
 #include "edit.hpp"
+#include "LinkHighlighter.hpp"
 #include "keyboard.hpp"
 #include "lang.hpp"
 #include "macroopcode.hpp"
@@ -2620,6 +2621,21 @@ case KEY_CTRLNUMPAD3: {
 				}
 			}
 
+			return TRUE;
+		}
+
+		case KEY_CTRLNUMENTER:
+		case KEY_CTRLENTER: {
+			int Length = 0;
+			const wchar_t *Str = CurLine->GetStringAddr(Length);
+			std::vector<LinkHighlighter::LinkRange> ranges;
+			LinkHighlighter::DetectLinks(Str, (size_t)Length, ranges);
+			for (const auto &r : ranges) {
+				if (CurPos >= r.startChar && CurPos < r.startChar + r.lengthChars) {
+					LinkHighlighter::Launch(Str + r.startChar, (size_t)r.lengthChars);
+					break;
+				}
+			}
 			return TRUE;
 		}
 		case KEY_CTRLN: {

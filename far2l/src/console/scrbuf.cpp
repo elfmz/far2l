@@ -43,6 +43,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DList.hpp"
 #include "console.hpp"
 #include "savescr.hpp"
+#include "manager.hpp"
+#include "frame.hpp"
+#include "filepanels.hpp"
+#include "panel.hpp"
+#include <algorithm>
 
 #include <new>
 
@@ -425,6 +430,31 @@ void ScreenBuf::FillRect(int X1, int Y1, int X2, int Y2, WCHAR Ch, DWORD64 Color
 /*
 	"Сбросить" виртуальный буфер на консоль
 */
+static bool ShouldShowPanelImages()
+{
+	if (!FrameManager || !CtrlObject || !CtrlObject->Cp())
+		return false;
+
+	// CurrentFrame can be a dialog above the panels. The bottom frame identifies
+	// the workspace beneath it; popup rectangles are clipped separately.
+	Frame *base = FrameManager->GetBottomFrame();
+	Frame *cur = FrameManager->GetCurrentFrame();
+	if (!base || base->GetType() != MODALTYPE_PANELS || FrameManager->InModalEV()
+			|| (cur && cur->GetType() == MODALTYPE_HELP))
+		return false;
+
+	FilePanels *cp = CtrlObject->Cp();
+	Panel *lp = cp->LeftPanel;
+	Panel *rp = cp->RightPanel;
+	return (lp && lp->GetType() == QVIEW_PANEL && lp->IsVisible())
+			|| (rp && rp->GetType() == QVIEW_PANEL && rp->IsVisible());
+}
+
+static bool SameImageExclusion(const SMALL_RECT &a, const SMALL_RECT &b)
+{
+	return a.Left == b.Left && a.Top == b.Top && a.Right == b.Right && a.Bottom == b.Bottom;
+}
+
 void ScreenBuf::Flush()
 {
 	ConsoleRepaintsDeferScope crds(NULL);
@@ -433,6 +463,38 @@ void ScreenBuf::Flush()
 
 	if (!Buf || !Shadow)
 		return;
+
+	static bool s_visibility_known = false, s_panel_images_visible = false;
+	static std::vector<SMALL_RECT> s_image_exclusions;
+	const char *backend = WinPortBackendInfo(-1);
+	const bool update_images = !LockCount && backend && strcmp(backend, "GUI|WX") == 0;
+	bool should_be_visible = false;
+	std::vector<SMALL_RECT> image_exclusions;
+	auto set_image_visibility = [&](bool visible, const std::vector<SMALL_RECT> &areas) {
+		if (s_visibility_known && visible == s_panel_images_visible
+				&& areas.size() == s_image_exclusions.size()
+				&& std::equal(areas.begin(), areas.end(), s_image_exclusions.begin(), SameImageExclusion))
+			return;
+		if (WINPORT(SetConsoleImageVisibility)(NULL, "image_viewer_qv", visible, areas.data(), areas.size())) {
+			s_visibility_known = true;
+			s_panel_images_visible = visible;
+			s_image_exclusions = areas;
+		}
+	};
+	if (update_images) {
+		should_be_visible = ShouldShowPanelImages();
+		image_exclusions = SaveScreen::GetConsoleImageExclusions();
+		// Cover new popups before painting their text. Keep old clips until their
+		// underlying console has been restored, then uncover them at the end of the repaint batch.
+		auto covered = s_image_exclusions;
+		for (const auto &area : image_exclusions) {
+			if (std::none_of(covered.begin(), covered.end(), [&](const SMALL_RECT &old) {
+				return SameImageExclusion(area, old);
+			}))
+				covered.push_back(area);
+		}
+		set_image_visibility(s_panel_images_visible && should_be_visible, covered);
+	}
 
 	if (!LockCount) {
 		if (CtrlObject && (CtrlObject->Macro.IsRecording() || CtrlObject->Macro.IsExecuting())) {
@@ -554,6 +616,8 @@ void ScreenBuf::Flush()
 
 		SBFlags.Set(SBFLAGS_USESHADOW | SBFLAGS_FLUSHED);
 	}
+	if (update_images)
+		set_image_visibility(should_be_visible, image_exclusions);
 }
 
 void ScreenBuf::Lock()

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <condition_variable>
+#include <map>
 #include "WinCompat.h"
 #include "ConsoleBuffer.h"
 #include "Backend.h"
@@ -23,6 +24,12 @@ class ConsoleOutput : public IConsoleOutput
 		void Add(const SMALL_RECT &area);
 		void Add(const SMALL_RECT *areas, size_t cnt);
 	} _deferred_repaints;
+	struct ImageVisibility
+	{
+		bool visible;
+		std::vector<SMALL_RECT> exclusions;
+	};
+	std::map<std::string, ImageVisibility> _deferred_image_visibility;
 	unsigned int _change_id{1};
 	std::condition_variable _change_id_cond;
 
@@ -136,4 +143,5 @@ public:
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
 	virtual bool OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf);
 	virtual bool OnDeleteConsoleImage(const char *id);
+	virtual bool OnSetConsoleImageVisibility(const char *id, bool visible, const SMALL_RECT *exclusions, size_t count) override;
 };

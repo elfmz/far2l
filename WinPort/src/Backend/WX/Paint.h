@@ -50,9 +50,9 @@ public:
 	ConsolePaintContext(wxWindow *window);
 	void ShowFontDialog();
 
-	uint8_t CharFitTest(wxPaintDC &dc, wchar_t wcz, unsigned int nx);
-	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
-	void OnPaint(wxPaintDC &dc, SMALL_RECT *qedit = NULL);
+	uint8_t CharFitTest(wxDC &dc, wchar_t wcz, unsigned int nx);
+	void ApplyFont(wxDC &dc, uint8_t index = 0);
+	void OnPaint(wxDC &dc, SMALL_RECT *qedit = NULL);
 	void RefreshArea( const SMALL_RECT &area );
 	void BlinkCursor();
 	void SetSharp(bool sharp);
@@ -95,7 +95,7 @@ class ConsolePainter
 	} _brush_clr;
 
 	ConsolePaintContext *_context;
-	wxPaintDC &_dc;
+	wxDC &_dc;
 	wxString &_buffer;
 	CursorProps &_cursor_props;
 
@@ -116,7 +116,7 @@ class ConsolePainter
 	void FlushDecorations(unsigned int cx_end);
 
 public:
-	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
+	ConsolePainter(ConsolePaintContext *context, wxDC &dc, wxString &_buffer, CursorProps &cursor_props);
 	void SetFillColor(const WinPortRGB &clr);
 
 

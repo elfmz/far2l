@@ -276,7 +276,7 @@ void ConsolePaintContext::ShowFontDialog()
 	SetFont(font);
 }
 
-uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t wc, unsigned int nx)
+uint8_t ConsolePaintContext::CharFitTest(wxDC &dc, wchar_t wc, unsigned int nx)
 {
 #ifdef DYNAMIC_FONTS
 	const bool cacheable = (size_t((uint32_t)wc) - 1 < _char_fit_cache.checked.size()); // && wcz[1] == 0
@@ -323,13 +323,13 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t wc, unsigned int
 #endif
 }
 
-void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
+void ConsolePaintContext::ApplyFont(wxDC &dc, uint8_t index)
 {
 	if (index < _fonts.size())
 		dc.SetFont(_fonts[index]);
 }
 
-void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
+void ConsolePaintContext::OnPaint(wxDC &dc, SMALL_RECT *qedit)
 {
 	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
 		// not refreshed yet - so early start so nothing to paint yet
@@ -543,7 +543,7 @@ void CursorProps::Update()
 
 //////////////////////
 
-ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer, CursorProps &cursor_props) :
+ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxDC &dc, wxString &buffer, CursorProps &cursor_props) :
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(cursor_props),
 	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
 	_prev_underlined(false), _prev_strikeout(false), _prev_bold(false)

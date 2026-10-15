@@ -38,14 +38,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "farcolors.hpp"
 #include "console.hpp"
+#include <algorithm>
+#include <mutex>
+#include <map>
+
+namespace {
+	struct SavedScreens
+	{
+		struct Scope { const void *owner; SaveScreen *screen; };
+		std::mutex mutex;
+		std::vector<Scope> scopes;
+		std::map<const void *, std::vector<SMALL_RECT>> exclusions;
+	};
+
+	SavedScreens &ImageSavedScreens()
+	{
+		static SavedScreens state;
+		return state;
+	}
+}
 
 SaveScreen::SaveScreen()
 {
 	_OT(SysLog(L"[%p] SaveScreen::SaveScreen()", this));
 	SaveArea(0, 0, ScrX, ScrY);
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	state.scopes.push_back({this, this});
 }
 
 SaveScreen::SaveScreen(int X1, int Y1, int X2, int Y2)
+	: SaveScreen(X1, Y1, X2, Y2, false)
+{
+}
+
+SaveScreen::SaveScreen(int X1, int Y1, int X2, int Y2, bool exclude_images)
 {
 	_OT(SysLog(L"[%p] SaveScreen::SaveScreen(X1=%i,Y1=%i,X2=%i,Y2=%i)", this, X1, Y1, X2, Y2));
 
@@ -55,10 +82,16 @@ SaveScreen::SaveScreen(int X1, int Y1, int X2, int Y2)
 	Y2 = Min(static_cast<int>(ScrY), Max(0, Y2));
 
 	SaveArea(X1, Y1, X2, Y2);
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	state.scopes.push_back({this, this});
+	if (exclude_images && !ScreenBuf.empty())
+		state.exclusions[this] = {SMALL_RECT{SHORT(X1), SHORT(Y1), SHORT(X2), SHORT(Y2)}};
 }
 
 SaveScreen::~SaveScreen()
 {
+	EndConsoleImageScope(this);
 	if (!ScreenBuf.empty())
 		RestoreArea();
 
@@ -67,6 +100,11 @@ SaveScreen::~SaveScreen()
 
 void SaveScreen::Discard()
 {
+	{
+		auto &state = ImageSavedScreens();
+		std::lock_guard<std::mutex> lock(state.mutex);
+		state.exclusions.erase(this);
+	}
 	ScreenBuf.clear();
 	X2 = X1;
 	Y2 = Y1;
@@ -74,6 +112,11 @@ void SaveScreen::Discard()
 
 void SaveScreen::RestoreArea(int RestoreCursor)
 {
+	{
+		auto &state = ImageSavedScreens();
+		std::lock_guard<std::mutex> lock(state.mutex);
+		state.exclusions.erase(this);
+	}
 	fprintf(stderr, "SaveScreen::RestoreArea %d %d %d %d %s\n", X1, Y1, X2, Y2, ScreenBuf.empty() ? "EMPTY" : "");
 	if (!ScreenBuf.empty()) {
 		PutText(X1, Y1, X2, Y2, ScreenBuf.data());
@@ -83,6 +126,62 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 			MoveCursor(CurPosX, CurPosY);
 		}
 	}
+}
+
+void SaveScreen::ExcludeConsoleImages()
+{
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	if (!ScreenBuf.empty())
+		state.exclusions[this] = {SMALL_RECT{SHORT(X1), SHORT(Y1), SHORT(X2), SHORT(Y2)}};
+}
+
+void SaveScreen::ExcludeConsoleImages(int X1, int Y1, int X2, int Y2)
+{
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	// Buttonless progress messages draw directly, without a Dialog. Attach their
+	// clip to the innermost saved background or progress redraw scope.
+	for (auto it = state.scopes.rbegin(); it != state.scopes.rend(); ++it) {
+		auto *screen = it->screen;
+		if (screen && (screen->ScreenBuf.empty() || screen->X1 > X1 || screen->Y1 > Y1
+				|| screen->X2 < Min(X2, int(ScrX)) || screen->Y2 < Min(Y2, int(ScrY))))
+			continue;
+		SMALL_RECT area{SHORT(Max(0, X1)), SHORT(Max(0, Y1)), SHORT(Min(X2, int(ScrX))), SHORT(Min(Y2, int(ScrY)))};
+		auto &areas = state.exclusions[it->owner];
+		if (std::none_of(areas.begin(), areas.end(), [&](const SMALL_RECT &other) {
+			return other.Left == area.Left && other.Top == area.Top
+					&& other.Right == area.Right && other.Bottom == area.Bottom;
+		}))
+			areas.push_back(area);
+		break;
+	}
+}
+
+std::vector<SMALL_RECT> SaveScreen::GetConsoleImageExclusions()
+{
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	std::vector<SMALL_RECT> out;
+	for (const auto &entry : state.exclusions)
+		out.insert(out.end(), entry.second.begin(), entry.second.end());
+	return out;
+}
+
+void SaveScreen::BeginConsoleImageScope(const void *owner)
+{
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	state.scopes.push_back({owner, nullptr});
+}
+
+void SaveScreen::EndConsoleImageScope(const void *owner)
+{
+	auto &state = ImageSavedScreens();
+	std::lock_guard<std::mutex> lock(state.mutex);
+	state.scopes.erase(std::remove_if(state.scopes.begin(), state.scopes.end(),
+			[&](const SavedScreens::Scope &scope) { return scope.owner == owner; }), state.scopes.end());
+	state.exclusions.erase(owner);
 }
 
 void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)

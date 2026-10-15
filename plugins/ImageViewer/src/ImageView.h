@@ -1,4 +1,5 @@
 #pragma once
+#include "Common.h"
 #include "Image.h"
 #include "WinCompat.h"
 #include <cstdio>
@@ -51,6 +52,7 @@ class ImageView
 	void JustReset(bool keep_rotmir = false);
 
 protected:
+	std::string _img_id{WINPORT_IMAGE_ID};
 	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan);
 	bool CurFileSelected() const { return _all_files[_cur_file].second; }
 	const std::string &CurFile() const { return _all_files[_cur_file].first; }
@@ -58,7 +60,7 @@ protected:
 	const std::string &CurFileSizeStr() const { return _file_size_str; }
 
 public:
-	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
+	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files, const char *image_id = WINPORT_IMAGE_ID);
 	~ImageView();
 
 

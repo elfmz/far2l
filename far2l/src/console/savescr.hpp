@@ -47,6 +47,7 @@ class SaveScreen
 public:
 	SaveScreen();
 	SaveScreen(int X1, int Y1, int X2, int Y2);
+	SaveScreen(int X1, int Y1, int X2, int Y2, bool exclude_images);
 	~SaveScreen();
 
 	void SaveArea(int nX1, int nY1, int nX2, int nY2);
@@ -55,4 +56,11 @@ public:
 	void AppendArea(SaveScreen *NewArea);
 	void DumpBuffer(const wchar_t *Title);
 	const CHAR_INFO &Read(int X, int Y) const;
+
+	// Popup exclusions have the same lifetime as the saved console beneath them.
+	void ExcludeConsoleImages();
+	static void ExcludeConsoleImages(int X1, int Y1, int X2, int Y2);
+	static std::vector<SMALL_RECT> GetConsoleImageExclusions();
+	static void BeginConsoleImageScope(const void *owner);
+	static void EndConsoleImageScope(const void *owner);
 };

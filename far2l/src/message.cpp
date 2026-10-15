@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "mix.hpp"
 #include "InterThreadCall.hpp"
+#include "savescr.hpp"
 
 static int MessageX1, MessageY1, MessageX2, MessageY2;
 static FARString strMsgHelpTopic;
@@ -377,6 +378,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 	}
 
 	// *** Без Диалога! ***
+	SaveScreen::ExcludeConsoleImages(X1, Y1, X2 + 2, Y2 + 1);
 	SetCursorType(0, 0);
 
 	if (!(Flags & MSG_KEEPBACKGROUND)) {

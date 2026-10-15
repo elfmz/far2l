@@ -207,9 +207,11 @@ void ScreenObject::Show()
 	if (!Flags.Check(FSCROBJ_VISIBLE)) {
 		Flags.Set(FSCROBJ_VISIBLE);
 		if (Flags.Check(FSCROBJ_ENABLERESTORESCREEN) && !SaveScr)
-			SaveScr = new SaveScreen(X1, Y1, X2, Y2);
+			SaveScr = new SaveScreen(X1, Y1, X2, Y2, true);
 	}
 
+	if (SaveScr)
+		SaveScr->ExcludeConsoleImages();
 	DisplayObject();
 	//	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
@@ -219,13 +221,13 @@ void ScreenObject::Shadow(bool Full)
 	if (Flags.Check(FSCROBJ_VISIBLE)) {
 		if (Full) {
 			if (!ShadowSaveScr)
-				ShadowSaveScr = new SaveScreen(0, 0, ScrX, ScrY);
+				ShadowSaveScr = new SaveScreen(0, 0, ScrX, ScrY, true);
 
 			MakeShadow(0, 0, ScrX, ScrY, ShadowSaveScr);
 
 		} else {
 			if (!ShadowSaveScr)
-				ShadowSaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
+				ShadowSaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1, true);
 
 			MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1, ShadowSaveScr);
 			MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1, ShadowSaveScr);

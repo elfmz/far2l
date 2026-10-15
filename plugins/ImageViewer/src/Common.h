@@ -10,6 +10,7 @@
 #include <farcolor.h>
 
 #define WINPORT_IMAGE_ID "image_viewer"
+#define WINPORT_IMAGE_ID_QV "image_viewer_qv"
 
 enum EXITED_DUE
 {

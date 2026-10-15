@@ -313,7 +313,7 @@ ImageOpResult ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img
 		if (set_h > chunk_h + chunk_h / 4) {
 			set_h = chunk_h;
 		}
-		if (!WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID,
+		if (!WINPORT(SetConsoleImage)(NULL, _img_id.c_str(),
 				WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | (sent_h ? WP_IMG_ATTACH_BOTTOM : 0),
 				area, img.Width(), set_h, img.Ptr(0, sent_h))) {
 			fprintf(stderr, "%s: error at %d of %d\n", __FUNCTION__, sent_h, img.Height());
@@ -371,7 +371,7 @@ bool ImageView::SendScrollAttachH(const SMALL_RECT *area, int src_left, int src_
 		flags|= WP_IMG_ATTACH_RIGHT;
 	}
 
-	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, area,
+	return WINPORT(SetConsoleImage)(NULL, _img_id.c_str(), flags, area,
 		_tmp_image.Width(), _tmp_image.Height(), _tmp_image.Data()) != FALSE;
 }
 
@@ -392,7 +392,7 @@ bool ImageView::SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_
 		flags|= WP_IMG_ATTACH_BOTTOM;
 	}
 
-	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, area,
+	return WINPORT(SetConsoleImage)(NULL, _img_id.c_str(), flags, area,
 		_tmp_image.Width(), _tmp_image.Height(), _tmp_image.Data()) != FALSE;
 }
 
@@ -476,7 +476,7 @@ ImageOpResult ImageView::RenderImage()
 			&& (_wgi.Caps & WP_IMGCAP_ROTMIR) != 0) {                      // and backend supports transforms:
 		// transform image remotely without any bitmap transfer
 		fprintf(stderr, "ImageView: transform remote image (0x%x)\n", tformed);
-		out = WINPORT(TransformConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, tformed) != FALSE ? ImageOpResult::OK : ImageOpResult::FAILED;
+		out = WINPORT(TransformConsoleImage)(NULL, _img_id.c_str(), &area, tformed) != FALSE ? ImageOpResult::OK : ImageOpResult::FAILED;
 
 	} else if (!scaled && tformed == 0                 // if image only shifted
 			&& abs(_prev_left - src_left) < viewport_w // and shifted-in area is
@@ -568,18 +568,19 @@ void ImageView::JustReset(bool keep_rotmir)
 
 ///////////////////// ImageView PUBLICs
 
-ImageView::ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
+ImageView::ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files, const char *image_id)
 	:
 	_all_files(all_files),
 	_initial_file(initial_file),
-	_cur_file(initial_file)
+	_cur_file(initial_file),
+	_img_id(image_id ? image_id : WINPORT_IMAGE_ID)
 {
 	assert(_initial_file < all_files.size());
 }
 
 ImageView::~ImageView()
 {
-	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+	WINPORT(DeleteConsoleImage)(NULL, _img_id.c_str());
 	if (!_tmp_file.empty()) {
 		unlink(_tmp_file.c_str());
 	}
@@ -785,7 +786,7 @@ static bool CmdFindAndReplace(std::string &cmd, const char *pattern, int value)
 
 void ImageView::RunProcessingCommand()
 {
-	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+	WINPORT(DeleteConsoleImage)(NULL, _img_id.c_str());
 	auto cmd = g_settings.ExtraCommandsMenu();
 	if (!cmd.empty()) {
 		while (CmdFindAndReplace(cmd, "{W}", _orig_image.Width())

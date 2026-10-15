@@ -579,6 +579,11 @@ extern "C" {
 		return ChooseConOut(con)->OnDeleteConsoleImage(id);
 	}
 
+	WINPORT_DECL(SetConsoleImageVisibility, BOOL, (HANDLE con, const char *id, BOOL visible, const SMALL_RECT *exclusions, size_t count))
+	{
+		return ChooseConOut(con)->OnSetConsoleImageVisibility(id, visible != FALSE, exclusions, count) ? TRUE : FALSE;
+	}
+
 	static struct {
 		struct Cmp
 		{

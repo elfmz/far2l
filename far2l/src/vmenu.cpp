@@ -1608,9 +1608,9 @@ void VMenu::DisplayObject()
 	if (!CheckFlags(VMENU_LISTBOX) && !SaveScr) {
 		if (!CheckFlags(VMENU_DISABLEDRAWBACKGROUND)
 				&& !(BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX))
-			SaveScr = new SaveScreen(X1 - 2, Y1 - 1, X2 + 4, Y2 + 2);
+			SaveScr = new SaveScreen(X1 - 2, Y1 - 1, X2 + 4, Y2 + 2, true);
 		else
-			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
+			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1, true);
 	}
 
 	if (!CheckFlags(VMENU_LISTBOX)) {

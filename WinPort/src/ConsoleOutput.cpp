@@ -890,6 +890,7 @@ void ConsoleOutput::RepaintsDeferStart()
 void ConsoleOutput::RepaintsDeferFinish(bool force)
 {
 	std::vector<SMALL_RECT> deferred_repaints;
+	decltype(_deferred_image_visibility) image_visibility;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (force) {
@@ -899,9 +900,19 @@ void ConsoleOutput::RepaintsDeferFinish(bool force)
 		}
 		if (_repaint_defer == 0) {
 			deferred_repaints.swap(_deferred_repaints);
+			image_visibility.swap(_deferred_image_visibility);
 		}
 		if (!deferred_repaints.empty()) {
 			LockedChangeIdUpdate();
+		}
+	}
+	// The console cells are complete now. Publish image clipping only here:
+	// an earlier Refresh() would expose the old QuickView text before the dialog.
+	if (_backend) {
+		for (const auto &entry : image_visibility) {
+			const auto &state = entry.second;
+			_backend->OnSetConsoleImageVisibility(entry.first.c_str(), state.visible,
+					state.exclusions.data(), state.exclusions.size());
 		}
 	}
 	if (!deferred_repaints.empty() && _backend) {
@@ -1013,4 +1024,26 @@ bool ConsoleOutput::OnDeleteConsoleImage(const char *id)
 {
 	fprintf(stderr, "OnDeleteConsoleImage: id='%s'\n", id);
 	return _backend ? _backend->OnDeleteConsoleImage(id) : false;
+}
+
+bool ConsoleOutput::OnSetConsoleImageVisibility(const char *id, bool visible, const SMALL_RECT *exclusions, size_t count)
+{
+	if (!id || (count && !exclusions) || !_backend)
+		return false;
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		if (_repaint_defer) {
+			auto &state = _deferred_image_visibility[id];
+			state.visible = visible;
+			state.exclusions.clear();
+			if (count)
+				state.exclusions.assign(exclusions, exclusions + count);
+			unsigned int width, height;
+			_buf.GetSize(width, height);
+			if (width && height)
+				_deferred_repaints.Add(SMALL_RECT{0, 0, SHORT(width - 1), SHORT(height - 1)});
+			return true;
+		}
+	}
+	return _backend ? _backend->OnSetConsoleImageVisibility(id, visible, exclusions, count) : false;
 }

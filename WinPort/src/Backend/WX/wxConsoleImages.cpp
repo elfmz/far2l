@@ -6,13 +6,45 @@
 #include "Backend.h"
 #include "CallInMain.h"
 
-void wxConsoleImages::Paint(wxPaintDC &dc, const wxRect &rc, unsigned int font_width, unsigned int font_height)
+void wxConsoleImages::Paint(wxDC &dc, const wxRect &rc, unsigned int font_width, unsigned int font_height)
 {
 	if (_images.empty()) {
 		return;
 	}
 
 	for (auto& it : _images) {
+		auto visibility = _visibility.find(it.first);
+		if (visibility != _visibility.end() && !visibility->second.visible) {
+			continue;
+		}
+		wxRegion clip(rc);
+		if (visibility != _visibility.end()) {
+			for (const auto &area : visibility->second.exclusions) {
+				clip.Subtract(wxRect(area.Left * font_width, area.Top * font_height,
+						(area.Right + 1 - area.Left) * font_width,
+						(area.Bottom + 1 - area.Top) * font_height));
+			}
+		}
+		if (clip.IsEmpty())
+			continue;
+		// wxDCClipper's region constructor uses only its bounding box. Apply the
+		// actual region separately, preserving its holes and the existing DC clip.
+		wxDCClipper clipper(dc, rc);
+		wxRegion device_clip;
+		for (wxRegionIterator part(clip); part; ++part) {
+			const auto rect = part.GetRect();
+#if wxCHECK_VERSION(3, 1, 5)
+			device_clip.Union(wxRect(dc.LogicalToDevice(rect.GetPosition()),
+					dc.LogicalToDeviceRel(rect.GetSize())));
+#else
+			device_clip.Union(wxRect(
+					dc.LogicalToDeviceX(rect.GetX()),
+					dc.LogicalToDeviceY(rect.GetY()),
+					dc.LogicalToDeviceXRel(rect.GetWidth()),
+					dc.LogicalToDeviceYRel(rect.GetHeight())));
+#endif
+		}
+		dc.SetDeviceClippingRegion(device_clip);
 		auto sz = it.second.bitmap.GetSize();
 		wxRect img_rc;
 		img_rc.SetLeft(font_width * it.second.area.Left);
@@ -39,7 +71,8 @@ void wxConsoleImages::Paint(wxPaintDC &dc, const wxRect &rc, unsigned int font_w
 //						fprintf(stderr, "WX image: [%d:%d] at [%d:%d]\n", sz.GetWidth(), sz.GetHeight(), x, y);
 				dc.DrawBitmap(it.second.bitmap, x, y, false);
 			} else {
-				auto scaled_sz = it.second.scaled_bitmap.GetSize();
+				auto scaled_sz = it.second.scaled_bitmap.IsOk()
+						? it.second.scaled_bitmap.GetSize() : wxSize(0, 0);
 				if (img_rc.GetWidth() != scaled_sz.GetWidth() || img_rc.GetHeight() != scaled_sz.GetHeight()) {
 					fprintf(stderr, "WX image scaling: [%d:%d] -> [%d:%d] at [%d:%d]\n",
 						sz.GetWidth(), sz.GetHeight(), img_rc.GetWidth(), img_rc.GetHeight(),
@@ -227,4 +260,16 @@ bool wxConsoleImages::Delete(const char *id)
 {
 	std::string str_id(id);
 	return _images.erase(str_id) != 0;
+}
+
+bool wxConsoleImages::SetVisibility(const char *id, bool visible, const SMALL_RECT *exclusions, size_t count)
+{
+	if (!id || (count && !exclusions))
+		return false;
+	auto &state = _visibility[id];
+	state.visible = visible;
+	state.exclusions.clear();
+	if (count)
+		state.exclusions.assign(exclusions, exclusions + count);
+	return true;
 }

@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include "TPreRedrawFunc.hpp"
+#include "savescr.hpp"
 
 TPreRedrawFunc PreRedraw;
 
@@ -45,6 +46,7 @@ PreRedrawItem TPreRedrawFunc::Pop()
 		--Total;
 		PreRedrawItem Destination = Top->Item;
 		current = Top->Next;
+		SaveScreen::EndConsoleImageScope(Top);
 		delete Top;
 		Top = current;
 		return Destination;
@@ -78,6 +80,7 @@ PreRedrawItem TPreRedrawFunc::Push(const PreRedrawItem &Source)
 	if (current) {
 		Top = current;
 		++Total;
+		SaveScreen::BeginConsoleImageScope(Top);
 		return Top->Item;
 	}
 
@@ -101,6 +104,7 @@ void TPreRedrawFunc::Free()
 {
 	while (Top) {
 		current = Top->Next;
+		SaveScreen::EndConsoleImageScope(Top);
 		delete Top;
 		Top = current;
 	}

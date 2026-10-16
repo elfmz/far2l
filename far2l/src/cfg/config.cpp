@@ -1159,6 +1159,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 		(Local && EdCfg_TabSize > 0 ? DIF_DISABLE : 0) );
 	Builder.AddTextAfter(TabSize, Msg::EditConfigTabSize);
 	Builder.AddCheckbox(Msg::EditShowWhiteSpace, &EdOpt.ShowWhiteSpace);
+	Builder.AddCheckbox(Msg::EditShowEOL, &EdOpt.ShowEOL);
 	Builder.AddCheckbox(Msg::EditShowKeyBar, &EdOpt.ShowKeyBar);
 	Builder.AddCheckbox(Msg::EditShowLineNumbers, &EdOpt.ShowLineNumbers);
 	Builder.ColumnBreak();

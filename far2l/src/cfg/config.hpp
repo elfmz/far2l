@@ -227,6 +227,7 @@ struct EditorOptions
 	int SearchRegexp;
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
+	int ShowEOL;
 	int ShowLineNumbers;
 	int ShowGutterMarks;
 

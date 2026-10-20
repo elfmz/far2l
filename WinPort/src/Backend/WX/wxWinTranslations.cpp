@@ -291,7 +291,9 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	_pressed_keys.insert(keycode);
 
 #if defined(wxHAS_RAW_KEY_CODES) && defined(__WXMAC__)
-	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == RAW_ALTGR) {
+	if (event.GetKeyCode() == WXK_ALT
+	    && event.GetRawKeyCode() == RAW_ALTGR
+	    && WinPortGetUseRightAltAsAltGr()) {
 		_composing = true;
 	}
 
@@ -310,11 +312,15 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		_right_control = true;
 	}
-	// Only ISO_Level3_Shift (RAW_CONTEXT) is AltGr. Alt_R (RAW_ALTGR) is emitted by
-	// layouts without AltGr, e.g. us and ru, and must stay a plain Alt (see #3619).
-	if ((event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) &&
-		event.GetRawKeyCode() == RAW_CONTEXT) {
-		_right_alt = true;
+	// Only ISO_Level3_Shift is AltGr by default. Alt_R must remain a plain
+	// Alt on layouts such as us/ru unless composing is explicitly enabled.
+	if (event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) {
+		if (event.GetRawKeyCode() == RAW_CONTEXT) {
+			_right_alt = true;
+		}
+		if (event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR) {
+			_composing = WinPortGetUseRightAltAsAltGr();
+		}
 	}
 #endif
 }
@@ -330,7 +336,7 @@ bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 		Touchbar_SetAlternate(false);
 	}
 
-	if (event.GetKeyCode() == WXK_ALT) {
+	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == RAW_ALTGR) {
 		_composing = false;
 	}
 #endif
@@ -340,7 +346,12 @@ bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 		_right_control = false;
 	}
 	if (event.GetKeyCode() == WXK_ALT || event.GetKeyCode() == 0) {
-		_right_alt = false;
+		if (event.GetRawKeyCode() == RAW_CONTEXT) {
+			_right_alt = false;
+		}
+		if (event.GetRawKeyCode() == RAW_CONTEXT || event.GetRawKeyCode() == RAW_ALTGR) {
+			_composing = false;
+		}
 	}
 #endif
 
@@ -629,9 +640,6 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if ((!event.GetKeyCode() || event.GetKeyCode() == WXK_ALT) &&
 		event.GetRawKeyCode() == RAW_CONTEXT) { // AltGr only, Alt_R stays plain Alt (#3619)
-		if (KeyDown) {
-			Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
-		}
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		Event.KeyEvent.wVirtualKeyCode = VK_MENU;
 	}
@@ -657,7 +665,9 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 	}
 
-	if (key_tracker.RightAlt()) {
+	// AltGr characters retain the Windows Ctrl+Alt representation, but the
+	// modifier itself must not switch the key bar to synthetic Ctrl+Alt titles.
+	if (key_tracker.RightAlt() && Event.KeyEvent.wVirtualKeyCode != VK_MENU) {
 		Event.KeyEvent.dwControlKeyState|= RIGHT_ALT_PRESSED | LEFT_CTRL_PRESSED;
 	}
 

@@ -2,22 +2,21 @@
 #import <AppKit/NSPasteboard.h>
 #import "pasteboard.h"
 
-NSString *stringFromWchar(const wchar_t *charText) {
-	return [[NSString alloc] initWithBytes:charText length:wcslen(charText)*sizeof(*charText) encoding:NSUTF32LittleEndianStringEncoding];
+static NSString *stringFromWchar(const wchar_t *charText, size_t cnt) {
+	return [[NSString alloc] initWithBytes:charText length:cnt*sizeof(*charText) encoding:NSUTF32LittleEndianStringEncoding];
 }
 
-NSString *stringFromChar(const char *charText)
+static NSString *stringFromChar(const char *charText, size_t cnt)
 {
-	return [NSString stringWithUTF8String:charText];
+	return [NSString stringWithBytes:charText length:cnt encoding:NSUTF8StringEncoding];
 }
 
-void CopyToPasteboard(const char* szText) {
+void CopyToPasteboard(const char* szText, size_t cnt) {
 	[[NSPasteboard generalPasteboard] clearContents];
-//	[[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:szText] forType:NSPasteboardTypeString];
-	[[NSPasteboard generalPasteboard] setString:stringFromChar(szText) forType:NSPasteboardTypeString];
+	[[NSPasteboard generalPasteboard] setString:stringFromChar(szText, cnt) forType:NSPasteboardTypeString];
 }
 
-void CopyToPasteboard(const wchar_t* wszText) {
+void CopyToPasteboard(const wchar_t* wszText, size_t cnt) {
 	[[NSPasteboard generalPasteboard] clearContents];
-	[[NSPasteboard generalPasteboard] setString:stringFromWchar(wszText) forType:NSPasteboardTypeString];
+	[[NSPasteboard generalPasteboard] setString:stringFromWchar(wszText, cnt) forType:NSPasteboardTypeString];
 }

@@ -4,7 +4,7 @@
 
 struct IOSC52Interactor
 {
-	virtual void OSC52SetClipboard(const char *text) = 0;
+	virtual void OSC52SetClipboard(const std::string &text) = 0;
 };
 
 class OSC52ClipboardBackend : public FSClipboardBackend

@@ -196,16 +196,14 @@ void Grabber::CopyGrabbedArea(bool append)
 
 	if (clip.Open()) {
 		if (append) {
-			wchar_t *prev_clip_data = clip.Paste();
-			if (prev_clip_data && *prev_clip_data) {
-				std::wstring tmp = prev_clip_data;
-				if (tmp.back() != '\n') {
-					tmp+= '\n';
-					tmp+= grabbed_text;
+			auto tmp = clip.Paste();
+			if (tmp && !tmp->empty()) {
+				if (tmp->back() != '\n') {
+					tmp->push_back('\n');
 				}
-				grabbed_text.swap(tmp);
+				*tmp += grabbed_text;
+				grabbed_text.swap(*tmp);
 			}
-			free(prev_clip_data);
 			clip.Copy(grabbed_text.c_str());
 		} else {
 			clip.CopyWithHtml(grabbed_text.c_str(), grabbed_html.c_str());

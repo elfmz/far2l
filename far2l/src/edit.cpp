@@ -2135,14 +2135,12 @@ int Edit::GetSelString(wchar_t *Data, int MaxSize)
 		return FALSE;
 	}
 
-	int CopyLength;
+	int CopyLength = Min(MaxSize, Max(0, (my->SelEnd != -1) ? my->SelEnd - my->SelStart : Str.Size() - my->SelStart));
 
-	if (my->SelEnd == -1)
-		CopyLength = MaxSize;
-	else
-		CopyLength = Min(MaxSize, my->SelEnd - my->SelStart + 1);
-
-	far_wcsncpy(Data, Str.CPtr() + my->SelStart, CopyLength);
+	Str.CopyTo(Data, my->SelStart, CopyLength);
+	if (CopyLength < MaxSize) {
+		Data[CopyLength] = 0;
+	}
 	return TRUE;
 }
 
@@ -2154,7 +2152,11 @@ int Edit::GetSelString(FARString &strStr)
 		return FALSE;
 	}
 
-	strStr.Copy(this->Str.CPtr() + my->SelStart, my->SelEnd - my->SelStart + 1);
+	int CopyLength = Max(0, (my->SelEnd != -1) ? my->SelEnd - my->SelStart : Str.Size() - my->SelStart);
+
+	wchar_t *Data = strStr.GetBuffer(CopyLength);
+	Str.CopyTo(Data, my->SelStart, CopyLength);
+	strStr.ReleaseBuffer(CopyLength);
 	return TRUE;
 }
 

@@ -3198,31 +3198,17 @@ static bool clipFunc(const TMacroFunction *)
 		}
 		case 2:		// Add "S" into Clipboard
 		{
-			TVar varClip(Val.s());
 			Clipboard clip;
 
 			Ret = FALSE;
 
 			if (clip.Open()) {
-				wchar_t *CopyData = clip.Paste();
-
-				if (CopyData) {
-					size_t DataSize = StrLength(CopyData);
-					wchar_t *NewPtr = (wchar_t *)realloc(CopyData,
-							(DataSize + StrLength(Val.s()) + 2) * sizeof(wchar_t));
-
-					if (NewPtr) {
-						CopyData = NewPtr;
-						wcscpy(CopyData + DataSize, Val.s());
-						varClip = CopyData;
-						free(CopyData);
-					} else {
-						free(CopyData);
-					}
-				}
-
-				Ret = clip.Copy(varClip.s());
-
+				std::wstring Data;
+				auto cpr = clip.Paste();
+				if (cpr)
+					Data = *cpr;
+				Data+=  Val.s();
+				Ret = clip.Copy(Data);
 				clip.Close();
 			}
 			VMStack.Push(TVar((int64_t)Ret));	// 0!  ???

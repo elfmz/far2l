@@ -1286,20 +1286,14 @@ int64_t Editor::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 		}
 		case MCODE_V_EDITORSELVALUE:	// Editor.SelValue
 		{
-			FARString strText;
-			wchar_t *Text;
+			std::wstring Text;
 
 			if (VBlockStart)
-				Text = VBlock2Text(nullptr);
+				VBlock2Text(Text);
 			else
-				Text = Block2Text(nullptr);
+				Block2Text(Text);
 
-			if (Text) {
-				strText = Text;
-				free(Text);
-			}
-
-			*(FARString *)vParam = strText;
+			*(FARString *)vParam = Text;
 			return 1;
 		}
 	}
@@ -5517,29 +5511,32 @@ void Editor::Paste(const wchar_t *Src)
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 
-	wchar_t *ClipText = (wchar_t *)Src;
-	BOOL IsDeleteClipText = FALSE;
+	std::wstring ClipText;
 
-	if (!ClipText) {
+	if (!Src) {
 		Clipboard clip;
 
 		if (!clip.Open())
 			return;
 
 		bool IsVertical = false;
-		ClipText = clip.Paste(IsVertical);
-		if (ClipText && IsVertical && !m_bWordWrap) {
-			VPaste(ClipText);
-			clip.Close();
-			return;
+		auto cpr = clip.Paste(IsVertical);
+		if (cpr) {
+			if (IsVertical && !m_bWordWrap) {
+				VPaste(*cpr);
+				clip.Close();
+				return;
+			}
+			ClipText = *cpr;
 		}
 
 		clip.Close();
 
-		IsDeleteClipText = TRUE;
+	} else {
+		ClipText = Src;
 	}
 
-	if (ClipText && *ClipText) {
+	if (!ClipText.empty()) {
 		AddUndoData(UNDO_BEGIN);
 		Flags.Set(FEDITOR_NEWUNDO);
 		TextChanged(1);
@@ -5563,7 +5560,7 @@ void Editor::Paste(const wchar_t *Src)
 		int StartPos = CurLine->GetCurPos();
 		int oldAutoIndent = EdOpt.AutoIndent;
 
-		for (int I = 0; ClipText[I];) {
+		for (int I = 0; I < (int)ClipText.size();) {
 			if (ClipText[I] == L'\n' || ClipText[I] == L'\r') {
 				CurLine->Select(StartPos, -1);
 				StartPos = 0;
@@ -5595,7 +5592,7 @@ void Editor::Paste(const wchar_t *Src)
 
 				int Pos = I;
 
-				while (ClipText[Pos] && ClipText[Pos] != L'\n' && ClipText[Pos] != L'\r')
+				while (size_t(Pos) < ClipText.size() && ClipText[Pos] != L'\n' && ClipText[Pos] != L'\r')
 					Pos++;
 
 				if (Pos > I) {
@@ -5621,10 +5618,6 @@ void Editor::Paste(const wchar_t *Src)
 		AddUndoData(UNDO_END);
 	}
 
-	if (IsDeleteClipText)
-		free(ClipText);
-
-
 	if (m_bWordWrap) {
 		RememberWordWrapPreferredCellPos();
 
@@ -5640,61 +5633,28 @@ void Editor::Copy(int Append)
 		return;
 	}
 
-	wchar_t *CopyData = nullptr;
+	std::wstring CopyData;
 
 	Clipboard clip;
 
 	if (!clip.Open())
 		return;
 
-	if (Append)
-		CopyData = clip.Paste();
-
-	if ((CopyData = Block2Text(CopyData))) {
-		clip.Copy(CopyData);
-		free(CopyData);
+	if (Append) {
+		auto cpr = clip.Paste();
+		if (cpr)
+			CopyData = *cpr;
 	}
+
+	Block2Text(CopyData);
+
+	clip.Copy(CopyData);
 
 	clip.Close();
 }
 
-wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
+void Editor::Block2Text(std::wstring &Data)
 {
-	size_t DataSize = 0;
-
-	if (ptrInitData)
-		DataSize = wcslen(ptrInitData);
-
-	size_t TotalChars = DataSize;
-	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next) {
-		const auto Sel = Ptr->GetSelection();
-		if (Sel.Start == -1)
-			break;
-		if (Sel.End == -1) {
-			TotalChars+= Ptr->GetLength() - Sel.Start;
-			TotalChars+= wcslen(NATIVE_EOLW);	// CRLF
-		} else
-			TotalChars+= Sel.End - Sel.Start;
-	}
-	TotalChars++;	// '\0'
-
-	wchar_t *CopyData = (wchar_t *)malloc(TotalChars * sizeof(wchar_t));
-
-	if (!CopyData) {
-		if (ptrInitData)
-			free(ptrInitData);
-
-		return nullptr;
-	}
-
-	if (ptrInitData) {
-		wcscpy(CopyData, ptrInitData);
-		free(ptrInitData);
-	} else {
-		*CopyData = 0;
-	}
-
-
 	int line_in_block = 0;
 	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next, ++line_in_block) {
 		const auto Sel = Ptr->GetSelection();
@@ -5710,16 +5670,14 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 		else
 			Length = Sel.End - Sel.Start;
 
-		Ptr->GetSelString(CopyData + DataSize, Length + 1);
-		DataSize+= Length;
+		Data.resize(Data.size() + Length + 1);
+		Ptr->GetSelString(Data.data() + Data.size() - (Length + 1), Length + 1);
+		Data.resize(Data.size() - 1);
 
 		if (Sel.End == -1) {
-			wcscpy(CopyData + DataSize, NATIVE_EOLW);
-			DataSize+= wcslen(NATIVE_EOLW);
+			Data.append(NATIVE_EOLW);
 		}
 	}
-
-	return CopyData;
 }
 
 void Editor::DeleteBlock()
@@ -6588,50 +6546,27 @@ void Editor::DeleteVBlock()
 
 void Editor::VCopy(int Append)
 {
-	wchar_t *CopyData = nullptr;
+	std::wstring CopyData;
 
 	Clipboard clip;
 
 	if (!clip.Open())
 		return;
 
-	if (Append)
-		CopyData = clip.Paste();
-
-	if ((CopyData = VBlock2Text(CopyData))) {
-		clip.Copy(CopyData, true);
-		free(CopyData);
+	if (Append) {
+		auto cpr = clip.Paste();
+		if (cpr)
+			CopyData = *cpr;
 	}
+
+	VBlock2Text(CopyData);
+	clip.Copy(CopyData, true);
 
 	clip.Close();
 }
 
-wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
+void Editor::VBlock2Text(std::wstring &Data)
 {
-	size_t DataSize = 0;
-
-	if (ptrInitData)
-		DataSize = wcslen(ptrInitData);
-
-	// RealPos всегда <= TabPos, поэтому берём максимальный размер буфера
-	size_t TotalChars = DataSize + (VBlockSizeX + wcslen(NATIVE_EOLW)) * VBlockSizeY + 1;
-
-	wchar_t *CopyData = (wchar_t *)malloc(TotalChars * sizeof(wchar_t));
-
-	if (!CopyData) {
-		if (ptrInitData)
-			free(ptrInitData);
-
-		return nullptr;
-	}
-
-	if (ptrInitData) {
-		wcscpy(CopyData, ptrInitData);
-		free(ptrInitData);
-	} else {
-		*CopyData = 0;
-	}
-
 	Edit *CurPtr = VBlockStart;
 
 	for (int Line = 0; CurPtr && Line < VBlockSizeY; Line++, CurPtr = CurPtr->m_next) {
@@ -6645,104 +6580,97 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 			if (CopySize > TBlockSizeX)
 				CopySize = TBlockSizeX;
 
-			CurPtr->GetString(TBlockX, CopyData + DataSize, CopySize);
+			Data.resize(Data.size() + CopySize);
+			CurPtr->GetString(TBlockX, Data.data() + Data.size() - CopySize, CopySize);
 
-			if (CopySize < TBlockSizeX)
-				wmemset(CopyData + DataSize + CopySize, L' ', TBlockSizeX - CopySize);
+			if (CopySize < TBlockSizeX) {
+				Data.append(TBlockSizeX - CopySize, L' ');
+			}
 		} else {
-			wmemset(CopyData + DataSize, L' ', TBlockSizeX);
+			Data.append(TBlockSizeX, L' ');
 		}
-
-		DataSize+= TBlockSizeX;
-		wcscpy(CopyData + DataSize, NATIVE_EOLW);
-		DataSize+= wcslen(NATIVE_EOLW);
+		Data+= NATIVE_EOLW;
 	}
-
-	return CopyData;
 }
 
-void Editor::VPaste(wchar_t *ClipText)
+void Editor::VPaste(const std::wstring &ClipText)
 {
-	if (Flags.Check(FEDITOR_LOCKMODE))
+	if (Flags.Check(FEDITOR_LOCKMODE) || ClipText.empty())
 		return;
 
-	if (*ClipText) {
-		AddUndoData(UNDO_BEGIN);
-		Flags.Set(FEDITOR_NEWUNDO);
-		TextChanged(1);
-		int SaveOvertype = Flags.Check(FEDITOR_OVERTYPE);
-		UnmarkBlockAndShowIt();
-		Pasting++;
-		Lock();
+	AddUndoData(UNDO_BEGIN);
+	Flags.Set(FEDITOR_NEWUNDO);
+	TextChanged(1);
+	int SaveOvertype = Flags.Check(FEDITOR_OVERTYPE);
+	UnmarkBlockAndShowIt();
+	Pasting++;
+	Lock();
 
-		if (Flags.Check(FEDITOR_OVERTYPE)) {
-			Flags.Clear(FEDITOR_OVERTYPE);
-			CurLine->SetOvertypeMode(FALSE);
-		}
-
-		VBlockStart = CurLine;
-		BlockStartLine = NumLine;
-		int StartPos = CurLine->GetCellCurPos();
-		VBlockX = StartPos;
-		VBlockSizeX = 0;
-		VBlockY = NumLine;
-		VBlockSizeY = 0;
-		Edit *SavedTopScreen = TopScreen;
-
-		for (int I = 0; ClipText[I]; I++)
-			if (ClipText[I] != '\r' && ClipText[I] != '\n') {
-				ProcessKey(ClipText[I]);
-			} else {
-				const size_t EolLength = (ClipText[I] == '\r' || ClipText[I + 1] == '\n') ? 2 : 1;
-
-				int CurWidth = CurLine->GetCellCurPos() - StartPos;
-
-				if (CurWidth > VBlockSizeX)
-					VBlockSizeX = CurWidth;
-
-				VBlockSizeY++;
-
-				if (!CurLine->m_next) {
-					if (ClipText[I + EolLength]) {
-						ProcessKey(KEY_END);
-						ProcessKey(KEY_ENTER);
-
-						// Mantis 0002966: Неправильная вставка вертикального блока в конце файла
-						for (int I = 0; I < StartPos; I++)
-							ProcessKey(L' ');					}
-				} else {
-					ProcessKey(KEY_DOWN);
-					CurLine->SetCellCurPos(StartPos);
-					CurLine->SetOvertypeMode(FALSE);
-				}
-
-				I+= EolLength - 1;
-				continue;
-			}
-
-		int CurWidth = CurLine->GetCellCurPos() - StartPos;
-
-		if (CurWidth > VBlockSizeX)
-			VBlockSizeX = CurWidth;
-
-		if (!VBlockSizeY)
-			VBlockSizeY++;
-
-		if (SaveOvertype) {
-			Flags.Set(FEDITOR_OVERTYPE);
-			CurLine->SetOvertypeMode(TRUE);
-		}
-
-		TopScreen = SavedTopScreen;
-		CurLine = VBlockStart;
-		NumLine = BlockStartLine;
-		CurLine->SetCellCurPos(StartPos);
-		Pasting--;
-		Unlock();
-		AddUndoData(UNDO_END);
+	if (Flags.Check(FEDITOR_OVERTYPE)) {
+		Flags.Clear(FEDITOR_OVERTYPE);
+		CurLine->SetOvertypeMode(FALSE);
 	}
 
-	free(ClipText);
+	VBlockStart = CurLine;
+	BlockStartLine = NumLine;
+	int StartPos = CurLine->GetCellCurPos();
+	VBlockX = StartPos;
+	VBlockSizeX = 0;
+	VBlockY = NumLine;
+	VBlockSizeY = 0;
+	Edit *SavedTopScreen = TopScreen;
+
+	for (int I = 0; I < (int)ClipText.size(); I++)
+		if (ClipText[I] != '\r' && ClipText[I] != '\n') {
+			ProcessKey(ClipText[I]);
+		} else {
+			const size_t EolLength = (ClipText[I] == '\r' || ClipText[I + 1] == '\n') ? 2 : 1;
+
+			int CurWidth = CurLine->GetCellCurPos() - StartPos;
+
+			if (CurWidth > VBlockSizeX)
+				VBlockSizeX = CurWidth;
+
+			VBlockSizeY++;
+
+			if (!CurLine->m_next) {
+				if (ClipText[I + EolLength]) {
+					ProcessKey(KEY_END);
+					ProcessKey(KEY_ENTER);
+
+					// Mantis 0002966: Неправильная вставка вертикального блока в конце файла
+					for (int I = 0; I < StartPos; I++)
+						ProcessKey(L' ');					}
+			} else {
+				ProcessKey(KEY_DOWN);
+				CurLine->SetCellCurPos(StartPos);
+				CurLine->SetOvertypeMode(FALSE);
+			}
+
+			I+= EolLength - 1;
+			continue;
+		}
+
+	int CurWidth = CurLine->GetCellCurPos() - StartPos;
+
+	if (CurWidth > VBlockSizeX)
+		VBlockSizeX = CurWidth;
+
+	if (!VBlockSizeY)
+		VBlockSizeY++;
+
+	if (SaveOvertype) {
+		Flags.Set(FEDITOR_OVERTYPE);
+		CurLine->SetOvertypeMode(TRUE);
+	}
+
+	TopScreen = SavedTopScreen;
+	CurLine = VBlockStart;
+	NumLine = BlockStartLine;
+	CurLine->SetCellCurPos(StartPos);
+	Pasting--;
+	Unlock();
+	AddUndoData(UNDO_END);
 }
 
 void Editor::VBlockShift(int Left)

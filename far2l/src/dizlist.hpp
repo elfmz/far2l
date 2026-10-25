@@ -66,7 +66,7 @@ public:
 	~DizList();
 
 public:
-	void Read(const wchar_t *Path, const wchar_t *DizName = nullptr);
+	void Read(const wchar_t *Path, const wchar_t *DizName = nullptr, bool silent = false);
 	void Reset();
 	const wchar_t *GetDizTextAddr(const wchar_t *Name, const int64_t FileSize);
 	bool DeleteDiz(const wchar_t *Name);

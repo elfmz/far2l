@@ -220,12 +220,11 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				case KEY_HOME: iv->Home(); break;
 				case KEY_PGDN: iv->Iterate(true); break;
 				case KEY_PGUP: iv->Iterate(false); break;
-				case KEY_ENTER: case KEY_NUMENTER:
-					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ENTER, 0);
+				case KEY_ESC: case KEY_F10: {
+					const bool discard = (key == KEY_ESC) && (((int)Param2 & KEY_SHIFT) != 0);
+					g_far.SendDlgMessage(hDlg, DM_CLOSE, discard ? EXITED_DUE_ESCAPE_DISCARD : EXITED_DUE_ESCAPE, 0);
 					break;
-				case KEY_ESC: case KEY_F10:
-					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ESCAPE, 0);
-					break;
+				}
 				case KEY_F7: case 'h': case 'H': iv->MirrorH(); break;
 				case KEY_F8: case 'v': case 'V': iv->MirrorV(); break;
 				case KEY_F5: case 'f': case 'F':
@@ -252,9 +251,6 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					break;
 				case 'g': case 'G': case KEY_ALTF8:
 					iv->ShowGpsInfo();
-					break;
-				case 't': case 'T': case KEY_CTRLF10:
-					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_GOTO_CURFILE, 0);
 					break;
 			}
 		}
@@ -341,12 +337,10 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 		switch (exit_code) {
 			case EXITED_DUE_RESIZE:
 				continue;
-			case EXITED_DUE_ENTER:
+			case EXITED_DUE_ESCAPE:
 				if (selection) {
 					*selection = iv.GetSelection();
 				}
-				break;
-			case EXITED_DUE_GOTO_CURFILE:
 				if (goto_file) {
 					*goto_file = iv.CurFile();
 				}
@@ -359,7 +353,7 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 				}
 				break;
 			case EXITED_DUE_CANCELLED:
-			case EXITED_DUE_ESCAPE:
+			case EXITED_DUE_ESCAPE_DISCARD:
 				break;
 		}
 		return exit_code;

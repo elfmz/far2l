@@ -37,9 +37,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "flink.hpp"
 class Panel;
+class CopyProgress;
+class FileFilter;
 
 #include <WinCompat.h>
 #include "FARString.hpp"
+#include <cstdint>
+#include <ctime>
+#include <memory>
+#include <vector>
 
 enum COPY_CODES
 {
@@ -82,6 +88,25 @@ struct COPY_FLAGS
 	DWORD ErrorMessageFlags;		//  MSG_WARNING | MSG_ERRORTYPE [| MSG_DISPLAYNOTIFY if Opt.NotifOpt.OnFileOperation ]
 };
 
+struct ShellCopyProgressState
+{
+	long OldCalcTime{0};
+	int TotalFiles{0};
+	int TotalFilesToProcess{0};
+	clock_t CopyStartTime{0};
+	int OrigScrX{0};
+	int OrigScrY{0};
+	uint64_t TotalCopySize{0};
+	uint64_t TotalCopiedSize{0};
+	uint64_t CurCopiedSize{0};
+	uint64_t TotalSkippedSize{0};
+	size_t CountTarget{0};
+	bool ShowTotalCopySize{false};
+	FARString strTotalCopySizeText;
+	clock_t ProgressUpdateTime{0};
+	CopyProgress *Progress{nullptr};
+};
+
 class ShellCopyFileExtendedAttributes
 {
 	FileExtendedAttributes _xattr;
@@ -114,6 +139,7 @@ class ShellFileTransfer
 	const FARString &_strDestName;
 	ShellCopyBuffer &_CopyBuffer;
 	COPY_FLAGS &_Flags;
+	ShellCopyProgressState &_ProgressState;
 	const FAR_FIND_DATA_EX &_SrcData;
 
 	clock_t _Stopwatch = 0;
@@ -134,7 +160,8 @@ class ShellFileTransfer
 
 public:
 	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, const FARString &strDestName,
-			bool Append, bool Resume, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags);
+			bool Append, bool Resume, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags,
+			ShellCopyProgressState &ProgressState);
 	~ShellFileTransfer();
 
 	void Do();
@@ -143,9 +170,11 @@ public:
 class ShellCopy
 {
 	COPY_FLAGS Flags;
+	ShellCopyProgressState ProgressState;
 	Panel *SrcPanel, *DestPanel;
 	int SrcPanelMode, DestPanelMode;
 	DizList DestDiz;
+	DizList SourceDiz;
 	FARString strDestDizPath;
 	FARString strCopiedName;
 	FARString strRenamedName;
@@ -162,7 +191,22 @@ class ShellCopy
 	// в остальных случаях - RP_EXACTCOPY - как у источника
 	ReparsePointTypes RPT;
 	ShellCopyBuffer CopyBuffer;
+	FileFilter *Filter{nullptr};
+	bool UseFilter{false};
 	bool CaseInsensitiveFS{false};
+	bool Background{false};
+	bool FrameLocked{false};
+	bool UpdateDiz{false};
+	FARString SourceDir;
+	std::vector<FARString> OperationItems;
+	std::vector<FARString> OperationDestinations;
+	struct TreeUpdate
+	{
+		enum Type { Add, Delete, Rename } type;
+		FARString source;
+		FARString destination;
+	};
+	std::vector<TreeUpdate> TreeUpdates;
 
 	std::vector<FARString> SelectedPanelItems;
 	struct CopiedDirectory
@@ -199,14 +243,41 @@ class ShellCopy
 
 	bool CmpFullNames(const wchar_t *Src, const wchar_t *Dest) const;
 	bool CmpNames(const wchar_t *Src, const wchar_t *Dest) const;
+	void PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPresent,
+			DWORD FileAttr, FARString strSelName, bool ShowCopyTime);
+	void AddTreeName(const wchar_t *name);
+	void DeleteTreeName(const wchar_t *name);
+	void RenameTreeName(const wchar_t *source, const wchar_t *destination);
+	void ApplyTreeUpdates();
+	void CreatePath(FARString &path);
+	void CopyDiz(const wchar_t *source, const wchar_t *destination);
+	void DeleteDiz(const wchar_t *source);
+	void FlushDiz();
+	void UnlockFrame();
+	void Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel, int Move, int Link,
+			int CurrentOnly, int Ask, int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir);
+	ShellCopy();
+	friend LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 
 	COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 	COPY_CODES CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 
 public:
-	ShellCopy(Panel *SrcPanel, int Move, int Link, int CurrentOnly, int Ask, int &ToPlugin,
+	static void Execute(Panel *SrcPanel, int Move, int Link, int CurrentOnly, int Ask, int &ToPlugin,
 			const wchar_t *PluginDestPath, bool ToSubdir = false);
 	~ShellCopy();
 };
+
+bool HasBackgroundFileOperation();
+using BackgroundFileOperationId = uint64_t;
+struct BackgroundFileOperationInfo
+{
+	BackgroundFileOperationId id;
+	FARString text;
+};
+void GetBackgroundFileOperations(std::vector<BackgroundFileOperationInfo> &operations);
+bool GetBackgroundFileOperationProgress(BackgroundFileOperationId id, FARString &text);
+void ShowBackgroundFileOperation(BackgroundFileOperationId id);
+void AbortAndWaitForBackgroundFileOperations();
 
 LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);

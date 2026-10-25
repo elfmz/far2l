@@ -3230,7 +3230,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 			int SelStart = GetLength();
 
 			// magic
-			if (IsSlash(Str[SelStart - 1]) && Str[SelStart - 2] == L'"'
+			if (SelStart > 1 && IsSlash(Str[SelStart - 1]) && Str[SelStart - 2] == L'"'
 					&& IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart - 2))) {
 				Str[SelStart - 2] = Str[SelStart - 1];
 				Str.Truncate(Str.Size() - 1);// StrSize--; NB: originally NUL char wasnt enforced after truncation
@@ -3293,7 +3293,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 									int SelStart = GetLength();
 
 									// magic
-									if (IsSlash(Str[SelStart - 1]) && Str[SelStart - 2] == L'"'
+									if (SelStart > 1 && IsSlash(Str[SelStart - 1]) && Str[SelStart - 2] == L'"'
 											&& IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart - 2))) {
 										Str[SelStart - 2] = Str[SelStart - 1];
 										Str.Truncate(Str.Size() - 1);// StrSize--; NB: originally NUL char wasnt enforced after truncation

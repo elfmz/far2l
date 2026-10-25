@@ -19,6 +19,7 @@ struct S3Credentials
 struct S3Session
 {
 	ne_session *sess = nullptr;
+	std::string host; // must outlive sess: used as ne_ssl_set_verify() userdata
 
 	S3Session() = default;
 	~S3Session() {

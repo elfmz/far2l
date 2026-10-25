@@ -16,7 +16,7 @@ in
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.9.0-c12197b";
+        version = "2.9.1-3591802";
 
         #separateDebugInfo = true;
 
@@ -24,8 +24,8 @@ in
           owner = "elfmz";
           repo = "far2l";
 
-          rev = "c12197bceb57b645dcbac99af6c51be815cb756b";
-          sha256 = "sha256-AzwG4w++mu/5XeURQ86xu6HfXpFlc5VuK9CbMx6kPBU=";
+          rev = "3591802e656cdc0c835882651a7460732dd471f4";
+          sha256 = "sha256-CWFycE3Jb+fie7LXeOzbWf15mil/NgXowY6w0GSvguw=";
         };
 
         postPatch = ''

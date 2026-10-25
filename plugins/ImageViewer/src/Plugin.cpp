@@ -153,14 +153,14 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 		return -1;
 	}
 
-	bool has_real_selection = false;
+	int use_real_selection = 0;
 	ssize_t cur = -1;
 	const auto &cur_fn = GetCurrentPanelItem();
 	for (int i = 0; i < pi.ItemsNumber; ++i) {
 		const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
 		if (!fn_sel.first.empty() && fn_sel.first != "." && fn_sel.first != "..") {
 			if (fn_sel.second) {
-				has_real_selection = true;
+				use_real_selection = -1;
 			}
 			if (fn_sel.first == cur_fn) {
 				cur = all_files.size();
@@ -176,7 +176,19 @@ static ssize_t GetPanelItemsForView(const std::string &name, std::vector<std::pa
 			cur = chosen_files.size();
 			chosen_files.emplace_back(all_files[i]);
 		} else {
-			if (has_real_selection) { // if some has marking selection - choose all such files
+			if (use_real_selection < 0 && !all_files[i].second) {
+				const wchar_t *msg_items[] = {g_settings.Msg(M_TITLE),
+					g_settings.Msg(M_CHOOSE_SCOPE_TEXT),
+					g_settings.Msg(M_CHOOSE_SCOPE_SELECTED),
+					g_settings.Msg(M_CHOOSE_SCOPE_ALL)
+				};
+				if (g_far.Message(g_far.ModuleNumber, 0, nullptr, msg_items, 4, 2) == 0) {
+					use_real_selection = 1;
+				} else {
+					use_real_selection = 0;
+				}
+			}
+			if (use_real_selection) { // if some has marking selection - choose all such files
 				if (all_files[i].second) {
 					chosen_files.emplace_back(all_files[i]);
 				}
@@ -201,7 +213,7 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 	std::unordered_set<std::string> selection;
 	std::string goto_file;
 	auto ed = ShowImageAtFull(initial_file, all_items, selection, false, &goto_file);
-	if (ed == EXITED_DUE_ENTER) {
+	if (ed == EXITED_DUE_ESCAPE) {
 		PanelInfo pi{};
 		g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 		if (pi.ItemsNumber > 0) {
@@ -219,7 +231,6 @@ static EXITED_DUE OpenPluginAtCurrentPanel(const std::string &name)
 			g_far.Control(PANEL_ACTIVE, FCTL_ENDSELECTION, 0, 0);
 			g_far.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 		}
-	} else if (ed == EXITED_DUE_GOTO_CURFILE) {
 		GoToPanelFile(goto_file);
 	}
 	return ed;
@@ -358,7 +369,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const un
 {
 	if (Name) {
 		if ((OpMode == OPM_PGDN && g_settings.OpenByCtrlPgDn())
-		 || (OpMode  == 0 && g_settings.OpenByEnter())) {
+		 || (OpMode == 0 && g_settings.OpenByEnter())) {
 			const wchar_t *slash = wcsrchr(Name, L'/');
 			const auto &name_mb = Wide2MB(slash ? slash + 1 : Name);
 			if (g_settings.MatchFile(name_mb.c_str())) {

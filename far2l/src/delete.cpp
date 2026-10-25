@@ -878,7 +878,6 @@ int DeleteFileWithFolder(const wchar_t *FileName)
 		}
 	}
 
-	WINPORT(SetLastError)((_localLastError = WINPORT(GetLastError)()));
 	return FALSE;
 }
 

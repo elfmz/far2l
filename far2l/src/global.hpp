@@ -81,8 +81,6 @@ extern SaveScreen *GlobalSaveScrPtr;
 
 extern int CriticalInternalError;
 
-extern int _localLastError;
-
 extern unsigned int g_umask;
 
 extern int KeepUserScreen;

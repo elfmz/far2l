@@ -117,36 +117,51 @@ struct RegWipeScope
 
 #include <vector>
 
+
+template <class CHAR_T, class LEN_T = size_t>
+	std::pair<void *, LEN_T> ClipboardAllocFrom(const CHAR_T *src, LEN_T cnt)
+{
+	LEN_T len = sizeof(CHAR_T) * cnt;
+	if (len < cnt) {
+		return std::make_pair(nullptr, len);
+	}
+	void *out = cnt ? WINPORT(ClipboardAlloc)(cnt * sizeof(CHAR_T)) : nullptr;
+	if (out) {
+		memcpy(out, src, cnt * sizeof(CHAR_T));
+	}
+	return std::make_pair(out, len);
+}
+
 template <class CHAR_T, class LEN_T>
 	void *ClipboardAllocFromVector(const std::vector<CHAR_T> &src, LEN_T &len)
 {
-	len = LEN_T(src.size() * sizeof(CHAR_T));
-	if (size_t(len) != (src.size() * sizeof(CHAR_T)))
-		return nullptr;
-
-	void *out = len ? WINPORT(ClipboardAlloc)(len) : nullptr;
-	if (out) {
-		memcpy(out, src.data(), len);
-	}
-	return out;
+	auto r = ClipboardAllocFrom(src.data(), src.size());
+	len = r.second;
+	return r.first;
 }
 
 template <class CHAR_T>
 	void *ClipboardAllocFromVector(const std::vector<CHAR_T> &src)
 {
-	size_t len;
-	return ClipboardAllocFromVector<CHAR_T, size_t>(src, len);
+	return ClipboardAllocFrom(src.data(), src.size()).first;
 }
 
 template <class CHAR_T>
 	void *ClipboardAllocFromZeroTerminatedString(const CHAR_T *src)
 {
 	const size_t len = tzlen(src) + 1;
-	void *out = len ? WINPORT(ClipboardAlloc)(len * sizeof(CHAR_T)) : nullptr;
-	if (out) {
-		memcpy(out, src, len * sizeof(CHAR_T));
+	return ClipboardAllocFrom(src, len).first;
+}
+
+template <class CHAR_T>
+	std::pair<const CHAR_T*, size_t> ClipboardCharsAndCountWithoutNUL(const void *data, size_t len)
+{
+	const CHAR_T *chars = (const CHAR_T *)data;
+	size_t cnt = len / sizeof(CHAR_T); 
+	if (cnt && !chars[cnt]) {
+		cnt--;
 	}
-	return out;
+	return std::make_pair(chars, cnt);
 }
 
 struct ConsoleRepaintsDeferScope

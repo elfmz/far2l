@@ -375,7 +375,7 @@ private:
 	void BlockRight();
 	void DeleteVBlock();
 	void VCopy(int Append);
-	void VPaste(wchar_t *ClipText);
+	void VPaste(const std::wstring &ClipText);
 	void VBlockShift(int Left);
 	bool IsVerticalBlockEditMode() const;
 	bool ProcessVerticalBlockEditKey(FarKey Key);
@@ -406,8 +406,8 @@ private:
 	int BlockStart2NumLine(int *Pos);
 	int BlockEnd2NumLine(int *Pos);
 	bool CheckLine(Edit *line);
-	wchar_t *Block2Text(wchar_t *ptrInitData);
-	wchar_t *VBlock2Text(wchar_t *ptrInitData);
+	void Block2Text(std::wstring &Data);
+	void VBlock2Text(std::wstring &Data);
 
 public:
 	int GetEditorID() const { return EditorID; }

@@ -335,8 +335,8 @@ TTYFar2lClipboardBackend::SetDataThread::SetDataThread(TTYFar2lClipboardBackend 
 	: _backend(backend), _format(format)
 {
 	if (_format == CF_UNICODETEXT) { // CF_UNICODETEXT -> CF_TEXT to reduce traffic
-		const size_t wchar_cnt = wcsnlen((const wchar_t *)data, len / sizeof(wchar_t));
-		UtfConverter<wchar_t, unsigned char>((const wchar_t *)data, wchar_cnt).CopyToVector(_data);
+		auto cc = ClipboardCharsAndCountWithoutNUL<wchar_t>(data, len);
+		UtfConverter<wchar_t, unsigned char>(cc.first, cc.second).CopyToVector(_data);
 		_format = CF_TEXT;
 
 	} else {
@@ -419,8 +419,8 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 	if (format == CF_UNICODETEXT) { // use UTF8 instead of UTF32 to reduce traffic
 		void *data = InnerClipboardGetData(CF_TEXT, len);
 		if (data) {
-			const size_t chars_cnt = strnlen((const char *)data, len);
-			UtfConverter<char, wchar_t> cvt((const char *)data, chars_cnt);
+			auto cc = ClipboardCharsAndCountWithoutNUL<char>(data, len);
+			UtfConverter<char, wchar_t> cvt(cc.first, cc.second);
 			WINPORT(ClipboardFree)(data);
 			return ClipboardAllocFromVector(cvt);
 		}

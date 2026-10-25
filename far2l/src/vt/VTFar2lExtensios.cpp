@@ -70,10 +70,10 @@ static uint64_t CalculateDataID(UINT fmt, const void *data, uint32_t len)
 		len = 0;
 
 	} else if (fmt == CF_UNICODETEXT) {
-		len = wcsnlen((const wchar_t *)data, len / sizeof(wchar_t)) * sizeof(wchar_t);
+		len = ClipboardCharsAndCountWithoutNUL<wchar_t>(data, len).second * sizeof(wchar_t);
 
 	} else if (fmt == CF_TEXT) {
-		len = strnlen((const char *)data, len);
+		len = ClipboardCharsAndCountWithoutNUL<char>(data, len).second;
 	}
 	uint64_t id = len;
 	if (len) {

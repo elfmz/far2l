@@ -173,11 +173,10 @@ bool Clipboard::IsFormatAvailable(UINT Format)
 }
 
 // Перед вставкой производится очистка буфера
-bool Clipboard::Copy(const wchar_t *Data, bool IsVertical)
+bool Clipboard::Copy(const std::wstring &Data, bool IsVertical)
 {
 	Empty();
-
-	if (!AddData(CF_UNICODETEXT, Data, (wcslen(Data) + 1) * sizeof(wchar_t))) {
+	if (!AddData(CF_UNICODETEXT, Data.c_str(), (Data.size() + 1) * sizeof(wchar_t))) {
 		return false;
 	}
 
@@ -191,7 +190,7 @@ bool Clipboard::Copy(const wchar_t *Data, bool IsVertical)
 	return true;
 }
 
-bool Clipboard::CopyWithHtml(const wchar_t *Data, const char *Html)
+bool Clipboard::CopyWithHtml(const std::wstring &Data, const char *Html)
 {
 	Empty();
 
@@ -199,7 +198,7 @@ bool Clipboard::CopyWithHtml(const wchar_t *Data, const char *Html)
 		return false;
 	}
 
-	if (!AddData(CF_UNICODETEXT, Data, (wcslen(Data) + 1) * sizeof(wchar_t))) {
+	if (!AddData(CF_UNICODETEXT, Data.c_str(), (Data.size() + 1) * sizeof(wchar_t))) {
 		return false;
 	}
 
@@ -227,46 +226,30 @@ bool Clipboard::AddData(UINT FormatType, const void *Data, size_t Size)
 
 // max - без учета символа конца строки!
 // max = -1 - there is no limit!
-wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
+std::optional<std::wstring> Clipboard::Paste(bool &IsVertical)
 {
-	PVOID ClipData = GetData(CF_UNICODETEXT);
-
-	if (!ClipData)
-		return nullptr;
-
-	const wchar_t *ClipChars = (const wchar_t *)ClipData;
-	size_t CharsCount = wcsnlen(ClipChars, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
-
-	if (CharsCount > 0 && ClipChars[0] == L'\xFEFF') {
-		++ClipChars;
-		--CharsCount;
-	}
-
-	if (MaxChars >= 0 && CharsCount > (size_t)MaxChars)
-		CharsCount = (size_t)MaxChars;
-
-	wchar_t *ClipText = (wchar_t *)malloc((CharsCount + 1) * sizeof(wchar_t));
-	if (ClipText) {
-		wmemcpy(ClipText, ClipChars, CharsCount);
-		ClipText[CharsCount] = 0;
-	}
-
 	IsVertical = false;
+	std::optional<std::wstring> out;
 
-	if (ClipText && wcsstr(ClipText, NATIVE_EOLW)) {
-		UINT FormatType = RegisterFormat(FAR_VerticalBlock_Unicode);
-		if (FormatType && IsFormatAvailable(FormatType)) {
-			IsVertical = true;
+	PVOID ClipData = GetData(CF_UNICODETEXT);
+	if (ClipData) {
+		auto cc = ClipboardCharsAndCountWithoutNUL<wchar_t>(ClipData, WINPORT(ClipboardSize)(ClipData));
+
+		if (cc.second && *cc.first == L'\xFEFF') {
+			++cc.first;
+			--cc.second;
+		}
+
+		out.emplace(cc.first, cc.second);
+		if (out && out->find(NATIVE_EOLW) != std::wstring::npos) {
+			UINT FormatType = RegisterFormat(FAR_VerticalBlock_Unicode);
+			if (FormatType && IsFormatAvailable(FormatType)) {
+				IsVertical = true;
+			}
 		}
 	}
 
-	return ClipText;
-}
-
-wchar_t *Clipboard::Paste()
-{
-	bool IsVertical;
-	return Paste(IsVertical);
+	return out;
 }
 
 /* ------------------------------------------------------------ */
@@ -290,13 +273,15 @@ wchar_t *PasteFromClipboardEx(int MaxChars)
 
 	if (!clip.Open())
 		return nullptr;
-
-	bool IsVertical;
-	wchar_t *ClipText = clip.Paste(IsVertical, MaxChars);
-
+	auto cpr = clip.Paste();
 	clip.Close();
+	if (!cpr)
+		return nullptr;
 
-	return ClipText;
+	if (MaxChars >= 0 && cpr->size() > size_t(MaxChars))
+		cpr->resize(MaxChars);
+
+	return wcsdup(cpr->c_str());
 }
 
 wchar_t *WINAPI PasteFromClipboard()

@@ -33,11 +33,12 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <optional>
 #include <WinCompat.h>
 
 int WINAPI CopyToClipboard(const wchar_t *Data);
 wchar_t *PasteFromClipboardEx(int MaxChars = -1);
-wchar_t *WINAPI PasteFromClipboard();
+wchar_t *PasteFromClipboard();
 BOOL EmptyInternalClipboard();
 
 class Clipboard
@@ -58,10 +59,17 @@ public:
 	BOOL Open();
 	BOOL Close();
 	BOOL Empty();
-	bool Copy(const wchar_t *Data, bool IsVertical = false);
-	bool CopyWithHtml(const wchar_t *Data, const char *Html);
-	wchar_t *Paste(bool &IsVertical, int MaxChars = -1);
-	wchar_t *Paste();
+	bool Copy(const std::wstring &Data, bool IsVertical = false);
+	bool CopyWithHtml(const std::wstring &Data, const char *Html);
+
+	std::optional<std::wstring> Paste(bool &IsVertical);
+
+	inline std::optional<std::wstring> Paste()
+	{
+		bool IsVertical;
+		return Paste(IsVertical);
+	}
+
 
 private:
 	bool AddData(UINT FormatType, const void *Data, size_t Size);

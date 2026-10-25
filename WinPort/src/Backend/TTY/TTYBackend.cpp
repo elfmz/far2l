@@ -1010,7 +1010,7 @@ void TTYBackend::ChooseSimpleClipboardBackend()
 	}
 }
 
-void TTYBackend::OSC52SetClipboard(const char *text)
+void TTYBackend::OSC52SetClipboard(const std::string &text)
 {
 	fprintf(stderr, "TTYBackend::OSC52SetClipboard\n");
 	std::unique_lock<std::mutex> lock(_async_mutex);

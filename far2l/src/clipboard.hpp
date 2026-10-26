@@ -62,14 +62,7 @@ public:
 	bool Copy(const std::wstring &Data, bool IsVertical = false);
 	bool CopyWithHtml(const std::wstring &Data, const char *Html);
 
-	std::optional<std::wstring> Paste(bool &IsVertical);
-
-	inline std::optional<std::wstring> Paste()
-	{
-		bool IsVertical;
-		return Paste(IsVertical);
-	}
-
+	std::optional<std::wstring> Paste(bool *IsVertical = nullptr);
 
 private:
 	bool AddData(UINT FormatType, const void *Data, size_t Size);

@@ -5520,7 +5520,7 @@ void Editor::Paste(const wchar_t *Src)
 			return;
 
 		bool IsVertical = false;
-		auto cpr = clip.Paste(IsVertical);
+		auto cpr = clip.Paste(&IsVertical);
 		if (cpr) {
 			if (IsVertical && !m_bWordWrap) {
 				VPaste(*cpr);

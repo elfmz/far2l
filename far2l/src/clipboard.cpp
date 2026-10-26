@@ -226,9 +226,12 @@ bool Clipboard::AddData(UINT FormatType, const void *Data, size_t Size)
 
 // max - без учета символа конца строки!
 // max = -1 - there is no limit!
-std::optional<std::wstring> Clipboard::Paste(bool &IsVertical)
+std::optional<std::wstring> Clipboard::Paste(bool *IsVertical)
 {
-	IsVertical = false;
+	if (IsVertical) {
+		*IsVertical = false;
+	}
+
 	std::optional<std::wstring> out;
 
 	PVOID ClipData = GetData(CF_UNICODETEXT);
@@ -241,10 +244,10 @@ std::optional<std::wstring> Clipboard::Paste(bool &IsVertical)
 		}
 
 		out.emplace(cc.first, cc.second);
-		if (out && out->find(NATIVE_EOLW) != std::wstring::npos) {
+		if (IsVertical && out->find(NATIVE_EOLW) != std::wstring::npos) {
 			UINT FormatType = RegisterFormat(FAR_VerticalBlock_Unicode);
 			if (FormatType && IsFormatAvailable(FormatType)) {
-				IsVertical = true;
+				*IsVertical = true;
 			}
 		}
 	}

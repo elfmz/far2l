@@ -1795,6 +1795,7 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 		try {
 			std::thread([self, progress, taskId, Move, AddSlash, CDP, strSelName, ShowCopyTime]() mutable {
 				try {
+					SudoClientRegion sdc_rgn;
 					self->PerformCopy(Move, AddSlash, CDP.SelCount, CDP.FolderPresent,
 							CDP.FileAttr, strSelName, ShowCopyTime);
 				} catch (...) {

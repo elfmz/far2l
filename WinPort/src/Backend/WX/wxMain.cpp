@@ -1839,6 +1839,14 @@ COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 	return out;
 }
 
+void WinPortPanel::EnsureMouseReleasedFromDrag()
+{
+	if (_drag_captured_mouse && HasCapture()) {
+		ReleaseMouse();
+		_drag_captured_mouse = false;
+	}
+}
+
 void WinPortPanel::OnMouse( wxMouseEvent &event )
 {
 	ResetTimerIdling();
@@ -1860,9 +1868,10 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 
 	_last_mouse_event = event;
 
-	if ((mode&ENABLE_QUICK_EDIT_MODE) || _adhoc_quickedit)
+	if ((mode&ENABLE_QUICK_EDIT_MODE) || _adhoc_quickedit) {
+		EnsureMouseReleasedFromDrag();
 		OnMouseQEdit( event, pos_char );
-	else if (mode&ENABLE_MOUSE_INPUT) {
+	} else if (mode&ENABLE_MOUSE_INPUT) {
 		OnMouseNormal( event, pos_char );
 		if (left_down)
 			BeginExternalFileDrag();
@@ -1877,8 +1886,10 @@ void WinPortPanel::BeginExternalFileDrag()
 {
 	EndExternalFileDrag();
 
-	if (!HasCapture())
+	if (!HasCapture()) {
 		CaptureMouse();
+		_drag_captured_mouse = true;
+	}
 }
 
 void WinPortPanel::TryStartExternalFileDrag()
@@ -1891,8 +1902,7 @@ void WinPortPanel::TryStartExternalFileDrag()
 		return;
 
 	_external_drag_active = true;
-	ReleaseMouse();
-
+	EnsureMouseReleasedFromDrag();
 	wxFileDataObject data;
 	for (const auto &file : _external_drag_files)
 		data.AddFile(wxString(file.c_str()));
@@ -1910,8 +1920,7 @@ void WinPortPanel::TryStartExternalFileDrag()
 
 void WinPortPanel::EndExternalFileDrag()
 {
-	if (!_external_drag_active && HasCapture())
-		ReleaseMouse();
+	EnsureMouseReleasedFromDrag();
 	_external_drag_files.clear();
 }
 

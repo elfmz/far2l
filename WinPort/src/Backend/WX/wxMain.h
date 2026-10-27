@@ -91,6 +91,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	std::atomic<DWORD> _focused_ts{1};
 	std::vector<std::wstring> _external_drag_files;
 	bool _external_drag_active{false};
+	bool _drag_captured_mouse{false};
 	MOUSE_EVENT_RECORD _prev_mouse_event{};
 	DWORD _prev_mouse_event_ts{0};
 
@@ -163,6 +164,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void DamageAreaBetween(COORD c1, COORD c2);
 	void ResetTimerIdling();
 
+	void EnsureMouseReleasedFromDrag();
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
 	virtual void OnConsoleOutputResized();
 	virtual void OnConsoleOutputTitleChanged();

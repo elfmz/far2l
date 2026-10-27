@@ -193,6 +193,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
 	virtual bool OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf);
 	virtual bool OnDeleteConsoleImage(const char *id);
+	virtual bool OnSetConsoleImageVisibility(const char *id, bool visible, const SMALL_RECT *exclusions, size_t count) override;
 
 public:
 	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

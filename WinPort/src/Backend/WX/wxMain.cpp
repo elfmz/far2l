@@ -1,4 +1,5 @@
 #include "wxMain.h"
+#include <wx/dcbuffer.h>
 #include <dlfcn.h>
 #include <wx/dnd.h>
 #include "../NotifySh.h"
@@ -1782,7 +1783,9 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 	//fprintf(stderr, "WinPortPanel::OnPaint\n");
 	_pending_refreshes = 0;
 
-	wxPaintDC dc(this);
+	// Present console text and image overlays as one frame. Drawing the console
+	// directly first briefly erases the image on every dialog/menu repaint.
+	wxAutoBufferedPaintDC dc(this);
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;
@@ -2353,6 +2356,19 @@ bool WinPortPanel::OnDeleteConsoleImage(const char *id)
 		if (!_images.Delete(id)) {
 			return false;
 		}
+		Refresh(false, nullptr);
+		return true;
+	};
+
+	return wxIsMainThread() ? impl() : CallInMain<bool>(impl);
+}
+
+bool WinPortPanel::OnSetConsoleImageVisibility(const char *id, bool visible, const SMALL_RECT *exclusions, size_t count)
+{
+	auto impl = [&]() {
+		if (!_images.SetVisibility(id, visible, exclusions, count))
+			return false;
+		// Repaint the underlying console as well when removing an overlay.
 		Refresh(false, nullptr);
 		return true;
 	};

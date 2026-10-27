@@ -46,7 +46,7 @@ class ImageAtQV : public Threaded
 
 			iv.reset();
 			std::vector<std::pair<std::string, bool> > all_files{{file, false}};
-			iv.emplace(0, all_files);
+			iv.emplace(0, all_files, WINPORT_IMAGE_ID_QV);
 			if (iv->Setup(area, &_changing) != ImageOpResult::OK) {
 				iv.reset();
 			}

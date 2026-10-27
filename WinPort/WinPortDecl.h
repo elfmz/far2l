@@ -89,6 +89,8 @@
 	// tf - is a valid combintation of WP_IMGTF_* values
 	WINPORT_DECL_DEF(TransformConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, const SMALL_RECT *area, uint16_t tf))
 	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id))
+	// Exclusions are inclusive console-cell rectangles; visibility survives image replacement.
+	WINPORT_DECL_DEF(SetConsoleImageVisibility, BOOL, (HANDLE hConsoleOutput, const char *id, BOOL visible, const SMALL_RECT *exclusions, size_t count))
 
 #ifdef WINPORT_REGISTRY
 	///registry API

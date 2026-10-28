@@ -793,6 +793,26 @@ void Manager::ProcessMainLoop()
 	if (CurrentFrame)
 		CtrlObject->Macro.SetMode(CurrentFrame->GetMacroMode());
 
+	// Recover only from a lock that leaked for real: positive, stable across two
+	// consecutive unguarded iterations. Guards (modal stack, redraw, macro) may
+	// legitimately hold the lock, so they invalidate the stability observation.
+	static int s_prev_lock_count = -1;
+	const int lock_count = ScrBuf.GetLockCount();
+	const bool guards_active = ModalStackCount || IsRedrawFramesInProcess
+			|| CtrlObject->Macro.IsExecuting() != MACROMODE_NOMACRO
+			|| CtrlObject->Macro.PeekKey();
+	if (guards_active) {
+		s_prev_lock_count = -1;
+	} else if (lock_count > 0 && lock_count == s_prev_lock_count) {
+		fprintf(stderr, "ProcessMainLoop: clearing leaked screen lock count=%d\n",
+			lock_count);
+		ScrBuf.SetLockCount(0);
+		ScrBuf.Flush();
+		s_prev_lock_count = ScrBuf.GetLockCount();
+	} else {
+		s_prev_lock_count = lock_count;
+	}
+
 	DispatchInterThreadCalls();
 
 	if (CurrentFrame && !CurrentFrame->ProcessEvents()) {

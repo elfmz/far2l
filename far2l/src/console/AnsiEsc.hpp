@@ -26,7 +26,7 @@ namespace AnsiEsc
 		DWORD	rgb_foreground = 0;
 		DWORD	rgb_background = 0;
 
-		void ParseSuffixM(const int *args, int argc);
+		void ParseSuffixM(const int *args, int argc, DWORD64 default_attr);
 		void FromConsoleAttributes(DWORD64 qAttributes);
 		DWORD64 ToConsoleAttributes();
 	};
@@ -51,6 +51,7 @@ namespace AnsiEsc
 		Parser _parser;
 		FontState _font_state;
 		DWORD64 _initial_attr;
+		DWORD64 _default_attr;
 		wchar_t _last_char = L' ';
 
 		void EnforceStateColor();

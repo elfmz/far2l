@@ -253,7 +253,7 @@ private:
 		$ 19.03.2002 DJ
 		IgnoreVisible - обновить, даже если панель невидима
 	*/
-	void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying);
+	void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying, int NoProgress);
 	void UpdatePlugin(int KeepSelection, int IgnoreVisible);
 
 	void MoveSelection(ListDataVec &NewList, ListDataVec &OldList);

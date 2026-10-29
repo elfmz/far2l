@@ -1802,8 +1802,8 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 					InterThreadCall<int>([self]() {
 						self->ApplyTreeUpdates();
 						if (CtrlObject && CtrlObject->Cp()) {
-							CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
-							CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+							CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_NO_PROGRESS);
+							CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY | UPDATE_NO_PROGRESS);
 						}
 						Message(MSG_WARNING, 1, Msg::Error,
 								Msg::BackgroundFileOperationFailed, Msg::Ok);
@@ -2023,8 +2023,8 @@ void ShellCopy::PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPr
 		if (Background) {
 			ApplyTreeUpdates();
 			if (CtrlObject && CtrlObject->Cp()) {
-				CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
-				CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+				CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_NO_PROGRESS);
+				CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY | UPDATE_NO_PROGRESS);
 			}
 
 			if (Opt.NotifOpt.OnFileOperation)

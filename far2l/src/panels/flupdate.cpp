@@ -72,7 +72,7 @@ void FileList::Update(int Mode)
 		switch (PanelMode) {
 			case NORMAL_PANEL:
 				ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,
-						Mode & UPDATE_DRAW_MESSAGE, Mode & UPDATE_CAN_BE_ANNOYING);
+						Mode & UPDATE_DRAW_MESSAGE, Mode & UPDATE_CAN_BE_ANNOYING, Mode & UPDATE_NO_PROGRESS);
 				break;
 			case PLUGIN_PANEL: {
 				OpenPluginInfo Info;
@@ -81,7 +81,7 @@ void FileList::Update(int Mode)
 
 				if (PanelMode != PLUGIN_PANEL)
 					ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,
-							Mode & UPDATE_DRAW_MESSAGE, Mode & UPDATE_CAN_BE_ANNOYING);
+							Mode & UPDATE_DRAW_MESSAGE, Mode & UPDATE_CAN_BE_ANNOYING, Mode & UPDATE_NO_PROGRESS);
 				else if ((Info.Flags & OPIF_REALNAMES)
 						|| CtrlObject->Cp()->GetAnotherPanel(this)->GetMode() == PLUGIN_PANEL
 						|| !(Mode & UPDATE_SECONDARY))
@@ -127,7 +127,7 @@ static void PR_ReadFileNamesMsg()
 // ЭТО ЕСТЬ УЗКОЕ МЕСТО ДЛЯ СКОРОСТНЫХ ХАРАКТЕРИСТИК Far Manager
 // при считывании дирректории
 
-void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying)
+void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying, int NoProgress)
 {
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ReadFileNamesMsg);
 
@@ -135,7 +135,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 	if (!IsVisible() && !IgnoreVisible) {
 		UpdateRequired = TRUE;
-		UpdateRequiredMode = KeepSelection;
+		UpdateRequiredMode = KeepSelection | NoProgress;
 		return;
 	}
 
@@ -325,7 +325,9 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			// FileCount++;
 
 			DWORD CurTime = WINPORT(GetTickCount)();
-			if (CurTime - StartTime > RedrawTimeout) {
+			// Automatic updates must not draw a progress title over an editor
+			// or flush the screen halfway through restoring the panels.
+			if (!NoProgress && CurTime - StartTime > RedrawTimeout) {
 				StartTime = CurTime;
 				if (IsVisible()) {
 					FARString strReadMsg;
@@ -508,7 +510,7 @@ int FileList::UpdateIfChanged(int UpdateMode)
 						AnotherPanel->Redraw();
 				}
 
-				Update(UPDATE_KEEP_SELECTION);
+				Update(UPDATE_KEEP_SELECTION | UPDATE_NO_PROGRESS);
 
 				if (UpdateMode == UIC_UPDATE_NORMAL)
 					Show();

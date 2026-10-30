@@ -4178,6 +4178,8 @@ wildcards ('*' and '?') and special expressions:
     #[c,x-z]#     any character enclosed by the brackets.
                 Both separate characters and character intervals
                 are allowed.
+    #${VAR}#      VAR will be resolved from environment;
+                Useful to put some complex mask there
 
     For example, files ftp.exe, fc.exe and f.ext may be selected using mask
 f*.ex?, mask *co* will select both color.ini and edit.com, mask [c-f,t]*.txt
@@ -4221,6 +4223,8 @@ the character '#|#'.
     The same as *|*.bak
  6. *|/^pict\d{1,3}\.gif$/i
     All files except for pict0.gif — pict999.gif, disregard the character case.
+ 7. *|${IRRELEVANT}
+    All files except for listed in IRRELEVANT environment variable
 
     The comma (or semicolon) is used for separating file masks from each other,
 and the '|' character separates include masks from exclude masks.

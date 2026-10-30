@@ -1,6 +1,6 @@
 /*
-  custom buid far2l package with python and arclite enabled, where you could personally select revisions
-  Also added some postinstall fixes, for example for linking 7z custom build 7z.so
+  custom buid far2l package, where you could personally select revisions
+  Also added some postinstall fixes, for example for linking 7z.so
 */
 {
   pkgs,
@@ -16,7 +16,7 @@ in
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.9.1-3591802";
+        version = "2.9.1-1bd345f";
 
         #separateDebugInfo = true;
 
@@ -24,8 +24,8 @@ in
           owner = "elfmz";
           repo = "far2l";
 
-          rev = "3591802e656cdc0c835882651a7460732dd471f4";
-          sha256 = "sha256-CWFycE3Jb+fie7LXeOzbWf15mil/NgXowY6w0GSvguw=";
+          rev = "1bd345fe9708f94e03209bd443c2ca2303b39c25";
+          sha256 = "sha256-0898sWltJcgupef3xvazb6e2z9s/XrS8z1XRtdGsXzM=";
         };
 
         postPatch = ''
@@ -56,7 +56,6 @@ in
           prev.libuchardet
           prev.spdlog
           prev.libxml2
-          prev.pcre
           # Netrocks
           prev.openssl
           prev.libssh
@@ -146,10 +145,10 @@ in
           ''
             # Wrap tools paths to program bin
             wrapProgram $out/bin/far2l \
-              --prefix PATH : ${lib.makeBinPath farTools}
-
-            # Link p7z lib to far plugin arclite home
-            echo "Linking 7zzz libraries..."
+              --prefix PATH : ${lib.makeBinPath farTools} \
+              --suffix PATH : ${lib.makeBinPath [ prev.xdg-utils ]}
+            # Link 7z plugin
+            echo "Linking 7z libraries..."
             mkdir -p $out/lib/far2l/Plugins/arclite/plug/
             for file in ${prev._7zz.lib}/lib/*; do
               ln -sf "$file" "$out/lib/far2l/Plugins/arclite/plug/"

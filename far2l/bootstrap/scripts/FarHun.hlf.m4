@@ -3723,6 +3723,8 @@ akár semmilyen karakter);
 
     #[c,x-z]#     ^<wrap>a szögletes zárójelek közt álló bármelyik karakter.
 Lehet egyedüli, lehet tartomány vagy a kettő kombinációja.
+    #${VAR}# A VAR a környezetből lesz feloldva;
+Hasznos összetett maszkot tenni oda
 
     Például az ftp.exe, fc.exe és az f.ext fájl az f*.ex? maszkkal írható le,
 a *co* maszba belefér a color.ini és az edit.com is, a [c-f,t]*.txt maszknak
@@ -3759,6 +3761,10 @@ befoglaló maszkok után kell állniuk, #|# karakterrel elválasztva.
 egyszer szerepelhet.
     5. |*.bak
        Ugyanaz, mint a *|*.bak
+    6. *|/^pict\d{1,3}\.gif$/i
+       Minden fájl, kivéve a pict0.gif — pict999.gif fájlt, figyelmen kívül hagyja a kis- és nagybetűket.
+    7. *|${IRRELEVANT}
+       Minden fájl, kivéve az IRRELEVANT környezeti változóban felsoroltakat
 
     A "," (vagy ";") az egyes maszkokat, a "|" karakter pedig a befoglaló és a
 kizáró maszkok csoportját választja el egymástól.

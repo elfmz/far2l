@@ -34,7 +34,7 @@ ExpectString("left-fgdfgfd");
 
 // disable exit confirmation
 TypeFKey(9)
-ExpectString("Left    Files    Commands    Options    Right");
+ExpectString("Left    Files    Commands    Objects    Options    Navigate    View    Right", 0, 0, -1, -1, 10000);
 TypeText("on")
 ExpectString("══ Confirmations ══");
 ToggleLAlt(true)

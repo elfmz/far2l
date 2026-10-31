@@ -168,7 +168,6 @@ private:
 	static void sUnmountPath(FARString path, bool forced);
 
 protected:
-	bool SetLocation_Directory(const wchar_t *path);
 	bool SetLocation_Plugin(bool file_plugin, class Plugin *plugin, const wchar_t *path,
 			const wchar_t *host_file, LONG_PTR item);
 
@@ -183,6 +182,8 @@ public:
 	virtual ~Panel();
 
 public:
+	bool SetLocation_Directory(const wchar_t *path);
+
 	virtual int SendKeyToPlugin(DWORD Key, BOOL Pred = FALSE) { return FALSE; };
 	virtual BOOL SetCurDir(const wchar_t *NewDir, int ClosePlugin);
 	virtual void ChangeDirToCurrent();

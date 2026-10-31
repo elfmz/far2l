@@ -976,6 +976,27 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	return RetCode;
 }
 
+// Returns Index-th record counting from the most recent one (Index==0 is
+// the latest). Unlike GetPrev/GetNext doesn't use or modify CurrentItem,
+// so it doesn't interfere with Ctrl-E/Ctrl-X history navigation.
+bool History::GetRecentStr(size_t Index, FARString &strStr)
+{
+	SyncChanges();
+
+	HistoryRecord *Item = HistoryList.Last();
+
+	while (Item && Index) {
+		Item = HistoryList.Prev(Item);
+		Index--;
+	}
+
+	if (!Item)
+		return false;
+
+	strStr = Item->strName;
+	return true;
+}
+
 void History::GetPrev(FARString &strStr)
 {
 	CurrentItem = HistoryList.Prev(CurrentItem);

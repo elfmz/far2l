@@ -27,6 +27,7 @@
 #define INI_OPENINFV       "OpenInFV"
 #define INI_IMAGEMASKS     "ImageMasks"
 #define INI_VIDEOMASKS     "VideoMasks"
+#define INI_CONFIRM_SELECTION_ON_EXIT   "ConfirmSelectionOnExit"
 
 Settings g_settings;
 
@@ -44,6 +45,7 @@ Settings::Settings()
 		_open_in_fv = sv->GetInt(INI_OPENINFV, _open_in_fv) != 0;
 		_image_masks = sv->GetString(INI_IMAGEMASKS, DEFAULT_IMAGE_MASKS);
 		_video_masks = sv->GetString(INI_VIDEOMASKS, DEFAULT_VIDEO_MASKS);
+		_confirm_selection_on_exit = sv->GetInt(INI_CONFIRM_SELECTION_ON_EXIT, _confirm_selection_on_exit) != 0;
 
 		unsigned int default_scale = sv->GetUInt(INI_DEFAULTSCALE, _default_scale);
 		if (default_scale < (unsigned int)INVALID_SCALE_EDGE_VALUE) {
@@ -204,7 +206,7 @@ std::string Settings::ExtraCommandsMenu()
 
 void Settings::ConfigurationDialog()
 {
-	const int w = 50, h = 16;
+	const int w = 58, h = 18;
 
 	struct FarDialogItem fdi[] = {
 	/* 0 */ {DI_DOUBLEBOX, 1,   1,   w - 2, h - 2, 0,	 {}, 0, 0,	Msg(M_TITLE), 0},
@@ -219,9 +221,11 @@ void Settings::ConfigurationDialog()
 	/* 9 */ {DI_TEXT,      3,   10,  w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
 	/*10 */ {DI_EDIT,      3,   11,  w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
 	/*11 */ {DI_SINGLEBOX, 2,   12,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
-	/*12 */ {DI_BUTTON,    4,   13,  0,	    0,     FALSE, {}, 0, 0, Msg(M_EXTRA_COMMANDS), 0},
-	/*13 */ {DI_BUTTON,    27,  13,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
-	/*14 */ {DI_BUTTON,    35,  13,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
+	/*12 */ {DI_CHECKBOX,  3,   13,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_CONFIRM_ON_EXIT), 0},
+	/*13 */ {DI_SINGLEBOX, 2,   14,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
+	/*14 */ {DI_BUTTON,    4,   15,  0,	    0,     FALSE, {}, 0, 0, Msg(M_EXTRA_COMMANDS), 0},
+	/*15 */ {DI_BUTTON,    27,  15,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
+	/*16 */ {DI_BUTTON,    35,  15,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
 	};
 
 	fdi[1].Param.Selected = _use_orientation;
@@ -235,6 +239,8 @@ void Settings::ConfigurationDialog()
 
 	fdi[8].PtrData = image_masks.c_str();
 	fdi[10].PtrData = video_masks.c_str();
+
+	fdi[12].Param.Selected = _confirm_selection_on_exit;
 
 	auto dlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, w, h, L"settings", fdi, ARRAYSIZE(fdi), 0, 0, nullptr, 0);
 	auto commands_copy = _commands;
@@ -262,6 +268,7 @@ void Settings::ConfigurationDialog()
 		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 6, 0) == BSTATE_CHECKED);
 		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 8, 0);
 		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 10, 0);
+		_confirm_selection_on_exit = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 12, 0) == BSTATE_CHECKED);
 
 		StrWide2MB(image_masks, _image_masks);
 		StrWide2MB(video_masks, _video_masks);
@@ -272,6 +279,7 @@ void Settings::ConfigurationDialog()
 		kfh.SetInt(INI_SETTINGS, INI_OPENBYCPGDN, _open_by_cpgdn);
 		kfh.SetInt(INI_SETTINGS, INI_OPENINQV, _open_in_qv);
 		kfh.SetInt(INI_SETTINGS, INI_OPENINFV, _open_in_fv);
+		kfh.SetInt(INI_SETTINGS, INI_CONFIRM_SELECTION_ON_EXIT, _confirm_selection_on_exit);
 
 		if (_image_masks != DEFAULT_IMAGE_MASKS) {
 			kfh.SetString(INI_SETTINGS, INI_IMAGEMASKS, _image_masks);

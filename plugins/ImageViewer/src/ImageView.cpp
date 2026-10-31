@@ -31,7 +31,7 @@ ImageOpResult ImageView::PrepareImage()
 
 	struct stat st {};
 	if (stat(_render_file.c_str(), &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0) {
-		_all_files[_cur_file].second = false; // silently unselect non-loadable files
+		std::get<1>(_all_files[_cur_file]) = std::get<2>(_all_files[_cur_file]) = false; // silently unselect non-loadable files
 		return ImageOpResult::FAILED;
 	}
 
@@ -78,7 +78,7 @@ ImageOpResult ImageView::PrepareImage()
 
 	if (stat(_tmp_file.c_str(), &st) == -1 || st.st_size == 0) {
 		unlink(_tmp_file.c_str());
-		_all_files[_cur_file].second = false; // silently unselect non-loadable files
+		std::get<1>(_all_files[_cur_file]) = std::get<2>(_all_files[_cur_file]) = false; // silently unselect non-loadable files
 		return ImageOpResult::FAILED;
 	}
 
@@ -568,7 +568,7 @@ void ImageView::JustReset(bool keep_rotmir)
 
 ///////////////////// ImageView PUBLICs
 
-ImageView::ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
+ImageView::ImageView(size_t initial_file, const std::vector<std::tuple<std::string, bool, bool> > &all_files)
 	:
 	_all_files(all_files),
 	_initial_file(initial_file),
@@ -589,11 +589,25 @@ std::unordered_set<std::string> ImageView::GetSelection() const
 {
 	std::unordered_set<std::string> out;
 	for (const auto &it : _all_files) {
-		if (it.second) {
-			out.insert(it.first);
+		if (std::get<1>(it)) {
+			out.insert(std::get<0>(it));
 		}
 	}
 	return out;
+}
+
+bool ImageView::SelectionChangesCount(int &selected, int &deselected)
+{
+	selected = deselected = 0;
+	for (const auto &it : _all_files) {
+		if (std::get<1>(it) != std::get<2>(it)) {
+			if (std::get<1>(it))
+				selected++;
+			else
+				deselected++;
+		}
+	}
+	return (selected > 0) || (deselected > 0);
 }
 
 ImageOpResult ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
@@ -748,23 +762,23 @@ void ImageView::Reset(bool keep_rotmir)
 
 void ImageView::Select()
 {
-	if (!_all_files[_cur_file].second) {
-		_all_files[_cur_file].second = true;
+	if (!std::get<1>(_all_files[_cur_file])) {
+		std::get<1>(_all_files[_cur_file]) = true;
 		DenoteState();
 	}
 }
 
 void ImageView::Deselect()
 {
-	if (_all_files[_cur_file].second) {
-		_all_files[_cur_file].second = false;
+	if (std::get<1>(_all_files[_cur_file])) {
+		std::get<1>(_all_files[_cur_file]) = false;
 		DenoteState();
 	}
 }
 
 void ImageView::ToggleSelection()
 {
-	_all_files[_cur_file].second = !_all_files[_cur_file].second;
+	std::get<1>(_all_files[_cur_file]) = !std::get<1>(_all_files[_cur_file]);
 	DenoteState();
 }
 

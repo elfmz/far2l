@@ -16,7 +16,8 @@ class ImageView
 	volatile bool *_cancel{nullptr};
 
 	std::string _render_file, _tmp_file, _file_size_str;
-	std::vector<std::pair<std::string, bool> > _all_files;
+	// all_files: filename, current selection, initial selection
+	std::vector<std::tuple<std::string, bool, bool> > _all_files;
 	size_t _initial_file{}, _cur_file{};
 	WinportGraphicsInfo _wgi{}; // updated during RenderImage before actual rendering
 
@@ -52,19 +53,20 @@ class ImageView
 
 protected:
 	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan);
-	bool CurFileSelected() const { return _all_files[_cur_file].second; }
-	const std::string &CurFile() const { return _all_files[_cur_file].first; }
+	bool CurFileSelected() const { return std::get<1>(_all_files[_cur_file]); }
+	const std::string &CurFile() const { return std::get<0>(_all_files[_cur_file]); }
 	volatile bool *CancelFlag() const { return _cancel; }
 	const std::string &CurFileSizeStr() const { return _file_size_str; }
 
 public:
-	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
+	ImageView(size_t initial_file, const std::vector<std::tuple<std::string, bool, bool> > &all_files);
 	~ImageView();
 
 
 	const std::string &ErrorString() const { return _err_str; }
 
 	std::unordered_set<std::string> GetSelection() const;
+	bool SelectionChangesCount(int &selected, int &deselected);
 
 	ImageOpResult Setup(SMALL_RECT &rc, volatile bool *cancel = nullptr);
 

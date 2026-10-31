@@ -76,7 +76,7 @@ public:
 	bool _first_draw{true};
 	using ImageView::CurFile;
 
-	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
+	ImageViewAtFull(size_t initial_file, const std::vector<std::tuple<std::string, bool, bool> > &all_files)
 		: ImageView(initial_file, all_files)
 	{
 	}
@@ -221,8 +221,40 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				case KEY_PGDN: iv->Iterate(true); break;
 				case KEY_PGUP: iv->Iterate(false); break;
 				case KEY_ESC: case KEY_F10: {
-					const bool discard = (key == KEY_ESC) && (((int)Param2 & KEY_SHIFT) != 0);
-					g_far.SendDlgMessage(hDlg, DM_CLOSE, discard ? EXITED_DUE_ESCAPE_DISCARD : EXITED_DUE_ESCAPE, 0);
+					int exit_action = -1;
+					if (iv->may_select && g_settings.ConfirmSelectionOnExit()) {
+						int selected, deselected;
+						if (iv->SelectionChangesCount(selected, deselected)) {
+							std::vector<const wchar_t *> items;
+							items.push_back(g_settings.Msg(M_TITLE));
+							wchar_t buf[0x100]{};
+							swprintf(buf, ARRAYSIZE(buf) - 1,
+								g_settings.Msg(M_SELECTION_CHANGES1), selected, deselected);
+							items.push_back(buf);
+							items.push_back(g_settings.Msg(M_SELECTION_CHANGES2));
+							WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+							switch (g_far.Message(g_far.ModuleNumber, FMSG_MB_YESNOCANCEL, nullptr,
+															items.data(), items.size(), 0)) {
+								case 0:
+									exit_action = EXITED_DUE_ESCAPE;
+									break;
+								case 1:
+									exit_action = EXITED_DUE_ESCAPE_DISCARD;
+									break;
+								default:
+									exit_action = -1; // no exit without choice
+							}
+						}
+						else
+							exit_action = EXITED_DUE_ESCAPE_DISCARD; // no selection changes was
+					}
+					else // if without explicit confirm message discard for Shift+Esc
+						exit_action = (key == KEY_ESC) && (((int)Param2 & KEY_SHIFT) != 0)
+							? EXITED_DUE_ESCAPE_DISCARD : EXITED_DUE_ESCAPE;
+					if (exit_action >= 0)
+						g_far.SendDlgMessage(hDlg, DM_CLOSE, exit_action, 0);
+					else
+						iv->ForceShow();
 					break;
 				}
 				case KEY_F7: case 'h': case 'H': iv->MirrorH(); break;
@@ -289,7 +321,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error, std::string *goto_file = nullptr)
+static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::tuple<std::string, bool, bool>> &all_files, std::unordered_set<std::string> *selection, bool silent_exit_on_error, std::string *goto_file = nullptr)
 {
 	ImageViewAtFull iv(initial_file, all_files);
 	if (selection) {
@@ -347,7 +379,7 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 				break;
 			case EXITED_DUE_ERROR:
 				if (!silent_exit_on_error) {
-					std::wstring ws_cur_file = L"\"" + StrMB2Wide(all_files[initial_file].first) + L"\"";
+					std::wstring ws_cur_file = L"\"" + StrMB2Wide(std::get<0>(all_files[initial_file])) + L"\"";
 					std::wstring werr_str = StrMB2Wide(iv.ErrorString());
 					ShowError({g_settings.Msg(M_FAILED_TO_LOAD_IMAGE), ws_cur_file, werr_str});
 				}
@@ -360,14 +392,14 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 	}
 }
 
-EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file)
+EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::tuple<std::string, bool, bool>> &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error, std::string *goto_file)
 {
 	return ShowImageAtFullInternal(initial_file, all_files, &selection, silent_exit_on_error, goto_file);
 }
 
 EXITED_DUE ShowImageAtFull(const std::string &file, bool silent_exit_on_error, std::string *goto_file)
 {
-	std::vector<std::pair<std::string, bool>> all_files{{file, false}};
+	std::vector<std::tuple<std::string, bool, bool>> all_files{{file, false, false}};
 	return ShowImageAtFullInternal(0, all_files, nullptr, silent_exit_on_error, goto_file);
 }
 

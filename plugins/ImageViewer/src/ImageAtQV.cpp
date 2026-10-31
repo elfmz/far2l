@@ -45,7 +45,7 @@ class ImageAtQV : public Threaded
 				area.Left, area.Top, area.Right, area.Bottom, file.c_str());
 
 			iv.reset();
-			std::vector<std::pair<std::string, bool> > all_files{{file, false}};
+			std::vector<std::tuple<std::string, bool, bool> > all_files{{file, false, false}};
 			iv.emplace(0, all_files);
 			if (iv->Setup(area, &_changing) != ImageOpResult::OK) {
 				iv.reset();

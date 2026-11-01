@@ -1154,6 +1154,12 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				ChangeEditKeyBar();
 				return TRUE;
 
+			case KEY_CTRLSHIFTF5:
+				m_editor->SetShowEOL(m_editor->GetShowEOL() ? 0 : 1);
+				m_editor->Show();
+				ChangeEditKeyBar();
+				return TRUE;
+
 			case KEY_SHIFTF5:
 				if (EdCfg && EdCfg->TabSize > 0) {
 					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentSize, EdCfg->TabSize);
@@ -2235,6 +2241,8 @@ void FileEditor::SetEditKeyBarStatefulLabels()
 		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed ? Msg::SingleEditF8UTF8 : Msg::EditF8UTF8), 7);
 
 	EditKeyBar.Change(KBL_MAIN, m_editor->GetShowWhiteSpace() ? Msg::EditF5Hide : Msg::EditF5, 4);
+	EditKeyBar.Change(KBL_CTRLSHIFT, m_editor->GetShowEOL() ? Msg::EditCtrlShiftF5Hide
+			: (Opt.OnlyEditorViewerUsed ? Msg::SingleEditCtrlShiftF5 : Msg::EditCtrlShiftF5), 4);
 
 	EditKeyBar.Change(KBL_CTRL, m_editor->GetConvertTabs() ? Msg::EditCtrlF5 : Msg::EditCtrlF5Spaces, 4);
 
@@ -2464,6 +2472,7 @@ void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
 	m_editor->SetReadOnlyLock(EdOpt.ReadOnlyLock);
 	m_editor->SetShowScrollBar(EdOpt.ShowScrollBar);
 	m_editor->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
+	m_editor->SetShowEOL(EdOpt.ShowEOL);
 	m_editor->SetShowLineNumbers(EdOpt.ShowLineNumbers);
 	m_editor->SetShowGutterMarks(EdOpt.ShowGutterMarks);
 	m_editor->SetSearchPickUpWord(EdOpt.SearchPickUpWord);
@@ -2940,6 +2949,8 @@ int FileEditor::IsOptionActive(int hMenu, int vMenu) {
 		return m_editor->GetShowLineNumbers();
 	case MENU_VIEW_SPACES:
 		return m_editor->GetShowWhiteSpace();
+	case MENU_VIEW_EOL:
+		return m_editor->GetShowEOL();
 	case MENU_VIEW_TABS_TO_SPACES:
 		return m_editor->GetConvertTabs() == EXPAND_NEWTABS;
 	case MENU_VIEW_OVERTYPE:

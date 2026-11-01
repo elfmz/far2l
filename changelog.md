@@ -5,6 +5,12 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* _New:_ Parallel background copy and move
+* Themes: added "Catpuccin Mocha"
+* Fix slow bracketed paste of large text
+* Fix NUL chars in copypasted strings
+* Fix directory creation with quotes in the name
+* Several bugfixes and improvements
 
 ## 2.9.1 beta (2026-10-07)
 * GUI|WX: Drag files out of far2l panels

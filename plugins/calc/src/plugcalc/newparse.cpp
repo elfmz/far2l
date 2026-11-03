@@ -1313,18 +1313,21 @@ bool CalcParser::SetDelims(wchar_t decimal, wchar_t args, wchar_t digit)
 
 int limit_number(int num_lim, const SArg & val, int radix)
 {
+	Big b = val.GetBig();
+	if (b.IsZero())
+		return num_lim;
+
 	// XXX: This is ugly, I know...
 	static const Big e10[8] = { Big(L"1e10"), Big(L"1e100"), Big(L"1e1000"), Big(L"1e10000"), Big(L"1e100000"),
 								Big(L"1e1000000"), Big(L"1e10000000"), Big(L"1e100000000") };
 	static const Big e_10[8] = { Big(L"1e-10"), Big(L"1e-100"), Big(L"1e-1000"), Big(L"1e-10000"), Big(L"1e-100000"),
 								Big(L"1e-1000000"), Big(L"1e-10000000"), Big(L"1e-100000000") };
-	Big b = val.GetBig();
 	if (b < 0)
 		num_lim--;
 	b.Abs();
 	if (b <= e_10[0] || b >= e10[0])
 	{
-		for (int i = 1; (b >= e10[i] || b <= e_10[i]) && i < 9; i++)
+		for (size_t i = 1; i < sizeof(e10) / sizeof(e10[0]) && (b >= e10[i] || b <= e_10[i]); i++)
 			num_lim--;
 	}
 	else if (radix != CALC_RADIX_EXPONENTIAL)

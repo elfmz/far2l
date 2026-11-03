@@ -12,7 +12,9 @@ namespace openwith
 		Error,
 		NotRealNames,
 		SaveConfigError,
-		NoAppsFound,
+		NoCompatibleApps,
+		NoCompatibleAppsForAll,
+		DetectedFileTypes,
 		CannotExecute,
 		UnsupportedPlatform,
 

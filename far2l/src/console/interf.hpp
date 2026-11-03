@@ -106,6 +106,14 @@ void MakeShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss = NULL);
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color);
 void SetColor(uint64_t Color, bool ApplyToConsole = false);
 void SetFarColor(uint16_t Color, bool ApplyToConsole = false);
+
+void SetFarColor(uint16_t Color, bool Focus, bool Hover, bool Pressed, bool Selected);
+uint64_t SoftenItemColor(uint64_t attributes, int Focus, int Hover, int Pressed, int Selected);
+uint64_t GetAccentColors(uint64_t attributes);
+uint64_t GetLinkColor(uint64_t attributes);
+uint64_t SoftenColorToBlack(uint64_t attributes);
+uint64_t SoftenColorToDisabled(uint64_t attributes);
+
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb, bool used);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb);
 void FarTrueColorFromAttributes(FarTrueColorForeAndBack &TFB, DWORD64 Attrs);

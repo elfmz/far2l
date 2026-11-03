@@ -62,10 +62,15 @@ namespace openwith
 				FilterOutTerminalCandidates(*app_candidates, filepaths.size());
 
 				if ((*app_candidates).empty()) {
-					ShowErrorDlg({ GetMsg(MsgID::NoAppsFound), JoinStrings(provider->GetFileTypes(), L"; ") });
+					const auto filetypes = provider->GetFileTypes();
+					ShowErrorDlg({
+						filetypes.size() == 1 ? GetMsg(MsgID::NoCompatibleApps)
+											  : GetMsg(MsgID::NoCompatibleAppsForAll),
+						GetMsg(MsgID::DetectedFileTypes),
+						JoinStrings(filetypes, L"; ")
+					});
 					return;  // No application candidates; exit the plugin.
 				}
-
 
 				// NOTE: FarMenuItem stores a raw const wchar_t* — no copy is made.
 				// The pointers here point directly into the name strings inside "app_candidates".

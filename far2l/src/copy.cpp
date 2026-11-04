@@ -1767,6 +1767,11 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 			if (Background) {
 				FARString fullDestination;
 				ConvertNameToFull(destination, fullDestination);
+				// A trailing slash requests moving/copying into a directory.
+				// Full-path normalization removes it, so preserve that intent.
+				const size_t destinationLength = StrLength(destination);
+				if (destinationLength && IsSlash(destination[destinationLength - 1]))
+					AddEndSlash(fullDestination);
 				OperationDestinations.emplace_back(fullDestination);
 			} else {
 				OperationDestinations.emplace_back(destination);

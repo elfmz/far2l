@@ -200,6 +200,13 @@ struct CopyProgressSnapshot
 	bool scanning{true};
 };
 
+// Bytes already present at resumed destinations advance progress without increasing transfer speed.
+static uint64_t CopySizeLeft(uint64_t total, uint64_t copied, uint64_t resumed)
+{
+	const uint64_t remaining = total - Min(total, resumed);
+	return remaining - Min(remaining, copied);
+}
+
 class CopyProgress final : public DirInfoProgressTracker
 {
 	ShellCopyProgressState &State;
@@ -218,9 +225,11 @@ class CopyProgress final : public DirInfoProgressTracker
 	std::wstring CurrentDestination;
 	uint64_t CurrentCompleted{0};
 	uint64_t CurrentTotal{0};
+	uint64_t CurrentResumeOffset{0};
 	uint64_t OverallCompleted{0};
 	uint64_t OverallTotal{0};
 	uint64_t OverallSkipped{0};
+	uint64_t OverallResumeOffset{0};
 	int FilesProcessed{0};
 	int FilesTotal{0};
 	bool Scanning{true};
@@ -460,9 +469,11 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 			OverallCompleted = CompletedSize;
 			OverallTotal = TotalSize;
 			OverallSkipped = State.TotalSkippedSize;
+			OverallResumeOffset = State.TotalResumeOffset;
 		} else {
 			CurrentCompleted = CompletedSize;
 			CurrentTotal = TotalSize;
+			CurrentResumeOffset = State.CurResumeOffset;
 		}
 		return;
 	}
@@ -475,7 +486,9 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 	}
 
 	UINT64 OldCompletedSize = CompletedSize;
-	UINT64 OldTotalSize = TotalSize;
+	const UINT64 SizeLeft = CopySizeLeft(TotalSize, CompletedSize,
+			TotalProgress ? State.TotalResumeOffset : State.CurResumeOffset);
+	CompletedSize = TotalSize - SizeLeft;
 	CompletedSize>>= 8;
 	TotalSize>>= 8;
 	CompletedSize = Min(CompletedSize, TotalSize);
@@ -505,7 +518,6 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 
 	if (Time && (!Total || TotalProgress)) {
 		DWORD WorkTime = GetProcessUptimeMSec() - State.CopyStartTime;
-		UINT64 SizeLeft = (OldTotalSize > OldCompletedSize) ? (OldTotalSize - OldCompletedSize) : 0;
 		long CalcTime = State.OldCalcTime;
 
 		if (WaitUserTime != -1)		// -1 => находимся в процессе ожидания ответа юзера
@@ -549,9 +561,9 @@ void CopyProgress::GetSnapshot(CopyProgressSnapshot &snapshot) const
 	std::lock_guard<std::mutex> lock(StateMutex);
 	snapshot.source = CurrentSource;
 	snapshot.destination = CurrentDestination;
-	snapshot.currentCompleted = CurrentCompleted;
+	snapshot.currentCompleted = CurrentTotal - CopySizeLeft(CurrentTotal, CurrentCompleted, CurrentResumeOffset);
 	snapshot.currentTotal = CurrentTotal;
-	snapshot.overallCompleted = OverallCompleted;
+	snapshot.overallCompleted = OverallTotal - CopySizeLeft(OverallTotal, OverallCompleted, OverallResumeOffset);
 	snapshot.overallTotal = OverallTotal;
 	snapshot.filesProcessed = FilesProcessed;
 	snapshot.filesTotal = FilesTotal;
@@ -571,9 +583,7 @@ void CopyProgress::GetSnapshot(CopyProgressSnapshot &snapshot) const
 				total = OverallTotal;
 			}
 			snapshot.bytesPerSecond = completed / snapshot.elapsedSeconds;
-			const uint64_t sizeLeft = total > (Total ? OverallCompleted : completed)
-					? total - (Total ? OverallCompleted : completed)
-					: 0;
+			const uint64_t sizeLeft = total - (Total ? snapshot.overallCompleted : snapshot.currentCompleted);
 			if (snapshot.bytesPerSecond) {
 				snapshot.remainingSeconds = static_cast<DWORD>(sizeLeft / snapshot.bytesPerSecond);
 			}
@@ -1776,6 +1786,12 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 	// нужно ли показывать время копирования?
 	bool ShowCopyTime = (Opt.CMOpt.CopyTimeRule & COPY_RULE_FILES) != 0;
 
+	// Choose the progress mode before creating the background dialog and its snapshot state.
+	if (CDP.SelCount == 1 && !CDP.FolderPresent && OperationDestinations.size() == 1) {
+		ProgressState.ShowTotalCopySize = false;
+		ProgressState.TotalFilesToProcess = 1;
+	}
+
 	if (Background) {
 		if (UpdateDiz)
 			SourceDiz.Read(SourceDir);
@@ -1891,7 +1907,7 @@ void ShellCopy::PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPr
 			ProgressState.CountTarget = OperationDestinations.size();
 			ProgressState.TotalFiles = 0;
 			ProgressState.TotalCopySize = ProgressState.TotalCopiedSize =
-					ProgressState.TotalSkippedSize = 0;
+					ProgressState.TotalSkippedSize = ProgressState.TotalResumeOffset = 0;
 			ProgressState.ProgressUpdateTime = 0;
 
 			// Запомним время начала
@@ -1929,11 +1945,6 @@ void ShellCopy::PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPr
 				// делаем так не всегда, а только когда NameTmp не является маской.
 				if (AddSlash && !strNameTmp.ContainsAnyOf("*?"))
 					AddEndSlash(strNameTmp);
-
-				if (CDP.SelCount == 1 && !CDP.FolderPresent) {
-					ProgressState.ShowTotalCopySize = false;
-					ProgressState.TotalFilesToProcess = 1;
-				}
 
 				if (Move && !Background) {
 					if (CDP.SelCount == 1 && CDP.FolderPresent
@@ -2888,6 +2899,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 		FARString &strDest, int KeepPathPos, int Rename)
 {
 	ProgressState.CurCopiedSize = 0;	// Сбросить текущий прогресс
+	ProgressState.CurResumeOffset = 0;
 
 	if (ProgressState.Progress->Cancelled()) {
 		return (COPY_CANCEL);
@@ -3408,6 +3420,12 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 	} else if (SrcData.nFileSize > (uint64_t)_CopyBuffer.Size && !_Flags.SPARSEFILES && !_Flags.USECOW) {
 		_DestFile.AllocationHint(SrcData.nFileSize);
 	}
+
+	if (Resume) {
+		_ResumeOffset = Min(static_cast<uint64_t>(_AppendPos), SrcData.nFileSize);
+		_ProgressState.CurResumeOffset = _ResumeOffset;
+		_ProgressState.TotalResumeOffset+= _ResumeOffset;
+	}
 }
 
 ShellFileTransfer::~ShellFileTransfer()
@@ -3416,6 +3434,8 @@ ShellFileTransfer::~ShellFileTransfer()
 		try {
 			fprintf(stderr, "~ShellFileTransfer: discarding '%ls'\n", _strDestName.CPtr());
 			_SrcFile.Close();
+			_ProgressState.TotalResumeOffset-= _ResumeOffset;
+			_ProgressState.CurResumeOffset = 0;
 			_ProgressState.Progress->SetProgressValue(0, 0);
 			_ProgressState.CurCopiedSize = 0;	// Сбросить текущий прогресс
 
@@ -3658,6 +3678,7 @@ static dev_t GetRDev(FARString SrcName)
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, FARString &strDestName,
 		int Append, int Resume)
 {
+	ProgressState.CurResumeOffset = 0;
 	if (!Background) {
 		ProgressState.OrigScrX = ScrX;
 		ProgressState.OrigScrY = ScrY;
@@ -4179,6 +4200,7 @@ bool ShellCopy::CalcTotalSize()
 
 	// INFO: Это для варианта, когда "ВСЕГО = общий размер * количество целей"
 	ProgressState.TotalCopySize = ProgressState.TotalCopySize * ProgressState.CountTarget;
+	ProgressState.TotalFilesToProcess*= ProgressState.CountTarget;
 	InsertCommas(ProgressState.TotalCopySize, ProgressState.strTotalCopySizeText);
 	ProgressState.Progress->SetTotalInfo(
 			ProgressState.TotalCopySize, ProgressState.TotalFilesToProcess);

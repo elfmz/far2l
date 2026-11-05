@@ -1776,6 +1776,12 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 	// нужно ли показывать время копирования?
 	bool ShowCopyTime = (Opt.CMOpt.CopyTimeRule & COPY_RULE_FILES) != 0;
 
+	// Choose the progress mode before creating the background dialog and its snapshot state.
+	if (CDP.SelCount == 1 && !CDP.FolderPresent) {
+		ProgressState.ShowTotalCopySize = false;
+		ProgressState.TotalFilesToProcess = 1;
+	}
+
 	if (Background) {
 		if (UpdateDiz)
 			SourceDiz.Read(SourceDir);
@@ -1929,11 +1935,6 @@ void ShellCopy::PerformCopy(int Move, bool AddSlash, int SelCount, bool FolderPr
 				// делаем так не всегда, а только когда NameTmp не является маской.
 				if (AddSlash && !strNameTmp.ContainsAnyOf("*?"))
 					AddEndSlash(strNameTmp);
-
-				if (CDP.SelCount == 1 && !CDP.FolderPresent) {
-					ProgressState.ShowTotalCopySize = false;
-					ProgressState.TotalFilesToProcess = 1;
-				}
 
 				if (Move && !Background) {
 					if (CDP.SelCount == 1 && CDP.FolderPresent

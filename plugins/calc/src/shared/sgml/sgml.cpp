@@ -50,9 +50,9 @@ CSgmlEl::~CSgmlEl()
 	for (int i = 0; i < parnum; i++)
 	{
 		if (params[i][0])
-			delete params[i][0];
+			delete[] params[i][0];
 		if (params[i][1])
-			delete params[i][1];
+			delete[] params[i][1];
 	}
 }
 

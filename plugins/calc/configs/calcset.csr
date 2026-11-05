@@ -200,7 +200,7 @@
 
         <!-- Exponent and Factorial
             Экспонента и Факториал -->
-        <func syntax="exp"    mean="exp _pow op0"/>
+        <func syntax="exp"    mean="e _pow op0"/>
         <func syntax="factor" mean="_factor(op0)"/>
 
         <!-- Random Number   (0..1)
@@ -226,8 +226,8 @@
 
         <!-- Hyperbolic functions
              Гиперболические функции -->
-        <func syntax="sinh"   mean="(exp _pow op0  _minus  exp  _pow (-op0))/2"/>
-        <func syntax="cosh"   mean="(exp _pow op0  _plus   exp  _pow (-op0))/2"/>
+        <func syntax="sinh"   mean="(e _pow op0  _minus  e _pow (-op0))/2"/>
+        <func syntax="cosh"   mean="(e _pow op0  _plus   e _pow (-op0))/2"/>
         <func syntax="tanh"   mean="sinh(op0) / cosh(op0)"/>
         <func syntax="cth"    mean="cosh(op0) / sinh(op0)"/>
 

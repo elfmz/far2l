@@ -100,6 +100,8 @@ struct ShellCopyProgressState
 	uint64_t TotalCopiedSize{0};
 	uint64_t CurCopiedSize{0};
 	uint64_t TotalSkippedSize{0};
+	uint64_t CurResumeOffset{0};
+	uint64_t TotalResumeOffset{0};
 	size_t CountTarget{0};
 	bool ShowTotalCopySize{false};
 	FARString strTotalCopySizeText;
@@ -144,6 +146,7 @@ class ShellFileTransfer
 
 	clock_t _Stopwatch = 0;
 	int64_t _AppendPos = -1;
+	uint64_t _ResumeOffset = 0;
 	DWORD _DstFlags    = 0;
 	DWORD _ModeToCreateWith = 0;
 

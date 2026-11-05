@@ -1777,7 +1777,7 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 	bool ShowCopyTime = (Opt.CMOpt.CopyTimeRule & COPY_RULE_FILES) != 0;
 
 	// Choose the progress mode before creating the background dialog and its snapshot state.
-	if (CDP.SelCount == 1 && !CDP.FolderPresent) {
+	if (CDP.SelCount == 1 && !CDP.FolderPresent && OperationDestinations.size() == 1) {
 		ProgressState.ShowTotalCopySize = false;
 		ProgressState.TotalFilesToProcess = 1;
 	}
@@ -4180,6 +4180,7 @@ bool ShellCopy::CalcTotalSize()
 
 	// INFO: Это для варианта, когда "ВСЕГО = общий размер * количество целей"
 	ProgressState.TotalCopySize = ProgressState.TotalCopySize * ProgressState.CountTarget;
+	ProgressState.TotalFilesToProcess*= ProgressState.CountTarget;
 	InsertCommas(ProgressState.TotalCopySize, ProgressState.strTotalCopySizeText);
 	ProgressState.Progress->SetTotalInfo(
 			ProgressState.TotalCopySize, ProgressState.TotalFilesToProcess);

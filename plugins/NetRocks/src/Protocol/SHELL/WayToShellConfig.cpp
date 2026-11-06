@@ -19,6 +19,7 @@ WayToShellConfig::WayToShellConfig(const std::string &ways_ini, const std::strin
 	KeyFileReadSection kf(ways_ini, way_name);
 	command = kf.GetString("Command");
 	serial = kf.GetString("Serial");
+	flavor = kf.GetString("Flavor");
 	std::string values;
 	std::vector<std::string> exploded_values;
 	for (unsigned i = 0;;++i) {

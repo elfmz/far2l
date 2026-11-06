@@ -87,26 +87,99 @@ namespace FishPlus
 		}
 	}
 
-	std::string Session::EncodePathLine(const std::string &path)
+	// The wire expects POSIX-shape paths ("/c/Users/foo",
+	// "//srv/share/rest"), but a Windows user's muscle memory produces
+	// "C:\Users\foo" and the site config's Directory field takes that
+	// verbatim. Fold Windows-shape to POSIX-shape here so the helper never
+	// has to guess. EncodePathLine calls this only for a pwsh peer: on a
+	// POSIX one the very same characters are ordinary filename bytes.
+	//
+	// Only the leading drive letter and separator swap need touching; the
+	// rest is byte-for-byte the same, which keeps every locale-shaped
+	// filename intact. UNC "\\srv\share" is folded to "//srv/share";
+	// "X:relative" is passed through, for the reason given at that branch.
+	static std::string NormalizeWirePath(const std::string &p)
 	{
-		bool needs_escape = path.empty() || path[0] == '~';
+		if (p.size() >= 3 && (p[0] == '\\' || p[1] == '\\')
+			&& (p[0] == '\\' || p[0] == '/')
+			&& (p[1] == '\\' || p[1] == '/')) {
+			// UNC "\\srv\share\rest" -> "//srv/share/rest". A leading "//"
+			// with no backslash in it is already POSIX shape, so it must not
+			// come here: rewriting it would turn a backslash that is a legal
+			// character in a POSIX filename into a separator.
+			std::string out("//");
+			for (size_t i = 2; i < p.size(); ++i) {
+				out+= (p[i] == '\\') ? '/' : p[i];
+			}
+			return out;
+		}
+		if (p.size() >= 2 && p[1] == ':'
+			&& ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z'))) {
+			// "X:\..." or "X:/..." -> "/x/..." matching helper output.
+			std::string out;
+			out.reserve(p.size() + 1);
+			out+= '/';
+			out+= (char)tolower((unsigned char)p[0]);
+			if (p.size() < 3 || (p[2] != '\\' && p[2] != '/')) {
+				// "X:relative" means "relative to the current directory on
+				// drive X", a per-drive cwd this client does not track and
+				// cannot expand. Folding it to "/x/relative" would name a
+				// different file, and dropping the separator names none at
+				// all, so it goes on the wire as typed and the helper answers
+				// with the exact bytes the user gave it.
+				return p;
+			}
+			out+= '/';
+			for (size_t i = 3; i < p.size(); ++i) {
+				out+= (p[i] == '\\') ? '/' : p[i];
+			}
+			return out;
+		}
+		return p;
+	}
+
+	std::string Session::EncodePathLine(const std::string &path) const
+	{
+		// Only a PowerShell peer speaks in Windows-shape paths. A POSIX peer
+		// gets the path untouched: backslash and colon are ordinary filename
+		// characters there, and folding them would silently rename the target.
+		const std::string norm = (_feats.Flavor() == "pwsh")
+			? NormalizeWirePath(path) : path;
+		bool needs_escape = norm.empty() || norm[0] == '~';
 		if (!needs_escape) {
-			needs_escape = (path.find('\n') != std::string::npos
-				|| path.find('\r') != std::string::npos);
+			needs_escape = (norm.find('\n') != std::string::npos
+				|| norm.find('\r') != std::string::npos);
 		}
 		if (!needs_escape) {
-			return path;
+			return norm;
 		}
 		std::string out("~");
-		base64_encode(out, (const unsigned char *)path.c_str(), path.size());
+		base64_encode(out, (const unsigned char *)norm.c_str(), norm.size());
 		return out;
 	}
 
 	void Session::Handshake(const char *helper_path, bool tty_transport)
 	{
-		const std::string script = LoadHelperScript(helper_path, _token);
+		HandshakeOptions opts;
+		opts.helper_path = helper_path;
+		opts.tty_transport = tty_transport;
+		Handshake(opts);
+	}
 
-		SendRaw(BootstrapLine(_token));
+	void Session::Handshake(const HandshakeOptions &opts)
+	{
+		if (opts.helper_path == nullptr) {
+			throw ProtocolError("FISH+ handshake: helper_path not set");
+		}
+		const std::string script = LoadHelperScript(opts.helper_path, _token);
+
+		if (opts.base64_pwsh_bootstrap) {
+			// The pwsh bootstrap carries the helper base64-encoded on its
+			// own line: there is nothing further to upload after it.
+			SendRaw(BootstrapLinePwshB64(_token, script));
+		} else {
+			SendRaw(BootstrapLine(_token));
+		}
 
 		// Everything printed before the marker - motd, shell warnings, login
 		// banners - is noise and gets discarded. The marker carries the session
@@ -125,9 +198,12 @@ namespace FishPlus
 			}
 		}
 
-		// Nothing is in flight while the shell's parser is working, so the
-		// script can now be fed in through the bootstrap's read loop.
-		SendRaw(script + HELPER_END_MARKER + "\n");
+		if (!opts.base64_pwsh_bootstrap) {
+			// Nothing is in flight while the shell's parser is working, so
+			// the script can now be fed in through the bootstrap's read loop.
+			// The pwsh path already carries the helper inside the bootstrap.
+			SendRaw(script + HELPER_END_MARKER + "\n");
+		}
 
 		Response resp = ReadResponse(0, false);
 		if (!resp.ok) {
@@ -163,7 +239,7 @@ namespace FishPlus
 		// binary frames. The helper tames such a terminal with POSIX stty and
 		// announces "tty" when it managed to. A terminal backed transport whose
 		// helper did not manage it cannot carry raw payload at all.
-		_raw_payload_safe = (!tty_transport || _feats.Has("tty"));
+		_raw_payload_safe = (!opts.tty_transport || _feats.Has("tty"));
 
 		fprintf(stderr, "[FISH+] connected, proto %d, feats:%s%s\n", proto,
 			_feats.Raw().empty() ? " (none)" : "", _feats.Raw().c_str());

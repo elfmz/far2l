@@ -34,7 +34,7 @@ export PS4=
 export PROMPT_COMMAND=
 
 f4_end() {
- echo ".$F4TOKEN $F4ID $1 $2"
+ printf '%s\n' ".$F4TOKEN $F4ID $1 $2"
 }
 
 f4_flat() {
@@ -368,9 +368,9 @@ fi
 # timestamps differently and the client has to know which it is reading.
 f4_mode_line() {
  if [ "$F4MODE" = ls ]; then
-  echo "M ls $F4LSTIME"
+  printf '%s\n' "M ls $F4LSTIME"
  else
-  echo "M $F4MODE"
+  printf '%s\n' "M $F4MODE"
  fi
 }
 
@@ -569,6 +569,15 @@ f4_cmd_info() {
   f4_end err "no supported stat tool on remote host"
   return
  fi
+ # A path that is neither a real entry nor a symlink simply does not exist.
+ # That is an expected answer -- an upload target is not there yet, a move
+ # may have already removed it -- not a tool failure, so report it
+ # distinctly instead of letting find's stderr leak through as a generic
+ # error the client cannot tell apart from a broken remote host.
+ if [ ! -e "$F4PATH" ] && [ ! -L "$F4PATH" ]; then
+  f4_end err "no such file or directory"
+  return
+ fi
  F4RV=
  case $F4MODE in
   find ) F4OUT=`find $1 "$F4PATH" -mindepth 0 -maxdepth 0 -printf "$F4FMT_FIND" 2>&1`; F4RV=$? ;;
@@ -588,7 +597,7 @@ f4_cmd_info() {
  esac
  if [ $F4RV -eq 0 ] && [ -n "$F4OUT" ]; then
   f4_mode_line
-  echo "$F4OUT"
+  printf '%s\n' "$F4OUT"
   f4_end ok
  else
   f4_end err "$(f4_flat "$F4OUT")"
@@ -608,7 +617,7 @@ f4_cmd_rdlink() {
   return
  fi
  if [ $F4RV -eq 0 ] && [ -n "$F4OUT" ]; then
-  echo "$F4OUT"
+  printf '%s\n' "$F4OUT"
   f4_end ok
  else
   f4_end err "$(f4_flat "$F4OUT")"
@@ -656,8 +665,8 @@ f4_cmd_read() {
   f4_end err "no way to read a byte range on remote host"
   return
  fi
- echo "S $F4SZ"
- echo "#$F4N"
+ printf '%s\n' "S $F4SZ"
+ printf '%s\n' "#$F4N"
  if [ "$F4N" -gt 0 ]; then
   f4_read_range "$F4PATH" "$1" "$F4N"
  fi
@@ -1317,7 +1326,7 @@ f4_cmd_jstart() {
  echo 0 > "$F4JD/n"
  ( f4_job_body "$f4_jkind" "$f4_ja1" "$f4_ja2"; echo $? > "$F4JD/rc" ) </dev/null > "$F4JD/out" 2> "$F4JD/err" &
  echo $! > "$F4JD/pid"
- echo "J $F4JN"
+ printf '%s\n' "J $F4JN"
  f4_end ok
 }
 
@@ -1352,7 +1361,7 @@ f4_cmd_jpoll() {
  fi
  f4_jline="S $f4_jst $f4_jrc"
  [ -n "$f4_jmsg" ] && f4_jline="$f4_jline $(f4_flat "$f4_jmsg")"
- echo "$f4_jline"
+ printf '%s\n' "$f4_jline"
  f4_jtot=`wc -l < "$F4JD/out" 2>/dev/null | tr -d ' '`
  f4_num "$f4_jtot" || f4_jtot=0
  f4_jn=`cat "$F4JD/n" 2>/dev/null`
@@ -1396,7 +1405,7 @@ f4_cmd_jlist() {
    f4_jst=run
    [ -f "$f4_je/rc" ] && f4_jst=done
    [ -f "$f4_je/kill" ] && f4_jst=kill
-   echo "${f4_je##*/} $f4_jst $(cat "$f4_je/kind" 2>/dev/null)"
+   printf '%s\n' "${f4_je##*/} $f4_jst $(cat "$f4_je/kind" 2>/dev/null)"
   done
  fi
  f4_end ok
@@ -1557,7 +1566,7 @@ while :; do
    f4_cmd_rmode "$F4A1"
    ;;
   feats )
-   echo "$F4PROTO$F4FEATS"
+   printf '%s\n' "$F4PROTO$F4FEATS"
    f4_end ok
    ;;
   exit )

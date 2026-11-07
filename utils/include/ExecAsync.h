@@ -15,6 +15,7 @@ class ExecAsync : Threaded
 	std::mutex _mtx;
 	bool _dont_care{false};
 	bool _started{false};
+	bool _hard_kill_requested{false}; // protected by _mtx
 	int _exec_error{0};
 	int _exit_signal{0}, _exit_code{-1};
 	int _kill_fd[2]{-1, -1};
@@ -85,7 +86,7 @@ public:
 	bool Wait(int timeout_msec = -1);
 
 	void KillSoftly(); // send SIGINT to process
-	void KillHardly(); // send SIGKILL to process and disrupt stdio dispatcher loop
+	void KillHardly(); // send or queue SIGKILL; the worker drains remaining output
 
 	void FetchStdout(std::vector<char> &content); // get currently buffered-in stdout content and clear that buffer
 	std::string FetchStdout(); // same as above

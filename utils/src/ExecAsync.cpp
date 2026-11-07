@@ -71,6 +71,8 @@ void ExecAsync::Kill(int sig)
 	}
 	assert(_started);
 	std::lock_guard<std::mutex> lock(_mtx);
+	if (sig == SIGKILL)
+		_hard_kill_requested = true;
 	if (_pid != (pid_t)-1) {
 		if (kill(_pid, sig) < 0) {
 			fprintf(stderr, "ExecAsync: kill pid=%d sig=%d error %d\n", _pid, sig, errno);
@@ -245,10 +247,14 @@ void *ExecAsync::ThreadProc()
 		_exit(e);
 	}
 
+	bool hard_kill;
 	{
 		std::lock_guard<std::mutex> lock(_mtx);
 		_pid = pid;
+		hard_kill = _hard_kill_requested;
 	}
+	if (hard_kill)
+		Kill(SIGKILL);
 
 	CheckedCloseFD(in.fd[0]);
 	CheckedCloseFD(out.fd[1]);
@@ -297,6 +303,11 @@ void *ExecAsync::ThreadProc()
 			fprintf(stderr, "ExecAsync: select timeout???\n");
 			continue;
 		}
+		if (_kill_fd[0] != -1 && FD_ISSET(_kill_fd[0], &read_fds)) {
+			// Stop feeding stdin, but keep draining output until the child exits.
+			CheckedCloseFD(in.fd[1]);
+			CheckedCloseFD(_kill_fd[0]);
+		}
 		if (in.fd[1] != -1 && FD_ISSET(in.fd[1], &write_fds)) {
 			if (_stdin_offset >= _stdin.size()) {
 				CheckedCloseFD(in.fd[1]);
@@ -338,10 +349,6 @@ void *ExecAsync::ThreadProc()
 			} else if (r > 0 && _exec_error == 0) {
 				_exec_error = -1;
 			}
-		}
-
-        if (_kill_fd[0] != -1 && FD_ISSET(_kill_fd[0], &read_fds)) {
-			break; // hard exit
 		}
 	}
 

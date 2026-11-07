@@ -577,7 +577,7 @@ Messager &FN_NOINLINE ExMessager::AddDup(const wchar_t *v)
 Messager &FN_NOINLINE ExMessager::AddDupWrap(const wchar_t *v)
 {
 	size_t maxlen = wcslen(v);
-	if( maxlen <= MAX_WIDTH_MESSAGE )
+	if( StrZCellsCount(v) <= MAX_WIDTH_MESSAGE )
 		return AddDup(v);
 
 	FARString fs = v;

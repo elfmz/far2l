@@ -3,6 +3,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <algorithm>
+#ifdef __APPLE__
+#include <crt_externs.h>
+#else
+extern char **environ;
+#endif
 #include "utils.h"
 #include "ExecAsync.h"
 #include "ScopeHelpers.h"
@@ -15,7 +21,8 @@ ExecAsync::ExecAsync(const char *program) : _program(program)
 ExecAsync::~ExecAsync()
 {
 	CheckedCloseFD(_kill_fd[1]);
-	Wait();
+	if (_started)
+		Wait();
 	CheckedCloseFD(_kill_fd[0]);
 }
 
@@ -23,6 +30,12 @@ void ExecAsync::AddArgument(const char *s)
 {
 	assert(!_started);
 	_args.emplace_back(s);
+}
+
+void ExecAsync::UnsetEnvironmentVariable(const char *name)
+{
+	assert(!_started);
+	_unset_env.emplace_back(name);
 }
 
 void ExecAsync::DontCare()
@@ -58,6 +71,8 @@ void ExecAsync::Kill(int sig)
 	}
 	assert(_started);
 	std::lock_guard<std::mutex> lock(_mtx);
+	if (sig == SIGKILL)
+		_hard_kill_requested = true;
 	if (_pid != (pid_t)-1) {
 		if (kill(_pid, sig) < 0) {
 			fprintf(stderr, "ExecAsync: kill pid=%d sig=%d error %d\n", _pid, sig, errno);
@@ -184,6 +199,23 @@ void *ExecAsync::ThreadProc()
 	argv[_args.size()] = NULL;
 	fprintf(stderr, "ExecAsync: %s\n", print_str.c_str());
 
+#ifdef __APPLE__
+	char ***environment = _NSGetEnviron();
+#else
+	char ***environment = &environ;
+#endif
+	std::vector<char *> envp;
+	if (!_unset_env.empty()) {
+		// Prepare before fork; the child only replaces its environment pointer.
+		for (char **entry = *environment; entry && *entry; ++entry) {
+			if (std::none_of(_unset_env.begin(), _unset_env.end(), [entry](const std::string &name) {
+				return strncmp(*entry, name.c_str(), name.size()) == 0 && (*entry)[name.size()] == '=';
+			}))
+				envp.push_back(*entry);
+		}
+		envp.push_back(nullptr);
+	}
+
 	MakeFDNonCloexec(in.fd[0]);
 	MakeFDNonCloexec(out.fd[1]);
 	MakeFDNonCloexec(err.fd[1]);
@@ -201,6 +233,8 @@ void *ExecAsync::ThreadProc()
 		dup2(in.fd[0], STDIN_FILENO); close(in.fd[0]);
 		dup2(out.fd[1], STDOUT_FILENO); close(out.fd[1]);
 		dup2(err.fd[1], STDERR_FILENO); close(err.fd[1]);
+		if (!_unset_env.empty())
+			*environment = envp.data();
 		const char *program = _program.empty() ? argv[0] : _program.c_str();
 		execvp(program, argv.data());
 		int e = errno;
@@ -213,10 +247,14 @@ void *ExecAsync::ThreadProc()
 		_exit(e);
 	}
 
+	bool hard_kill;
 	{
 		std::lock_guard<std::mutex> lock(_mtx);
 		_pid = pid;
+		hard_kill = _hard_kill_requested;
 	}
+	if (hard_kill)
+		Kill(SIGKILL);
 
 	CheckedCloseFD(in.fd[0]);
 	CheckedCloseFD(out.fd[1]);
@@ -228,7 +266,23 @@ void *ExecAsync::ThreadProc()
 	MakeFDNonBlocking(err.fd[0]);
 	MakeFDNonBlocking(xer.fd[0]);
 
+	int st{0};
+	bool reaped{false};
 	while (out.fd[0] != -1 || err.fd[0] != -1 || xer.fd[0] != -1) {
+		if (hard_kill) {
+			std::lock_guard<std::mutex> lock(_mtx);
+			const pid_t r = waitpid(pid, &st, WNOHANG);
+			if (r == pid && (WIFEXITED(st) || WIFSIGNALED(st))) {
+				_pid = -1;
+				reaped = true;
+				break; // Descendants may still hold the output pipes open.
+			}
+			if (r == -1 && errno != EINTR) {
+				fprintf(stderr, "ExecAsync: waitpid pid=%d error %d\n", pid, errno);
+				_pid = -1;
+				return nullptr;
+			}
+		}
 		fd_set read_fds, write_fds;
 		FD_ZERO(&read_fds);
 		FD_ZERO(&write_fds);
@@ -253,7 +307,10 @@ void *ExecAsync::ThreadProc()
 			mfd = std::max(mfd, xer.fd[0]);
 		}
 
-		int r = select(mfd + 1, &read_fds, (in.fd[1] != -1) ? &write_fds : NULL, NULL, NULL);
+		// Recheck the direct child even if descendants produce no output or EOF.
+		timeval timeout{0, 50000};
+		int r = select(mfd + 1, &read_fds, (in.fd[1] != -1) ? &write_fds : NULL, NULL,
+				hard_kill ? &timeout : nullptr);
 		if (r < 0) {
 			if (errno == EINTR || errno == EAGAIN) {
 				continue;
@@ -261,9 +318,16 @@ void *ExecAsync::ThreadProc()
 			fprintf(stderr, "ExecAsync: select error %d\n", errno);
 			break;
 		}
-		if (r == 0) {
-			fprintf(stderr, "ExecAsync: select timeout???\n");
+		if (r == 0)
 			continue;
+		if (_kill_fd[0] != -1 && FD_ISSET(_kill_fd[0], &read_fds)) {
+			{
+				std::lock_guard<std::mutex> lock(_mtx);
+				hard_kill = _hard_kill_requested;
+			}
+			// Stop feeding stdin, but keep draining output until the child exits.
+			CheckedCloseFD(in.fd[1]);
+			CheckedCloseFD(_kill_fd[0]);
 		}
 		if (in.fd[1] != -1 && FD_ISSET(in.fd[1], &write_fds)) {
 			if (_stdin_offset >= _stdin.size()) {
@@ -307,15 +371,10 @@ void *ExecAsync::ThreadProc()
 				_exec_error = -1;
 			}
 		}
-
-        if (_kill_fd[0] != -1 && FD_ISSET(_kill_fd[0], &read_fds)) {
-			break; // hard exit
-		}
 	}
 
 	for (;;) {
-		int st{0};
-		if (waitpid(pid, &st, 0) == pid) {
+		if (reaped || waitpid(pid, &st, 0) == pid) {
 			if (WIFSIGNALED(st)) {
 				std::lock_guard<std::mutex> lock(_mtx);
 				_pid = -1;

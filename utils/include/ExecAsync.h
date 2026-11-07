@@ -8,12 +8,14 @@ class ExecAsync : Threaded
 {
 	std::string _program;
 	std::vector<std::string> _args;
+	std::vector<std::string> _unset_env;
 
 	std::vector<char> _stdin, _stdout, _stderr;
 	size_t _stdin_offset{0};
 	std::mutex _mtx;
 	bool _dont_care{false};
 	bool _started{false};
+	bool _hard_kill_requested{false}; // protected by _mtx
 	int _exec_error{0};
 	int _exit_signal{0}, _exit_code{-1};
 	int _kill_fd[2]{-1, -1};
@@ -34,6 +36,8 @@ public:
 	}
 
 	void AddArgument(const char *a);
+	// Remove a variable from the child environment, leaving the parent unchanged.
+	void UnsetEnvironmentVariable(const char *name);
 
 	// use if command stdout/stderr is out of interest,
 	// so only tailing parts of them will be available from FetchStdout/FetchStderr
@@ -82,7 +86,7 @@ public:
 	bool Wait(int timeout_msec = -1);
 
 	void KillSoftly(); // send SIGINT to process
-	void KillHardly(); // send SIGKILL to process and disrupt stdio dispatcher loop
+	void KillHardly(); // send or queue SIGKILL; drain until the direct child is reaped
 
 	void FetchStdout(std::vector<char> &content); // get currently buffered-in stdout content and clear that buffer
 	std::string FetchStdout(); // same as above

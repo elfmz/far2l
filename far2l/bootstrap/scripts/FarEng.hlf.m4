@@ -1814,6 +1814,14 @@ folders.
     Check the #Use filter# checkbox to search for files according to user
 defined conditions. Press the #Filter# button to open the ~filters menu~@FiltersMenu@.
 
+    The #Respect Git ignore rules# option skips ignored files and folders in local
+Git repositories, using #.gitignore#, repository and global exclusions. Tracked files
+remain searchable. Enabled by default; requires #git# in #PATH# and is unavailable
+on plugin panels. Outside a Git repository it has no effect. An ignored search root
+remains searchable; ignore rules for its contents still apply. If Git fails, ignored
+files may appear in the affected search area; #.git# remains skipped. Filtering
+continues elsewhere, and a warning is shown.
+
     The #Advanced# button invokes the ~find file advanced options~@FindFileAdvanced@
 dialog that can be used to specify extended set of search properties.
 

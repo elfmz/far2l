@@ -831,7 +831,7 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 		hPlugin = CtrlObject->Plugins.OpenPlugin(plugin, OPEN_DISKMENU, item);					// nItem
 	}
 
-	if (hPlugin == INVALID_HANDLE_VALUE) {
+	if (hPlugin == INVALID_HANDLE_VALUE || hPlugin == ((HANDLE)-2)) {
 		fprintf(stderr, "SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED plugin open\n", file_plugin,
 				plugin, path, host_file, (long long)item);
 		return false;

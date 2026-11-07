@@ -86,7 +86,7 @@ public:
 	bool Wait(int timeout_msec = -1);
 
 	void KillSoftly(); // send SIGINT to process
-	void KillHardly(); // send or queue SIGKILL; the worker drains remaining output
+	void KillHardly(); // send or queue SIGKILL; drain until the direct child is reaped
 
 	void FetchStdout(std::vector<char> &content); // get currently buffered-in stdout content and clear that buffer
 	std::string FetchStdout(); // same as above

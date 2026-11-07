@@ -2518,7 +2518,8 @@ static bool FindFilesProcess(Vars &v)
 			FARString warning;
 			const FARString root(fft.GetGitIgnoreWarning());
 			warning.Format(Msg::FindGitIgnoreFailed, root.CPtr());
-			Message(MSG_WARNING, 1, Msg::FindFileTitle, warning.CPtr(), Msg::Ok);
+			ExMessager message(Msg::FindFileTitle);
+			message.AddDupWrap(warning).Add(Msg::Ok).Show(MSG_WARNING | MSG_LEFTALIGN, 1);
 		}
 		PauseFlag = false;
 		StopFlag = false;

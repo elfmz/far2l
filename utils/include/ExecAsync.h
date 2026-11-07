@@ -8,6 +8,7 @@ class ExecAsync : Threaded
 {
 	std::string _program;
 	std::vector<std::string> _args;
+	std::vector<std::string> _unset_env;
 
 	std::vector<char> _stdin, _stdout, _stderr;
 	size_t _stdin_offset{0};
@@ -34,6 +35,8 @@ public:
 	}
 
 	void AddArgument(const char *a);
+	// Remove a variable from the child environment, leaving the parent unchanged.
+	void UnsetEnvironmentVariable(const char *name);
 
 	// use if command stdout/stderr is out of interest,
 	// so only tailing parts of them will be available from FetchStdout/FetchStderr

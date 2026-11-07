@@ -3,6 +3,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <algorithm>
+#ifdef __APPLE__
+#include <crt_externs.h>
+#else
+extern char **environ;
+#endif
 #include "utils.h"
 #include "ExecAsync.h"
 #include "ScopeHelpers.h"
@@ -24,6 +30,12 @@ void ExecAsync::AddArgument(const char *s)
 {
 	assert(!_started);
 	_args.emplace_back(s);
+}
+
+void ExecAsync::UnsetEnvironmentVariable(const char *name)
+{
+	assert(!_started);
+	_unset_env.emplace_back(name);
 }
 
 void ExecAsync::DontCare()
@@ -185,6 +197,23 @@ void *ExecAsync::ThreadProc()
 	argv[_args.size()] = NULL;
 	fprintf(stderr, "ExecAsync: %s\n", print_str.c_str());
 
+#ifdef __APPLE__
+	char ***environment = _NSGetEnviron();
+#else
+	char ***environment = &environ;
+#endif
+	std::vector<char *> envp;
+	if (!_unset_env.empty()) {
+		// Prepare before fork; the child only replaces its environment pointer.
+		for (char **entry = *environment; entry && *entry; ++entry) {
+			if (std::none_of(_unset_env.begin(), _unset_env.end(), [entry](const std::string &name) {
+				return strncmp(*entry, name.c_str(), name.size()) == 0 && (*entry)[name.size()] == '=';
+			}))
+				envp.push_back(*entry);
+		}
+		envp.push_back(nullptr);
+	}
+
 	MakeFDNonCloexec(in.fd[0]);
 	MakeFDNonCloexec(out.fd[1]);
 	MakeFDNonCloexec(err.fd[1]);
@@ -202,6 +231,8 @@ void *ExecAsync::ThreadProc()
 		dup2(in.fd[0], STDIN_FILENO); close(in.fd[0]);
 		dup2(out.fd[1], STDOUT_FILENO); close(out.fd[1]);
 		dup2(err.fd[1], STDERR_FILENO); close(err.fd[1]);
+		if (!_unset_env.empty())
+			*environment = envp.data();
 		const char *program = _program.empty() ? argv[0] : _program.c_str();
 		execvp(program, argv.data());
 		int e = errno;

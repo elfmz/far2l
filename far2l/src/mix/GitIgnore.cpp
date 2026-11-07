@@ -68,6 +68,9 @@ struct GitIgnoreFilter::Impl
 	bool LoadIgnored(const std::string &scope, std::set<std::string> &paths)
 	{
 		ExecAsync git("git");
+		git.UnsetEnvironmentVariable("GIT_DIR");
+		git.UnsetEnvironmentVariable("GIT_INDEX_FILE");
+		git.UnsetEnvironmentVariable("GIT_WORK_TREE");
 		git.AddArguments("git", "-C", scope, "ls-files", "--full-name", "-z",
 				"--others", "--ignored", "--exclude-standard", "--directory", "--",
 				recursive ? ":(literal)." : ":(glob)*");

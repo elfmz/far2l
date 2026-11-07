@@ -69,6 +69,7 @@ struct GitIgnoreFilter::Impl
 	{
 		ExecAsync git("git");
 		git.UnsetEnvironmentVariable("GIT_DIR");
+		git.UnsetEnvironmentVariable("GIT_COMMON_DIR");
 		git.UnsetEnvironmentVariable("GIT_INDEX_FILE");
 		git.UnsetEnvironmentVariable("GIT_WORK_TREE");
 		git.AddArguments("git", "-C", scope, "ls-files", "--full-name", "-z",

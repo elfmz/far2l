@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ThreadedWorkQueue.h"
 #include "MountInfo.h"
 #include "SafeMMap.hpp"
+#include "GitIgnore.hpp"
 #include <atomic>
 #include <algorithm>
 #include <fcntl.h>
@@ -307,6 +308,7 @@ struct Vars
 	bool FindPositionChanged;
 	bool Finalized;
 	bool PluginMode;
+	bool RespectGitIgnore;
 
 	void Clear()
 	{
@@ -316,6 +318,7 @@ struct Vars
 		FindPositionChanged = false;
 		Finalized = false;
 		PluginMode = false;
+		RespectGitIgnore = false;
 	}
 };
 
@@ -404,6 +407,7 @@ enum FINDASKDLG
 	FAD_CHECKBOX_CASE,
 	FAD_CHECKBOX_WHOLEWORDS,
 	FAD_CHECKBOX_HEX,
+	FAD_CHECKBOX_GITIGNORE,
 	FAD_CHECKBOX_FILTER,
 	FAD_CHECKBOX_ARC,
 	FAD_CHECKBOX_DIRS,
@@ -2067,10 +2071,10 @@ static void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 	SearchMode = SaveSearchMode;
 }
 
-static void DoScanTree(HANDLE hDlg, FARString &strRoot)
+static void DoScanTree(HANDLE hDlg, FARString &strRoot, GitIgnoreFilter *gitIgnore)
 {
-	ScanTree ScTree(FALSE, !(SearchMode == FINDAREA_CURRENT_ONLY || SearchMode == FINDAREA_INPATH),
-			Opt.FindOpt.FindSymLinks);
+	const bool recursive = SearchMode != FINDAREA_CURRENT_ONLY && SearchMode != FINDAREA_INPATH;
+	ScanTree ScTree(FALSE, recursive, Opt.FindOpt.FindSymLinks);
 	FARString strSelName;
 	DWORD FileAttr;
 
@@ -2095,16 +2099,45 @@ static void DoScanTree(HANDLE hDlg, FARString &strRoot)
 			strCurRoot = strRoot;
 		}
 
+		if (gitIgnore)
+			gitIgnore->SetSearchRoot(strCurRoot.GetMB(), recursive);
 		ScTree.SetFindPath(strCurRoot, L"*");
 		itd.SetFindMessage(strCurRoot);
 		FAR_FIND_DATA_EX FindData;
 		FARString strFullName;
+		FARString excludedSubtree;
 
 		while (!StopFlag && ScTree.GetNextName(&FindData, strFullName)) {
 			// WINPORT(Sleep)(0);
 			while (PauseFlag)
 				WINPORT(Sleep)(10);
 
+			const bool directory = (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+			// In this search, recursive scanning always enters ordinary directories.
+			// A directory link may instead be rejected by ScanTree's cycle protection.
+			const bool canPrune = recursive && directory
+					&& !(FindData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_PINNED));
+			if (!excludedSubtree.IsEmpty()) {
+				if (strFullName.Begins(excludedSubtree)) {
+					if (canPrune)
+						ScTree.SkipDir();
+					continue;
+				}
+				excludedSubtree.Clear();
+			}
+			const auto excludeDirectory = [&] {
+				if (canPrune) {
+					ScTree.SkipDir();
+				} else if (recursive && directory) {
+					// Suppress any yielded descendants without assuming the link was entered.
+					excludedSubtree = strFullName;
+					AddEndSlash(excludedSubtree);
+				}
+			};
+			if (gitIgnore && gitIgnore->IsIgnored(strFullName.GetMB())) {
+				excludeDirectory();
+				continue;
+			}
 			bool bContinue = false;
 
 			while (!StopFlag) {
@@ -2113,9 +2146,8 @@ static void DoScanTree(HANDLE hDlg, FARString &strRoot)
 
 					if (!Filter->FileInFilter(FindData, &foundType)) {
 						// сюда заходим, если не попали в фильтр или попали в Exclude-фильтр
-						if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-								&& foundType == FIFT_EXCLUDE)
-							ScTree.SkipDir();	// скипаем только по Exclude-фильтру, т.к. глубже тоже нужно просмотреть
+						if (directory && foundType == FIFT_EXCLUDE)
+							excludeDirectory();
 
 						{
 							bContinue = true;
@@ -2248,9 +2280,16 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int &Recurs
 	RecurseLevel--;
 }
 
-static void DoPrepareFileList(HANDLE hDlg)
+static void DoPrepareFileList(HANDLE hDlg, bool respectGitIgnore, std::string &gitIgnoreWarning)
 {
 	ThreadedWorkQueuePtrScope wqs(pWorkQueue);
+	std::unique_ptr<GitIgnoreFilter> gitIgnore;
+	if (respectGitIgnore) {
+		gitIgnore.reset(new GitIgnoreFilter([] { return StopFlag.load(); }, [&gitIgnoreWarning](const std::string &root) {
+			if (gitIgnoreWarning.empty())
+				gitIgnoreWarning = root;
+		}));
+	}
 	FARString strRoot;
 	CtrlObject->CmdLine->GetCurDir(strRoot);
 
@@ -2276,7 +2315,7 @@ static void DoPrepareFileList(HANDLE hDlg)
 	const wchar_t *pwRoot;
 	for (size_t LI = 0; (pwRoot = List.Get(LI)) != nullptr; ++LI) {
 		strRoot = pwRoot;
-		DoScanTree(hDlg, strRoot);
+		DoScanTree(hDlg, strRoot, gitIgnore.get());
 	}
 }
 
@@ -2316,10 +2355,15 @@ static void DoPreparePluginList(HANDLE hDlg)
 class FindFileThread : public Threaded
 {
 	bool PluginMode;
+	bool RespectGitIgnore;
 	HANDLE hDlg;
 	volatile bool bDone = false;
+	std::string GitIgnoreWarning;
 
 public:
+	// Read after CheckForDone() has joined this search's worker.
+	const std::string &GetGitIgnoreWarning() const { return GitIgnoreWarning; }
+
 	using Threaded::StartThread;
 
 	bool CheckForDone()
@@ -2331,9 +2375,9 @@ public:
 		return true;
 	}
 
-	FindFileThread(bool PluginMode_, HANDLE hDlg_)
+	FindFileThread(const Vars &v, HANDLE hDlg_)
 		:
-		PluginMode(PluginMode_), hDlg(hDlg_)
+		PluginMode(v.PluginMode), RespectGitIgnore(v.RespectGitIgnore), hDlg(hDlg_)
 	{}
 
 	virtual void *ThreadProc()
@@ -2346,7 +2390,7 @@ public:
 			if (PluginMode) {
 				DoPreparePluginList(hDlg);
 			} else {
-				DoPrepareFileList(hDlg);
+				DoPrepareFileList(hDlg, RespectGitIgnore, GitIgnoreWarning);
 			}
 			msec = GetProcessUptimeMSec() - msec;
 			fprintf(stderr, "FindFiles complete in %u msec\n", msec);
@@ -2464,12 +2508,18 @@ static bool FindFilesProcess(Vars &v)
 
 	strLastDirName.Clear();
 
-	FindFileThread fft(v.PluginMode, reinterpret_cast<HANDLE>(&Dlg));
+	FindFileThread fft(v, reinterpret_cast<HANDLE>(&Dlg));
 	if (fft.StartThread()) {
 		wakeful W;
 		Dlg.Process();
 		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(fft.CheckForDone());
 
+		if (!fft.GetGitIgnoreWarning().empty()) {
+			FARString warning;
+			const FARString root(fft.GetGitIgnoreWarning());
+			warning.Format(Msg::FindGitIgnoreFailed, root.CPtr());
+			Message(MSG_WARNING, 1, Msg::FindFileTitle, warning.CPtr(), Msg::Ok);
+		}
 		PauseFlag = false;
 		StopFlag = false;
 
@@ -2668,6 +2718,12 @@ FindFiles::FindFiles()
 	strFindStr = strLastFindStr;
 	strSearchFromRoot = Msg::SearchFromRootFolder;
 
+	constexpr short W = 78, R = W - 6, Mid = W / 2 - 1;
+	constexpr short Y = 10; // First checkbox row.
+	constexpr short Rows = std::max(FAD_CHECKBOX_FILTER - FAD_CHECKBOX_CASEMASK,
+			FAD_SEPARATOR_2 - FAD_CHECKBOX_FILTER);
+	constexpr short H = Y + Rows + 6; // Scope, buttons, separators and bottom margin.
+
 	Vars v;
 	do {
 		v.Clear();
@@ -2675,39 +2731,42 @@ FindFiles::FindFiles()
 		Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 		v.PluginMode = ActivePanel->GetMode() == PLUGIN_PANEL && ActivePanel->IsVisible();
 		strSearchFromRoot = Msg::SearchFromRootFolder;
+		const bool gitAvailable = GitIgnoreFilter::IsAvailable();
 		const wchar_t *MasksHistoryName = L"Masks", *TextHistoryName = L"SearchText";
 		const wchar_t *HexMask = L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH";
-		const wchar_t VSeparator[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-				BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
+		std::wstring VSeparator(Rows + 2, BoxSymbols[BS_V1]);
+		VSeparator.front() = BoxSymbols[BS_T_H1V1];
+		VSeparator.back() = BoxSymbols[BS_B_H1V1];
 		struct DialogDataEx FindAskDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1,  74, 18, {}, 0, Msg::FindFileTitle},
-			{DI_TEXT,      5,  2,  0,  2,  {}, 0, Msg::FindFileMasks},
-			{DI_EDIT,      5,  3,  72, 3,  {(DWORD_PTR)MasksHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,L""},
-			{DI_TEXT,      3,  4,  0,  5,  {}, DIF_SEPARATOR, L""},
-			{DI_TEXT,      5,  5,  0,  6,  {}, 0, L""},
-			{DI_EDIT,      5,  6,  72, 6,  {(DWORD_PTR)TextHistoryName}, DIF_HISTORY, L""},
-			{DI_FIXEDIT,   5,  6,  72, 6,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
-			{DI_TEXT,      5,  7,  0,  7,  {}, 0, L""},
-			{DI_COMBOBOX,  5,  8,  72, 8,  {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
-			{DI_TEXT,      3,  9,  0,  9,  {}, DIF_SEPARATOR, L""},
-			{DI_CHECKBOX,  5,  10, 0,  10, {}, 0, Msg::FindFileCaseFileMask},
-			{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::FindFileCase},
-			{DI_CHECKBOX,  5,  12, 0,  12, {}, 0, Msg::FindFileWholeWords},
-			{DI_CHECKBOX,  5,  13, 0,  13, {}, 0, Msg::SearchForHex},
-			{DI_CHECKBOX,  40, 10, 0,  10, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::FindUseFilter},
-			{DI_CHECKBOX,  40, 11, 0,  11, {}, 0, Msg::FindArchives},
-			{DI_CHECKBOX,  40, 12, 0,  12, {}, 0, Msg::FindFolders},
-			{DI_CHECKBOX,  40, 13, 0,  13, {}, 0, Msg::FindSymLinks},
-			{DI_TEXT,      3,  14, 0,  14, {}, DIF_SEPARATOR, L""},
-			{DI_VTEXT,     38, 9,  0,   9, {}, DIF_BOXCOLOR, VSeparator},
-			{DI_TEXT,      5,  15, 37, 15, {}, 0, Msg::SearchWhere},
-			{DI_COMBOBOX,  38, 15, 72, 15, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
-			{DI_TEXT,      3,  16, 0,  16, {}, DIF_SEPARATOR, L""},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindFileFind},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileDrive},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::FindFileSetFilter},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileAdvanced },
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::Cancel}
+			{DI_DOUBLEBOX, 3,       1,     W - 4,   H - 2, {}, 0,               Msg::FindFileTitle},
+			{DI_TEXT,      5,       2,     0,       2,     {}, 0,               Msg::FindFileMasks},
+			{DI_EDIT,      5,       3,     R,       3,     {(DWORD_PTR)MasksHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY, L""},
+			{DI_TEXT,      3,       4,     0,       5,     {}, DIF_SEPARATOR,   L""},
+			{DI_TEXT,      5,       5,     0,       6,     {}, 0,               L""},
+			{DI_EDIT,      5,       6,     R,       6,     {(DWORD_PTR)TextHistoryName}, DIF_HISTORY,     L""},
+			{DI_FIXEDIT,   5,       6,     R,       6,     {(DWORD_PTR)HexMask}, DIF_MASKEDIT,    L""},
+			{DI_TEXT,      5,       7,     0,       7,     {}, 0,               L""},
+			{DI_COMBOBOX,  5,       8,     R,       8,     {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+			{DI_TEXT,      3,       Y - 1, 0,       Y - 1, {}, DIF_SEPARATOR,   L""},
+			{DI_CHECKBOX,  5,       Y,     0,       Y,     {}, 0,               Msg::FindFileCaseFileMask},
+			{DI_CHECKBOX,  5,       Y + 1, 0,       Y + 1, {}, 0,               Msg::FindFileCase},
+			{DI_CHECKBOX,  5,       Y + 2, 0,       Y + 2, {}, 0,               Msg::FindFileWholeWords},
+			{DI_CHECKBOX,  5,       Y + 3, 0,       Y + 3, {}, 0,               Msg::SearchForHex},
+			{DI_CHECKBOX,  5,       Y + 4, 0,       Y + 4, {Opt.FindOpt.RespectGitIgnore}, 0,               Msg::FindRespectGitIgnore},
+			{DI_CHECKBOX,  Mid + 2, Y,     0,       Y,     {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION,  Msg::FindUseFilter},
+			{DI_CHECKBOX,  Mid + 2, Y + 1, 0,       Y + 1, {}, 0,               Msg::FindArchives},
+			{DI_CHECKBOX,  Mid + 2, Y + 2, 0,       Y + 2, {}, 0,               Msg::FindFolders},
+			{DI_CHECKBOX,  Mid + 2, Y + 3, 0,       Y + 3, {}, 0,               Msg::FindSymLinks},
+			{DI_TEXT,      3,       H - 6, 0,       H - 6, {}, DIF_SEPARATOR,   L""},
+			{DI_VTEXT,     Mid,     Y - 1, 0,       Y - 1, {}, DIF_BOXCOLOR,    VSeparator.c_str()},
+			{DI_TEXT,      5,       H - 5, Mid - 1, H - 5, {}, 0,               Msg::SearchWhere},
+			{DI_COMBOBOX,  Mid,     H - 5, R,       H - 5, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+			{DI_TEXT,      3,       H - 4, 0,       H - 4, {}, DIF_SEPARATOR,   L""},
+			{DI_BUTTON,    0,       H - 3, 0,       H - 3, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindFileFind},
+			{DI_BUTTON,    0,       H - 3, 0,       H - 3, {}, DIF_CENTERGROUP, Msg::FindFileDrive},
+			{DI_BUTTON,    0,       H - 3, 0,       H - 3, {}, DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::FindFileSetFilter},
+			{DI_BUTTON,    0,       H - 3, 0,       H - 3, {}, DIF_CENTERGROUP, Msg::FindFileAdvanced},
+			{DI_BUTTON,    0,       H - 3, 0,       H - 3, {}, DIF_CENTERGROUP, Msg::Cancel}
 		};
 		MakeDialogItemsEx(FindAskDlgData, FindAskDlg);
 
@@ -2727,6 +2786,10 @@ FindFiles::FindFiles()
 		FarList l = {ARRAYSIZE(li), li};
 		FindAskDlg[FAD_COMBOBOX_WHERE].ListItems = &l;
 
+		if (v.PluginMode || !gitAvailable) {
+			FindAskDlg[FAD_CHECKBOX_GITIGNORE].Flags|= DIF_DISABLE;
+			FindAskDlg[FAD_CHECKBOX_GITIGNORE].Selected = BSTATE_UNCHECKED;
+		}
 		if (v.PluginMode) {
 			PluginLocker Lock;
 			OpenPluginInfo Info;
@@ -2768,7 +2831,7 @@ FindFiles::FindFiles()
 				DIF_DISABLE);
 		Dlg.SetHelp(L"FindFile");
 		Dlg.SetId(FindFileId);
-		Dlg.SetPosition(-1, -1, 78, 20);
+		Dlg.SetPosition(-1, -1, W, H);
 		Dlg.Process();
 		ExitCode = Dlg.GetExitCode();
 		// Рефреш текущему времени для фильтра сразу после выхода из диалога
@@ -2789,6 +2852,11 @@ FindFiles::FindFiles()
 		if (v.FindFoldersChanged) {
 			Opt.FindOpt.FindFolders = (FindAskDlg[FAD_CHECKBOX_DIRS].Selected == BSTATE_CHECKED);
 		}
+
+		v.RespectGitIgnore = !(FindAskDlg[FAD_CHECKBOX_GITIGNORE].Flags & DIF_DISABLE)
+				&& FindAskDlg[FAD_CHECKBOX_GITIGNORE].Selected == BSTATE_CHECKED;
+		if (!v.PluginMode && gitAvailable)
+			Opt.FindOpt.RespectGitIgnore = v.RespectGitIgnore;
 
 		if (!v.PluginMode) {
 			Opt.FindOpt.FindSymLinks = (FindAskDlg[FAD_CHECKBOX_LINKS].Selected == BSTATE_CHECKED);

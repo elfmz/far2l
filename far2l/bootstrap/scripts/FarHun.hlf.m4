@@ -1537,6 +1537,13 @@ jelenlegi verziója nem keres olyan mappákban, amelyek
 megfelelő keresést végez. A #Szűrő# gomb lenyomásával a ~szűrők menüt~@FiltersMenu@
 hívhatjuk be.
 
+    A #Respect Git ignore rules# opció kihagyja a helyi Git-tárolók figyelmen kívül
+hagyott fájljait és mappáit a #.gitignore#, a tároló és a globális kizárási szabályok
+alapján. A követett fájlok továbbra is kereshetők. Alapértelmezés szerint engedélyezett;
+a #PATH# útvonalon elérhető #git# szükséges hozzá, és modulok paneljein nem használható.
+Git-tárolón kívül nincs hatása. Git-hiba esetén a keresés kizárási szabályok nélkül
+folytatódik, és figyelmeztetés jelenik meg.
+
     A #Haladó# gomb meghívja a ~fájlkeresés haladó beállításai~@FindFileAdvanced@
 párbeszédablakot, ahol bővíthető a keresési feltételek rendszere. A "Haladó"
 opció gyors engedélyezését vagy tiltását a #Haladó beállítások# jelölőnégyzettel

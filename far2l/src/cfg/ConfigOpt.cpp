@@ -494,6 +494,8 @@ const ConfigOpt g_cfg_opts[] {
 		L"FindFile", L"Uses case-sensitive matching for Find File masks" },
 	{OST_COMMON, NSecSystem, "UseFilterInSearch", &Opt.FindOpt.UseFilter, 0,
 		L"FindFile", L"Applies the current file filter during Find File operations" },
+	{OST_COMMON, NSecSystem, "RespectGitIgnoreInSearch", &Opt.FindOpt.RespectGitIgnore, 1,
+		L"FindFile", L"Skips Git-ignored paths in local Find File searches while retaining tracked files; requires git" },
 	{OST_COMMON, NSecSystem, "FindCodePage", &Opt.FindCodePage, CP_AUTODETECT,
 		L"FindFile", L"Default code page used for Find File text searches; 0xffffffff enables automatic detection, otherwise use a numeric code page such as 65001 for UTF-8" },
 	{OST_NONE,   NSecSystem, "CmdHistoryRule", &Opt.CmdHistoryRule, 0,

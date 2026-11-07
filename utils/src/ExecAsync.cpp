@@ -15,7 +15,8 @@ ExecAsync::ExecAsync(const char *program) : _program(program)
 ExecAsync::~ExecAsync()
 {
 	CheckedCloseFD(_kill_fd[1]);
-	Wait();
+	if (_started)
+		Wait();
 	CheckedCloseFD(_kill_fd[0]);
 }
 

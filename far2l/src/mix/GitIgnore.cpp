@@ -1,6 +1,7 @@
 #include "GitIgnore.hpp"
 #include "ExecAsync.h"
 #include <cstdlib>
+#include <cstring>
 #include <map>
 #include <set>
 #include <sys/stat.h>
@@ -65,7 +66,7 @@ struct GitIgnoreFilter::Impl
 		return physical;
 	}
 
-	bool LoadIgnored(const std::string &scope, std::set<std::string> &paths)
+	bool LoadIgnored(const std::string &root, const std::string &scope, std::set<std::string> &paths)
 	{
 		ExecAsync git("git");
 		git.UnsetEnvironmentVariable("GIT_DIR");
@@ -73,8 +74,20 @@ struct GitIgnoreFilter::Impl
 		git.UnsetEnvironmentVariable("GIT_INDEX_FILE");
 		git.UnsetEnvironmentVariable("GIT_WORK_TREE");
 		git.AddArguments("git", "-C", scope, "ls-files", "--full-name", "-z",
-				"--others", "--ignored", "--exclude-standard", "--directory", "--",
-				recursive ? ":(literal)." : ":(glob)*");
+				"--others", "--ignored", "--exclude-standard", "--directory");
+		if (scope != root) {
+			// Allow an explicitly chosen root and its ancestors, even if ignored.
+			// Rules for entries below the search root continue to apply.
+			std::string pattern = "!/";
+			for (const char c : scope.substr(root == "/" ? 1 : root.size() + 1) + "/") {
+				if (std::strchr("\\*?[] ", c))
+					pattern+= '\\';
+				pattern+= c;
+				if (c == '/')
+					git.AddArguments("--exclude", pattern);
+			}
+		}
+		git.AddArguments("--", recursive ? ":(literal)." : ":(glob)*");
 		if (!git.Start())
 			return false;
 
@@ -153,7 +166,7 @@ struct GitIgnoreFilter::Impl
 		if (inserted.second) {
 			// Git's --others already excludes tracked files and never collapses
 			// directories containing them. A separate index snapshot is unnecessary.
-			snapshot.ready = LoadIgnored(scope, snapshot.ignored);
+			snapshot.ready = LoadIgnored(repository.root, scope, snapshot.ignored);
 			if (!snapshot.ready && !cancelled())
 				failed(scope);
 		}

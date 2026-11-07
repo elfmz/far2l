@@ -1541,9 +1541,10 @@ hívhatjuk be.
 hagyott fájljait és mappáit a #.gitignore#, a tároló és a globális kizárási szabályok
 alapján. A követett fájlok továbbra is kereshetők. Alapértelmezés szerint engedélyezett;
 a #PATH# útvonalon elérhető #git# szükséges hozzá, és modulok paneljein nem használható.
-Git-tárolón kívül nincs hatása. Git-hiba esetén az érintett keresési terület
-találatai között figyelmen kívül hagyott fájlok is megjelenhetnek; a #.git# továbbra
-is kimarad. Máshol a szűrés folytatódik, és figyelmeztetés jelenik meg.
+Git-tárolón kívül nincs hatása. A figyelmen kívül hagyott keresési gyökér is kereshető;
+a tartalmára vonatkozó szabályok továbbra is érvényesek. Git-hiba esetén az érintett
+keresési terület találatai között figyelmen kívül hagyott fájlok is megjelenhetnek;
+a #.git# továbbra is kimarad. Máshol a szűrés folytatódik, és figyelmeztetés jelenik meg.
 
     A #Haladó# gomb meghívja a ~fájlkeresés haladó beállításai~@FindFileAdvanced@
 párbeszédablakot, ahol bővíthető a keresési feltételek rendszere. A "Haladó"

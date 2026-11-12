@@ -76,7 +76,7 @@ public:
 	void Flush();
 
 	void ChangePalette(const TTYBasePalette &palette);
-	void ChangeCursorHeight(unsigned int height);
+	void ChangeCursorHeight(unsigned int height, unsigned int insert_shape, unsigned int overtype_shape);
 	void ChangeCursorShape(int shape);
 	void ChangeCursor(bool visible, bool force = false);
 	int WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const;

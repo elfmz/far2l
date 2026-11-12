@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <Event.h>
 #include <TTYRawMode.h>
+#include <WinPort.h>
 #include <StackSerializer.h>
 #include "Backend.h"
 #include "TTYCaps.h"
@@ -49,6 +50,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	int *_result = nullptr;
 	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
+	int _last_cursor_shape_insert = -1, _last_cursor_shape_overtype = -1;
+	std::atomic<unsigned int> _cursor_shape_insert{CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE};
+	std::atomic<unsigned int> _cursor_shape_overtype{CONSOLE_TTY_CURSOR_SHAPE_BLOCK};
 	unsigned int _cur_width = 0, _cur_height = 0;
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
@@ -205,4 +209,3 @@ public:
 	void OnSigCont();
 	void OnSigHup();
 };
-

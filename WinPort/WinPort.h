@@ -33,6 +33,21 @@
 
 #define CONSOLE_TTY_PALETTE_OVERRIDE	0x00040000
 
+// Cursor shape values used with the TTY cursor-shape fields below.
+#define CONSOLE_TTY_CURSOR_SHAPE_BAR			0
+#define CONSOLE_TTY_CURSOR_SHAPE_BLOCK			1
+#define CONSOLE_TTY_CURSOR_SHAPE_UNDERLINE		2
+
+#define CONSOLE_TTY_CURSOR_SHAPE_MASK			0x3
+#define CONSOLE_TTY_CURSOR_SHAPE_INSERT_SHIFT		20
+#define CONSOLE_TTY_CURSOR_SHAPE_OVERTYPE_SHIFT	22
+#define CONSOLE_TTY_CURSOR_SHAPE_INSERT(shape) \
+	(((DWORD64)(shape) & CONSOLE_TTY_CURSOR_SHAPE_MASK) << CONSOLE_TTY_CURSOR_SHAPE_INSERT_SHIFT)
+#define CONSOLE_TTY_CURSOR_SHAPE_OVERTYPE(shape) \
+	(((DWORD64)(shape) & CONSOLE_TTY_CURSOR_SHAPE_MASK) << CONSOLE_TTY_CURSOR_SHAPE_OVERTYPE_SHIFT)
+#define CONSOLE_TTY_CURSOR_SHAPE_VALUE(tweaks, shift) \
+	((unsigned int)(((tweaks) >> (shift)) & CONSOLE_TTY_CURSOR_SHAPE_MASK))
+
 // using this value causes SetConsoleTweaks not to change any existing tweak(s) but only return support status
 #define TWEAKS_ONLY_QUERY_SUPPORTED 0xffffffffffffffff
 
@@ -43,6 +58,7 @@
 #define TWEAK_STATUS_SUPPORT_CHANGE_FONT	0x08
 #define TWEAK_STATUS_SUPPORT_TTY_PALETTE	0x10
 #define TWEAK_STATUS_SUPPORT_BLINK_RATE		0x20
+#define TWEAK_STATUS_SUPPORT_TTY_CURSOR_SHAPE	0x40
 
 // FindFirstFileWithFlags
 #define FIND_FILE_FLAG_NO_DIRS		0x01

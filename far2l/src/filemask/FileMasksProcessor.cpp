@@ -38,11 +38,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "udlist.hpp"
 #include "MaskGroups.hpp"
+#include "farwinapi.hpp"
 
 // Protect against cases like a=<a> or a=<b>, b=<a>, etc.
 // It also restricts valid nesting depth but the limit is high enough to cover all practical cases.
 // This method was chosen due to its simplicity.
 #define MAXCALLDEPTH 64
+
+// Runs on raw mask text before splitting; "\${NAME}" is kept as is for regex "\$" escapes.
+static FARString ExpandEnvVars(const wchar_t *masks)
+{
+	static RegExp re;
+	// The outer parens of R"(...)" are C++ raw string syntax, not part of the regex:
+	static const bool compiled = re.Compile(
+		LR"(/(?<!\\)\$\{([^}]+)\}/)"
+		//  ^                    ^  delimiters: Compile() defaults to OP_PERLSTYLE, which wants /.../
+		//   ^^^^^^^                lookbehind: '$' not preceded by '\', so "\${X}" stays as is;
+		//                          groups like this aren't numbered, var name lives in m[1]
+		//          ^^^^            literal "${"
+		//              ^^^^^^^     capture group 1: non-empty var name; m[0] = whole match
+		//                     ^^   literal "}"
+	);
+
+	FARString strOut;
+	RegExpMatch m[2];
+	size_t pos = 0;
+	// MatchCount in: m[] capacity, out: slots filled
+	for (int MatchCount = ARRAYSIZE(m);
+			compiled && re.SearchEx(ReStringView(masks), pos, m, MatchCount);
+			MatchCount = ARRAYSIZE(m)) // reset as re.SearchEx may change it
+	{
+		const FARString strName(masks + m[1].start, m[1].end - m[1].start);
+		FARString strValue{};
+		strOut.Append(masks + pos, m[0].start - pos);
+		apiGetEnvironmentVariable(strName, strValue);
+		strOut += strValue;
+		pos = m[0].end;
+	}
+	strOut += masks + pos;
+
+	return strOut;
+}
 
 static wchar_t *FindExcludeChar(wchar_t *masks)
 {
@@ -154,7 +190,9 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 	if (!*masks) return false;
 
 	bool rc = false;
-	wchar_t *MasksStr = wcsdup(masks);
+	FARString strExpanded = ExpandEnvVars(masks);
+	if (strExpanded.IsEmpty()) return false;
+	wchar_t *MasksStr = wcsdup(strExpanded.CPtr());
 
 	if (MasksStr) {
 		rc = true;

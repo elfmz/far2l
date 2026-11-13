@@ -191,6 +191,7 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 
 	bool rc = false;
 	FARString strExpanded = ExpandEnvVars(masks);
+	if (strExpanded.IsEmpty()) return false;
 	wchar_t *MasksStr = wcsdup(strExpanded.CPtr());
 
 	if (MasksStr) {

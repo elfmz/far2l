@@ -45,80 +45,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This method was chosen due to its simplicity.
 #define MAXCALLDEPTH 64
 
-// Expands ${NAME} references to environment variable values, so masks like
-// "${SRC}|${SRC_EXCLUDE}" can be used. $$ is a literal dollar sign; a '$' not immediately
-// followed by an opening brace, or followed by one with no matching closing brace, is left
-// as-is. Unset variables expand to an empty string, matching shell behavior.
-//
-// This makes '$' a special character in masks, the same way '*' and '?' already are, so a
-// filename that actually contains a '$' needs the bracket escape [$] to match it literally
-// (same trick [*] already provides for a literal asterisk).
-//
-// Left untouched inside /regex/ spans, so the existing "\$" literal-dollar regex escape
-// keeps working - same regexp-span tracking FindExcludeChar below uses for '|'.
+// Runs on raw mask text before splitting; "\${NAME}" is kept as is for regex "\$" escapes.
 static FARString ExpandEnvVars(const wchar_t *masks)
 {
+	static RegExp re;
+	// The outer parens of R"(...)" are C++ raw string syntax, not part of the regex:
+	static const bool compiled = re.Compile(
+		LR"(/(?<!\\)\$\{([^}]+)\}/)"
+		//  ^                    ^  delimiters: Compile() defaults to OP_PERLSTYLE, which wants /.../
+		//   ^^^^^^^                lookbehind: '$' not preceded by '\', so "\${X}" stays as is;
+		//                          groups like this aren't numbered, var name lives in m[1]
+		//          ^^^^            literal "${"
+		//              ^^^^^^^     capture group 1: non-empty var name; m[0] = whole match
+		//                     ^^   literal "}"
+	);
+
 	FARString strOut;
-	bool regexp = false;
-
-	for (const wchar_t *p = masks; *p; )
+	RegExpMatch m[2];
+	size_t pos = 0;
+	// MatchCount in: m[] capacity, out: slots filled
+	for (int MatchCount = ARRAYSIZE(m);
+			compiled && re.SearchEx(ReStringView(masks), pos, m, MatchCount);
+			MatchCount = ARRAYSIZE(m)) // reset as re.SearchEx may change it
 	{
-		if (regexp)
-		{
-			if (*p == L'\\' && p[1])
-			{
-				strOut+= *p++;
-				strOut+= *p++;
-				continue;
-			}
-			if (*p == L'/')
-				regexp = false;
-			strOut+= *p++;
-			continue;
-		}
-
-		if (*p == L'/')
-		{
-			regexp = true;
-			strOut+= *p++;
-			continue;
-		}
-
-		if (*p != L'$')
-		{
-			strOut+= *p++;
-			continue;
-		}
-
-		if (p[1] == L'$')
-		{
-			strOut+= L'$';
-			p+= 2;
-			continue;
-		}
-
-		if (p[1] != L'{')
-		{
-			strOut+= *p++;
-			continue;
-		}
-
-		const wchar_t *Close = wcschr(p + 2, L'}');
-		if (!Close)
-		{
-			strOut+= *p++;
-			continue;
-		}
-
-		if (Close > p + 2)
-		{
-			FARString strName(p + 2, Close - (p + 2)), strValue;
-			apiGetEnvironmentVariable(strName.CPtr(), strValue);
-			strOut+= strValue;
-		}
-
-		p = Close + 1;
+		const FARString strName(masks + m[1].start, m[1].end - m[1].start);
+		FARString strValue{};
+		strOut.Append(masks + pos, m[0].start - pos);
+		apiGetEnvironmentVariable(strName, strValue);
+		strOut += strValue;
+		pos = m[0].end;
 	}
+	strOut += masks + pos;
 
 	return strOut;
 }

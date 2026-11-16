@@ -35,11 +35,11 @@ static std::string VT_ComposePromptCommand(const std::string &exit_marker)
 	// zsh does not decode bash's backslash escapes in PS1. Capture actual
 	// control characters so the prompt still completes a command after SIGINT
 	// aborts the sourced script and skips its explicit completion marker.
-	std::string out = "if [ -n \"${ZSH_VERSION-}\" ]; then\nif [ -o promptpercent ]; then\n";
-	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "%?") + ")\"\nelse\n";
-	// Without prompt expansion, keep a literal failure marker for the aborted
-	// script. Normal completion reports FARVTRESULT through the explicit tail.
-	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "1") + ")\"\nfi\nelse\n";
+	std::string out = "if [ -n \"${ZSH_VERSION-}\" ]; then\n";
+	// Use the aborted script's default failure status without prompt expansion,
+	// even if the command changes zsh's prompt options before being interrupted.
+	// Normal completion reports FARVTRESULT through the explicit tail.
+	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "1") + ")\"\nelse\n";
 	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "\\$?") + ")\"\nfi\n";
 	out+=
 		"PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n";

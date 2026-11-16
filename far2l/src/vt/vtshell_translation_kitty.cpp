@@ -63,7 +63,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	if (KeyEvent.wVirtualKeyCode == VK_NONAME) {
 		if (KeyEvent.bKeyDown) {
 			fprintf(stderr, "kitty kb: probably IME event keydown, sending as text\n");
-			return Wide2MB(&KeyEvent.uChar.UnicodeChar);
+			const wchar_t wz[2] = {KeyEvent.uChar.UnicodeChar, 0};
+			return Wide2MB(&wz[0]);
 		} else {
 			fprintf(stderr, "kitty kb: probably IME event keyup, ignoring\n");
 			return "";

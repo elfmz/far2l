@@ -30,6 +30,19 @@ std::string VT_ComposeMarkerCommand(const std::string &marker)
 	return out;
 }
 
+static std::string VT_ComposePromptCommand(const std::string &exit_marker)
+{
+	// zsh does not decode bash's backslash escapes in PS1. Capture actual
+	// control characters so the prompt still completes a command after SIGINT
+	// aborts the sourced script and skips its explicit completion marker.
+	std::string out = "if [ -n \"${ZSH_VERSION-}\" ]; then\nsetopt promptpercent\n";
+	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "%?") + ")\"\nelse\n";
+	out+= "PS1=\"$(" + VT_ComposeMarkerCommand(exit_marker + "\\$?") + ")\"\nfi\n";
+	out+=
+		"PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n";
+	return out;
+}
+
 static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd, bool using_sudo)
 {
 	std::string title = cmd;
@@ -152,10 +165,7 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker, const std::string &exit_marker)
 {
 	std::string content;
-	// set PS1 to marker ensures marker printed in case user stopped complex command like 'while true; ... done' with Ctrl+C
-	content+= "PS1='\\033''_far2l_''"; // that '' inside prevent mistreating as control sequence if command accidentally echoed to terminal
-	content+= exit_marker;
-	content+= "$FARVTRESULT\\007'; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
+	content+= VT_ComposePromptCommand(exit_marker);
 	if (strcmp(cmd, "exit")!=0) {
 		content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
 	}

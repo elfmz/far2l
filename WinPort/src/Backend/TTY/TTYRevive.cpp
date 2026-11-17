@@ -115,10 +115,6 @@ int TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info)
 	} catch (LocalSocketCancelled &e) {
 		(void)e;
 		fprintf(stderr, "TTYReviveMe: kickass signalled\n");
-		char c;
-		if (read(kickass, &c, 1) < 0) {
-			perror("read kickass");
-		}
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYReviveMe: %s\n", e.what());

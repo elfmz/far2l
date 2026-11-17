@@ -541,6 +541,9 @@ public:
 	void DrawScrollbar();
 
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
+
+	InternalEditorBookMark* GetBookmark(){ return &SavePos; }
+	FARString GetLine(int row, int col, int maxlen);
 };
 
 #define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE)                                            \

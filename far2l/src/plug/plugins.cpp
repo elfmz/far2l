@@ -1024,12 +1024,6 @@ void PluginManager::ConfigureCurrent(Plugin *pPlugin, int INum)
 	}
 }
 
-struct PluginMenuItemData
-{
-	Plugin *pPlugin;
-	int nItem;
-};
-
 /*
 	$ 29.05.2001 IS
 	! При настройке "параметров внешних модулей" закрывать окно с их
@@ -1890,6 +1884,78 @@ std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
 	return BgTasks;
 }
 
+std::vector<MenuItemData> PluginManager::GetMenuItems(int ModalType, int StartPos, const wchar_t *HistoryName)
+{
+	std::vector<MenuItemData> v;
+
+	if (ModalType == MODALTYPE_DIALOG) {
+		if (reinterpret_cast<Dialog *>(FrameManager->GetCurrentFrame())->CheckDialogMode(DMODE_NOPLUGINS)) {
+			return v;
+		}
+	}
+
+	int Editor = ModalType == MODALTYPE_EDITOR, Viewer = ModalType == MODALTYPE_VIEWER,
+		Dialog = ModalType == MODALTYPE_DIALOG;
+
+	bool HotKeysPresent = CheckIfHotkeyPresent(HKK_MENU);
+
+	LoadIfCacheAbsent();
+
+	FARString strHotKey, strValue, strName;
+	PluginInfo Info{};
+	KeyFileReadHelper kfh(PluginsIni());
+
+	for (int I = 0; I < PluginsCount; I++) {
+		Plugin *pPlugin = PluginsData[I];
+		bool bCached = pPlugin->CheckWorkFlags(PIWF_CACHED) ? true : false;
+		int IFlags;
+
+		if (bCached) {
+			IFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags", 0);
+		} else {
+			if (!pPlugin->GetPluginInfo(&Info))
+				continue;
+			IFlags = Info.Flags;
+		}
+
+		if ((Editor && !(IFlags & PF_EDITOR)) || (Viewer && !(IFlags & PF_VIEWER))
+				|| (Dialog && !(IFlags & PF_DIALOG))
+				|| (!Editor && !Viewer && !Dialog && (IFlags & PF_DISABLEPANELS)))
+			continue;
+
+		for (int J = 0;; J++) {
+			if (bCached) {
+				const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
+				if (!kfh.HasKey(pPlugin->GetSettingsName(), key))
+					break;
+				strName = kfh.GetString(pPlugin->GetSettingsName(), key, "");
+			} else {
+				if (J >= Info.PluginMenuStringsNumber) break;
+				strName = Info.PluginMenuStrings[J];
+			}
+
+			GetPluginHotKey(pPlugin, J, HKK_MENU, strHotKey);
+			MenuItemData dataItem{ {L"", 0, 0}, {} };
+
+			if (!HotKeysPresent)
+				;
+			else if (!strHotKey.IsEmpty())
+				strName = strName.Format(L"&%lc%ls  %ls", strHotKey.At(0),
+					(strHotKey.At(0) == L'&' ? L"&" : L""), strName.CPtr());
+			else
+				strName = strName.Format(L"   %ls", strName.CPtr());
+			
+			dataItem.name = strName.GetWide();
+
+			dataItem.pluginItem.pPlugin = pPlugin;
+			dataItem.pluginItem.nItem = J;
+			//PluginList.SetUserData(&item, sizeof(PluginMenuItemData),
+			// PluginList.AddItem(&ListItem));
+			v.push_back(dataItem);
+		}
+	}
+	return v;
+}
 
 void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool UpdatePanel)
 {

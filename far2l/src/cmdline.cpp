@@ -75,6 +75,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dialog.hpp"
 #include <limits>
 
+#include "powerline.hpp"
+
 namespace
 {
 void NormalizeMultilineForExec(FARString &text)
@@ -328,12 +330,42 @@ void CommandLine::DisplayObject()
 		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
 		CmdStr.SetPosition(X1 + (int)active_prompt.CellsCount(), active_y, X2, active_y);
 	} else {
-		FARString prompt;
-		GetPrompt(prompt);
-		TruncPathStr(prompt, (X2 - X1) / 2);
-		GotoXY(X1, input_y);
-		SetFarColor(COL_COMMANDLINEPREFIX);
-		Text(prompt);
+	  FARString prompt;
+	  GetPrompt(prompt);
+	  if(!prompt.Contains(L'\x1b')) {
+		  TruncPathStr(prompt, (X2 - X1) / 2);
+	  }
+
+	  GotoXY(X1, Y1);
+	  int prompt_len = (int)prompt.CellsCount();
+
+	  if (prompt.Contains(L'\x1b')) {
+		  std::vector<TextSegment> v = ParseColorizedText(prompt.GetWide());
+		  prompt_len = v.size();
+		  for(size_t i = 0; i < v.size(); ++i) {
+			  wchar_t x[2];
+			  x[0] = v[i].c;
+			  x[1] = L'\0';
+				
+			  FarTrueColorForeAndBack tfb;
+			  tfb.Fore = v[i].colors.fg;
+			  tfb.Back = v[i].colors.bg;
+			  tfb.Fore.Flags = tfb.Back.Flags = 1;
+        
+			  DWORD64 Attrs;
+			  FarTrueColorToAttributes(Attrs, tfb);
+			  if (v[i].colors.bold) Attrs |= COMMON_LVB_BOLD;
+			  Attrs &= ~(COMMON_LVB_UNDERSCORE|COMMON_LVB_STRIKEOUT);
+			  SetColor(Attrs);
+			  GotoXY(X1 + i, Y1);
+			  Text(x);
+		  }
+	  }
+	  else {
+		  SetFarColor(COL_COMMANDLINEPREFIX);
+		  Text(strTruncDir);
+	  }
+
 		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
 		CmdStr.SetPosition(X1 + (int)prompt.CellsCount(), input_y, X2, input_y);
 	}
@@ -1695,6 +1727,13 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 					case L'Z':		// Git Branch
 					{
 						strDestStr+= GetGitBranchName(strCurDir);
+						break;
+					}
+					case 'O': // connect to powerline, get the colored results
+					{
+						std::string lineA = GetPowerlinePrompt(Wide2MB(strCurDir));
+						std::wstring lineW = MB2Wide(lineA.c_str());
+						strDestStr += lineW;
 						break;
 					}
 				}

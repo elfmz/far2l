@@ -93,6 +93,7 @@ private:
 	void ProcessKey_ShowFolderHistory();
 	void ProcessKey_ShowCommandsHistory();
 	int ProcessKey_Enter(FarKey Key);
+	int ExecuteCommand(const FARString &strStr, FarKey Key);
 	int ProcessKeyIfVisible(FarKey Key);
 	bool IsContinuationLine(const FARString &line) const;
 	bool AddHereDocDelimiters(const FARString &line);

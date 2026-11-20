@@ -1012,7 +1012,6 @@ void CommandLine::AddHistory(const wchar_t* Str)
 
 int CommandLine::ProcessKey_Enter(FarKey Key)
 {
-	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 	FARString strStr;
 	CmdStr.Select(-1, 0);
 	CmdStr.Show();
@@ -1051,9 +1050,15 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 		ClearMultilineState();
 	}
 
+	return ExecuteCommand(strStr, Key);
+}
+
+int CommandLine::ExecuteCommand(const FARString &strStr, FarKey Key)
+{
 	if (strStr.IsEmpty())
 		return FALSE;
 
+	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 	ActivePanel->SetCurPath();
 
 	FARString strCurDirFromPanel;
@@ -1063,7 +1068,7 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 
 	Redraw();
 	if ( ProcessFarCommands(strStr.CPtr()) ) {
-		CmdStr.SetString(L"", FALSE);
+		SetString(L"", FALSE);
 		Show();
 		return TRUE;
 	}
@@ -1386,8 +1391,11 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 							Opt.CmdLine.AskOnMultilinePaste = false;
 					}
 
-					AddHistory(strToExec);
-					ExecString(strToExec);
+					CmdStr.DisableAC();
+					SetString(strToExec);
+					CmdStr.RevertAC();
+					// Use the same plugin dispatch as Enter, passing the entire block.
+					ExecuteCommand(strToExec, KEY_ENTER);
 					break;
 				}
 			}

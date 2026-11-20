@@ -562,7 +562,8 @@ SSHExecutedCommand::~SSHExecutedCommand()
 	}
 	CheckedCloseFDPair(_kickass);
 
-	if (_success) {
+	// The environment cache parser only supports single-line commands.
+	if (_success && _command_line.find_first_of("\r\n") == std::string::npos) {
 		std::vector<std::string> parts;
 		StrExplode(parts, _command_line, " ");
 		if (parts.size() > 1) {

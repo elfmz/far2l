@@ -1850,8 +1850,15 @@ void ShellCopy::Start(const std::shared_ptr<ShellCopy> &self, Panel *SrcPanel,
 					SrcPanel->ClearLastGetSelection();
 				SrcPanel->Redraw();
 			}
-			if (ShowBackgroundCopyDialog(self, progress, false) == BackgroundCopyDialogResult::Aborted)
+			const auto result = ShowBackgroundCopyDialog(self, progress, false);
+			if (result == BackgroundCopyDialogResult::Aborted)
 				AbortAndWaitForBackgroundFileOperation(taskId);
+			else if (result == BackgroundCopyDialogResult::Finished
+					&& CDP.SelCount == 1 && !strRenamedName.IsEmpty()) {
+				// Keep following a renamed item while the operation is in the foreground.
+				SrcPanel->GoToFile(strRenamedName);
+				CtrlObject->Cp()->Redraw();
+			}
 			return;
 		}
 	}
@@ -2385,6 +2392,9 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	{
 		while (nextOperationItem()) {
+			// Description destinations belong to the current item only.
+			strRenamedName.Clear();
+			strCopiedName.Clear();
 			FARString strDest = Dest;
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -2462,7 +2472,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					if (CopyCode == COPY_SUCCESS_MOVE) {
 						if (!strDestDizPath.IsEmpty()) {
 							if (!strRenamedName.IsEmpty()) {
-								DestDiz.DeleteDiz(strSelName);
+								DestDiz.DeleteDiz(PointToName(strSelName));
 								CopyDiz(strSelName, strRenamedName);
 							} else {
 								if (strCopiedName.IsEmpty())
@@ -3004,8 +3014,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 				BOOL SuccessMove = apiMoveFile(Src, strDestPath);
 
 				if (SuccessMove) {
-					if (PointToName(strDestPath) == strDestPath.CPtr())
-						strRenamedName = strDestPath;
+					if (PointToName(strDestPath) == strDestPath.CPtr()
+							|| (Background && InSameDirectory(Src, strDestPath)))
+						strRenamedName = PointToName(strDestPath);
 					else
 						strCopiedName = PointToName(strDestPath);
 
@@ -3022,8 +3033,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 							continue;
 						case 1: {
 							if (apiCreateDirectory(strDestPath, nullptr)) {
-								if (PointToName(strDestPath) == strDestPath.CPtr())
-									strRenamedName = strDestPath;
+								if (PointToName(strDestPath) == strDestPath.CPtr()
+										|| (Background && InSameDirectory(Src, strDestPath)))
+									strRenamedName = PointToName(strDestPath);
 								else
 									strCopiedName = PointToName(strDestPath);
 
@@ -3056,8 +3068,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 		}
 		if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			AddTreeName(strDestPath);
-		if (Flags.MOVE && PointToName(strDestPath) == strDestPath.CPtr())
-			strRenamedName = strDestPath;
+		if (Flags.MOVE && (PointToName(strDestPath) == strDestPath.CPtr()
+				|| (Background && InSameDirectory(Src, strDestPath))))
+			strRenamedName = PointToName(strDestPath);
 		return COPY_SUCCESS;
 	}
 
@@ -3153,8 +3166,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 
 			if (MoveCode) {
 				if (DestAttr == INVALID_FILE_ATTRIBUTES || !(DestAttr & FILE_ATTRIBUTE_DIRECTORY)) {
-					if (PointToName(strDestPath) == strDestPath.CPtr())
-						strRenamedName = strDestPath;
+					if (PointToName(strDestPath) == strDestPath.CPtr()
+							|| (Background && InSameDirectory(Src, strDestPath)))
+						strRenamedName = PointToName(strDestPath);
 					else
 						strCopiedName = PointToName(strDestPath);
 				}
@@ -3180,6 +3194,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 			}
 			if (CopyCode == COPY_SUCCESS) {
 				strCopiedName = PointToName(strDestPath);
+				if (Flags.MOVE && (PointToName(strDestPath) == strDestPath.CPtr()
+						|| (Background && InSameDirectory(Src, strDestPath))))
+					strRenamedName = PointToName(strDestPath);
 				ProgressState.TotalFiles++;
 				ProgressState.Progress->SetFileCounts(
 						ProgressState.TotalFiles, ProgressState.TotalFilesToProcess);

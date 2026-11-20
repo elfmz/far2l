@@ -2392,6 +2392,9 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	{
 		while (nextOperationItem()) {
+			// Description destinations belong to the current item only.
+			strRenamedName.Clear();
+			strCopiedName.Clear();
 			FARString strDest = Dest;
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)

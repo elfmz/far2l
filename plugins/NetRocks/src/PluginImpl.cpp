@@ -1076,14 +1076,16 @@ void PluginImpl::StackedDirApply(StackedDir &sd)
 
 int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 {
-	if (wcsstr(cmd, L"exit ") == cmd || wcscmp(cmd, L"exit") == 0) {
+	// Multiline blocks must reach the shell intact, including any built-in commands.
+	const bool single_line = wcspbrk(cmd, L"\r\n") == nullptr;
+	if (single_line && (wcsstr(cmd, L"exit ") == cmd || wcscmp(cmd, L"exit") == 0)) {
 		if (GetCommandArgument(cmd) == L"far") {
 			return FALSE;
 		}
 		DismissRemoteHost();
 		UpdatePathInfo();
 
-	} else if (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0) {
+	} else if (single_line && (wcsstr(cmd, L"pushd ") == cmd || wcscmp(cmd, L"pushd") == 0)) {
 		StackedDir sd;
 		StackedDirCapture(sd);
 
@@ -1093,7 +1095,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 			FakeExec();
 		}
 
-	} else if (wcscmp(cmd, L"popd") == 0) {
+	} else if (single_line && wcscmp(cmd, L"popd") == 0) {
 		if (!_dir_stack.empty()) {
 			StackedDirApply(_dir_stack.back());
 			_dir_stack.pop_back();
@@ -1101,7 +1103,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 			FakeExec();
 		}
 
-	} else if (wcsstr(cmd, L"cd ") == cmd || wcscmp(cmd, L"cd") == 0) {
+	} else if (single_line && (wcsstr(cmd, L"cd ") == cmd || wcscmp(cmd, L"cd") == 0)) {
 		const std::wstring &dir = GetCommandArgument(cmd);
 		if (SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {
 			FakeExec();

@@ -406,7 +406,8 @@ void SSHExecutedCommand::IOLoop()
 		cmd = _working_dir;
 		QuoteCmdArg(cmd);
 		cmd.insert(0, "cd ");
-		cmd+= " && ";
+		// Stop the entire command block if its working directory is unavailable.
+		cmd+= " || exit 1\n";
 	}
 
 	cmd+= _command_line;
@@ -562,7 +563,8 @@ SSHExecutedCommand::~SSHExecutedCommand()
 	}
 	CheckedCloseFDPair(_kickass);
 
-	if (_success) {
+	// The environment cache parser only supports single-line commands.
+	if (_success && _command_line.find_first_of("\r\n") == std::string::npos) {
 		std::vector<std::string> parts;
 		StrExplode(parts, _command_line, " ");
 		if (parts.size() > 1) {

@@ -16,8 +16,8 @@ struct ViewerString
 	ViewerString(const ViewerString &src) = default;
 	ViewerString &operator=(const ViewerString &src) = default;
 
-	ViewerString(ViewerString &&src);
-	ViewerString &operator=(ViewerString &&src);
+	ViewerString(ViewerString &&src) noexcept;
+	ViewerString &operator=(ViewerString &&src) noexcept;
 
 	bool IsEmpty() const;
 	size_t Capacity() const;
@@ -31,6 +31,7 @@ struct ViewerString
 	void SetChars(size_t x, const wchar_t *cs, size_t cnt);
 
 private:
+	void GrowData(size_t size);
 	std::vector<wchar_t> _data;
 };
 

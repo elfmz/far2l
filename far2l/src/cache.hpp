@@ -49,7 +49,7 @@ public:
 
 	bool Opened() const { return FD != -1; }
 
-	void ActualizeFileSize();
+	void ActualizeFileSize(bool contentsChanged = false);
 
 	void SetPointer(INT64 Ptr, int Whence = SEEK_SET);
 	inline void GetPointer(INT64 &Ptr) const { Ptr = CurPtr; }

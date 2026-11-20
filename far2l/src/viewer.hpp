@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ViewerStrings.hpp"
 #include <vector>
 #include <string>
+#include <tuple>
 
 #define VIEWER_UNDO_COUNT 64
 
@@ -97,6 +98,15 @@ private:
 	KeyBar *ViewKeyBar;
 
 	ViewerStrings Strings;
+
+	struct WrappedRowIndex
+	{
+		std::tuple<UINT, int, int, int, int, int> layout;
+		bool pageMatchesLayout = false;
+		std::vector<int64_t> checkpoints; // Sparse row starts for long lines
+		std::vector<int64_t> rows;        // Consecutive boundaries near the last lookup
+		void Remember(int64_t start, int64_t end);
+	} WrappedRows;
 
 	struct ViewerColorRange
 	{
@@ -194,10 +204,11 @@ private:
 	void AdjustWidth();
 	void AdjustFilePos();
 
-	size_t SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length);
+	int64_t FindLineStart(int64_t position, int64_t lowerBound);
+	void UpdateWrappedRowLayout();
+	int64_t WrappedRowStart(int64_t position);
 
 	void ReadString(ViewerString &rString, int MaxSize, int StrSize);
-	int CalcStrSize(const wchar_t *Str, int Length);
 	void ChangeViewKeyBar();
 	void SetCRSym();
 	void Search(int Next, int FirstChar);

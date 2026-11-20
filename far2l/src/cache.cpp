@@ -119,10 +119,10 @@ void BufferedFileView::Close()
 	}
 }
 
-void BufferedFileView::ActualizeFileSize()
+void BufferedFileView::ActualizeFileSize(bool contentsChanged)
 {
 	struct stat s{};
-	if (FD != -1 && !PseudoFile && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
+	if (FD != -1 && !PseudoFile && sdc_fstat(FD, &s) == 0 && (contentsChanged || FileSize != (UINT64)s.st_size)) {
 		Clear();
 		FileSize = s.st_size;
 	}

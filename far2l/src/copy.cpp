@@ -2472,7 +2472,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					if (CopyCode == COPY_SUCCESS_MOVE) {
 						if (!strDestDizPath.IsEmpty()) {
 							if (!strRenamedName.IsEmpty()) {
-								DestDiz.DeleteDiz(strSelName);
+								DestDiz.DeleteDiz(PointToName(strSelName));
 								CopyDiz(strSelName, strRenamedName);
 							} else {
 								if (strCopiedName.IsEmpty())
@@ -3194,6 +3194,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 			}
 			if (CopyCode == COPY_SUCCESS) {
 				strCopiedName = PointToName(strDestPath);
+				if (Flags.MOVE && (PointToName(strDestPath) == strDestPath.CPtr()
+						|| (Background && InSameDirectory(Src, strDestPath))))
+					strRenamedName = PointToName(strDestPath);
 				ProgressState.TotalFiles++;
 				ProgressState.Progress->SetFileCounts(
 						ProgressState.TotalFiles, ProgressState.TotalFilesToProcess);

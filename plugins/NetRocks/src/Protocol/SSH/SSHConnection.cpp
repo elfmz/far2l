@@ -406,7 +406,8 @@ void SSHExecutedCommand::IOLoop()
 		cmd = _working_dir;
 		QuoteCmdArg(cmd);
 		cmd.insert(0, "cd ");
-		cmd+= " && ";
+		// Stop the entire command block if its working directory is unavailable.
+		cmd+= " || exit 1\n";
 	}
 
 	cmd+= _command_line;

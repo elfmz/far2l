@@ -220,7 +220,7 @@ void OpExecute::Do()
 			display_action.replace(p, 2, G.GetMsgWide(MCommandNotificationTitle));
 
 		// display only first argument of command to avoid leakage of secret information, like passwords etc
-		p = _command.find(' ');
+		p = _command.find_first_of(" \t\r\n");
 		std::string first_arg = (p != std::string::npos) ? _command.substr(0, p) : _command;
 
 		G.info.FSF->DisplayNotification(display_action.c_str(), StrMB2Wide(first_arg).c_str());

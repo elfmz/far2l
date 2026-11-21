@@ -1010,7 +1010,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_ADD:
 		case KEY_SUBTRACT:
 		case KEY_MULTIPLY: {
-			if (CmdIsNotEmpty)
+			if (CtrlObject->CmdLine->IsNotEmpty())
 				return FALSE;
 
 			int Mode = SELECT_ADD;
@@ -2140,7 +2140,7 @@ int FileList::ProcessKey(FarKey Key)
 		default:
 
 			if ((Key == L'*') || (Key == L'+') || (Key == L'-')) {
-				if (!CmdIsNotEmpty) {
+				if (!CtrlObject->CmdLine->IsNotEmpty()) {
 					if (Key == L'*') {
 						SelectFiles(SELECT_INVERT);
 						return TRUE;

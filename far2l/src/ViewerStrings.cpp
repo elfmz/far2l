@@ -2,7 +2,7 @@
 #include <utils.h>
 #include "ViewerStrings.hpp"
 
-ViewerString::ViewerString(ViewerString &&src)
+ViewerString::ViewerString(ViewerString &&src) noexcept
 {
 	nFilePos = src.nFilePos;
 	nSelStart = src.nSelStart;
@@ -13,7 +13,7 @@ ViewerString::ViewerString(ViewerString &&src)
 	_data.swap(src._data);
 }
 
-ViewerString &ViewerString::operator=(ViewerString &&src)
+ViewerString &ViewerString::operator=(ViewerString &&src) noexcept
 {
 	nFilePos = src.nFilePos;
 	nSelStart = src.nSelStart;
@@ -63,10 +63,19 @@ const wchar_t *ViewerString::Chars()
 	return _data.data();
 }
 
+void ViewerString::GrowData(size_t size)
+{
+	// The string is NUL-terminated; vector size is reusable storage. Grow in
+	// blocks to avoid resizing and zero-initializing on every appended character.
+	constexpr size_t BlockSize = 256;
+	const size_t padding = (BlockSize - size % BlockSize) % BlockSize;
+	_data.resize(size <= _data.max_size() - padding ? size + padding : size);
+}
+
 void ViewerString::SetChar(size_t x, wchar_t c)
 {
 	if (x >= _data.size()) {
-		_data.resize(x + 1);
+		GrowData(x + 1);
 	}
 	_data[x] = c;
 }
@@ -74,7 +83,7 @@ void ViewerString::SetChar(size_t x, wchar_t c)
 void ViewerString::SetChars(size_t x, const wchar_t *cs, size_t cnt)
 {
 	if (x + cnt > _data.size()) {
-		_data.resize(x + cnt);
+		GrowData(x + cnt);
 	}
 	wmemcpy(_data.data() + x, cs, cnt);
 }

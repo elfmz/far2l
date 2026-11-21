@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LinkHighlighter.hpp"
 #include <algorithm>
 #include <cwctype>
+#include <iterator>
 #include <vector>
 
 #define MAX_VIEWLINE 0x2000
@@ -304,6 +305,7 @@ int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 	OpenFailed = false;
 
 	ViewFile.Close();
+	TextRows = {};
 
 	const auto &GotPathName = NewFileHolder->GetPathName();
 	DWORD FileAttr = apiGetFileAttributes(GotPathName);
@@ -538,6 +540,18 @@ void Viewer::ShowPage(int nMode)
 	if (HideCursor)
 		SetCursorType(0, 10);
 
+	// A saved position or a change of layout can put the top inside a row.
+	if (nMode != SHOW_HEX && Width > 0) {
+		UpdateTextRowLayout();
+		if (!TextRows.pageMatchesLayout)
+			nMode = SHOW_RELOAD;
+		if (nMode == SHOW_RELOAD) {
+			FilePos = TextRowStart(FilePos);
+			TextRows.pageMatchesLayout = true;
+		}
+	} else {
+		TextRows.pageMatchesLayout = false;
+	}
 	vseek(FilePos, SEEK_SET);
 
 	if (!SelectSize)
@@ -569,7 +583,7 @@ void Viewer::ShowPage(int nMode)
 				if (Y == Y1 + 1 && !ViewFile.Eof())
 					SecondPos = vtell();
 
-				ReadString(Strings[I], -1, MAX_VIEWLINE);
+				ReadString(Strings[I]);
 			}
 			break;
 
@@ -577,17 +591,24 @@ void Viewer::ShowPage(int nMode)
 			Strings.ScrollUp();
 			Strings[0].nFilePos = FilePos;
 			SecondPos = Strings[1].nFilePos;
-			ReadString(Strings[0], (int)(SecondPos - FilePos), MAX_VIEWLINE);
+			ReadString(Strings[0]);
+			// Cached rows can only follow this row if their file offsets meet.
+			if (vtell() != SecondPos) {
+				ShowPage(SHOW_RELOAD);
+				return;
+			}
 			break;
 
 		case SHOW_DOWN:
+			if (Width > 0 && Strings[1].nFilePos > Strings[0].nFilePos)
+				TextRows.Remember(Strings[0].nFilePos, Strings[1].nFilePos);
 			vseek(Strings[Y2 - Y1].nFilePos, SEEK_SET);
 			Strings.ScrollDown();
 			FilePos = Strings[0].nFilePos;
 			SecondPos = Strings[1].nFilePos;
-			ReadString(Strings[Y2 - Y1], -1, MAX_VIEWLINE);
+			ReadString(Strings[Y2 - Y1]);
 			Strings[Y2 - Y1].nFilePos = vtell();
-			ReadString(Strings[Y2 - Y1], -1, MAX_VIEWLINE);
+			ReadString(Strings[Y2 - Y1]);
 			break;
 	}
 
@@ -714,44 +735,41 @@ void Viewer::PrepareViewerContext()
 		return;
 
 	constexpr size_t MaxContextLines = 200;
-	const int64_t savedFilePos = FilePos;
+	constexpr int64_t MaxContextUnits = MaxContextLines * MAX_VIEWLINE;
 	const int64_t savedViewPos = vtell();
 	const int64_t savedLastPage = LastPage;
 	const int savedWrap = VM.Wrap;
 	const int64_t visiblePos = Strings[0].nFilePos;
-	std::vector<int64_t> positions;
-
-	FilePos = visiblePos;
-	VM.Wrap = FALSE;
-	while (positions.size() < MaxContextLines && FilePos > 0) {
-		const int64_t previous = FilePos;
-		Up();
-		if (FilePos == previous)
-			break;
-		positions.emplace_back(FilePos);
+	const int64_t lowerBound = std::max<int64_t>(0, visiblePos - MaxContextUnits);
+	const bool continuesIntoView = FindLineStart(visiblePos, visiblePos - 1) != visiblePos;
+	std::vector<int64_t> lineEnds; // Exclusive ends in reverse file order.
+	int64_t pos = visiblePos;
+	while (lineEnds.size() < MaxContextLines && pos > lowerBound) {
+		lineEnds.emplace_back(pos);
+		pos = FindLineStart(pos - 1, lowerBound);
 	}
-	std::reverse(positions.begin(), positions.end());
+	// The lookback limit can fall inside an encoded character on a long line.
+	if (pos && pos == lowerBound)
+		pos = FindLineStart(pos, GetWrapSegment(pos).begin);
 
-	for (const int64_t position : positions) {
-		vseek(position, SEEK_SET);
+	VM.Wrap = FALSE;
+	vseek(pos, SEEK_SET);
+	const WrapSegment context {pos, visiblePos, true};
+	while (pos < visiblePos) {
 		ViewerString line;
-		line.nFilePos = position;
-		ReadString(line, -1, MAX_VIEWLINE);
-		if (vtell() > visiblePos) {
-			const int64_t distance = visiblePos - position;
-			size_t length = 0;
-			int64_t consumed = 0;
-			while (line.Chars(length)[0]) {
-				const int width = CalcCodeUnitsDistance(VM.CodePage,
-					line.Chars(length), line.Chars(length + 1));
-				if (consumed + width > distance)
-					break;
-				consumed+= width;
-				++length;
-			}
-			line.SetChar(length, 0);
-			line.WrapsToNext = true;
+		line.nFilePos = pos;
+		ReadString(line, context);
+		pos = vtell();
+		if (pos <= line.nFilePos) {
+			ViewerContext.clear();
+			break;
 		}
+		// A full buffer can stop immediately before the newline that ends its line.
+		line.WrapsToNext = pos < lineEnds.back() || (pos == visiblePos && continuesIntoView);
+		if (pos == lineEnds.back())
+			lineEnds.pop_back();
+		if (ViewerContext.size() == MaxContextLines)
+			ViewerContext.pop_front();
 		ViewerContext.emplace_back(std::move(line));
 	}
 
@@ -771,7 +789,6 @@ void Viewer::PrepareViewerContext()
 	}
 
 	VM.Wrap = savedWrap;
-	FilePos = savedFilePos;
 	LastPage = savedLastPage;
 	vseek(savedViewPos, SEEK_SET);
 }
@@ -1095,24 +1112,14 @@ static bool IsAnsiEscapeColoringArgsChar(wchar_t Ch)
 	return (Ch == L':' || Ch == L';' || (Ch >= '0' && Ch <= '9'));
 }
 
-size_t Viewer::SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length)
+static bool IsViewerWordBreak(wchar_t ch)
 {
-	size_t saved_index;
-	do {
-		saved_index = index;
-		while (index < length && (CharClasses::IsXxxfix(buf[index]) || buf[index] == '\r' || buf[index] == '\n')) {
-			++index;
-		}
-		if (VM.Processed) {
-			while (index + 2 < length && buf[index] == L'\e' && buf[index + 1] == L'[' ) {
-				index+= 2;
-				for (bool stop = false; !stop && index < length; ++index) {
-					stop = !IsAnsiEscapeColoringArgsChar(buf[index]);
-				}
-			}
-		}
-	} while (saved_index != index);
-	return index;
+	return IsSpace(ch) || ch == L',' || ch == L';' || ch == L'>' || ch == L')';
+}
+
+static int ViewerCodeUnitBytes(UINT codePage)
+{
+	return IsUTF32(codePage) ? 4 : IsUTF16(codePage) ? 2 : 1;
 }
 
 namespace
@@ -1299,7 +1306,13 @@ bool Viewer::LaunchLinkById(int linkId)
 	return LinkHighlighter::Launch(cleaned.c_str(), cleaned.size());
 }
 
-void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
+void Viewer::ReadString(ViewerString &rString)
+{
+	// Long text lines still span multiple row buffers when screen wrapping is off.
+	ReadString(rString, VM.Hex ? WrapSegment{} : GetWrapSegment(vtell()));
+}
+
+void Viewer::ReadString(ViewerString &rString, const WrapSegment &segment)
 {
 	WCHAR Ch, Ch2;
 	int64_t OutPtr, visual_length;
@@ -1333,6 +1346,20 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		rString.SetChars(0, piece, (size_t)(OutPtr + 1));
 	} else {
 		bool CRSkipped = false;
+		const bool wordWrap = VM.Wrap && VM.WordWrap;
+		int64_t wordBreakLength = 0, wordBreakPos = 0;
+		const auto rememberWordBreak = [&] {
+			wordBreakLength = OutPtr;
+			wordBreakPos = vtell();
+		};
+		const int64_t byteLimit = segment.forcedEnd ? segment.end * ViewerCodeUnitBytes(VM.CodePage) : -1;
+		// All lookahead, including word wrap's whitespace skip, sees a forced
+		// boundary as the end of this row. The next row resumes at the same byte.
+		const auto readRowChar = [&](WCHAR &ch) {
+			INT64 pos;
+			ViewFile.GetPointer(pos);
+			return (byteLimit < 0 || pos < byteLimit) && vgetc(ch);
+		};
 
 		if (SelectSize && vtell() > SelectPos) {
 			rString.nSelStart = 0;
@@ -1340,11 +1367,11 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		}
 
 		for (;;) {
-			if (OutPtr >= StrSize - 16) {
+			if (OutPtr >= MAX_VIEWLINE - 16) {
 				const int64_t position = vtell();
-				if (vgetc(Ch)) {
+				if (readRowChar(Ch)) {
 					rString.WrapsToNext = Ch != CRSym;
-					if (rString.WrapsToNext && CRSym == L'\n' && Ch == L'\r' && vgetc(Ch2))
+					if (rString.WrapsToNext && CRSym == L'\n' && Ch == L'\r' && readRowChar(Ch2))
 						rString.WrapsToNext = Ch2 != CRSym;
 				}
 				vseek(position, SEEK_SET);
@@ -1353,18 +1380,25 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 
 			do { // attach zero-length sequences at the string ending (if any)
 				int64_t SavePosEsc = vtell();
-				if (!vgetc(Ch)) {
+				if (!readRowChar(Ch)) {
 					break;
 				}
 				if (CharClasses::IsSuffix(Ch)) {
 					rString.SetChar(size_t(OutPtr++), Ch);
 					rString.SetChar(size_t(OutPtr), 0);
-				} else if (VM.Processed && Ch == L'\e' && vgetc(Ch2) && Ch2 == L'[') {
+				} else if (VM.Processed && Ch == L'\e' && readRowChar(Ch2) && Ch2 == L'[') {
 					// in processed mode coloring escape sequences are invisible and thus dont affect length
 					// however they must be part of string, even if located after its wrap-caused end
 					rString.SetChar(size_t(OutPtr++), Ch);
 					rString.SetChar(size_t(OutPtr++), Ch2);
-					while (vgetc(Ch) && OutPtr < StrSize - 16) {
+					while (OutPtr < MAX_VIEWLINE - 16) {
+						const int64_t argPos = vtell();
+						if (!readRowChar(Ch))
+							break;
+						if (Ch == CRSym || (CRSym == L'\n' && Ch == L'\r')) {
+							vseek(argPos, SEEK_SET);
+							break;
+						}
 						rString.SetChar(size_t(OutPtr++), Ch);
 						if (!IsAnsiEscapeColoringArgsChar(Ch)) {
 							break;
@@ -1375,7 +1409,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 					vseek(SavePosEsc, SEEK_SET);
 					break;
 				}
-			} while (OutPtr < StrSize - 16);
+			} while (OutPtr < MAX_VIEWLINE - 16);
 
 			/*
 				$ 12.07.2000 SVS
@@ -1390,40 +1424,13 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				int64_t SavePos = vtell();
 				WCHAR TmpChar = 0;
 
-				if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
+				if (readRowChar(Ch) && Ch != CRSym && (Ch != L'\r' || (readRowChar(TmpChar) && TmpChar != CRSym))) {
 					vseek(SavePos, SEEK_SET);
 
-					if (VM.WordWrap) {
-						if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
-							int64_t SavePtr = OutPtr;
-
-							/*
-								$ 18.07.2000 tran
-								добавил в качестве wordwrap разделителей , ; > )
-							*/
-							while (OutPtr) {
-								Ch2 = *rString.Chars((size_t)OutPtr);
-
-								if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
-									break;
-
-								OutPtr--;
-							}
-
-							Ch2 = *rString.Chars((size_t)OutPtr);
-
-							if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
-								OutPtr++;
-							else
-								while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
-									OutPtr++;
-
-							if (OutPtr < SavePtr && OutPtr) {
-								vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
-											rString.Chars((size_t)SavePtr)),
-										SEEK_CUR);
-							} else
-								OutPtr = SavePtr;
+					if (wordWrap) {
+						if (!IsSpace(Ch) && wordBreakLength > 0 && wordBreakLength < OutPtr) {
+							OutPtr = wordBreakLength;
+							vseek(wordBreakPos, SEEK_SET);
 						}
 
 						/*
@@ -1435,7 +1442,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 							int64_t lastpos;
 							for (;;) {
 								lastpos = vtell();
-								if (!vgetc(Ch) || !IsSpace(Ch))
+								if (!readRowChar(Ch) || !IsSpace(Ch))
 									break;
 							}
 							vseek(lastpos, SEEK_SET);
@@ -1453,22 +1460,8 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				bSelStartFound = true;
 			}
 
-			if (MaxSize == 0)
+			if (!readRowChar(Ch))
 				break;
-
-			if (!vgetc(Ch))
-				break;
-
-			if (MaxSize > 0) {
-				if (VM.CodePage == CP_UTF8) {
-					MaxSize-= UtfCalcSpace<wchar_t, char>(&Ch, 1, false);
-					if (MaxSize < 0) {
-						MaxSize = 0;
-					}
-				} else {
-					MaxSize--;
-				}
-			}
 
 			if (Ch == CRSym)
 				break;
@@ -1485,9 +1478,12 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 					visual_length++;
 				} while ((OutPtr % ViOpt.TabSize) && ((int)OutPtr < (MAX_VIEWLINE - 1)));
 
+				rString.SetChar(size_t(OutPtr), 0);
 				if (VM.Wrap && OutPtr > XX2 - X1)
 					rString.SetChar(XX2 - X1 + 1, 0);
 
+				if (wordWrap)
+					rememberWordBreak();
 				continue;
 			}
 
@@ -1502,7 +1498,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 					int64_t SavePos = vtell();
 					WCHAR nextCh = 0;
 
-					if (vgetc(nextCh) && nextCh != CRSym) {
+					if (readRowChar(nextCh) && nextCh != CRSym) {
 						CRSkipped = false;
 					}
 
@@ -1524,6 +1520,16 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				rString.nSelEnd = OutPtr;
 				bSelEndFound = true;
 			}
+
+			// Record breaks in displayed text. Semicolons in ANSI arguments are
+			// consumed above and never become word boundaries.
+			if (wordWrap && IsViewerWordBreak(Ch))
+				rememberWordBreak();
+		}
+		if (segment.forcedEnd && vtell() == segment.end) {
+			rString.WrapsToNext = true;
+			if (CRSkipped)
+				rString.SetChar(size_t(OutPtr++), L'\r');
 		}
 	}
 
@@ -1718,16 +1724,17 @@ int Viewer::ProcessKey(FarKey Key)
 					if (!apiGetFindDataForExactPathName(strFullFileName, NewViewFindData))
 						return TRUE;
 
-					ViewFile.ActualizeFileSize();
+					const bool contentsChanged = ViewFindData.ftLastWriteTime.dwLowDateTime
+								!= NewViewFindData.ftLastWriteTime.dwLowDateTime
+							|| ViewFindData.ftLastWriteTime.dwHighDateTime
+								!= NewViewFindData.ftLastWriteTime.dwHighDateTime;
+					ViewFile.ActualizeFileSize(contentsChanged);
 					vseek(0, SEEK_END);
 					int64_t CurFileSize = vtell();
 
-					if (ViewFindData.ftLastWriteTime.dwLowDateTime
-									!= NewViewFindData.ftLastWriteTime.dwLowDateTime
-							|| ViewFindData.ftLastWriteTime.dwHighDateTime
-									!= NewViewFindData.ftLastWriteTime.dwHighDateTime
-							|| CurFileSize != FileSize) {
+					if (contentsChanged || CurFileSize != FileSize) {
 						ViewFindData = NewViewFindData;
+						TextRows = {};
 						FileSize = CurFileSize;
 
 						if (FilePos > FileSize)
@@ -2070,7 +2077,7 @@ int Viewer::ProcessKey(FarKey Key)
 				vseek(FilePos, SEEK_SET);
 
 				for (int i = Y1; i < Y2; i++) {
-					ReadString(vString, -1, MAX_VIEWLINE);
+					ReadString(vString);
 
 					if (LastPage) {
 						return TRUE;
@@ -2080,7 +2087,7 @@ int Viewer::ProcessKey(FarKey Key)
 				FilePos = vtell();
 
 				for (int i = Y1; i <= Y2; i++)
-					ReadString(vString, -1, MAX_VIEWLINE);
+					ReadString(vString);
 
 				/*
 					$ 02.06.2003 VVM
@@ -2507,19 +2514,175 @@ void Viewer::FilePosShiftLeft(uint64_t Offset)
 		FilePos = 0;
 }
 
+// Return the offset after the last newline in [lowerBound, position), or
+// lowerBound. Scan in file code units so the offsets agree with vtell().
+int64_t Viewer::FindLineStart(int64_t position, int64_t lowerBound)
+{
+	wchar_t delimiter = CRSym;
+	if (VM.CodePage == CP_UTF16BE)
+		delimiter = RevBytes(static_cast<uint16_t>(delimiter));
+	else if (VM.CodePage == CP_UTF32BE)
+		delimiter = RevBytes(static_cast<uint32_t>(delimiter));
+	else if (!IsUnicodeOrUtfCodePage(VM.CodePage)) {
+		char byte;
+		if (WINPORT(WideCharToMultiByte)(VM.CodePage, 0, &delimiter, 1, &byte, 1, nullptr, nullptr) == 1)
+			delimiter = static_cast<unsigned char>(byte);
+	}
+
+	wchar_t units[MAX_VIEWLINE];
+	while (position > lowerBound) {
+		const int count = static_cast<int>(std::min<int64_t>(position - lowerBound, MAX_VIEWLINE));
+		position-= count;
+		vseek(position, SEEK_SET);
+		for (int i = vread(units, count, true); i > 0; --i) {
+			if (units[i - 1] == delimiter)
+				return position + i;
+		}
+	}
+	return lowerBound;
+}
+
+int64_t Viewer::FindContinuationBreak(int64_t mark)
+{
+	// Prefer a displayed word delimiter in the last 128 code units. Decode
+	// a little earlier to synchronize UTF-8 and UTF-16. In processed text,
+	// also look back by one row buffer to recognize an enclosing ANSI escape.
+	const int64_t window = mark - 128;
+	const int64_t probe = window - (VM.Processed ? MAX_VIEWLINE : 0);
+	vseek(probe - 4, SEEK_SET);
+	int64_t preferred = -1, safe = -1, character = mark;
+	wchar_t previous = 0;
+	bool inArgs = false;
+	for (int64_t pos = vtell(); pos <= mark; pos = vtell()) {
+		wchar_t ch;
+		if (!vgetc(ch)) {
+			if (vtell() <= pos)
+				break;
+			previous = 0;
+			inArgs = false;
+			continue;
+		}
+		const bool opensArgs = VM.Processed && previous == L'\e' && ch == L'[';
+		const bool inEscape = inArgs || opensArgs;
+		if (previous != L'\r' || ch != L'\n')
+			character = pos;
+		if (pos >= probe && !inEscape && !CharClasses::IsSuffix(ch) && !CharClasses::IsPrefix(previous)
+				&& ch != CharClasses::ZERO_WIDTH_JOINER && previous != CharClasses::ZERO_WIDTH_JOINER
+				&& previous != L'\r' && ch != L'\r' && ch != CRSym) {
+			safe = pos;
+			if (pos >= window && IsViewerWordBreak(previous))
+				preferred = pos;
+		}
+		inArgs = opensArgs || (inArgs && IsAnsiEscapeColoringArgsChar(ch));
+		previous = inEscape ? 0 : ch;
+	}
+	if (preferred >= 0)
+		return preferred;
+	// A run of combining marks can itself exceed the whole probe.
+	return safe >= 0 ? safe : character;
+}
+
+Viewer::WrapSegment Viewer::GetWrapSegment(int64_t position)
+{
+	constexpr int64_t intervalBytes = 256 * 1024;
+	const int64_t interval = intervalBytes / ViewerCodeUnitBytes(VM.CodePage);
+	if (FileSize <= interval)
+		return {0, FileSize, false};
+
+	position = std::min(position, FileSize - 1);
+	auto &segment = TextRows.segment;
+	if (position >= segment.begin && position < segment.end)
+		return segment;
+
+	// Each complete interval supplies one restart point. Prefer its last
+	// physical newline. Only a newline-free interval needs a forced row end.
+	struct Boundary { int64_t pos; bool forced; };
+	const auto boundaryAfter = [&](int64_t block) -> Boundary {
+		if (FileSize - block <= interval)
+			return {FileSize, false};
+		const int64_t mark = block + interval;
+		const int64_t line = FindLineStart(mark, block);
+		if (line > block)
+			return {line, false};
+		return {FindContinuationBreak(mark), true};
+	};
+
+	INT64 saved;
+	ViewFile.GetPointer(saved);
+	const int64_t block = position - position % interval;
+	Boundary end = boundaryAfter(block);
+	if (end.pos <= position) {
+		segment.begin = end.pos;
+		end = boundaryAfter(block + interval);
+	} else {
+		segment.begin = block ? boundaryAfter(block - interval).pos : 0;
+	}
+	segment.end = end.pos;
+	segment.forcedEnd = end.forced;
+	ViewFile.SetPointer(saved);
+	return segment;
+}
+
+void Viewer::TextRowIndex::Remember(int64_t start, int64_t end)
+{
+	// Keep consecutive offsets for one block and one offset per crossed block.
+	if (rows.empty() || rows.back() != start || rows.front() / MAX_VIEWLINE != start / MAX_VIEWLINE)
+		rows.assign(1, start);
+	rows.emplace_back(end);
+	if (start / MAX_VIEWLINE != end / MAX_VIEWLINE && (checkpoints.empty() || end > checkpoints.back()))
+		checkpoints.emplace_back(end);
+}
+
+void Viewer::UpdateTextRowLayout()
+{
+	const auto layout = std::make_tuple(VM.CodePage, Width, ViOpt.TabSize, VM.Wrap, VM.WordWrap,
+			VM.Processed, CRSym, FileSize);
+	if (TextRows.layout != layout) {
+		TextRows = {};
+		TextRows.layout = layout;
+	}
+}
+
+// Return the start of the displayed row containing the given file code unit.
+// In particular the code unit just before a row belongs to its predecessor.
+int64_t Viewer::TextRowStart(int64_t position)
+{
+	position = std::clamp<int64_t>(position, 0, FileSize);
+	if (!position)
+		return 0;
+	auto &rows = TextRows.rows;
+	auto &checkpoints = TextRows.checkpoints;
+	if (!rows.empty() && position >= rows.front() && position <= rows.back())
+		return *std::prev(std::upper_bound(rows.begin(), rows.end(), position));
+
+	auto it = std::upper_bound(checkpoints.begin(), checkpoints.end(), position);
+	int64_t anchor = it == checkpoints.begin() ? 0 : *std::prev(it);
+	if (!rows.empty() && rows.back() <= position)
+		anchor = std::max(anchor, rows.back());
+
+	int64_t start = FindLineStart(position, std::max(anchor, GetWrapSegment(position).begin));
+	if (checkpoints.empty() || start > anchor || start < checkpoints.front())
+		checkpoints.assign(1, start);
+
+	vseek(start, SEEK_SET);
+	ViewerString row;
+	while (start < position) {
+		ReadString(row);
+		const int64_t next = vtell();
+		if (next <= start)
+			break;
+
+		TextRows.Remember(start, next);
+		if (next > position)
+			break;
+		start = next;
+	}
+	return start;
+}
+
 void Viewer::Up()
 {
-	if (!ViewFile.Opened())
-		return;
-
-	wchar_t Buf[MAX_VIEWLINE + 1];
-	int BufSize, I;
-
-	if (FilePos > ((int64_t)(sizeof(Buf) / sizeof(wchar_t))) - 1)
-		BufSize = (sizeof(Buf) / sizeof(wchar_t)) - 1;
-	else if (FilePos != 0)
-		BufSize = (int)FilePos;
-	else
+	if (!ViewFile.Opened() || FilePos <= 0)
 		return;
 
 	LastPage = 0;
@@ -2538,135 +2701,12 @@ void Viewer::Up()
 		return;
 	}
 
-	vseek(FilePos - (int64_t)BufSize, SEEK_SET);
-	I = BufSize = vread(Buf, BufSize, true);
-	if (I == -1) {
+	if (VM.Wrap && Width <= 0)
 		return;
-	}
 
-	wchar_t CRSymEncoded = (unsigned int)CRSym;
-	wchar_t CRRSymEncoded = (unsigned int)'\r';
-	switch (VM.CodePage) {
-		case CP_UTF32BE:
-			CRSymEncoded<<= 24;
-			CRRSymEncoded<<= 24;
-			break;
-		case CP_UTF16BE:
-			CRSymEncoded<<= 8;
-			CRRSymEncoded<<= 8;
-			break;
-	}
-
-	if (I > 0 && Buf[I - 1] == CRSymEncoded) {
-		--I;
-	}
-
-	if (I > 0 && CRSym == L'\n' && Buf[I - 1] == CRRSymEncoded) {
-		--I;
-	}
-
-	while (I > 0 && Buf[I - 1] != CRSymEncoded) {
-		--I;
-	}
-
-	int64_t WholeLineLength = (BufSize - I);	// in code units
-
-	if (VM.Wrap && Width > 0) {
-		vseek(FilePos - WholeLineLength, SEEK_SET);
-		int WrapBufSize = vread(Buf, WholeLineLength, false);
-
-		// we might read more code units and could actually overflow current position
-		// so try to find out exact substring that matches into line start and current position
-		Buf[WrapBufSize] = 0;
-		//		fprintf(stderr, "WrapBufSize=%d WholeLineLength=%d LINE='%ls'\n", WrapBufSize, WholeLineLength, &Buf[0]);
-		//		fprintf(stderr, "LINE1: '%ls'\n", &Buf[0]);
-		while (WrapBufSize) {
-			int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize]);
-			if (distance <= WholeLineLength) {
-				while (WrapBufSize
-						&& distance == CalcCodeUnitsDistance(VM.CodePage, &Buf[0], &Buf[WrapBufSize - 1])) {
-					--WrapBufSize;
-				}
-				break;
-			}
-			--WrapBufSize;
-		}
-		Buf[WrapBufSize] = 0;
-		//		fprintf(stderr, "Matching LINE: '%ls'\n", &Buf[0]);
-
-		if (VM.WordWrap) {
-			//	khffgkjkfdg dfkghd jgfhklf |
-			//	sdflksj lfjghf fglh lf     |
-			//	dfdffgljh ldgfhj           |
-			bool LeadingSpaces = WrapBufSize > 0 && IsSpace(Buf[0]);
-			for (I = 0; I < WrapBufSize;) {
-				if (!IsSpace(Buf[I])) {
-					int CurLineStart = LeadingSpaces ? 0 : I; // Keep spaces at beginning of wrapped line: #2246
-					for (int LastFitEnd = CurLineStart + 1;; ++I) {
-						if (I == WrapBufSize) {
-							int distance =
-									CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
-							FilePosShiftLeft((distance > 0) ? distance : 1);
-							return;
-						}
-
-						if (!IsSpace(Buf[I]) && (I + 1 == WrapBufSize || IsSpace(Buf[I + 1]))) {
-							if (CalcStrSize(&Buf[CurLineStart], I + 1 - CurLineStart) > Width) {
-								I = LastFitEnd;
-								break;
-							}
-							LastFitEnd = I + 1;
-						}
-					}
-					LeadingSpaces = false;
-
-				} else {
-					++I;
-				}
-			}
-		}
-
-		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I) {
-			I = SkipZeroWidthSubsequence(Buf, I, WrapBufSize);
-			if (I == WrapBufSize) {
-				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
-				FilePosShiftLeft((distance > 0) ? distance : 1);
-				return;
-			}
-
-			int SublineLength = CalcStrSize(&Buf[CurLineStart], I - CurLineStart);
-			if (SublineLength > PrevSublineLength) {
-				if (SublineLength >= Width) {
-					CurLineStart = I;
-					PrevSublineLength = 0;
-				} else {
-					PrevSublineLength = SublineLength;
-				}
-			}
-		}
-	}
-
-	//	fprintf(stderr, "!!!!!!!!!!!!NOWRAP!!!!!!!!!!!!\n");
-	FilePosShiftLeft((WholeLineLength > 0) ? WholeLineLength : 1);
-}
-
-int Viewer::CalcStrSize(const wchar_t *Str, int Length)
-{
-	int Size, I;
-
-	for (Size = 0, I = 0;; I++) {
-		I = SkipZeroWidthSubsequence(Str, I, Length);
-		if (I >= Length) {
-			break;
-		}
-		if (Str[I] == L'\t') {
-			Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
-		} else {
-			Size++;
-		}
-	}
-
-	return (Size);
+	UpdateTextRowLayout();
+	FilePos = TextRowStart(FilePos - 1);
+	LastPage = 0;
 }
 
 int Viewer::GetStrBytesNum(const wchar_t *Str, int Length)
@@ -3358,6 +3398,15 @@ int Viewer::vread(wchar_t *Buf, int Count, bool Raw)
 				break;
 			}
 
+			// ReadString reads one character at a time. ASCII needs no UTF-8
+			// conversion, including NUL, tabs and line endings.
+			if (Count == 1 && static_cast<unsigned char>(*SrcView) < 0x80) {
+				Buf[0] = static_cast<unsigned char>(*SrcView);
+				++Ptr;
+				ResultedCount = 1;
+				break;
+			}
+
 			size_t SourcedCount = ViewSize;
 			size_t SinkedCount = (Count - ResultedCount);
 
@@ -3398,8 +3447,10 @@ int Viewer::vread(wchar_t *Buf, int Count, bool Raw)
 		LPBYTE View = ViewFile.ViewBytesAt(Ptr, ReadSize);
 
 		if (Count == 1 && ReadSize == 2 && !Raw && (VM.CodePage == CP_UTF16LE || VM.CodePage == CP_UTF16BE)) {
-			// Если UTF16 то простой ли это символ или нет?
-			if (*(uint16_t *)View >= 0xd800 && *(uint16_t *)View <= 0xdfff) {
+			// Only a high surrogate begins a pair. Inspect the high byte
+			// in file byte order before asking for the second code unit.
+			const BYTE high = View[VM.CodePage == CP_UTF16BE ? 0 : 1];
+			if (high >= 0xd8 && high <= 0xdb) {
 				ReadSize+= 2;
 				View = ViewFile.ViewBytesAt(Ptr, ReadSize);
 			}
@@ -3433,17 +3484,7 @@ int Viewer::vread(wchar_t *Buf, int Count, bool Raw)
 
 void Viewer::vseek(int64_t Offset, int Whence)
 {
-	switch (VM.CodePage) {
-		case CP_UTF32BE:
-		case CP_UTF32LE:
-			Offset*= 4;
-			break;
-		case CP_UTF16BE:
-		case CP_UTF16LE:
-			Offset*= 2;
-			break;
-	}
-	ViewFile.SetPointer(Offset, Whence);
+	ViewFile.SetPointer(Offset * ViewerCodeUnitBytes(VM.CodePage), Whence);
 }
 
 int64_t Viewer::vtell()
@@ -3653,45 +3694,9 @@ void Viewer::GoTo(int ShowDlg, int64_t Offset, DWORD Flags)
 
 void Viewer::AdjustFilePos()
 {
-	if (!VM.Hex) {
-		const int buf_size = 4096;
-		std::vector<wchar_t> Buf(buf_size);
-		int64_t StartLinePos = -1, GotoLinePos = FilePos - (int64_t)buf_size;
-
-		if (GotoLinePos < 0)
-			GotoLinePos = 0;
-
-		vseek(GotoLinePos, SEEK_SET);
-		int ReadSize = (int)Min((int64_t)buf_size, (int64_t)(FilePos - GotoLinePos));
-		ReadSize = vread(Buf.data(), ReadSize);
-
-		for (int I = ReadSize - 1; I >= 0; I--)
-			if (Buf[I] == (wchar_t)CRSym) {
-				StartLinePos = GotoLinePos + I;
-				break;
-			}
-
-		vseek(FilePos + 1, SEEK_SET);
-
-		if (VM.Hex) {
-			size_t len = 8;
-			switch (VM.CodePage) {
-				case CP_UTF32LE:
-				case CP_UTF32BE:
-					len*= 4;
-					break;
-
-				case CP_UTF16LE:
-				case CP_UTF16BE:
-					len*= 2;
-					break;
-			}
-
-			FilePos&= ~(len - 1);
-		} else {
-			if (FilePos != StartLinePos)
-				Up();
-		}
+	if (!VM.Hex && (!VM.Wrap || Width > 0)) {
+		UpdateTextRowLayout();
+		FilePos = TextRowStart(FilePos == FileSize && FilePos > 0 ? FilePos - 1 : FilePos);
 	}
 }
 

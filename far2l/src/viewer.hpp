@@ -41,8 +41,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cache.hpp"
 #include "fileholder.hpp"
 #include "ViewerStrings.hpp"
+#include <deque>
 #include <vector>
 #include <string>
+#include <tuple>
 
 #define VIEWER_UNDO_COUNT 64
 
@@ -98,6 +100,22 @@ private:
 
 	ViewerStrings Strings;
 
+	struct WrapSegment
+	{
+		int64_t begin = 0, end = 0;
+		bool forcedEnd = false;
+	};
+
+	struct TextRowIndex
+	{
+		std::tuple<UINT, int, int, int, int, int, int, int64_t> layout;
+		bool pageMatchesLayout = false;
+		WrapSegment segment;
+		std::vector<int64_t> checkpoints; // Sparse row starts for long lines
+		std::vector<int64_t> rows;        // Consecutive boundaries near the last lookup
+		void Remember(int64_t start, int64_t end);
+	} TextRows;
+
 	struct ViewerColorRange
 	{
 		size_t StartPos;
@@ -106,7 +124,7 @@ private:
 	};
 
 	std::vector<std::vector<ViewerColorRange>> ViewerColors;
-	std::vector<ViewerString> ViewerContext;
+	std::deque<ViewerString> ViewerContext;
 	bool ViewerContextReady = false;
 	bool ViewerContextRetained = false;
 	int64_t ViewerContextPos = -1;
@@ -194,10 +212,14 @@ private:
 	void AdjustWidth();
 	void AdjustFilePos();
 
-	size_t SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length);
+	int64_t FindLineStart(int64_t position, int64_t lowerBound);
+	int64_t FindContinuationBreak(int64_t mark);
+	WrapSegment GetWrapSegment(int64_t position);
+	void UpdateTextRowLayout();
+	int64_t TextRowStart(int64_t position);
 
-	void ReadString(ViewerString &rString, int MaxSize, int StrSize);
-	int CalcStrSize(const wchar_t *Str, int Length);
+	void ReadString(ViewerString &rString);
+	void ReadString(ViewerString &rString, const WrapSegment &segment);
 	void ChangeViewKeyBar();
 	void SetCRSym();
 	void Search(int Next, int FirstChar);

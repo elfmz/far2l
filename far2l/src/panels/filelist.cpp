@@ -1010,7 +1010,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_ADD:
 		case KEY_SUBTRACT:
 		case KEY_MULTIPLY: {
-			if (CtrlObject->CmdLine->IsNotEmpty())
+			if (CtrlObject->CmdLine->IsVisible() && CtrlObject->CmdLine->IsNotEmpty())
 				return FALSE;
 
 			int Mode = SELECT_ADD;

@@ -70,6 +70,7 @@ enum FLAGS_CLASS_EDITLINE
 	FEDITLINE_WORDWRAP          = 0x02000000,
 	FEDITLINE_EOLTYPE_MASK      = 0x1c000000,
 	FEDITLINE_EOLTYPE_SHIFT     = 26,
+	FEDITLINE_SHOWEOL           = 0x20000000,
 };
 
 struct ColorItem
@@ -242,6 +243,7 @@ public:
 	int GetPersistentBlocks() { return Flags.Check(FEDITLINE_PERSISTENTBLOCKS); }
 
 	void SetShowWhiteSpace(int Mode) { Flags.Change(FEDITLINE_SHOWWHITESPACE, Mode); }
+	void SetShowEOL(int Mode) { Flags.Change(FEDITLINE_SHOWEOL, Mode); }
 
 	void GetString(int Offset, wchar_t *Data, int MaxSize);
 	inline void GetString(wchar_t *Data, int MaxSize)
@@ -355,7 +357,7 @@ public:
 	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }
 	void SetEditorMode(int Mode) { Flags.Change(FEDITLINE_EDITORMODE, Mode); };
 	void SetEditorParent(int Mode) { Flags.Change(FEDITLINE_PARENT_EDITOR, Mode); };
-	void ExpandTabs();
+	bool ExpandTabs();
 
 	void AddColor(const ColorItem *col);
 	size_t DeleteColor(int ColorPos);

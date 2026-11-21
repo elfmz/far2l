@@ -4918,6 +4918,17 @@ upd:"Show white space"
 "Пробільні символи"
 "Прагальныя сімвалы"
 
+EditShowEOL
+"Окончания &строк"
+"Show line &endings"
+upd:"Show line &endings"
+upd:"Show line &endings"
+upd:"Show line &endings"
+upd:"Show line &endings"
+upd:"Show line &endings"
+"Закінчення &рядків"
+upd:"Show line &endings"
+
 EditShowLineNumbers
 "Номера стро&к"
 "Show line &numbers"
@@ -5742,6 +5753,17 @@ upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
+
+EditorMenuViewEOL
+"Окончания строк                    Ctrl+Shift+F5"
+"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
+"Закінчення рядків                  Ctrl+Shift+F5"
+upd:"Toggle line endings                Ctrl+Shift+F5"
 
 EditorMenuViewTabs
 "Конвертировать табуляции в пробелы  Ctrl+F5"
@@ -8870,6 +8892,17 @@ upd:"HidSpc"
 "СхвПрб"
 "СхвПрб"
 
+EditCtrlShiftF5Hide
+"СпрEOL"
+"HidEOL"
+upd:"HidEOL"
+upd:"HidEOL"
+upd:"HidEOL"
+upd:"HidEOL"
+upd:"HidEOL"
+"СхвEOL"
+upd:"HidEOL"
+
 EditCtrlF3Hide
 "СпрНом"
 "HideNum"
@@ -9523,15 +9556,15 @@ EditCtrlShiftF4
 ""
 
 EditCtrlShiftF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ПокEOL"
+"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+"ПокEOL"
+upd:"ShwEOL"
 
 EditCtrlShiftF6
 ""
@@ -10620,15 +10653,15 @@ SingleEditCtrlShiftF4
 ""
 
 SingleEditCtrlShiftF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ПокEOL"
+"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+upd:"ShwEOL"
+"ПокEOL"
+upd:"ShwEOL"
 
 SingleEditCtrlShiftF6
 ""

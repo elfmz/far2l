@@ -617,7 +617,7 @@ void Edit::FastShow()
 			OutStr.emplace_back(wc ? wc : L' ');
 		}
 	}
-	if (Flags.Check(FEDITLINE_SHOWEOL) && Flags.Check(FEDITLINE_EDITORMODE)
+	if (int(OutStrCells) < EditLength && Flags.Check(FEDITLINE_SHOWEOL) && Flags.Check(FEDITLINE_EDITORMODE)
 			&& my->LeftPos <= RealPosToCell(Str.Size())) {
 		for (const wchar_t *eol = GetEOL(); *eol && int(OutStrCells) < EditLength; ++eol) {
 			OutStr.emplace_back(*eol == L'\r' ? L'\x240D' : L'\x240A');
@@ -2361,10 +2361,10 @@ int Edit::Search(const FARString &What, FARString &ReplaceStr, int Position, int
 			Reverse, Regexp, SearchLength, WordDiv());
 }
 
-void Edit::ExpandTabs()
+bool Edit::ExpandTabs()
 {
 	if (Flags.Check(FEDITLINE_READONLY))
-		return;
+		return false;
 
 	bool changed = false;
 
@@ -2396,6 +2396,8 @@ void Edit::ExpandTabs()
 
 	if (changed)
 		Changed();
+
+	return changed;
 }
 
 void Edit::SetCurPos(int NewPos)

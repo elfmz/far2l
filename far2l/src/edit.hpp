@@ -357,7 +357,7 @@ public:
 	bool GetWordWrap() const { return Flags.Check(FEDITLINE_WORDWRAP); }
 	void SetEditorMode(int Mode) { Flags.Change(FEDITLINE_EDITORMODE, Mode); };
 	void SetEditorParent(int Mode) { Flags.Change(FEDITLINE_PARENT_EDITOR, Mode); };
-	void ExpandTabs();
+	bool ExpandTabs();
 
 	void AddColor(const ColorItem *col);
 	size_t DeleteColor(int ColorPos);

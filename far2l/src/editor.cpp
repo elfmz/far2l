@@ -115,6 +115,7 @@ struct MultilineSearchBuffer
 			const wchar_t *eol = line->GetEOL();
 			text += (*eol || !line->m_next) ? eol : defaultEol;
 			lines.push_back({line, start, textEnd, static_cast<int>(text.GetLength())});
+			line->Compact();
 		}
 	}
 
@@ -1233,7 +1234,9 @@ bool Editor::ReplaceAllRegexp(MultilineSearchBuffer &buffer, const FARString &se
 	replacements = std::move(merged);
 
 	const Replacement target = reverse ? replacements.front() : replacements.back();
-	int targetOffset = target.startOffset + static_cast<int>(target.text.GetLength());
+	int targetOffset = target.startOffset;
+	if (!reverse)
+		targetOffset += static_cast<int>(target.text.GetLength());
 	for (const Replacement &replacement : replacements) {
 		if (replacement.startOffset < target.startOffset)
 			targetOffset += static_cast<int>(replacement.text.GetLength())
@@ -1344,6 +1347,7 @@ void Editor::PasteRegexpReplacement(const FARString &text, const wchar_t *endEol
 	if (start != text.GetLength())
 		Paste(FARString(text.CPtr() + start, text.GetLength() - start));
 	CurLine->SetEOL(endEol);
+	UnmarkBlock();
 }
 
 bool Editor::CheckLine(Edit *line)
@@ -5544,6 +5548,11 @@ BOOL Editor::Search(int Next)
 						FARString strQReplaceStr = Regexp ? rawRegexpReplacement : strReplaceStrCurrent;
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
+						if (Regexp) {
+							ReplaceStrings(strQSearchStr, L"\r", L"\x240D");
+							ReplaceStrings(strQSearchStr, L"\n", L"\x240A");
+							ReplaceStrings(strQSearchStr, L"\t", L"\x2192"); // →
+						}
 						ReplaceStrings(strQReplaceStr, L"\r", Regexp ? L"\x240D" : L"\x2424");
 						ReplaceStrings(strQReplaceStr, L"\n", L"\x240A");
 						ReplaceStrings(strQReplaceStr, L"\t", L"\x2192"); // →
@@ -7709,7 +7718,8 @@ int Editor::EditorControl(int Command, void *Param)
 				}
 
 				AddUndoData(UNDO_EDIT, StringNumber, CurPtr->GetCurPos(), CurPtr);
-				CurPtr->ExpandTabs();
+				if (CurPtr->ExpandTabs())
+					m_MultilineSearchBuffer.reset();
 			}
 
 			return TRUE;
@@ -8697,8 +8707,10 @@ void Editor::SetConvertTabs(int NewMode)
 	{
 		EdOpt.ExpandTabs = NewMode;
 		if (NewMode == EXPAND_ALLTABS) {
-			for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next)
-				CurPtr->ExpandTabs();
+			for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next) {
+				if (CurPtr->ExpandTabs())
+					m_MultilineSearchBuffer.reset();
+			}
 		}
 	}
 }
@@ -9098,12 +9110,17 @@ bool Editor::SetCodePage(UINT codepage)
 	if (m_codepage != codepage) {
 		const UINT oldCodepage = m_codepage;
 		m_codepage = codepage;
-		Edit *current = TopList;
 		DWORD Result = 0;
 
-		while (current) {
+		size_t lineNumber = 0;
+		for (Edit *current = TopList; current; current = current->m_next, ++lineNumber) {
 			Result|= current->TranscodeCodePage(oldCodepage, m_codepage);
-			current = current->m_next;
+			if (m_MultilineSearchBuffer) {
+				const auto &buffer = *m_MultilineSearchBuffer;
+				const auto &line = buffer.lines[lineNumber];
+				if (!current->Str.EqualTo(buffer.text.CPtr() + line.start, line.textEnd - line.start))
+					m_MultilineSearchBuffer.reset();
+			}
 		}
 
 		Show();

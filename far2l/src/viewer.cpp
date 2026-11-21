@@ -735,41 +735,41 @@ void Viewer::PrepareViewerContext()
 		return;
 
 	constexpr size_t MaxContextLines = 200;
+	constexpr int64_t MaxContextUnits = MaxContextLines * MAX_VIEWLINE;
 	const int64_t savedViewPos = vtell();
 	const int64_t savedLastPage = LastPage;
 	const int savedWrap = VM.Wrap;
 	const int64_t visiblePos = Strings[0].nFilePos;
-	std::vector<int64_t> positions;
-
-	// Plugin context uses bounded chunks preceding the viewport, independently
-	// of the current display layout and its row index.
-	for (int64_t pos = visiblePos; positions.size() < MaxContextLines && pos > 0;) {
-		pos = FindLineStart(pos - 1, std::max<int64_t>(0, pos - MAX_VIEWLINE));
-		positions.emplace_back(pos);
+	const int64_t lowerBound = std::max<int64_t>(0, visiblePos - MaxContextUnits);
+	const bool continuesIntoView = FindLineStart(visiblePos, visiblePos - 1) != visiblePos;
+	std::vector<int64_t> lineEnds; // Exclusive ends in reverse file order.
+	int64_t pos = visiblePos;
+	while (lineEnds.size() < MaxContextLines && pos > lowerBound) {
+		lineEnds.emplace_back(pos);
+		pos = FindLineStart(pos - 1, lowerBound);
 	}
-	std::reverse(positions.begin(), positions.end());
+	// The lookback limit can fall inside an encoded character on a long line.
+	if (pos && pos == lowerBound)
+		pos = FindLineStart(pos, GetWrapSegment(pos).begin);
 
 	VM.Wrap = FALSE;
-	for (const int64_t position : positions) {
-		vseek(position, SEEK_SET);
+	vseek(pos, SEEK_SET);
+	const WrapSegment context {pos, visiblePos, true};
+	while (pos < visiblePos) {
 		ViewerString line;
-		line.nFilePos = position;
-		ReadString(line, {});
-		if (vtell() > visiblePos) {
-			const int64_t distance = visiblePos - position;
-			size_t length = 0;
-			int64_t consumed = 0;
-			while (line.Chars(length)[0]) {
-				const int width = CalcCodeUnitsDistance(VM.CodePage,
-					line.Chars(length), line.Chars(length + 1));
-				if (consumed + width > distance)
-					break;
-				consumed+= width;
-				++length;
-			}
-			line.SetChar(length, 0);
-			line.WrapsToNext = true;
+		line.nFilePos = pos;
+		ReadString(line, context);
+		pos = vtell();
+		if (pos <= line.nFilePos) {
+			ViewerContext.clear();
+			break;
 		}
+		// A full buffer can stop immediately before the newline that ends its line.
+		line.WrapsToNext = pos < lineEnds.back() || (pos == visiblePos && continuesIntoView);
+		if (pos == lineEnds.back())
+			lineEnds.pop_back();
+		if (ViewerContext.size() == MaxContextLines)
+			ViewerContext.pop_front();
 		ViewerContext.emplace_back(std::move(line));
 	}
 

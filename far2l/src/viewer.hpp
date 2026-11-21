@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cache.hpp"
 #include "fileholder.hpp"
 #include "ViewerStrings.hpp"
+#include <deque>
 #include <vector>
 #include <string>
 #include <tuple>
@@ -123,7 +124,7 @@ private:
 	};
 
 	std::vector<std::vector<ViewerColorRange>> ViewerColors;
-	std::vector<ViewerString> ViewerContext;
+	std::deque<ViewerString> ViewerContext;
 	bool ViewerContextReady = false;
 	bool ViewerContextRetained = false;
 	int64_t ViewerContextPos = -1;

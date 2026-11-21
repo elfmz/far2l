@@ -205,6 +205,37 @@ function GoToByte(offset) {
     TypeEnter();
 }
 
+// A fresh profile gets this file when the optional Colorer plugin is installed.
+if (Exists(profile + "/.config/plugins/colorer/config.ini")) {
+    var contextName = "context-fragments.cpp";
+    var settings = mydir + "/profile-" + contextName + "/.config/plugins/colorer";
+    MkdirsAll([settings], 0700);
+    SaveTextFile(settings + "/config.ini", ["[Settings]", "ViewerColoring=2", "TrueMod=0"]);
+
+    // The old 8,192-byte stride skipped the closing */ at offset 8,176.
+    var body = " ".repeat(8176) + "*/" + " ".repeat(16383 - 8178);
+    var contextLines = ["int reference;", "/* int", body, "int after;", "// short"];
+    var after = contextLines.slice(0, 3).join("\n").length + 1;
+    // With an eight-column tab, the opener ends exactly at screen column 80.
+    var tabPrefix = "\t" + " ".repeat(70) + "/*";
+    var inside = contextLines.join("\n").length + 1 + tabPrefix.length;
+    contextLines.push(tabPrefix + "int inside */", "int outside;");
+    SaveTextFile(mydir + "/" + contextName, contextLines.concat(tail));
+    OpenWrapFixture(contextName, 80);
+    var keyword = ReadCell(0, 1).Fore, comment = ReadCell(3, 2).Fore;
+    if (keyword == comment)
+        Panic("Expected distinct colors for a C++ keyword and a block comment");
+    GoToByte(after);
+    CheckBoundedLine("int after;", 0, 1, 0, " ");
+    if (ReadCell(0, 1).Fore != keyword)
+        Panic("Lost the closing */ between context fragments");
+    GoToByte(inside);
+    CheckBoundedLine("int inside */", 0, 1, 0, " ");
+    if (ReadCell(0, 1).Fore != comment || ReadCell(0, 2).Fore != keyword)
+        Panic("Incorrect comment boundary after the tab or at the next physical line");
+    TypeEscape(); ExpectAppExit(0);
+}
+
 // Each full unwrapped row holds 8,176 decoded characters. These rows use
 // three bytes per character and start with distinct full-width markers.
 var rowChars = 8192 - 16;
